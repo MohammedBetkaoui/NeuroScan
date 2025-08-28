@@ -5,9 +5,9 @@ Werkzeug==2.3.7
 # HTTP requests
 requests==2.31.0
 
-# Machine Learning
-torch==2.0.1+cpu --find-links https://download.pytorch.org/whl/torch_stable.html
-torchvision==0.15.2+cpu --find-links https://download.pytorch.org/whl/torch_stable.html
+# Machine Learning (versions CPU optimisées pour déploiement)
+torch==2.0.1
+torchvision==0.15.2
 numpy==1.24.3
 Pillow==10.0.0
 

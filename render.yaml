@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: neuroscan
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements_render.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        value: neuroscan-secret-key-production-2025
+    healthCheckPath: /

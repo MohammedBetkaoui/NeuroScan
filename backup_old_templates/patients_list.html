@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Patients | NeuroScan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --blue-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --green-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --purple-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --orange-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-heavy: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            --border-radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        /* Navigation moderne */
+        .modern-navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-light);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Header section moderne */
+        .hero-section {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 4rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="1" fill="white" opacity="0.1"/><circle cx="10" cy="90" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Cartes de statistiques modernes */
+        .stats-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary-gradient);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .stats-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stats-icon.blue {
+            background: var(--blue-gradient);
+            color: white;
+        }
+
+        .stats-icon.orange {
+            background: var(--orange-gradient);
+            color: white;
+        }
+
+        .stats-icon.green {
+            background: var(--green-gradient);
+            color: white;
+        }
+
+        .stats-icon.purple {
+            background: var(--purple-gradient);
+            color: white;
+        }
+
+        /* Cartes patients modernes */
+        .patient-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .patient-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .patient-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        /* Badges de risque modernes */
+        .risk-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .risk-faible {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        .risk-modere, .risk-modéré {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+        .risk-eleve, .risk-élevé {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        .risk-critique {
+            background: linear-gradient(135deg, #7c2d12, #991b1b);
+            color: white;
+        }
+        .risk-indetermine, .risk-indéterminé {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            color: white;
+        }
+
+        /* Filtres modernes */
+        .filter-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+        }
+
+        .form-select, .form-control {
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-select:focus, .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+            background: white;
+        }
+
+        /* Boutons modernes */
+        .modern-btn {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            color: white;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--shadow-light);
+        }
+
+        .modern-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+            color: white;
+        }
+
+        .modern-btn.outline {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+        }
+
+        .modern-btn.outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Pagination moderne */
+        .pagination .page-link {
+            border: none;
+            border-radius: 10px;
+            margin: 0 2px;
+            color: #667eea;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .pagination .page-item.active .page-link {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: var(--shadow-light);
+        }
+
+        .pagination .page-link:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Search bar moderne */
+        .search-container {
+            position: relative;
+        }
+
+        .search-input {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            padding: 12px 50px 12px 20px;
+            color: white;
+            font-size: 1.1rem;
+            transition: var(--transition);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .search-input:focus {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+            outline: none;
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            color: white;
+            transition: var(--transition);
+        }
+
+        .search-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 2rem 0;
+            }
+
+            .stats-card {
+                margin-bottom: 1rem;
+            }
+
+            .patient-card {
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* Loading states */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg modern-navbar sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+                <div class="d-flex align-items-center">
+                    <div class="me-2 p-2 rounded-lg" style="background: var(--primary-gradient);">
+                        <i class="fas fa-brain text-white"></i>
+                    </div>
+                    NeuroScan
+                </div>
+            </a>
+
+            <div class="navbar-nav ms-auto d-flex align-items-center">
+                <div class="d-flex align-items-center me-4">
+                    <div class="me-3">
+                        <div class="d-flex align-items-center">
+                            <div class="me-2 p-2 rounded-circle" style="background: var(--green-gradient);">
+                                <i class="fas fa-user-md text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold text-dark">Dr. {{ doctor.full_name }}</div>
+                                <div class="text-muted small">Neurologue</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a class="modern-btn outline" href="{{ url_for('dashboard') }}">
+                        <i class="fas fa-arrow-left me-2"></i>Tableau de bord
+                    </a>
+                    <a class="modern-btn" href="{{ url_for('pro_dashboard_advanced') }}">
+                        <i class="fas fa-chart-line me-2"></i>Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="hero-content">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <div class="fade-in-up">
+                            <h1 class="display-4 fw-bold mb-3">
+                                <i class="fas fa-users me-3"></i>Mes Patients
+                            </h1>
+                            <p class="lead mb-4 opacity-90">
+                                Suivi personnalisé et historique détaillé de vos patients avec des outils d'analyse avancés
+                            </p>
+                            <div class="d-flex flex-wrap gap-3">
+                                <div class="d-flex align-items-center bg-white bg-opacity-90 rounded-pill px-3 py-2">
+                                    <i class="fas fa-shield-alt me-2 text-success"></i>
+                                    <span class="small fw-medium text-dark">Données sécurisées</span>
+                                </div>
+                                <div class="d-flex align-items-center bg-white bg-opacity-90 rounded-pill px-3 py-2">
+                                    <i class="fas fa-clock me-2 text-primary"></i>
+                                    <span class="small fw-medium text-dark">Suivi en temps réel</span>
+                                </div>
+                                <div class="d-flex align-items-center bg-white bg-opacity-90 rounded-pill px-3 py-2">
+                                    <i class="fas fa-chart-line me-2 text-info"></i>
+                                    <span class="small fw-medium text-dark">Analytics avancés</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="slide-in-right">
+                            <div class="search-container">
+                                <input type="text" class="form-control search-input" id="searchInput"
+                                       placeholder="Rechercher un patient...">
+                                <button class="search-btn" type="button">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <small class="opacity-75">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Recherche par nom ou ID patient
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-5">
+        <!-- Statistiques rapides -->
+        <div class="row mb-5">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card h-100 fade-in-up" style="animation-delay: 0.1s;">
+                    <div class="card-body text-center p-4">
+                        <div class="stats-icon blue mx-auto">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h5 class="card-title fw-semibold text-dark mb-2">Total Patients</h5>
+                        <h2 class="fw-bold mb-2" style="color: #4facfe;" id="totalPatients">
+                            <span class="loading-placeholder">-</span>
+                        </h2>
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-arrow-up text-success me-1"></i>
+                            <small class="text-muted">+12% ce mois</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card h-100 fade-in-up" style="animation-delay: 0.2s;">
+                    <div class="card-body text-center p-4">
+                        <div class="stats-icon orange mx-auto">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h5 class="card-title fw-semibold text-dark mb-2">Patients à Risque</h5>
+                        <h2 class="fw-bold mb-2" style="color: #ff9a9e;" id="highRiskPatients">
+                            <span class="loading-placeholder">-</span>
+                        </h2>
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-shield-alt text-warning me-1"></i>
+                            <small class="text-muted">Surveillance active</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card h-100 fade-in-up" style="animation-delay: 0.3s;">
+                    <div class="card-body text-center p-4">
+                        <div class="stats-icon green mx-auto">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <h5 class="card-title fw-semibold text-dark mb-2">Analyses ce Mois</h5>
+                        <h2 class="fw-bold mb-2" style="color: #43e97b;" id="monthlyAnalyses">
+                            <span class="loading-placeholder">-</span>
+                        </h2>
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-calendar text-success me-1"></i>
+                            <small class="text-muted">Activité élevée</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-card h-100 fade-in-up" style="animation-delay: 0.4s;">
+                    <div class="card-body text-center p-4">
+                        <div class="stats-icon purple mx-auto">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h5 class="card-title fw-semibold text-dark mb-2">Suivi Moyen</h5>
+                        <h2 class="fw-bold mb-2" style="color: #fa709a;" id="avgFollowUp">
+                            <span class="loading-placeholder">-</span>
+                        </h2>
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-clock text-info me-1"></i>
+                            <small class="text-muted">Durée optimale</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="filter-card fade-in-up" style="animation-delay: 0.5s;">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="me-3 p-2 rounded-lg" style="background: var(--blue-gradient);">
+                                <i class="fas fa-filter text-white"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1 fw-semibold">Filtres Avancés</h5>
+                                <p class="text-muted mb-0 small">Affinez votre recherche avec des critères précis</p>
+                            </div>
+                            <div class="ms-auto">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters()">
+                                    <i class="fas fa-undo me-1"></i>Réinitialiser
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row align-items-end">
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <label class="form-label fw-medium">
+                                    <i class="fas fa-stethoscope me-1 text-primary"></i>
+                                    Diagnostic
+                                </label>
+                                <select class="form-select" id="diagnosisFilter">
+                                    <option value="">Tous les diagnostics</option>
+                                    <option value="Normal">✅ Normal</option>
+                                    <option value="Gliome">🔴 Gliome</option>
+                                    <option value="Méningiome">🟡 Méningiome</option>
+                                    <option value="Tumeur pituitaire">🟣 Tumeur pituitaire</option>
+                                </select>
+                            </div>
+
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <label class="form-label fw-medium">
+                                    <i class="fas fa-exclamation-triangle me-1 text-warning"></i>
+                                    Niveau de risque
+                                </label>
+                                <select class="form-select" id="riskFilter">
+                                    <option value="">Tous les niveaux</option>
+                                    <option value="critique">🚨 Critique</option>
+                                    <option value="élevé">⚠️ Élevé</option>
+                                    <option value="modéré">⚡ Modéré</option>
+                                    <option value="faible">✅ Faible</option>
+                                </select>
+                            </div>
+
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <label class="form-label fw-medium">
+                                    <i class="fas fa-sort me-1 text-info"></i>
+                                    Trier par
+                                </label>
+                                <select class="form-select" id="sortBy">
+                                    <option value="last_analysis_date">📅 Dernière analyse</option>
+                                    <option value="patient_name">👤 Nom du patient</option>
+                                    <option value="total_analyses">📊 Nombre d'analyses</option>
+                                    <option value="risk_level">⚠️ Niveau de risque</option>
+                                </select>
+                            </div>
+
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="d-grid gap-2">
+                                    <button class="modern-btn" onclick="applyFilters()">
+                                        <i class="fas fa-search me-2"></i>Appliquer les filtres
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filtres actifs -->
+                        <div id="activeFilters" class="mt-3 d-none">
+                            <div class="d-flex align-items-center flex-wrap gap-2">
+                                <small class="text-muted fw-medium">Filtres actifs:</small>
+                                <div id="activeFiltersList" class="d-flex flex-wrap gap-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- En-tête de la liste -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-1">Liste des Patients</h4>
+                <p class="text-muted mb-0">
+                    <span id="patientsCount">0</span> patients trouvés
+                    <span id="filteredInfo" class="d-none">sur <span id="totalPatientsCount">0</span> au total</span>
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm" onclick="toggleView('grid')" id="gridViewBtn">
+                    <i class="fas fa-th me-1"></i>Grille
+                </button>
+                <button class="btn btn-outline-primary btn-sm" onclick="toggleView('list')" id="listViewBtn">
+                    <i class="fas fa-list me-1"></i>Liste
+                </button>
+                <button class="btn btn-outline-success btn-sm" onclick="exportPatients()">
+                    <i class="fas fa-download me-1"></i>Exporter
+                </button>
+            </div>
+        </div>
+
+        <!-- Liste des patients -->
+        <div id="patientsContainer" class="row">
+            <!-- État de chargement -->
+            <div id="loadingState" class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-3 text-muted">Chargement des patients...</p>
+            </div>
+
+            <!-- État vide -->
+            <div id="emptyState" class="col-12 text-center py-5 d-none">
+                <div class="mb-4">
+                    <i class="fas fa-users text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+                </div>
+                <h5 class="text-muted">Aucun patient trouvé</h5>
+                <p class="text-muted">Essayez de modifier vos critères de recherche ou d'ajouter de nouveaux patients.</p>
+                <button class="btn btn-primary" onclick="resetFilters()">
+                    <i class="fas fa-undo me-2"></i>Réinitialiser les filtres
+                </button>
+            </div>
+        </div>
+
+        <!-- Pagination moderne -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted small">
+                        Affichage de <span id="showingFrom">0</span> à <span id="showingTo">0</span>
+                        sur <span id="showingTotal">0</span> patients
+                    </div>
+                    <nav aria-label="Navigation des patients">
+                        <ul class="pagination mb-0" id="pagination">
+                            <!-- Pagination dynamique -->
+                        </ul>
+                    </nav>
+                    <div class="d-flex align-items-center gap-2">
+                        <small class="text-muted">Patients par page:</small>
+                        <select class="form-select form-select-sm" style="width: auto;" id="patientsPerPageSelect">
+                            <option value="12">12</option>
+                            <option value="24">24</option>
+                            <option value="48">48</option>
+                            <option value="96">96</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour actions rapides -->
+    <div class="modal fade" id="quickActionsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="border-radius: var(--border-radius); border: none; box-shadow: var(--shadow-heavy);">
+                <div class="modal-header" style="background: var(--primary-gradient); color: white; border-radius: var(--border-radius) var(--border-radius) 0 0;">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-bolt me-2"></i>Actions Rapides
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" id="quickActionsBody">
+                    <!-- Contenu dynamique -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de détails patient -->
+    <div class="modal fade" id="patientDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content" style="border-radius: var(--border-radius); border: none; box-shadow: var(--shadow-heavy);">
+                <div class="modal-header" style="background: var(--green-gradient); color: white; border-radius: var(--border-radius) var(--border-radius) 0 0;">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-user-md me-2"></i>Détails du Patient
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0" id="patientDetailsBody">
+                    <!-- Contenu dynamique -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notifications -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+        <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <div class="rounded me-2" style="width: 20px; height: 20px; background: var(--primary-gradient);"></div>
+                <strong class="me-auto">NeuroScan</strong>
+                <small class="text-muted" id="toastTime">maintenant</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastBody">
+                <!-- Message dynamique -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        let allPatients = [];
+        let filteredPatients = [];
+        let currentPage = 1;
+        let patientsPerPage = 12;
+        let currentView = 'grid';
+        let isLoading = false;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vérifier que la page est correctement initialisée
+            if (!initializePage()) {
+                console.error('Page initialization failed - missing required elements');
+                return;
+            }
+
+            initializeAnimations();
+            loadPatients();
+            setupEventListeners();
+
+            // Délai pour s'assurer que Bootstrap est chargé
+            setTimeout(() => {
+                showNotification('Bienvenue dans votre espace patients', 'success');
+            }, 500);
+        });
+
+        function initializeAnimations() {
+            // Animation d'entrée pour les éléments
+            const animatedElements = document.querySelectorAll('.fade-in-up, .slide-in-right');
+            animatedElements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = el.classList.contains('fade-in-up') ? 'translateY(30px)' : 'translateX(30px)';
+
+                setTimeout(() => {
+                    el.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                    el.style.opacity = '1';
+                    el.style.transform = 'translate(0, 0)';
+                }, index * 100);
+            });
+        }
+
+        function setupEventListeners() {
+            // Recherche en temps réel avec debounce
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        filterPatients();
+                    }, 300);
+                });
+            }
+
+            // Changement du nombre de patients par page
+            const patientsPerPageSelect = document.getElementById('patientsPerPageSelect');
+            if (patientsPerPageSelect) {
+                patientsPerPageSelect.addEventListener('change', function() {
+                    patientsPerPage = parseInt(this.value);
+                    currentPage = 1;
+                    displayPatients();
+                });
+            }
+
+            // Filtres
+            const diagnosisFilter = document.getElementById('diagnosisFilter');
+            const riskFilter = document.getElementById('riskFilter');
+            const sortBy = document.getElementById('sortBy');
+
+            if (diagnosisFilter) diagnosisFilter.addEventListener('change', filterPatients);
+            if (riskFilter) riskFilter.addEventListener('change', filterPatients);
+            if (sortBy) sortBy.addEventListener('change', filterPatients);
+        }
+
+        async function loadPatients() {
+            try {
+                const response = await fetch('/api/my-patients');
+                const data = await response.json();
+
+                if (data.success) {
+                    allPatients = data.data;
+                    
+                    // Charger les métriques pour chaque patient
+                    for (let patient of allPatients) {
+                        await loadPatientMetrics(patient);
+                    }
+                    
+                    filteredPatients = [...allPatients];
+                    displayPatients();
+                    updateStats();
+                } else {
+                    console.error('Erreur lors du chargement des patients:', data.error);
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des patients:', error);
+            }
+        }
+
+        async function loadPatientMetrics(patient) {
+            try {
+                const response = await fetch(`/api/patients/${patient.patient_id}/detailed-history`);
+                const data = await response.json();
+
+                if (data.success) {
+                    patient.metrics = data.data.metrics;
+                    patient.last_diagnosis = data.data.analyses.length > 0 ? 
+                        data.data.analyses[data.data.analyses.length - 1].predicted_label : 'Inconnu';
+                }
+            } catch (error) {
+                console.error(`Erreur lors du chargement des métriques pour ${patient.patient_id}:`, error);
+                patient.metrics = { risk_level: 'indéterminé' };
+                patient.last_diagnosis = 'Inconnu';
+            }
+        }
+
+        function displayPatients() {
+            const container = document.getElementById('patientsContainer');
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+
+            // Vérifier que les éléments existent avant de les manipuler
+            if (!container) {
+                console.error('Element patientsContainer not found');
+                return;
+            }
+
+            // Masquer les états si ils existent
+            if (loadingState) loadingState.classList.add('d-none');
+            if (emptyState) emptyState.classList.add('d-none');
+
+            const startIndex = (currentPage - 1) * patientsPerPage;
+            const endIndex = startIndex + patientsPerPage;
+            const patientsToShow = filteredPatients.slice(startIndex, endIndex);
+
+            if (patientsToShow.length === 0) {
+                container.innerHTML = '';
+                if (emptyState) emptyState.classList.remove('d-none');
+                updatePaginationInfo(0, 0, 0);
+                return;
+            }
+
+            if (currentView === 'grid') {
+                container.innerHTML = patientsToShow.map((patient, index) => `
+                    <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+                        <div class="patient-card h-100" style="animation-delay: ${index * 0.1}s;" onclick="viewPatientProfile('${patient.patient_id}')">
+                            <div class="card-body p-4">
+                                <!-- En-tête avec avatar et badge de risque -->
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div class="d-flex align-items-center flex-grow-1">
+                                        <div class="me-3 p-3 rounded-circle" style="background: var(--blue-gradient); min-width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-user text-white fs-5"></i>
+                                        </div>
+                                        <div class="flex-grow-1 min-width-0">
+                                            <h5 class="card-title mb-1 fw-bold text-truncate" title="${patient.patient_name || 'Patient inconnu'}">${patient.patient_name || 'Patient inconnu'}</h5>
+                                            <small class="text-muted">ID: ${patient.patient_id || 'N/A'}</small>
+                                        </div>
+                                    </div>
+                                    <span class="risk-badge risk-${(patient.metrics?.risk_level || 'indéterminé').replace(/é/g, 'e')} ms-2">
+                                        ${(patient.metrics?.risk_level || 'indéterminé').charAt(0).toUpperCase() + (patient.metrics?.risk_level || 'indéterminé').slice(1)}
+                                    </span>
+                                </div>
+
+                                <!-- Métriques principales -->
+                                <div class="row text-center mb-4">
+                                    <div class="col-4">
+                                        <div class="border-end pe-2">
+                                            <div class="fw-bold text-primary fs-4">${patient.total_analyses || 0}</div>
+                                            <small class="text-muted">Analyses</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="border-end pe-2">
+                                            <div class="fw-bold text-info fs-4">${patient.metrics?.follow_up_months || 0}</div>
+                                            <small class="text-muted">Mois</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="fw-bold text-success fs-4">${Math.round(patient.metrics?.avg_confidence || 0)}%</div>
+                                        <small class="text-muted">Confiance</small>
+                                    </div>
+                                </div>
+
+                                <!-- Informations détaillées -->
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <small class="text-muted fw-medium">
+                                            <i class="fas fa-stethoscope me-1"></i>Dernier diagnostic:
+                                        </small>
+                                        <span class="badge ${getDiagnosticBadgeClass(patient.last_diagnosis || 'Inconnu')}">
+                                            ${getDiagnosticIcon(patient.last_diagnosis || 'Inconnu')} ${patient.last_diagnosis || 'Inconnu'}
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <small class="text-muted fw-medium">
+                                            <i class="fas fa-calendar me-1"></i>Dernière analyse:
+                                        </small>
+                                        <small class="fw-medium text-dark">${formatDate(patient.last_analysis_date)}</small>
+                                    </div>
+                                </div>
+
+                                <!-- Alertes si présentes -->
+                                ${patient.metrics?.alerts && patient.metrics.alerts.length > 0 ? `
+                                    <div class="alert alert-warning py-2 px-3 mb-3 d-flex align-items-center" style="border-radius: 10px; border: none;">
+                                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                                        <small class="fw-medium mb-0">${patient.metrics.alerts.length} alerte(s) active(s)</small>
+                                    </div>
+                                ` : ''}
+
+                                <!-- Barre de progression pour la confiance -->
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <small class="text-muted fw-medium">Confiance moyenne</small>
+                                        <small class="fw-bold text-success">${Math.round(patient.metrics?.avg_confidence || 0)}%</small>
+                                    </div>
+                                    <div class="progress" style="height: 6px; border-radius: 3px;">
+                                        <div class="progress-bar bg-success" role="progressbar"
+                                             style="width: ${patient.metrics?.avg_confidence || 0}%; border-radius: 3px;"
+                                             aria-valuenow="${patient.metrics?.avg_confidence || 0}"
+                                             aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Footer avec boutons d'action -->
+                            <div class="card-footer bg-transparent border-0 pt-0 pb-3">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm flex-fill"
+                                            onclick="event.stopPropagation(); viewPatientProfile('${patient.patient_id}')"
+                                            title="Voir le profil complet">
+                                        <i class="fas fa-eye me-1"></i>Profil
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm"
+                                            onclick="event.stopPropagation(); showPatientDetails('${patient.patient_id}')"
+                                            title="Aperçu rapide">
+                                        <i class="fas fa-info-circle"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm"
+                                            onclick="event.stopPropagation(); showQuickActions('${patient.patient_id}')"
+                                            title="Actions rapides">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                // Vue liste
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th><i class="fas fa-user me-2"></i>Patient</th>
+                                        <th><i class="fas fa-chart-bar me-2"></i>Analyses</th>
+                                        <th><i class="fas fa-stethoscope me-2"></i>Dernier diagnostic</th>
+                                        <th><i class="fas fa-exclamation-triangle me-2"></i>Risque</th>
+                                        <th><i class="fas fa-calendar me-2"></i>Dernière analyse</th>
+                                        <th><i class="fas fa-cog me-2"></i>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${patientsToShow.map(patient => `
+                                        <tr onclick="viewPatientProfile('${patient.patient_id}')" style="cursor: pointer;">
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3 p-2 rounded-circle" style="background: var(--blue-gradient); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                                        <i class="fas fa-user text-white"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold">${patient.patient_name || 'Patient inconnu'}</div>
+                                                        <small class="text-muted">ID: ${patient.patient_id || 'N/A'}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary fs-6">${patient.total_analyses || 0}</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge ${getDiagnosticBadgeClass(patient.last_diagnosis || 'Inconnu')}">
+                                                    ${getDiagnosticIcon(patient.last_diagnosis || 'Inconnu')} ${patient.last_diagnosis || 'Inconnu'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="risk-badge risk-${(patient.metrics?.risk_level || 'indéterminé').replace(/é/g, 'e')}">
+                                                    ${(patient.metrics?.risk_level || 'indéterminé').charAt(0).toUpperCase() + (patient.metrics?.risk_level || 'indéterminé').slice(1)}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <small>${formatDate(patient.last_analysis_date)}</small>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-outline-primary" onclick="event.stopPropagation(); viewPatientProfile('${patient.patient_id}')" title="Profil">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); showQuickActions('${patient.patient_id}')" title="Actions">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+
+            updatePagination();
+            updatePaginationInfo(startIndex + 1, Math.min(endIndex, filteredPatients.length), filteredPatients.length);
+            updateCounts();
+        }
+
+        function updateStats() {
+            document.getElementById('totalPatients').textContent = allPatients.length;
+            
+            const highRiskCount = allPatients.filter(p => 
+                p.metrics?.risk_level === 'critique' || p.metrics?.risk_level === 'élevé'
+            ).length;
+            document.getElementById('highRiskPatients').textContent = highRiskCount;
+            
+            // Calcul des analyses du mois (simulation)
+            const monthlyCount = allPatients.reduce((sum, p) => sum + (p.total_analyses || 0), 0);
+            document.getElementById('monthlyAnalyses').textContent = Math.floor(monthlyCount / 3);
+            
+            // Suivi moyen
+            const avgFollowUp = allPatients.reduce((sum, p) => sum + (p.metrics?.follow_up_months || 0), 0) / allPatients.length;
+            document.getElementById('avgFollowUp').textContent = avgFollowUp.toFixed(1) + ' mois';
+        }
+
+        function filterPatients() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const diagnosisFilter = document.getElementById('diagnosisFilter').value;
+            const riskFilter = document.getElementById('riskFilter').value;
+
+            filteredPatients = allPatients.filter(patient => {
+                const matchesSearch = patient.patient_name.toLowerCase().includes(searchTerm) ||
+                                    patient.patient_id.toLowerCase().includes(searchTerm);
+                const matchesDiagnosis = !diagnosisFilter || patient.last_diagnosis === diagnosisFilter;
+                const matchesRisk = !riskFilter || patient.metrics?.risk_level === riskFilter;
+
+                return matchesSearch && matchesDiagnosis && matchesRisk;
+            });
+
+            currentPage = 1;
+            displayPatients();
+        }
+
+        function applyFilters() {
+            filterPatients();
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredPatients.length / patientsPerPage);
+            const pagination = document.getElementById('pagination');
+
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+            
+            // Bouton précédent
+            paginationHTML += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Précédent</a>
+                </li>
+            `;
+
+            // Pages
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    paginationHTML += `
+                        <li class="page-item ${i === currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                        </li>
+                    `;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    paginationHTML += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                }
+            }
+
+            // Bouton suivant
+            paginationHTML += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Suivant</a>
+                </li>
+            `;
+
+            pagination.innerHTML = paginationHTML;
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredPatients.length / patientsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                displayPatients();
+            }
+        }
+
+        function viewPatientProfile(patientId) {
+            window.location.href = `/patient/${patientId}`;
+        }
+
+        function showQuickActions(patientId) {
+            const patient = allPatients.find(p => p.patient_id === patientId);
+            if (!patient) return;
+
+            const modalBody = document.getElementById('quickActionsBody');
+            modalBody.innerHTML = `
+                <h6>${patient.patient_name}</h6>
+                <p class="text-muted">ID: ${patient.patient_id}</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" onclick="viewPatientProfile('${patientId}')">
+                        <i class="fas fa-eye me-2"></i>Voir le profil complet
+                    </button>
+                    <button class="btn btn-success" onclick="scheduleFollowUp('${patientId}')">
+                        <i class="fas fa-calendar-plus me-2"></i>Programmer un suivi
+                    </button>
+                    <button class="btn btn-info" onclick="generateReport('${patientId}')">
+                        <i class="fas fa-file-medical me-2"></i>Générer un rapport
+                    </button>
+                </div>
+            `;
+
+            new bootstrap.Modal(document.getElementById('quickActionsModal')).show();
+        }
+
+        function scheduleFollowUp(patientId) {
+            // Fonctionnalité à implémenter
+            alert('Fonctionnalité de programmation de suivi à venir');
+        }
+
+        function generateReport(patientId) {
+            showNotification('Génération du rapport en cours...', 'info');
+            // Simuler la génération
+            setTimeout(() => {
+                showNotification('Rapport généré avec succès', 'success');
+            }, 2000);
+        }
+
+        // Nouvelles fonctions utilitaires
+        function getDiagnosticBadgeClass(diagnosis) {
+            const classes = {
+                'Normal': 'bg-success',
+                'Gliome': 'bg-danger',
+                'Méningiome': 'bg-warning',
+                'Tumeur pituitaire': 'bg-info',
+                'Inconnu': 'bg-secondary'
+            };
+            return classes[diagnosis] || 'bg-secondary';
+        }
+
+        function getDiagnosticIcon(diagnosis) {
+            const icons = {
+                'Normal': '✅',
+                'Gliome': '🔴',
+                'Méningiome': '🟡',
+                'Tumeur pituitaire': '🟣',
+                'Inconnu': '❓'
+            };
+            return icons[diagnosis] || '❓';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'Non disponible';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        function updatePaginationInfo(from, to, total) {
+            document.getElementById('showingFrom').textContent = from;
+            document.getElementById('showingTo').textContent = to;
+            document.getElementById('showingTotal').textContent = total;
+        }
+
+        function updateCounts() {
+            document.getElementById('patientsCount').textContent = filteredPatients.length;
+            document.getElementById('totalPatientsCount').textContent = allPatients.length;
+
+            const filteredInfo = document.getElementById('filteredInfo');
+            if (filteredPatients.length !== allPatients.length) {
+                filteredInfo.classList.remove('d-none');
+            } else {
+                filteredInfo.classList.add('d-none');
+            }
+        }
+
+        function toggleView(view) {
+            currentView = view;
+
+            // Mettre à jour les boutons
+            document.getElementById('gridViewBtn').classList.toggle('btn-primary', view === 'grid');
+            document.getElementById('gridViewBtn').classList.toggle('btn-outline-primary', view !== 'grid');
+            document.getElementById('listViewBtn').classList.toggle('btn-primary', view === 'list');
+            document.getElementById('listViewBtn').classList.toggle('btn-outline-primary', view !== 'list');
+
+            displayPatients();
+        }
+
+        function resetFilters() {
+            const searchInput = document.getElementById('searchInput');
+            const diagnosisFilter = document.getElementById('diagnosisFilter');
+            const riskFilter = document.getElementById('riskFilter');
+            const sortBy = document.getElementById('sortBy');
+
+            if (searchInput) searchInput.value = '';
+            if (diagnosisFilter) diagnosisFilter.value = '';
+            if (riskFilter) riskFilter.value = '';
+            if (sortBy) sortBy.value = 'last_analysis_date';
+
+            filteredPatients = [...allPatients];
+            currentPage = 1;
+            displayPatients();
+            updateActiveFilters();
+            showNotification('Filtres réinitialisés', 'info');
+        }
+
+        function updateActiveFilters() {
+            const activeFilters = [];
+            const searchInput = document.getElementById('searchInput');
+            const diagnosisFilter = document.getElementById('diagnosisFilter');
+            const riskFilter = document.getElementById('riskFilter');
+
+            const searchTerm = searchInput ? searchInput.value : '';
+            const diagnosis = diagnosisFilter ? diagnosisFilter.value : '';
+            const risk = riskFilter ? riskFilter.value : '';
+
+            if (searchTerm) activeFilters.push(`Recherche: "${searchTerm}"`);
+            if (diagnosis) activeFilters.push(`Diagnostic: ${diagnosis}`);
+            if (risk) activeFilters.push(`Risque: ${risk}`);
+
+            const container = document.getElementById('activeFilters');
+            const list = document.getElementById('activeFiltersList');
+
+            if (container && list) {
+                if (activeFilters.length > 0) {
+                    container.classList.remove('d-none');
+                    list.innerHTML = activeFilters.map(filter =>
+                        `<span class="badge bg-primary">${filter}</span>`
+                    ).join('');
+                } else {
+                    container.classList.add('d-none');
+                }
+            }
+        }
+
+        function exportPatients() {
+            const csvContent = convertPatientsToCSV(filteredPatients);
+            downloadCSV(csvContent, 'patients_export.csv');
+            showNotification('Export réussi', 'success');
+        }
+
+        function convertPatientsToCSV(patients) {
+            const headers = ['Nom', 'ID', 'Dernier diagnostic', 'Niveau de risque', 'Total analyses', 'Dernière analyse'];
+            const csvContent = [
+                headers.join(','),
+                ...patients.map(patient => [
+                    patient.patient_name,
+                    patient.patient_id,
+                    patient.last_diagnosis,
+                    patient.metrics?.risk_level || 'indéterminé',
+                    patient.total_analyses,
+                    patient.last_analysis_date
+                ].join(','))
+            ].join('\n');
+
+            return csvContent;
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', filename);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function showNotification(message, type = 'info') {
+            const toast = document.getElementById('notificationToast');
+            const toastBody = document.getElementById('toastBody');
+            const toastTime = document.getElementById('toastTime');
+
+            // Vérifier que les éléments existent
+            if (!toast || !toastBody || !toastTime) {
+                console.log('Notification:', message); // Fallback vers console
+                return;
+            }
+
+            toastBody.textContent = message;
+            toastTime.textContent = 'maintenant';
+
+            // Changer la couleur selon le type
+            const toastHeader = toast.querySelector('.toast-header div');
+            if (toastHeader) {
+                const gradients = {
+                    'success': 'var(--green-gradient)',
+                    'error': 'linear-gradient(135deg, #ef4444, #dc2626)',
+                    'warning': 'linear-gradient(135deg, #f59e0b, #d97706)',
+                    'info': 'var(--blue-gradient)'
+                };
+                toastHeader.style.background = gradients[type] || gradients.info;
+            }
+
+            // Vérifier que Bootstrap est disponible
+            if (typeof bootstrap !== 'undefined') {
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+            } else {
+                console.log('Bootstrap not loaded, notification:', message);
+            }
+        }
+
+        // Fonctions utilitaires manquantes
+        function getDiagnosticBadgeClass(diagnosis) {
+            const classes = {
+                'Normal': 'bg-success text-white',
+                'Gliome': 'bg-danger text-white',
+                'Méningiome': 'bg-warning text-dark',
+                'Tumeur pituitaire': 'bg-info text-white',
+                'Inconnu': 'bg-secondary text-white'
+            };
+            return classes[diagnosis] || 'bg-secondary text-white';
+        }
+
+        function getDiagnosticIcon(diagnosis) {
+            const icons = {
+                'Normal': '✅',
+                'Gliome': '🔴',
+                'Méningiome': '🟡',
+                'Tumeur pituitaire': '🟣',
+                'Inconnu': '❓'
+            };
+            return icons[diagnosis] || '❓';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString || dateString === 'N/A') return 'Non disponible';
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return 'Date invalide';
+                return date.toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+            } catch (error) {
+                return 'Date invalide';
+            }
+        }
+
+        function updatePaginationInfo(from, to, total) {
+            const fromEl = document.getElementById('showingFrom');
+            const toEl = document.getElementById('showingTo');
+            const totalEl = document.getElementById('showingTotal');
+
+            if (fromEl) fromEl.textContent = from;
+            if (toEl) toEl.textContent = to;
+            if (totalEl) totalEl.textContent = total;
+        }
+
+        function updateCounts() {
+            const patientsCountEl = document.getElementById('patientsCount');
+            const totalPatientsCountEl = document.getElementById('totalPatientsCount');
+            const filteredInfoEl = document.getElementById('filteredInfo');
+
+            if (patientsCountEl) patientsCountEl.textContent = filteredPatients.length;
+            if (totalPatientsCountEl) totalPatientsCountEl.textContent = allPatients.length;
+
+            if (filteredInfoEl) {
+                if (filteredPatients.length !== allPatients.length) {
+                    filteredInfoEl.classList.remove('d-none');
+                } else {
+                    filteredInfoEl.classList.add('d-none');
+                }
+            }
+        }
+
+        function toggleView(view) {
+            currentView = view;
+
+            const gridBtn = document.getElementById('gridViewBtn');
+            const listBtn = document.getElementById('listViewBtn');
+
+            if (gridBtn && listBtn) {
+                // Mettre à jour les boutons
+                gridBtn.classList.toggle('btn-primary', view === 'grid');
+                gridBtn.classList.toggle('btn-outline-primary', view !== 'grid');
+                listBtn.classList.toggle('btn-primary', view === 'list');
+                listBtn.classList.toggle('btn-outline-primary', view !== 'list');
+            } else {
+                console.warn('View toggle buttons not found');
+            }
+
+            displayPatients();
+            showNotification(`Vue ${view === 'grid' ? 'grille' : 'liste'} activée`, 'info');
+        }
+
+        function showPatientDetails(patientId) {
+            const patient = allPatients.find(p => p.patient_id === patientId);
+            if (!patient) {
+                showNotification('Patient non trouvé', 'error');
+                return;
+            }
+
+            const modalBody = document.getElementById('patientDetailsBody');
+            if (!modalBody) return;
+
+            modalBody.innerHTML = `
+                <div class="p-4">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4">
+                            <div class="p-4 rounded-circle mx-auto mb-3" style="background: var(--blue-gradient); width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-user text-white" style="font-size: 2rem;"></i>
+                            </div>
+                            <h4 class="fw-bold">${patient.patient_name || 'Patient inconnu'}</h4>
+                            <p class="text-muted">ID: ${patient.patient_id || 'N/A'}</p>
+                            <span class="risk-badge risk-${(patient.metrics?.risk_level || 'indéterminé').replace(/é/g, 'e')} fs-6">
+                                ${(patient.metrics?.risk_level || 'indéterminé').charAt(0).toUpperCase() + (patient.metrics?.risk_level || 'indéterminé').slice(1)}
+                            </span>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="row mb-4">
+                                <div class="col-4 text-center">
+                                    <div class="fw-bold text-primary fs-3">${patient.total_analyses || 0}</div>
+                                    <small class="text-muted">Analyses totales</small>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div class="fw-bold text-info fs-3">${patient.metrics?.follow_up_months || 0}</div>
+                                    <small class="text-muted">Mois de suivi</small>
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div class="fw-bold text-success fs-3">${Math.round(patient.metrics?.avg_confidence || 0)}%</div>
+                                    <small class="text-muted">Confiance moyenne</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6 class="fw-bold mb-2">Informations médicales</h6>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Dernier diagnostic:</small>
+                                        <div class="mt-1">
+                                            <span class="badge ${getDiagnosticBadgeClass(patient.last_diagnosis || 'Inconnu')}">
+                                                ${getDiagnosticIcon(patient.last_diagnosis || 'Inconnu')} ${patient.last_diagnosis || 'Inconnu'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Dernière analyse:</small>
+                                        <div class="mt-1 fw-medium">${formatDate(patient.last_analysis_date)}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            ${patient.metrics?.alerts && patient.metrics.alerts.length > 0 ? `
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>${patient.metrics.alerts.length} alerte(s) active(s)</strong>
+                                </div>
+                            ` : ''}
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button class="btn btn-primary" onclick="viewPatientProfile('${patient.patient_id}')">
+                                    <i class="fas fa-eye me-2"></i>Voir le profil complet
+                                </button>
+                                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                    Fermer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const modal = new bootstrap.Modal(document.getElementById('patientDetailsModal'));
+            modal.show();
+        }
+
+        // Améliorer la fonction applyFilters
+        function applyFilters() {
+            filterPatients();
+            updateActiveFilters();
+            showNotification(`${filteredPatients.length} patients trouvés`, 'success');
+        }
+
+        // Améliorer la fonction de tri
+        function sortPatients() {
+            const sortByElement = document.getElementById('sortBy');
+            const sortBy = sortByElement ? sortByElement.value : 'last_analysis_date';
+
+            filteredPatients.sort((a, b) => {
+                switch (sortBy) {
+                    case 'patient_name':
+                        return (a.patient_name || '').localeCompare(b.patient_name || '');
+                    case 'total_analyses':
+                        return (b.total_analyses || 0) - (a.total_analyses || 0);
+                    case 'risk_level':
+                        const riskOrder = { 'critique': 4, 'élevé': 3, 'modéré': 2, 'faible': 1, 'indéterminé': 0 };
+                        return (riskOrder[b.metrics?.risk_level] || 0) - (riskOrder[a.metrics?.risk_level] || 0);
+                    case 'last_analysis_date':
+                    default:
+                        const dateA = new Date(a.last_analysis_date || 0);
+                        const dateB = new Date(b.last_analysis_date || 0);
+                        return dateB - dateA;
+                }
+            });
+        }
+
+        // Fonction pour initialiser la page de manière sécurisée
+        function initializePage() {
+            // Vérifier que tous les éléments essentiels existent
+            const requiredElements = [
+                'patientsContainer',
+                'searchInput',
+                'diagnosisFilter',
+                'riskFilter',
+                'sortBy'
+            ];
+
+            const missingElements = requiredElements.filter(id => !document.getElementById(id));
+
+            if (missingElements.length > 0) {
+                console.warn('Missing elements:', missingElements);
+                // Créer les éléments manquants ou afficher un message d'erreur
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+</body>
+</html>

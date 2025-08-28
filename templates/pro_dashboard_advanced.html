@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroScan Pro - Tableau de Bord Avancé</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --blue-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --green-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --purple-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --orange-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-heavy: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            --border-radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        /* Cards modernes */
+        .modern-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .modern-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        /* Stat cards avec gradients modernes */
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            z-index: 1;
+        }
+
+        .stat-card > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .stat-card.blue {
+            background: var(--blue-gradient);
+        }
+
+        .stat-card.green {
+            background: var(--green-gradient);
+        }
+
+        .stat-card.purple {
+            background: var(--purple-gradient);
+        }
+
+        .stat-card.orange {
+            background: var(--orange-gradient);
+        }
+
+        /* Header moderne */
+        .modern-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .chart-container canvas {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: calc(100% - 40px) !important;
+            height: calc(100% - 40px) !important;
+        }
+
+        /* Alerts modernes */
+        .alert-warning {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        }
+        .alert-info {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+        .alert-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        /* Panel de filtres moderne */
+        .filter-panel {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Cartes de filtres modernes */
+        .filter-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .filter-card:hover {
+            box-shadow: var(--shadow-medium);
+            transform: translateY(-4px);
+        }
+
+        .filter-input {
+            transition: var(--transition);
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .filter-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            transform: translateY(-2px);
+            background: white;
+        }
+
+        .filter-badge {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .filter-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .filter-active {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        /* Range sliders modernes */
+        .range-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #e5e7eb 0%, #e5e7eb 100%);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .range-slider:hover {
+            background: linear-gradient(to right, #d1d5db 0%, #d1d5db 100%);
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+            transition: var(--transition);
+        }
+
+        .range-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .range-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+            transition: var(--transition);
+        }
+
+        .range-slider::-moz-range-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Boutons modernes */
+        .modern-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            color: white;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--shadow-light);
+        }
+
+        .modern-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .modern-btn.secondary {
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+        }
+
+        .modern-btn.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .modern-btn.outline {
+            background: transparent;
+            border: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        .modern-btn.outline:hover {
+            background: #3b82f6;
+            color: white;
+        }
+
+        /* Quick buttons */
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .quick-btn:hover {
+            background: #3b82f6;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Table moderne */
+        .modern-table {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+        }
+
+        .modern-table thead {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+        }
+
+        .modern-table tbody tr {
+            transition: var(--transition);
+        }
+
+        .modern-table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+            transform: scale(1.01);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 280px;
+                padding: 10px;
+            }
+
+            .stat-card {
+                margin-bottom: 1rem;
+            }
+
+            .filter-card {
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* Period buttons */
+        .comparison-period-btn, .trend-period-btn {
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-weight: 500;
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .comparison-period-btn.active, .trend-period-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: var(--shadow-light);
+        }
+
+        .comparison-period-btn:not(.active), .trend-period-btn:not(.active) {
+            background: rgba(255, 255, 255, 0.8);
+            color: #6b7280;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .comparison-period-btn:not(.active):hover, .trend-period-btn:not(.active):hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-1px);
+        }
+
+        /* Scrollbar personnalisée */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="modern-header sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div class="flex items-center fade-in-up">
+                    <div class="flex-shrink-0 mr-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <i class="fas fa-brain text-white text-xl"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                            NeuroScan Pro
+                        </h1>
+                        <p class="text-sm text-gray-600 font-medium">Tableau de bord analytique avancé</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3 slide-in-right">
+                    <!-- Filters Toggle -->
+                    <button id="toggleFilters" class="modern-btn secondary relative">
+                        <i class="fas fa-filter mr-2"></i>
+                        <span class="hidden sm:inline">Filtres Avancés</span>
+                        <span id="activeFiltersCount" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg">0</span>
+                    </button>
+
+                    <!-- Export Dropdown -->
+                    <div class="relative">
+                        <button id="exportBtn" class="modern-btn">
+                            <i class="fas fa-download mr-2"></i>
+                            <span class="hidden sm:inline">Exporter</span>
+                            <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                        </button>
+                        <div id="exportMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-20 overflow-hidden">
+                            <div class="py-2">
+                                <a href="/api/analytics/export/csv" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-file-csv text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Exporter CSV</div>
+                                        <div class="text-xs text-gray-500">Données tabulaires</div>
+                                    </div>
+                                </a>
+                                <a href="/api/analytics/export/json" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-file-code text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Exporter JSON</div>
+                                        <div class="text-xs text-gray-500">Format structuré</div>
+                                    </div>
+                                </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <button onclick="exportToPDF()" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-file-pdf text-red-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Rapport PDF</div>
+                                        <div class="text-xs text-gray-500">Rapport complet</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation -->
+                    <a href="/pro-dashboard" class="modern-btn outline">
+                        <i class="fas fa-chart-simple mr-2"></i>
+                        <span class="hidden sm:inline">Vue Simple</span>
+                    </a>
+
+                    <!-- Back to Dashboard -->
+                    <a href="/dashboard" class="p-3 text-gray-600 hover:text-indigo-600 transition-colors rounded-lg hover:bg-white/50" title="Retour au tableau de bord">
+                        <i class="fas fa-arrow-left text-lg"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Advanced Filters Panel -->
+    <div id="filtersPanel" class="hidden filter-panel">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Filter Header -->
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 space-y-4 sm:space-y-0">
+                <div class="fade-in-up">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">
+                        <i class="fas fa-sliders-h mr-3 text-blue-600"></i>
+                        Filtres Avancés
+                    </h3>
+                    <p class="text-gray-600">Affinez vos recherches avec des critères précis et obtenez des insights détaillés</p>
+                </div>
+                <div class="flex items-center space-x-3 slide-in-right">
+                    <button id="resetFilters" class="modern-btn outline text-red-600 border-red-600 hover:bg-red-600 hover:text-white">
+                        <i class="fas fa-undo mr-2"></i>Réinitialiser
+                    </button>
+                    <button id="saveFilters" class="modern-btn success">
+                        <i class="fas fa-bookmark mr-2"></i>Sauvegarder
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Filters Display -->
+            <div id="activeFilters" class="mb-6 hidden fade-in-up">
+                <div class="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="text-sm font-semibold text-gray-700 flex items-center">
+                            <i class="fas fa-filter mr-2 text-blue-600"></i>
+                            Filtres actifs:
+                        </span>
+                        <div id="activeFiltersList" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+                <!-- Date Range Filter -->
+                <div class="filter-card p-6 fade-in-up" style="animation-delay: 0.1s;">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mr-3">
+                            <i class="fas fa-calendar-alt text-blue-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Période</h4>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Date de début</label>
+                            <input type="date" id="startDate" class="filter-input w-full px-4 py-3 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Date de fin</label>
+                            <input type="date" id="endDate" class="filter-input w-full px-4 py-3 text-sm">
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="quick-btn quick-date-btn" data-days="7">7 jours</button>
+                            <button class="quick-btn quick-date-btn" data-days="30">30 jours</button>
+                            <button class="quick-btn quick-date-btn" data-days="90">90 jours</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diagnostic Type Filter -->
+                <div class="filter-card p-6 fade-in-up" style="animation-delay: 0.2s;">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mr-3">
+                            <i class="fas fa-brain text-green-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Diagnostics</h4>
+                    </div>
+                    <div class="space-y-3">
+                        <label class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                            <input type="checkbox" class="diagnostic-checkbox mr-3 w-4 h-4 text-blue-600 rounded" value="Normal">
+                            <div class="flex-1">
+                                <span class="text-sm font-medium text-gray-900">Normal</span>
+                            </div>
+                            <span class="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full" id="count-Normal">0</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                            <input type="checkbox" class="diagnostic-checkbox mr-3 w-4 h-4 text-blue-600 rounded" value="Gliome">
+                            <div class="flex-1">
+                                <span class="text-sm font-medium text-gray-900">Gliome</span>
+                            </div>
+                            <span class="text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded-full" id="count-Gliome">0</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                            <input type="checkbox" class="diagnostic-checkbox mr-3 w-4 h-4 text-blue-600 rounded" value="Méningiome">
+                            <div class="flex-1">
+                                <span class="text-sm font-medium text-gray-900">Méningiome</span>
+                            </div>
+                            <span class="text-xs font-semibold text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full" id="count-Méningiome">0</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                            <input type="checkbox" class="diagnostic-checkbox mr-3 w-4 h-4 text-blue-600 rounded" value="Tumeur pituitaire">
+                            <div class="flex-1">
+                                <span class="text-sm font-medium text-gray-900">Tumeur pituitaire</span>
+                            </div>
+                            <span class="text-xs font-semibold text-purple-600 bg-purple-100 px-2 py-1 rounded-full" id="count-Tumeur pituitaire">0</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Confidence Range Filter -->
+                <div class="filter-card p-6 fade-in-up" style="animation-delay: 0.3s;">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center mr-3">
+                            <i class="fas fa-chart-line text-purple-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Confiance</h4>
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                Confiance minimale: <span id="minConfidenceValue" class="text-purple-600 font-bold text-lg">0%</span>
+                            </label>
+                            <input type="range" id="minConfidence" min="0" max="100" value="0"
+                                   class="range-slider w-full">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>0%</span>
+                                <span>50%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                Confiance maximale: <span id="maxConfidenceValue" class="text-purple-600 font-bold text-lg">100%</span>
+                            </label>
+                            <input type="range" id="maxConfidence" min="0" max="100" value="100"
+                                   class="range-slider w-full">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>0%</span>
+                                <span>50%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Processing Time Filter -->
+                <div class="filter-card p-6 fade-in-up" style="animation-delay: 0.4s;">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center mr-3">
+                            <i class="fas fa-clock text-orange-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Temps de traitement</h4>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                Temps maximum: <span id="maxTimeValue" class="text-orange-600 font-bold text-lg">10s</span>
+                            </label>
+                            <input type="range" id="maxProcessingTime" min="0" max="10" value="10" step="0.1"
+                                   class="range-slider w-full">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>0s</span>
+                                <span>5s</span>
+                                <span>10s</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="quick-btn quick-time-btn" data-time="1">< 1s</button>
+                            <button class="quick-btn quick-time-btn" data-time="3">< 3s</button>
+                            <button class="quick-btn quick-time-btn" data-time="5">< 5s</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-8 pt-6 border-t border-gray-200 space-y-4 sm:space-y-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span id="filterResultsPreview" class="text-sm text-gray-600 font-medium">
+                        Configurez vos filtres et cliquez sur "Appliquer" pour voir les résultats
+                    </span>
+                </div>
+                <div class="flex space-x-3">
+                    <button id="previewFilters" class="modern-btn outline">
+                        <i class="fas fa-eye mr-2"></i>Aperçu
+                    </button>
+                    <button id="applyFilters" class="modern-btn">
+                        <i class="fas fa-search mr-2"></i>Appliquer les filtres
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Alerts Section -->
+        <div id="alertsSection" class="mb-8">
+            <!-- Alerts will be loaded here -->
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Analyses -->
+            <div class="stat-card blue text-white p-6 fade-in-up" style="animation-delay: 0.1s;">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-chart-line text-lg mr-2 opacity-80"></i>
+                            <p class="text-blue-100 text-sm font-medium uppercase tracking-wide">Total Analyses</p>
+                        </div>
+                        <p id="totalAnalyses" class="text-4xl font-bold mb-1">-</p>
+                        <div class="flex items-center text-blue-200 text-xs">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span id="totalChange">+0%</span>
+                            <span class="ml-1">ce mois</span>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-2xl">
+                        <i class="fas fa-brain text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confiance Moyenne -->
+            <div class="stat-card green text-white p-6 fade-in-up" style="animation-delay: 0.2s;">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-check-circle text-lg mr-2 opacity-80"></i>
+                            <p class="text-green-100 text-sm font-medium uppercase tracking-wide">Confiance Moyenne</p>
+                        </div>
+                        <p id="avgConfidence" class="text-4xl font-bold mb-1">-%</p>
+                        <div class="flex items-center text-green-200 text-xs">
+                            <i class="fas fa-shield-alt mr-1"></i>
+                            <span id="confidenceChange">Fiabilité élevée</span>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-2xl">
+                        <i class="fas fa-award text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analyses Aujourd'hui -->
+            <div class="stat-card purple text-white p-6 fade-in-up" style="animation-delay: 0.3s;">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-calendar-day text-lg mr-2 opacity-80"></i>
+                            <p class="text-purple-100 text-sm font-medium uppercase tracking-wide">Aujourd'hui</p>
+                        </div>
+                        <p id="todayAnalyses" class="text-4xl font-bold mb-1">-</p>
+                        <div class="flex items-center text-purple-200 text-xs">
+                            <i class="fas fa-clock mr-1"></i>
+                            <span id="todayChange">Activité du jour</span>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-2xl">
+                        <i class="fas fa-calendar-check text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Temps Moyen -->
+            <div class="stat-card orange text-white p-6 fade-in-up" style="animation-delay: 0.4s;">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-clock text-lg mr-2 opacity-80"></i>
+                            <p class="text-orange-100 text-sm font-medium uppercase tracking-wide">Temps Moyen</p>
+                        </div>
+                        <p id="avgProcessingTime" class="text-4xl font-bold mb-1">-s</p>
+                        <div class="flex items-center text-orange-200 text-xs">
+                            <i class="fas fa-tachometer-alt mr-1"></i>
+                            <span id="timeChange">Performance optimale</span>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-2xl">
+                        <i class="fas fa-stopwatch text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+            <!-- Comparison Chart -->
+            <div class="xl:col-span-2 modern-card p-6 fade-in-up" style="animation-delay: 0.5s;">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1">Comparaison Temporelle</h3>
+                        <p class="text-gray-600 text-sm">Analyse comparative des performances</p>
+                    </div>
+                    <div class="flex space-x-2 bg-gray-100 p-1 rounded-xl">
+                        <button class="comparison-period-btn active text-sm px-3 py-2 rounded-lg transition-all" data-period="day">
+                            <i class="fas fa-clock mr-1"></i>Jour
+                        </button>
+                        <button class="comparison-period-btn text-sm px-3 py-2 rounded-lg transition-all" data-period="week">
+                            <i class="fas fa-calendar-week mr-1"></i>Semaine
+                        </button>
+                        <button class="comparison-period-btn text-sm px-3 py-2 rounded-lg transition-all" data-period="month">
+                            <i class="fas fa-calendar mr-1"></i>Mois
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container relative">
+                    <canvas id="comparisonChart"></canvas>
+                    <div id="comparisonChartLoader" class="absolute inset-0 flex items-center justify-center hidden">
+                        <div class="bg-white rounded-lg p-4 shadow-lg">
+                            <i class="fas fa-spinner fa-spin text-indigo-600 mr-2"></i>
+                            <span class="text-gray-700">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Trends -->
+            <div class="modern-card p-6 fade-in-up" style="animation-delay: 0.6s;">
+                <div class="mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-1">Performance</h3>
+                    <p class="text-gray-600 text-sm">Tendances de performance</p>
+                </div>
+                <div class="chart-container relative">
+                    <canvas id="performanceChart"></canvas>
+                    <div id="performanceChartLoader" class="absolute inset-0 flex items-center justify-center hidden">
+                        <div class="bg-white rounded-lg p-4 shadow-lg">
+                            <i class="fas fa-spinner fa-spin text-indigo-600 mr-2"></i>
+                            <span class="text-gray-700">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Métriques de performance -->
+                <div id="performanceMetrics" class="mt-4 space-y-3">
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-700">Temps moyen</span>
+                        <span class="text-sm font-bold text-blue-600" id="avgTime">-</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-700">Pic de performance</span>
+                        <span class="text-sm font-bold text-green-600" id="peakTime">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtered Results Table -->
+        <div id="filteredResults" class="modern-card fade-in-up" style="animation-delay: 0.7s;">
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1">Analyses Filtrées</h3>
+                        <p class="text-gray-600 text-sm">Résultats correspondant à vos critères de recherche</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span id="filteredCount" class="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-full">0 résultats</span>
+                        <div class="flex space-x-2">
+                            <button onclick="exportFilteredResults()" class="modern-btn outline text-sm">
+                                <i class="fas fa-download mr-2"></i>Exporter
+                            </button>
+                            <button onclick="refreshFilteredResults()" class="modern-btn success text-sm">
+                                <i class="fas fa-sync-alt mr-2"></i>Actualiser
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full modern-table">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-clock mr-2"></i>Date/Heure
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-file-medical mr-2"></i>Fichier
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-stethoscope mr-2"></i>Diagnostic
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-percentage mr-2"></i>Confiance
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-stopwatch mr-2"></i>Temps
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-info-circle mr-2"></i>Description
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="filteredAnalysesTable" class="bg-white divide-y divide-gray-100">
+                        <!-- État initial -->
+                        <tr id="initialState">
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center space-y-4">
+                                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-filter text-blue-600 text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-medium text-gray-900 mb-1">Aucun filtre appliqué</h3>
+                                        <p class="text-gray-500">Configurez vos filtres et cliquez sur "Appliquer" pour voir les résultats</p>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let comparisonChart = null;
+        let performanceChart = null;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeFilters();
+            loadDashboardData();
+            loadAlerts();
+            loadComparisons();
+            loadPerformanceTrends();
+
+            // Auto-refresh every 30 seconds
+            setInterval(() => {
+                loadDashboardData();
+                loadAlerts();
+                loadPerformanceTrends();
+            }, 30000);
+        });
+
+        // Advanced Filter functionality
+        function initializeFilters() {
+            const toggleFilters = document.getElementById('toggleFilters');
+            const filtersPanel = document.getElementById('filtersPanel');
+            const applyFilters = document.getElementById('applyFilters');
+            const previewFilters = document.getElementById('previewFilters');
+            const resetFilters = document.getElementById('resetFilters');
+
+            // Range sliders
+            const minConfidence = document.getElementById('minConfidence');
+            const maxConfidence = document.getElementById('maxConfidence');
+            const maxProcessingTime = document.getElementById('maxProcessingTime');
+            const minConfidenceValue = document.getElementById('minConfidenceValue');
+            const maxConfidenceValue = document.getElementById('maxConfidenceValue');
+            const maxTimeValue = document.getElementById('maxTimeValue');
+
+            // Toggle filters panel
+            toggleFilters?.addEventListener('click', () => {
+                filtersPanel.classList.toggle('hidden');
+                if (!filtersPanel.classList.contains('hidden')) {
+                    loadFilterCounts();
+                }
+            });
+
+            // Range slider updates
+            minConfidence?.addEventListener('input', (e) => {
+                minConfidenceValue.textContent = e.target.value + '%';
+                updateActiveFilters();
+            });
+
+            maxConfidence?.addEventListener('input', (e) => {
+                maxConfidenceValue.textContent = e.target.value + '%';
+                updateActiveFilters();
+            });
+
+            maxProcessingTime?.addEventListener('input', (e) => {
+                maxTimeValue.textContent = e.target.value + 's';
+                updateActiveFilters();
+            });
+
+            // Quick date buttons
+            document.querySelectorAll('.quick-date-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const days = parseInt(e.target.dataset.days);
+                    const endDate = new Date();
+                    const startDate = new Date();
+                    startDate.setDate(endDate.getDate() - days);
+
+                    document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+                    document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+                    updateActiveFilters();
+                });
+            });
+
+            // Quick time buttons
+            document.querySelectorAll('.quick-time-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const time = parseFloat(e.target.dataset.time);
+                    document.getElementById('maxProcessingTime').value = time;
+                    maxTimeValue.textContent = time + 's';
+                    updateActiveFilters();
+                });
+            });
+
+            // Diagnostic checkboxes
+            document.querySelectorAll('.diagnostic-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', updateActiveFilters);
+            });
+
+            // Date inputs
+            document.getElementById('startDate')?.addEventListener('change', updateActiveFilters);
+            document.getElementById('endDate')?.addEventListener('change', updateActiveFilters);
+
+            // Action buttons
+            applyFilters?.addEventListener('click', applyFiltersFunction);
+            previewFilters?.addEventListener('click', previewFiltersFunction);
+            resetFilters?.addEventListener('click', resetFiltersFunction);
+
+            // Export menu
+            const exportBtn = document.getElementById('exportBtn');
+            const exportMenu = document.getElementById('exportMenu');
+            
+            exportBtn?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                exportMenu.classList.toggle('hidden');
+            });
+            
+            document.addEventListener('click', () => {
+                exportMenu.classList.add('hidden');
+            });
+        }
+
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('/api/analytics/overview');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateOverviewStats(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        async function loadAlerts() {
+            try {
+                const response = await fetch('/api/analytics/alerts');
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateAlertsSection(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading alerts:', error);
+            }
+        }
+
+        async function loadComparisons() {
+            try {
+                const response = await fetch('/api/analytics/comparison');
+                const data = await response.json();
+
+                if (data.success) {
+                    updateComparisonChart(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading comparisons:', error);
+            }
+        }
+
+        async function loadPerformanceTrends() {
+            try {
+                const response = await fetch('/api/analytics/performance');
+                const data = await response.json();
+
+                if (data.success) {
+                    updatePerformanceChart(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading performance trends:', error);
+            }
+        }
+
+        function updateOverviewStats(data) {
+            document.getElementById('totalAnalyses').textContent = data.total_analyses;
+            document.getElementById('avgConfidence').textContent = data.avg_confidence + '%';
+            document.getElementById('avgProcessingTime').textContent = data.avg_processing_time + 's';
+            
+            // Calculate today's analyses
+            const today = new Date().toISOString().split('T')[0];
+            const todayData = data.daily_analyses.find(d => d[0] === today);
+            document.getElementById('todayAnalyses').textContent = todayData ? todayData[1] : 0;
+        }
+
+        function updateAlertsSection(alerts) {
+            const alertsSection = document.getElementById('alertsSection');
+            
+            if (alerts.length === 0) {
+                alertsSection.innerHTML = '';
+                return;
+            }
+
+            const alertsHTML = alerts.map(alert => `
+                <div class="alert-${alert.type} text-white p-4 rounded-xl mb-4 flex items-center">
+                    <div class="bg-white bg-opacity-20 p-2 rounded-full mr-4">
+                        <i class="fas fa-${alert.type === 'warning' ? 'exclamation-triangle' : alert.type === 'info' ? 'info-circle' : 'check-circle'}"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-bold">${alert.title}</h4>
+                        <p class="text-sm opacity-90">${alert.message}</p>
+                    </div>
+                    <div class="text-xs opacity-75">
+                        ${new Date(alert.timestamp).toLocaleTimeString('fr-FR')}
+                    </div>
+                </div>
+            `).join('');
+
+            alertsSection.innerHTML = alertsHTML;
+        }
+
+        function updateComparisonChart(data) {
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            
+            if (comparisonChart) {
+                comparisonChart.destroy();
+            }
+
+            // Prepare data for comparison
+            const labels = ['Ce mois', 'Mois dernier'];
+            const thisMonth = data.monthly['Ce mois']?.count || 0;
+            const lastMonth = data.monthly['Mois dernier']?.count || 0;
+
+            comparisonChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Nombre d\'analyses',
+                        data: [thisMonth, lastMonth],
+                        backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(156, 163, 175, 0.8)'],
+                        borderColor: ['rgb(59, 130, 246)', 'rgb(156, 163, 175)'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePerformanceChart(data) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+
+            if (performanceChart) {
+                performanceChart.destroy();
+            }
+
+            // Utiliser les données quotidiennes des 7 derniers jours
+            const dailyTrends = data.daily_trends;
+
+            // Si pas de données quotidiennes, utiliser les données horaires
+            const chartData = dailyTrends.labels.length > 0 ? dailyTrends : data.hourly_trends;
+
+            performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [
+                        {
+                            label: 'Confiance (%)',
+                            data: chartData.confidence,
+                            borderColor: 'rgb(34, 197, 94)',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            yAxisID: 'y',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Temps de traitement (s)',
+                            data: chartData.processing_time,
+                            borderColor: 'rgb(239, 68, 68)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            yAxisID: 'y1',
+                            tension: 0.4,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: chartData.labels.length > 10 ? 'Jours' : 'Heures'
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Confiance (%)'
+                            },
+                            min: 0,
+                            max: 100
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Temps (s)'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            min: 0
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update active filters display
+        function updateActiveFilters() {
+            const activeFilters = [];
+            const activeFiltersContainer = document.getElementById('activeFilters');
+            const activeFiltersList = document.getElementById('activeFiltersList');
+            const activeFiltersCount = document.getElementById('activeFiltersCount');
+
+            // Date filters
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            if (startDate || endDate) {
+                activeFilters.push({
+                    type: 'date',
+                    label: `Période: ${startDate || '...'} → ${endDate || '...'}`,
+                    remove: () => {
+                        document.getElementById('startDate').value = '';
+                        document.getElementById('endDate').value = '';
+                        updateActiveFilters();
+                    }
+                });
+            }
+
+            // Diagnostic filters
+            const selectedDiagnostics = Array.from(document.querySelectorAll('.diagnostic-checkbox:checked')).map(cb => cb.value);
+            if (selectedDiagnostics.length > 0) {
+                activeFilters.push({
+                    type: 'diagnostic',
+                    label: `Diagnostics: ${selectedDiagnostics.join(', ')}`,
+                    remove: () => {
+                        document.querySelectorAll('.diagnostic-checkbox').forEach(cb => cb.checked = false);
+                        updateActiveFilters();
+                    }
+                });
+            }
+
+            // Confidence filters
+            const minConf = document.getElementById('minConfidence').value;
+            const maxConf = document.getElementById('maxConfidence').value;
+            if (minConf > 0 || maxConf < 100) {
+                activeFilters.push({
+                    type: 'confidence',
+                    label: `Confiance: ${minConf}% - ${maxConf}%`,
+                    remove: () => {
+                        document.getElementById('minConfidence').value = 0;
+                        document.getElementById('maxConfidence').value = 100;
+                        document.getElementById('minConfidenceValue').textContent = '0%';
+                        document.getElementById('maxConfidenceValue').textContent = '100%';
+                        updateActiveFilters();
+                    }
+                });
+            }
+
+            // Processing time filter
+            const maxTime = document.getElementById('maxProcessingTime').value;
+            if (maxTime < 10) {
+                activeFilters.push({
+                    type: 'time',
+                    label: `Temps max: ${maxTime}s`,
+                    remove: () => {
+                        document.getElementById('maxProcessingTime').value = 10;
+                        document.getElementById('maxTimeValue').textContent = '10s';
+                        updateActiveFilters();
+                    }
+                });
+            }
+
+            // Update display
+            if (activeFilters.length > 0) {
+                activeFiltersContainer.classList.remove('hidden');
+                activeFiltersCount.classList.remove('hidden');
+                activeFiltersCount.textContent = activeFilters.length;
+
+                activeFiltersList.innerHTML = activeFilters.map(filter => `
+                    <span class="filter-badge flex items-center">
+                        ${filter.label}
+                        <button class="ml-2 hover:bg-white hover:bg-opacity-20 rounded-full p-1" onclick="(${filter.remove})()">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    </span>
+                `).join('');
+            } else {
+                activeFiltersContainer.classList.add('hidden');
+                activeFiltersCount.classList.add('hidden');
+                activeFiltersList.innerHTML = '';
+            }
+        }
+
+        // Load filter counts
+        async function loadFilterCounts() {
+            try {
+                const response = await fetch('/api/analytics/filter-counts');
+                const data = await response.json();
+
+                if (data.success) {
+                    Object.entries(data.data.diagnostic_counts).forEach(([diagnostic, count]) => {
+                        const countElement = document.getElementById(`count-${diagnostic}`);
+                        if (countElement) {
+                            countElement.textContent = count;
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading filter counts:', error);
+            }
+        }
+
+        // Preview filters function
+        async function previewFiltersFunction() {
+            const filters = getFilterValues();
+
+            try {
+                const response = await fetch('/api/analytics/filter-preview', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(filters)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('filterResultsPreview').textContent =
+                        `Aperçu: ${data.data.count} résultats trouvés`;
+                }
+            } catch (error) {
+                console.error('Error previewing filters:', error);
+            }
+        }
+
+        // Reset filters function
+        function resetFiltersFunction() {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            document.querySelectorAll('.diagnostic-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('minConfidence').value = 0;
+            document.getElementById('maxConfidence').value = 100;
+            document.getElementById('maxProcessingTime').value = 10;
+            document.getElementById('minConfidenceValue').textContent = '0%';
+            document.getElementById('maxConfidenceValue').textContent = '100%';
+            document.getElementById('maxTimeValue').textContent = '10s';
+            document.getElementById('filterResultsPreview').textContent = 'Filtres réinitialisés';
+            updateActiveFilters();
+        }
+
+        // Get filter values
+        function getFilterValues() {
+            return {
+                start_date: document.getElementById('startDate').value,
+                end_date: document.getElementById('endDate').value,
+                diagnostic_types: Array.from(document.querySelectorAll('.diagnostic-checkbox:checked')).map(cb => cb.value),
+                min_confidence: parseInt(document.getElementById('minConfidence').value),
+                max_confidence: parseInt(document.getElementById('maxConfidence').value),
+                max_processing_time: parseFloat(document.getElementById('maxProcessingTime').value)
+            };
+        }
+
+        // Apply filters function
+        async function applyFiltersFunction() {
+            const filters = getFilterValues();
+
+            try {
+                const response = await fetch('/api/analytics/filtered', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(filters)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    updateFilteredResults(data.data);
+                    document.getElementById('filterResultsPreview').textContent =
+                        `${data.data.analyses.length} résultats affichés`;
+                }
+            } catch (error) {
+                console.error('Error applying filters:', error);
+            }
+        }
+
+        function updateFilteredResults(data) {
+            const tbody = document.getElementById('filteredAnalysesTable');
+            const countSpan = document.getElementById('filteredCount');
+            
+            countSpan.textContent = `${data.analyses.length} résultats`;
+            tbody.innerHTML = '';
+
+            data.analyses.forEach(analysis => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${new Date(analysis.timestamp).toLocaleString('fr-FR')}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${analysis.filename}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getBadgeClass(analysis.predicted_label)}">
+                            ${analysis.predicted_label}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div class="flex items-center">
+                            <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: ${analysis.confidence}%"></div>
+                            </div>
+                            ${analysis.confidence}%
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${analysis.processing_time}s
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                        ${analysis.description}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function getBadgeClass(label) {
+            const classes = {
+                'Normal': 'bg-green-100 text-green-800',
+                'Gliome': 'bg-red-100 text-red-800',
+                'Méningiome': 'bg-yellow-100 text-yellow-800',
+                'Tumeur pituitaire': 'bg-purple-100 text-purple-800'
+            };
+            return classes[label] || 'bg-gray-100 text-gray-800';
+        }
+
+        // Nouvelles fonctions pour les fonctionnalités modernes
+        function exportFilteredResults() {
+            // Exporter les résultats filtrés
+            const filteredData = getCurrentFilteredData();
+            if (filteredData.length === 0) {
+                showNotification('Aucune donnée à exporter', 'warning');
+                return;
+            }
+
+            // Créer et télécharger le CSV
+            const csv = convertToCSV(filteredData);
+            downloadCSV(csv, 'analyses_filtrees.csv');
+            showNotification('Export réussi', 'success');
+        }
+
+        function refreshFilteredResults() {
+            // Actualiser les résultats filtrés
+            showNotification('Actualisation en cours...', 'info');
+            applyFiltersFunction();
+        }
+
+        function exportToPDF() {
+            // Générer un rapport PDF
+            window.location.href = '/api/analytics/export/pdf';
+        }
+
+        function convertToCSV(data) {
+            const headers = ['Date/Heure', 'Fichier', 'Diagnostic', 'Confiance', 'Temps', 'Description'];
+            const csvContent = [
+                headers.join(','),
+                ...data.map(row => [
+                    row.timestamp,
+                    row.filename,
+                    row.predicted_label,
+                    row.confidence + '%',
+                    row.processing_time + 's',
+                    row.description || ''
+                ].join(','))
+            ].join('\n');
+
+            return csvContent;
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', filename);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function getCurrentFilteredData() {
+            // Retourner les données actuellement filtrées
+            // Cette fonction devrait être implémentée selon la logique de filtrage
+            return [];
+        }
+
+        // Fonction de notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+
+            const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500';
+            notification.className += ` ${bgColor} text-white`;
+
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : type === 'warning' ? 'exclamation' : 'info'} mr-2"></i>
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Animation d'entrée
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+
+            // Auto-suppression après 5 secondes
+            setTimeout(() => {
+                notification.style.transform = 'translateX(full)';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // Initialisation des animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animation d'entrée pour les éléments
+            const animatedElements = document.querySelectorAll('.fade-in-up, .slide-in-right');
+            animatedElements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = el.classList.contains('fade-in-up') ? 'translateY(30px)' : 'translateX(30px)';
+
+                setTimeout(() => {
+                    el.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                    el.style.opacity = '1';
+                    el.style.transform = 'translate(0, 0)';
+                }, index * 100);
+            });
+
+            // Gestion des boutons de période
+            document.querySelectorAll('.comparison-period-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.comparison-period-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Afficher le loader
+                    const loader = document.getElementById('comparisonChartLoader');
+                    if (loader) loader.classList.remove('hidden');
+
+                    // Simuler le chargement des données
+                    setTimeout(() => {
+                        if (loader) loader.classList.add('hidden');
+                        showNotification(`Période ${this.textContent.trim()} sélectionnée`, 'success');
+                    }, 1000);
+                });
+            });
+
+            // Notification de bienvenue
+            setTimeout(() => {
+                showNotification('Tableau de bord avancé chargé avec succès', 'success');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

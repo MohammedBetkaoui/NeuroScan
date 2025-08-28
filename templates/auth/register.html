@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - NeuroScan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .register-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .input-field {
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="register-card rounded-2xl p-8 w-full max-w-2xl">
+        <!-- Logo et titre -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
+                <i class="fas fa-brain text-white text-2xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">NeuroScan</h1>
+            <p class="text-gray-600">Inscription Médecin</p>
+        </div>
+
+        <!-- Messages flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-50 text-red-700 border border-red-200{% elif category == 'success' %}bg-green-50 text-green-700 border border-green-200{% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+                        <div class="flex items-center">
+                            <i class="fas {% if category == 'error' %}fa-exclamation-circle{% elif category == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                            {{ message }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Formulaire d'inscription -->
+        <form method="POST" class="space-y-6">
+            <!-- Informations personnelles -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user mr-2"></i>Prénom *
+                    </label>
+                    <input type="text" id="first_name" name="first_name" required
+                           class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Jean">
+                </div>
+
+                <div>
+                    <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user mr-2"></i>Nom *
+                    </label>
+                    <input type="text" id="last_name" name="last_name" required
+                           class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="Dupont">
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-envelope mr-2"></i>Email professionnel *
+                </label>
+                <input type="email" id="email" name="email" required
+                       class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="dr.dupont@hopital.fr">
+            </div>
+
+            <!-- Mots de passe -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-lock mr-2"></i>Mot de passe *
+                    </label>
+                    <input type="password" id="password" name="password" required minlength="6"
+                           class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="••••••••">
+                </div>
+
+                <div>
+                    <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-lock mr-2"></i>Confirmer le mot de passe *
+                    </label>
+                    <input type="password" id="confirm_password" name="confirm_password" required minlength="6"
+                           class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="••••••••">
+                </div>
+            </div>
+
+            <!-- Informations professionnelles -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="speciality" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-stethoscope mr-2"></i>Spécialité
+                    </label>
+                    <select id="specialty" name="specialty"
+                            class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Sélectionner une spécialité</option>
+                        <option value="Neurologie">Neurologie</option>
+                        <option value="Neurochirurgie">Neurochirurgie</option>
+                        <option value="Radiologie">Radiologie</option>
+                        <option value="Médecine générale">Médecine générale</option>
+                        <option value="Oncologie">Oncologie</option>
+                        <option value="Autre">Autre</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="hospital" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-hospital mr-2"></i>Établissement
+                    </label>
+                    <input type="text" id="hospital" name="hospital"
+                           class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="CHU de Paris">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="license_number" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-id-card mr-2"></i>Numéro RPPS/ADELI
+                    </label>
+                    <input type="text" id="license_number" name="license_number"
+                           class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="12345678901">
+                </div>
+
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-phone mr-2"></i>Téléphone
+                    </label>
+                    <input type="tel" id="phone" name="phone"
+                           class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="01 23 45 67 89">
+                </div>
+            </div>
+
+            <button type="submit" 
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <i class="fas fa-user-plus mr-2"></i>Créer mon compte
+            </button>
+        </form>
+
+        <!-- Liens -->
+        <div class="mt-6 text-center space-y-2">
+            <p class="text-sm text-gray-600">
+                Déjà un compte ?
+                <a href="{{ url_for('login') }}" class="text-blue-600 hover:text-blue-700 font-medium">
+                    Se connecter
+                </a>
+            </p>
+            <a href="{{ url_for('index') }}" class="text-sm text-gray-500 hover:text-gray-700">
+                <i class="fas fa-arrow-left mr-1"></i>Retour à l'accueil
+            </a>
+        </div>
+
+        <!-- Informations légales -->
+        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+            <div class="flex items-start">
+                <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-900">Confidentialité</h4>
+                    <p class="text-xs text-gray-600 mt-1">
+                        En créant un compte, vous acceptez nos conditions d'utilisation et notre politique de confidentialité. 
+                        Toutes les données sont traitées selon les normes RGPD.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Animation d'entrée
+        document.addEventListener('DOMContentLoaded', function() {
+            const card = document.querySelector('.register-card');
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.6s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        });
+
+        // Validation des mots de passe
+        document.getElementById('confirm_password').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            
+            if (password !== confirmPassword) {
+                this.setCustomValidity('Les mots de passe ne correspondent pas');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        // Focus automatique sur le premier champ
+        document.getElementById('first_name').focus();
+    </script>
+</body>
+</html>

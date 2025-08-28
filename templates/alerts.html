@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alertes Médicales | NeuroScan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/neuroscan-modern.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/alerts-modern.css') }}" rel="stylesheet">
+    <style>
+        /* Variables CSS pour le thème des alertes */
+        :root {
+            --alert-critical: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            --alert-warning: linear-gradient(135deg, #ffd93d 0%, #ff9f43 100%);
+            --alert-info: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            --alert-success: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+            --glass-effect: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --shadow-modern: 0 8px 32px rgba(0, 0, 0, 0.12);
+            --shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.18);
+            --border-radius-modern: 20px;
+            --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Container principal avec effet glassmorphism */
+        .alerts-container {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-modern);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Cartes d'alertes modernes */
+        .alert-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--border-radius-modern);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: var(--transition-smooth);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .alert-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--alert-info);
+            transition: var(--transition-smooth);
+        }
+
+        .alert-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-hover);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .alert-card:hover::before {
+            width: 8px;
+        }
+
+        /* Styles spécifiques par sévérité */
+        .alert-high::before {
+            background: var(--alert-critical);
+        }
+
+        .alert-medium::before {
+            background: var(--alert-warning);
+        }
+
+        .alert-low::before {
+            background: var(--alert-info);
+        }
+
+        /* Alertes non lues avec effet de pulsation */
+        .alert-unread {
+            background: linear-gradient(135deg, rgba(116, 185, 255, 0.1), rgba(74, 144, 226, 0.05));
+            animation: pulse-glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 20px rgba(116, 185, 255, 0.3); }
+            100% { box-shadow: 0 0 30px rgba(116, 185, 255, 0.5); }
+        }
+
+        /* Badges de sévérité modernes */
+        .severity-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            border: none;
+        }
+
+        .severity-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .severity-badge:hover::before {
+            left: 100%;
+        }
+
+        .badge-critical {
+            background: var(--alert-critical);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .badge-warning {
+            background: var(--alert-warning);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 217, 61, 0.4);
+        }
+
+        .badge-info {
+            background: var(--alert-info);
+            color: white;
+            box-shadow: 0 4px 15px rgba(116, 185, 255, 0.4);
+        }
+
+        /* En-tête moderne */
+        .header-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header-section .container {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Cartes de statistiques modernes */
+        .stats-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--border-radius-modern);
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--alert-info);
+            transition: var(--transition-smooth);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .stats-card:hover::before {
+            height: 8px;
+        }
+
+        .stats-card.critical::before {
+            background: var(--alert-critical);
+        }
+
+        .stats-card.warning::before {
+            background: var(--alert-warning);
+        }
+
+        .stats-card.info::before {
+            background: var(--alert-info);
+        }
+
+        /* Icônes avec animation */
+        .alert-icon {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            transition: var(--transition-smooth);
+        }
+
+        .alert-card:hover .alert-icon {
+            transform: scale(1.2) rotate(5deg);
+        }
+
+        /* Boutons modernes */
+        .btn-modern {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn-modern:hover::before {
+            left: 100%;
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .alerts-container {
+                padding: 1rem;
+                margin: 1rem;
+                border-radius: 16px;
+            }
+
+            .alert-card {
+                padding: 1rem;
+                border-radius: 16px;
+            }
+
+            .alert-card:hover {
+                transform: translateY(-4px) scale(1.01);
+            }
+
+            .header-section {
+                padding: 2rem 0;
+            }
+
+            .severity-badge {
+                font-size: 0.7rem;
+                padding: 0.4rem 0.8rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .alert-card {
+                margin-bottom: 0.5rem;
+            }
+
+            .stats-card {
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* Mode sombre */
+        @media (prefers-color-scheme: dark) {
+            .alert-card {
+                background: rgba(30, 41, 59, 0.95);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: white;
+            }
+
+            .stats-card {
+                background: rgba(30, 41, 59, 0.95);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: white;
+            }
+
+            .alerts-container {
+                background: linear-gradient(135deg, rgba(30, 41, 59, 0.1), rgba(30, 41, 59, 0.05));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+                <i class="fas fa-brain me-2"></i>NeuroScan
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">Dr. {{ doctor.full_name }}</span>
+                <a class="nav-link" href="{{ url_for('dashboard') }}">
+                    <i class="fas fa-arrow-left me-1"></i>Tableau de bord
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- En-tête -->
+    <div class="header-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2">
+                        <i class="fas fa-bell me-3"></i>Alertes Médicales
+                    </h1>
+                    <p class="mb-0 fs-5">Surveillance et gestion des alertes automatiques</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-modern text-white" onclick="markAllAsRead()">
+                        <i class="fas fa-check-double me-1"></i>Tout marquer comme lu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Statistiques des alertes -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stats-card critical h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3 alert-icon"></i>
+                        <h5 class="card-title fw-bold">Critiques</h5>
+                        <h2 class="text-danger fw-bold" id="criticalCount">-</h2>
+                        <small class="text-muted">Nécessitent une attention immédiate</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card warning h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-exclamation-circle fa-3x text-warning mb-3 alert-icon"></i>
+                        <h5 class="card-title fw-bold">Moyennes</h5>
+                        <h2 class="text-warning fw-bold" id="mediumCount">-</h2>
+                        <small class="text-muted">À surveiller de près</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card info h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-info-circle fa-3x text-info mb-3 alert-icon"></i>
+                        <h5 class="card-title fw-bold">Faibles</h5>
+                        <h2 class="text-info fw-bold" id="lowCount">-</h2>
+                        <small class="text-muted">Informatives</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-envelope-open fa-3x text-secondary mb-3 alert-icon"></i>
+                        <h5 class="card-title fw-bold">Non Lues</h5>
+                        <h2 class="text-secondary fw-bold" id="unreadCount">-</h2>
+                        <small class="text-muted">Alertes non consultées</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="alerts-container">
+            <div class="row align-items-center">
+                <div class="col-md-3 mb-3">
+                    <label for="severityFilter" class="form-label fw-semibold">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Sévérité
+                    </label>
+                    <select class="form-select" id="severityFilter" onchange="applyFilters()">
+                        <option value="">Toutes les sévérités</option>
+                        <option value="high">🔴 Critiques</option>
+                        <option value="medium">🟡 Moyennes</option>
+                        <option value="low">🔵 Faibles</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="typeFilter" class="form-label fw-semibold">
+                        <i class="fas fa-tags me-2"></i>Type
+                    </label>
+                    <select class="form-select" id="typeFilter" onchange="applyFilters()">
+                        <option value="">Tous les types</option>
+                        <option value="new_tumor_detected">🆕 Nouvelle tumeur</option>
+                        <option value="diagnosis_change">🔄 Changement diagnostic</option>
+                        <option value="rapid_growth">📈 Croissance rapide</option>
+                        <option value="confidence_drop">📉 Baisse confiance</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="statusFilter" class="form-label fw-semibold">
+                        <i class="fas fa-eye me-2"></i>Statut
+                    </label>
+                    <select class="form-select" id="statusFilter" onchange="applyFilters()">
+                        <option value="">Tous les statuts</option>
+                        <option value="unread">📬 Non lues</option>
+                        <option value="read">📭 Lues</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-search me-2"></i>Recherche
+                    </label>
+                    <input type="text" class="form-control" id="searchInput"
+                           placeholder="🔍 Rechercher..." onkeyup="applyFilters()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des alertes -->
+        <div class="alerts-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold mb-0">
+                    <i class="fas fa-bell me-2"></i>Alertes Actives
+                    <span class="badge badge-info ms-2" id="totalAlertsCount">0</span>
+                </h4>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshAlerts()">
+                        <i class="fas fa-sync-alt me-1"></i>Actualiser
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" onclick="exportAlerts()">
+                        <i class="fas fa-download me-1"></i>Exporter
+                    </button>
+                </div>
+            </div>
+
+            <div id="alertsList">
+                <!-- Alertes chargées dynamiquement -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <p class="text-muted">Chargement des alertes...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <nav aria-label="Navigation des alertes">
+                    <ul class="pagination justify-content-center" id="pagination">
+                        <!-- Pagination dynamique -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour détails d'alerte -->
+    <div class="modal fade" id="alertModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Détails de l'Alerte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="alertModalBody">
+                    <!-- Contenu dynamique -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="button" class="btn btn-success" id="resolveAlertBtn">
+                        <i class="fas fa-check me-1"></i>Résoudre
+                    </button>
+                    <button type="button" class="btn btn-primary" id="viewPatientBtn">
+                        <i class="fas fa-user me-1"></i>Voir le patient
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/alerts-modern.js') }}"></script>
+    <script>
+        let allAlerts = [];
+        let filteredAlerts = [];
+        let currentPage = 1;
+        const alertsPerPage = 10;
+        let currentAlert = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAlerts();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('resolveAlertBtn').addEventListener('click', function() {
+                if (currentAlert) {
+                    resolveAlert(currentAlert.id);
+                }
+            });
+
+            document.getElementById('viewPatientBtn').addEventListener('click', function() {
+                if (currentAlert) {
+                    window.location.href = `/patient/${currentAlert.patient_id}`;
+                }
+            });
+        }
+
+        async function loadAlerts() {
+            try {
+                const response = await fetch('/api/alerts');
+                const data = await response.json();
+
+                if (data.success) {
+                    allAlerts = data.data;
+                    filteredAlerts = [...allAlerts];
+                    displayAlerts();
+                    updateStats();
+                } else {
+                    console.error('Erreur lors du chargement des alertes:', data.error);
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des alertes:', error);
+            }
+        }
+
+        function updateStats() {
+            const criticalCount = allAlerts.filter(a => a.severity === 'high').length;
+            const mediumCount = allAlerts.filter(a => a.severity === 'medium').length;
+            const lowCount = allAlerts.filter(a => a.severity === 'low').length;
+            const unreadCount = allAlerts.filter(a => !a.is_read).length;
+
+            document.getElementById('criticalCount').textContent = criticalCount;
+            document.getElementById('mediumCount').textContent = mediumCount;
+            document.getElementById('lowCount').textContent = lowCount;
+            document.getElementById('unreadCount').textContent = unreadCount;
+            document.getElementById('totalAlertsCount').textContent = filteredAlerts.length;
+        }
+
+        function displayAlerts() {
+            const alertsList = document.getElementById('alertsList');
+            const startIndex = (currentPage - 1) * alertsPerPage;
+            const endIndex = startIndex + alertsPerPage;
+            const alertsToShow = filteredAlerts.slice(startIndex, endIndex);
+
+            if (alertsToShow.length === 0) {
+                alertsList.innerHTML = `
+                    <div class="text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-check-circle text-success" style="font-size: 4rem; opacity: 0.7;"></i>
+                        </div>
+                        <h5 class="fw-bold text-muted mb-2">Aucune alerte trouvée</h5>
+                        <p class="text-muted">Toutes vos alertes ont été traitées ou aucune alerte ne correspond aux filtres appliqués.</p>
+                        <button class="btn btn-outline-primary mt-3" onclick="clearFilters()">
+                            <i class="fas fa-times me-1"></i>Effacer les filtres
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            alertsList.innerHTML = alertsToShow.map(alert => `
+                <div class="alert-card alert-${alert.severity} ${!alert.is_read ? 'alert-unread' : ''}"
+                     onclick="showAlertDetails(${alert.id})">
+                    <div class="d-flex align-items-start">
+                        <div class="flex-shrink-0 me-3">
+                            <i class="fas fa-${getSeverityIcon(alert.severity)} alert-icon text-${getSeverityColor(alert.severity)}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h6 class="mb-0 fw-bold">${alert.title}</h6>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="severity-badge badge-${getSeverityColor(alert.severity)}">
+                                        ${getSeverityText(alert.severity)}
+                                    </span>
+                                    ${!alert.is_read ? '<div class="bg-primary rounded-circle pulse-dot" style="width: 10px; height: 10px; animation: pulse 2s infinite;"></div>' : ''}
+                                </div>
+                            </div>
+                            <p class="text-muted mb-3" style="line-height: 1.6;">${alert.message}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center text-muted">
+                                    <i class="fas fa-user-circle me-2"></i>
+                                    <span class="fw-medium">${alert.patient_name}</span>
+                                    <span class="mx-2">•</span>
+                                    <span class="text-primary">#${alert.patient_id}</span>
+                                </div>
+                                <div class="d-flex align-items-center text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    <span>${formatDate(alert.created_at)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            updatePagination();
+        }
+
+        function applyFilters() {
+            const severityFilter = document.getElementById('severityFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredAlerts = allAlerts.filter(alert => {
+                const matchesSeverity = !severityFilter || alert.severity === severityFilter;
+                const matchesType = !typeFilter || alert.alert_type === typeFilter;
+                const matchesStatus = !statusFilter ||
+                    (statusFilter === 'unread' && !alert.is_read) ||
+                    (statusFilter === 'read' && alert.is_read);
+
+                const matchesSearch = !searchInput ||
+                    alert.title.toLowerCase().includes(searchInput) ||
+                    alert.message.toLowerCase().includes(searchInput) ||
+                    alert.patient_name.toLowerCase().includes(searchInput);
+
+                return matchesSeverity && matchesType && matchesStatus && matchesSearch;
+            });
+
+            currentPage = 1;
+            displayAlerts();
+            updateStats();
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredAlerts.length / alertsPerPage);
+            const pagination = document.getElementById('pagination');
+
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+
+            // Bouton précédent
+            paginationHTML += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Précédent</a>
+                </li>
+            `;
+
+            // Pages
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    paginationHTML += `
+                        <li class="page-item ${i === currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                        </li>
+                    `;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    paginationHTML += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                }
+            }
+
+            // Bouton suivant
+            paginationHTML += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Suivant</a>
+                </li>
+            `;
+
+            pagination.innerHTML = paginationHTML;
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredAlerts.length / alertsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                displayAlerts();
+            }
+        }
+
+        async function showAlertDetails(alertId) {
+            const alert = allAlerts.find(a => a.id === alertId);
+            if (!alert) return;
+
+            currentAlert = alert;
+
+            // Marquer comme lue si pas encore lu
+            if (!alert.is_read) {
+                await markAlertAsRead(alertId);
+            }
+
+            const modalBody = document.getElementById('alertModalBody');
+            modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Informations de l'Alerte</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Type:</strong></td><td>${getAlertTypeText(alert.alert_type)}</td></tr>
+                            <tr><td><strong>Sévérité:</strong></td><td>
+                                <span class="badge bg-${getSeverityColor(alert.severity)}">${getSeverityText(alert.severity)}</span>
+                            </td></tr>
+                            <tr><td><strong>Date:</strong></td><td>${formatDate(alert.created_at)}</td></tr>
+                            <tr><td><strong>Statut:</strong></td><td>${alert.is_read ? 'Lue' : 'Non lue'}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Patient Concerné</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Nom:</strong></td><td>${alert.patient_name}</td></tr>
+                            <tr><td><strong>ID:</strong></td><td>${alert.patient_id}</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Message</h6>
+                        <div class="alert alert-${getSeverityColor(alert.severity)} alert-${getSeverityColor(alert.severity)}-light">
+                            ${alert.message}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            new bootstrap.Modal(document.getElementById('alertModal')).show();
+        }
+
+        async function markAlertAsRead(alertId) {
+            try {
+                const response = await fetch(`/api/alerts/${alertId}/mark-read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const alert = allAlerts.find(a => a.id === alertId);
+                    if (alert) {
+                        alert.is_read = true;
+                        displayAlerts();
+                        updateStats();
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur lors du marquage comme lu:', error);
+            }
+        }
+
+        async function resolveAlert(alertId) {
+            try {
+                const response = await fetch(`/api/alerts/${alertId}/resolve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    // Retirer l'alerte de la liste
+                    allAlerts = allAlerts.filter(a => a.id !== alertId);
+                    filteredAlerts = filteredAlerts.filter(a => a.id !== alertId);
+
+                    displayAlerts();
+                    updateStats();
+
+                    bootstrap.Modal.getInstance(document.getElementById('alertModal')).hide();
+
+                    // Afficher un message de succès
+                    showToast('Alerte résolue avec succès', 'success');
+                }
+            } catch (error) {
+                console.error('Erreur lors de la résolution:', error);
+                showToast('Erreur lors de la résolution de l\'alerte', 'error');
+            }
+        }
+
+        async function markAllAsRead() {
+            const unreadAlerts = allAlerts.filter(a => !a.is_read);
+
+            for (const alert of unreadAlerts) {
+                await markAlertAsRead(alert.id);
+            }
+
+            showToast('Toutes les alertes ont été marquées comme lues', 'success');
+        }
+
+        function getSeverityIcon(severity) {
+            switch (severity) {
+                case 'high': return 'exclamation-triangle';
+                case 'medium': return 'exclamation-circle';
+                case 'low': return 'info-circle';
+                default: return 'bell';
+            }
+        }
+
+        function getSeverityColor(severity) {
+            switch (severity) {
+                case 'high': return 'danger';
+                case 'medium': return 'warning';
+                case 'low': return 'info';
+                default: return 'secondary';
+            }
+        }
+
+        function getSeverityText(severity) {
+            switch (severity) {
+                case 'high': return 'Critique';
+                case 'medium': return 'Moyenne';
+                case 'low': return 'Faible';
+                default: return 'Inconnue';
+            }
+        }
+
+        function getAlertTypeText(type) {
+            switch (type) {
+                case 'new_tumor_detected': return 'Nouvelle tumeur détectée';
+                case 'diagnosis_change': return 'Changement de diagnostic';
+                case 'rapid_growth': return 'Croissance rapide';
+                case 'confidence_drop': return 'Baisse de confiance';
+                case 'tumor_resolved': return 'Amélioration significative';
+                case 'high_grade_tumor': return 'Tumeur de haut grade';
+                default: return type;
+            }
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffMins < 1) return 'À l\'instant';
+            if (diffMins < 60) return `Il y a ${diffMins} min`;
+            if (diffHours < 24) return `Il y a ${diffHours}h`;
+            if (diffDays < 7) return `Il y a ${diffDays}j`;
+            return date.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Fonctions supplémentaires pour améliorer l'UX
+        function refreshAlerts() {
+            const refreshBtn = document.querySelector('[onclick="refreshAlerts()"]');
+            const icon = refreshBtn.querySelector('i');
+
+            // Animation de rotation
+            icon.classList.add('fa-spin');
+            refreshBtn.disabled = true;
+
+            // Simuler le rechargement
+            setTimeout(() => {
+                loadAlerts();
+                icon.classList.remove('fa-spin');
+                refreshBtn.disabled = false;
+                showToast('Alertes actualisées avec succès', 'success');
+            }, 1000);
+        }
+
+        function exportAlerts() {
+            const csvContent = "data:text/csv;charset=utf-8," +
+                "ID,Titre,Message,Sévérité,Patient,Date,Statut\n" +
+                filteredAlerts.map(alert =>
+                    `${alert.id},"${alert.title}","${alert.message}",${alert.severity},"${alert.patient_name}",${alert.created_at},${alert.is_read ? 'Lu' : 'Non lu'}`
+                ).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `alertes_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast('Export terminé avec succès', 'success');
+        }
+
+        function clearFilters() {
+            document.getElementById('severityFilter').value = '';
+            document.getElementById('typeFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            applyFilters();
+            showToast('Filtres effacés', 'info');
+        }
+
+        function showToast(message, type) {
+            // Créer un toast moderne avec glassmorphism
+            const toastContainer = document.createElement('div');
+            toastContainer.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+
+            const iconMap = {
+                success: 'check-circle text-success',
+                error: 'exclamation-circle text-danger',
+                warning: 'exclamation-triangle text-warning',
+                info: 'info-circle text-info'
+            };
+
+            toastContainer.innerHTML = `
+                <div class="toast show" role="alert" style="
+                    background: rgba(255, 255, 255, 0.95);
+                    backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                    border-radius: 16px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+                ">
+                    <div class="toast-header" style="background: transparent; border-bottom: 1px solid rgba(0, 0, 0, 0.1);">
+                        <i class="fas fa-${iconMap[type]} me-2"></i>
+                        <strong class="me-auto">NeuroScan</strong>
+                        <button type="button" class="btn-close" onclick="this.closest('.toast').parentElement.remove()"></button>
+                    </div>
+                    <div class="toast-body" style="font-weight: 500;">
+                        ${message}
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(toastContainer);
+
+            setTimeout(() => {
+                if (toastContainer.parentNode) {
+                    toastContainer.style.animation = 'slideOutRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+                    setTimeout(() => toastContainer.remove(), 400);
+                }
+            }, 4000);
+        }
+
+        // Ajouter les animations CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+            @keyframes pulse {
+                0%, 100% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.7; transform: scale(1.1); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -1,0 +1,4699 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Patient - {{ patient.patient_name }} | NeuroScan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        :root {
+            /* Palette de Couleurs Ultra-Moderne et Harmonieuse */
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            --secondary-gradient: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%);
+
+            /* Gradients Médicaux Professionnels */
+            --medical-primary: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%);
+            --medical-success: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+            --medical-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+            --medical-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+            --medical-info: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%);
+
+            /* Gradients Contextuels Modernes */
+            --blue-gradient: linear-gradient(135deg, #3b82f6 0%, #1e40af 50%, #1e3a8a 100%);
+            --green-gradient: linear-gradient(135deg, #10b981 0%, #047857 50%, #065f46 100%);
+            --purple-gradient: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%);
+            --orange-gradient: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%);
+            --red-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+            --cyan-gradient: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%);
+            --pink-gradient: linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%);
+            --indigo-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #4338ca 100%);
+
+            /* Gradients de Fond Ultra-Modernes */
+            --bg-gradient-primary: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 25%, #cbd5e1 50%, #94a3b8 75%, #64748b 100%);
+            --bg-gradient-secondary: linear-gradient(135deg, #fefefe 0%, #f1f5f9 25%, #e2e8f0 50%, #cbd5e1 75%, #94a3b8 100%);
+            --bg-gradient-accent: linear-gradient(135deg, #fafafa 0%, #f4f4f5 25%, #e4e4e7 50%, #d4d4d8 75%, #a1a1aa 100%);
+
+            /* Gradients Glassmorphism */
+            --glass-primary: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 100%);
+            --glass-secondary: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%);
+            --glass-accent: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+
+            /* Gradients Spécialisés Médicaux */
+            --neural-gradient: linear-gradient(135deg, #4c1d95 0%, #5b21b6 25%, #7c3aed 50%, #8b5cf6 75%, #a78bfa 100%);
+            --diagnostic-gradient: linear-gradient(135deg, #1e40af 0%, #2563eb 25%, #3b82f6 50%, #60a5fa 75%, #93c5fd 100%);
+            --health-gradient: linear-gradient(135deg, #065f46 0%, #047857 25%, #10b981 50%, #34d399 75%, #6ee7b7 100%);
+            --alert-gradient: linear-gradient(135deg, #b91c1c 0%, #dc2626 25%, #ef4444 50%, #f87171 75%, #fca5a5 100%);
+
+            /* Ombres Professionnelles */
+            --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            --shadow-glow: 0 0 20px rgba(102, 126, 234, 0.3);
+
+            /* Rayons de Bordure */
+            --radius-xs: 4px;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --radius-2xl: 24px;
+            --radius-full: 9999px;
+
+            /* Transitions Fluides */
+            --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+            /* Couleurs Système Modernes */
+            --color-primary: #6366f1;
+            --color-secondary: #8b5cf6;
+            --color-accent: #06b6d4;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-error: #ef4444;
+            --color-info: #3b82f6;
+
+            /* Palette Neutre Sophistiquée */
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+
+            /* Couleurs Médicales Spécialisées */
+            --medical-blue: #1e40af;
+            --medical-green: #047857;
+            --medical-purple: #7c3aed;
+            --medical-orange: #ea580c;
+            --medical-red: #dc2626;
+            --medical-cyan: #0891b2;
+
+            /* Couleurs d'État Avancées */
+            --success-light: #dcfce7;
+            --success-dark: #14532d;
+            --warning-light: #fef3c7;
+            --warning-dark: #92400e;
+            --error-light: #fee2e2;
+            --error-dark: #7f1d1d;
+            --info-light: #dbeafe;
+            --info-dark: #1e3a8a;
+
+            /* Espacement */
+            --space-xs: 0.25rem;
+            --space-sm: 0.5rem;
+            --space-md: 1rem;
+            --space-lg: 1.5rem;
+            --space-xl: 2rem;
+            --space-2xl: 3rem;
+            --space-3xl: 4rem;
+
+            /* Typographie */
+            --font-size-xs: 0.75rem;
+            --font-size-sm: 0.875rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.125rem;
+            --font-size-xl: 1.25rem;
+            --font-size-2xl: 1.5rem;
+            --font-size-3xl: 1.875rem;
+            --font-size-4xl: 2.25rem;
+
+            /* Z-Index */
+            --z-dropdown: 1000;
+            --z-sticky: 1020;
+            --z-fixed: 1030;
+            --z-modal-backdrop: 1040;
+            --z-modal: 1050;
+            --z-popover: 1060;
+            --z-tooltip: 1070;
+        }
+
+        /* Reset et Base Styles */
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(6, 182, 212, 0.05) 0%, transparent 50%),
+                linear-gradient(135deg, #f8fafc 0%, #f1f5f9 25%, #e2e8f0 50%, #cbd5e1 75%, #94a3b8 100%);
+            background-attachment: fixed;
+            background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+            min-height: 100vh;
+            line-height: 1.6;
+            color: var(--gray-800);
+            font-weight: 400;
+            letter-spacing: -0.01em;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="medical-pattern" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="0.5" fill="rgba(99, 102, 241, 0.1)"/><circle cx="5" cy="5" r="0.3" fill="rgba(139, 92, 246, 0.08)"/><circle cx="15" cy="15" r="0.3" fill="rgba(6, 182, 212, 0.06)"/></pattern></defs><rect width="100" height="100" fill="url(%23medical-pattern)"/></svg>'),
+                linear-gradient(45deg, transparent 49%, rgba(255, 255, 255, 0.03) 50%, transparent 51%);
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Typographie Moderne */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: -0.025em;
+            color: var(--gray-900);
+        }
+
+        h1 { font-size: var(--font-size-4xl); }
+        h2 { font-size: var(--font-size-3xl); }
+        h3 { font-size: var(--font-size-2xl); }
+        h4 { font-size: var(--font-size-xl); }
+        h5 { font-size: var(--font-size-lg); }
+        h6 { font-size: var(--font-size-base); }
+
+        p {
+            margin-bottom: var(--space-md);
+            color: var(--gray-600);
+        }
+
+        small {
+            font-size: var(--font-size-sm);
+            color: var(--gray-500);
+        }
+
+        /* Liens */
+        a {
+            color: var(--color-primary);
+            text-decoration: none;
+            transition: var(--transition-fast);
+        }
+
+        a:hover {
+            color: var(--color-secondary);
+            text-decoration: none;
+        }
+
+        /* Scrollbar Personnalisée */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--gray-100);
+            border-radius: var(--radius-full);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: var(--radius-full);
+            transition: var(--transition-fast);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-400);
+        }
+
+        /* Sélection de texte */
+        ::selection {
+            background: rgba(102, 126, 234, 0.2);
+            color: var(--gray-900);
+        }
+
+        /* Animations Avancées */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(40px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-40px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: var(--shadow-md);
+            }
+            50% {
+                transform: scale(1.02);
+                box-shadow: var(--shadow-lg);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200px 0;
+            }
+            100% {
+                background-position: calc(200px + 100%) 0;
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(102, 126, 234, 0.6);
+            }
+        }
+
+        /* Classes d'Animation */
+        .fade-in-up {
+            animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .slide-in-left {
+            animation: slideInLeft 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .scale-in {
+            animation: scaleIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .glow {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        /* États de Hover Avancés */
+        .hover-lift {
+            transition: var(--transition-normal);
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-2xl);
+        }
+
+        .hover-glow:hover {
+            box-shadow: var(--shadow-glow);
+        }
+
+        /* Loading States */
+        .loading-shimmer {
+            background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+            background-size: 200px 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        /* Navigation Ultra-Professionnelle */
+        .modern-navbar {
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%) !important;
+            backdrop-filter: blur(32px) saturate(200%);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow:
+                0 4px 32px rgba(0, 0, 0, 0.08),
+                0 1px 0 rgba(255, 255, 255, 0.9),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            transition: var(--transition-normal);
+            z-index: var(--z-sticky);
+            padding: var(--space-md) 0;
+            position: relative;
+        }
+
+        .modern-navbar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(16, 185, 129, 0.02) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .modern-navbar.scrolled {
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%) !important;
+            box-shadow:
+                0 8px 40px rgba(0, 0, 0, 0.12),
+                0 2px 0 rgba(255, 255, 255, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            transform: translateY(-1px);
+        }
+
+        /* Logo et Brand Ultra-Moderne */
+        .navbar-brand {
+            font-weight: 800;
+            font-size: var(--font-size-2xl);
+            color: var(--gray-800) !important;
+            transition: var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            text-decoration: none;
+            position: relative;
+            z-index: 2;
+        }
+
+        .navbar-brand:hover {
+            transform: scale(1.02);
+            color: var(--color-primary) !important;
+        }
+
+        .brand-logo {
+            width: 48px;
+            height: 48px;
+            background:
+                linear-gradient(135deg, #3b82f6 0%, #1e40af 50%, #1e3a8a 100%);
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: var(--font-size-xl);
+            box-shadow:
+                var(--shadow-lg),
+                0 0 20px rgba(59, 130, 246, 0.3),
+                inset 0 2px 0 rgba(255, 255, 255, 0.2);
+            transition: var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .brand-logo::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: var(--transition-slow);
+        }
+
+        .navbar-brand:hover .brand-logo {
+            transform: rotate(5deg) scale(1.1);
+            box-shadow:
+                var(--shadow-xl),
+                0 0 30px rgba(59, 130, 246, 0.4),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .navbar-brand:hover .brand-logo::before {
+            animation: shimmer 1s ease-in-out;
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .brand-name {
+            font-size: var(--font-size-xl);
+            font-weight: 800;
+            line-height: 1;
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .brand-tagline {
+            font-size: var(--font-size-xs);
+            font-weight: 500;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: -2px;
+        }
+
+        /* Navigation Items Professionnels */
+        .navbar-nav {
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .navbar-nav .nav-item {
+            margin: 0;
+        }
+
+        .navbar-nav .nav-link {
+            color: var(--gray-600) !important;
+            font-weight: 600;
+            font-size: var(--font-size-sm);
+            padding: var(--space-sm) var(--space-lg) !important;
+            border-radius: var(--radius-xl);
+            transition: var(--transition-fast);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid transparent;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: var(--color-primary) !important;
+            background:
+                linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+            border-color: rgba(59, 130, 246, 0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .navbar-nav .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: var(--transition-normal);
+        }
+
+        .navbar-nav .nav-link:hover::before {
+            left: 100%;
+        }
+
+        /* Profil Utilisateur Ultra-Moderne */
+        .navbar-user-profile {
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-sm) var(--space-md);
+            transition: var(--transition-fast);
+            border: 1px solid rgba(226, 232, 240, 0.6);
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+        }
+
+        .navbar-user-profile:hover {
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow:
+                0 4px 16px rgba(0, 0, 0, 0.1),
+                0 0 20px rgba(59, 130, 246, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            transform: translateY(-1px);
+        }
+
+        .navbar-user-avatar {
+            width: 40px;
+            height: 40px;
+            background:
+                linear-gradient(135deg, #10b981 0%, #047857 50%, #065f46 100%);
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: var(--font-size-sm);
+            box-shadow:
+                0 2px 8px rgba(16, 185, 129, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: var(--transition-fast);
+        }
+
+        .navbar-user-profile:hover .navbar-user-avatar {
+            transform: scale(1.05);
+            box-shadow:
+                0 4px 12px rgba(16, 185, 129, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .navbar-user-info {
+            margin-left: var(--space-md);
+        }
+
+        .navbar-user-name {
+            font-weight: 700;
+            font-size: var(--font-size-sm);
+            color: var(--gray-800);
+            line-height: 1.2;
+            margin-bottom: 1px;
+        }
+
+        .navbar-user-role {
+            font-size: var(--font-size-xs);
+            color: var(--gray-500);
+            line-height: 1.2;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Boutons d'Action dans la Navbar */
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .navbar-btn {
+            padding: var(--space-sm) var(--space-lg);
+            border-radius: var(--radius-xl);
+            font-weight: 600;
+            font-size: var(--font-size-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: var(--transition-fast);
+            border: 1px solid transparent;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            min-height: 40px;
+        }
+
+        .navbar-btn.primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow:
+                0 2px 8px rgba(59, 130, 246, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .navbar-btn.primary:hover {
+            transform: translateY(-1px);
+            box-shadow:
+                0 4px 12px rgba(59, 130, 246, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .navbar-btn.secondary {
+            background: transparent;
+            color: var(--gray-600);
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+
+        .navbar-btn.secondary:hover {
+            background: rgba(59, 130, 246, 0.05);
+            color: var(--color-primary);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Responsive Navbar */
+        .navbar-toggler {
+            border: none;
+            padding: var(--space-sm);
+            border-radius: var(--radius-md);
+            background: rgba(148, 163, 184, 0.1);
+            transition: var(--transition-fast);
+        }
+
+        .navbar-toggler:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Dropdowns Modernes */
+        .dropdown-menu {
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: var(--radius-xl);
+            box-shadow:
+                0 10px 40px rgba(0, 0, 0, 0.15),
+                0 4px 12px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            padding: var(--space-sm);
+            margin-top: var(--space-sm);
+            min-width: 220px;
+        }
+
+        .dropdown-item {
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            font-size: var(--font-size-sm);
+            color: var(--gray-700);
+            transition: var(--transition-fast);
+            border: 1px solid transparent;
+        }
+
+        .dropdown-item:hover {
+            background:
+                linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+            color: var(--color-primary);
+            border-color: rgba(59, 130, 246, 0.2);
+            transform: translateX(2px);
+        }
+
+        .dropdown-item.text-danger:hover {
+            background:
+                linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+            color: var(--color-error);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .dropdown-header {
+            font-weight: 700;
+            font-size: var(--font-size-xs);
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: var(--space-sm) var(--space-md);
+            margin-bottom: var(--space-xs);
+        }
+
+        .dropdown-divider {
+            margin: var(--space-sm) 0;
+            border-color: rgba(226, 232, 240, 0.8);
+        }
+
+        /* Badge de Notification */
+        .notification-badge {
+            background: var(--red-gradient);
+            color: white;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: var(--radius-full);
+            box-shadow:
+                0 2px 4px rgba(239, 68, 68, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        /* Responsive Améliorations */
+        @media (max-width: 991px) {
+            .modern-navbar {
+                padding: var(--space-sm) 0;
+            }
+
+            .brand-logo {
+                width: 40px;
+                height: 40px;
+                font-size: var(--font-size-lg);
+            }
+
+            .brand-name {
+                font-size: var(--font-size-lg);
+            }
+
+            .brand-tagline {
+                display: none;
+            }
+
+            .navbar-collapse {
+                margin-top: var(--space-md);
+                padding: var(--space-md);
+                background:
+                    linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+                backdrop-filter: blur(20px);
+                border-radius: var(--radius-xl);
+                border: 1px solid rgba(226, 232, 240, 0.8);
+                box-shadow: var(--shadow-lg);
+            }
+
+            .navbar-nav {
+                flex-direction: column;
+                gap: var(--space-xs);
+            }
+
+            .navbar-nav .nav-link {
+                padding: var(--space-md) var(--space-lg);
+                border-radius: var(--radius-lg);
+                width: 100%;
+                text-align: left;
+            }
+
+            .navbar-user-profile {
+                margin-top: var(--space-md);
+                padding: var(--space-md);
+                justify-content: center;
+            }
+
+            .navbar-user-info {
+                display: block !important;
+                text-align: center;
+                margin-left: var(--space-md);
+            }
+        }
+
+        @media (max-width: 575px) {
+            .brand-text {
+                display: none;
+            }
+
+            .container {
+                padding-left: var(--space-md);
+                padding-right: var(--space-md);
+            }
+        }
+
+        /* États de Focus pour l'Accessibilité */
+        .navbar-brand:focus,
+        .nav-link:focus,
+        .dropdown-item:focus {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+
+        /* Animation d'Entrée pour la Navbar */
+        .modern-navbar {
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Header Patient Ultra-Moderne avec Nouveau Design */
+        .patient-header {
+            background:
+                linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #475569 75%, #64748b 100%),
+                radial-gradient(circle at 30% 70%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 70% 30%, rgba(16, 185, 129, 0.2) 0%, transparent 50%);
+            color: white;
+            padding: var(--space-3xl) 0;
+            position: relative;
+            overflow: hidden;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+        }
+
+        .patient-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 60% 60%, rgba(139, 92, 246, 0.1) 0%, transparent 60%),
+                linear-gradient(45deg, transparent 49%, rgba(255, 255, 255, 0.03) 50%, transparent 51%),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60"><defs><pattern id="hero-pattern" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="30" cy="30" r="1.5" fill="rgba(255,255,255,0.1)"/><circle cx="15" cy="15" r="0.8" fill="rgba(59,130,246,0.15)"/><circle cx="45" cy="45" r="0.8" fill="rgba(16,185,129,0.12)"/><circle cx="15" cy="45" r="0.6" fill="rgba(139,92,246,0.1)"/><circle cx="45" cy="15" r="0.6" fill="rgba(6,182,212,0.08)"/></pattern></defs><rect width="60" height="60" fill="url(%23hero-pattern)"/></svg>');
+            opacity: 0.8;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .patient-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 150px;
+            background:
+                linear-gradient(to top, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.4) 30%, transparent 100%),
+                linear-gradient(135deg, transparent 40%, rgba(59, 130, 246, 0.05) 50%, transparent 60%);
+        }
+
+        /* Animation pour l'arrière-plan du hero */
+        @keyframes heroFloat {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            33% {
+                transform: translateY(-10px) rotate(1deg);
+            }
+            66% {
+                transform: translateY(5px) rotate(-1deg);
+            }
+        }
+
+        .patient-header::before {
+            animation: heroFloat 8s ease-in-out infinite;
+        }
+
+        .patient-header-content {
+            position: relative;
+            z-index: 3;
+        }
+
+        .patient-avatar {
+            width: 160px;
+            height: 160px;
+            background:
+                linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(16, 185, 129, 0.15) 100%),
+                rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: var(--radius-2xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4.5rem;
+            margin-bottom: var(--space-lg);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow:
+                var(--shadow-2xl),
+                0 0 40px rgba(59, 130, 246, 0.3),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3);
+            transition: var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .patient-avatar::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background:
+                linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent),
+                linear-gradient(135deg, rgba(59, 130, 246, 0.1), transparent, rgba(16, 185, 129, 0.1));
+            transform: rotate(45deg);
+            transition: var(--transition-slow);
+        }
+
+        .patient-avatar:hover {
+            transform: scale(1.08) rotate(8deg);
+            box-shadow:
+                var(--shadow-2xl),
+                0 0 60px rgba(59, 130, 246, 0.4),
+                0 0 80px rgba(16, 185, 129, 0.2),
+                inset 0 2px 0 rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .patient-avatar:hover::before {
+            animation: shimmer 1.5s ease-in-out;
+        }
+
+        .patient-title {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: var(--space-md);
+            color: white !important;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .patient-subtitle {
+            font-size: var(--font-size-xl);
+            font-weight: 400;
+            color: white !important;
+            opacity: 0.9;
+            margin-bottom: var(--space-lg);
+        }
+
+        .patient-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-lg);
+        }
+
+        .patient-badge {
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%),
+                rgba(59, 130, 246, 0.1);
+            backdrop-filter: blur(15px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--radius-full);
+            padding: var(--space-sm) var(--space-md);
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            transition: var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .patient-badge:hover {
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.15) 100%),
+                rgba(59, 130, 246, 0.15);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow:
+                0 8px 25px rgba(0, 0, 0, 0.15),
+                0 0 20px rgba(59, 130, 246, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Variantes de badges avec couleurs spécifiques */
+        .patient-badge.premium {
+            background:
+                linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 193, 7, 0.1) 100%),
+                rgba(255, 215, 0, 0.1);
+        }
+
+        .patient-badge.premium:hover {
+            background:
+                linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 193, 7, 0.15) 100%),
+                rgba(255, 215, 0, 0.15);
+            box-shadow:
+                0 8px 25px rgba(0, 0, 0, 0.15),
+                0 0 20px rgba(255, 215, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .patient-info-panel {
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%),
+                linear-gradient(225deg, rgba(16, 185, 129, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+            backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: var(--radius-2xl);
+            padding: var(--space-xl);
+            box-shadow:
+                var(--shadow-2xl),
+                0 0 30px rgba(16, 185, 129, 0.2),
+                inset 0 2px 0 rgba(255, 255, 255, 0.2);
+            transition: var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .patient-info-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 30% 30%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(59, 130, 246, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .patient-info-panel > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .patient-info-panel:hover {
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.12) 100%),
+                linear-gradient(225deg, rgba(16, 185, 129, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%);
+            transform: translateY(-6px) scale(1.02);
+            box-shadow:
+                var(--shadow-2xl),
+                0 0 40px rgba(16, 185, 129, 0.3),
+                0 0 60px rgba(59, 130, 246, 0.2),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.35);
+        }
+
+        .patient-info-title {
+            font-size: var(--font-size-lg);
+            font-weight: 700;
+            margin-bottom: var(--space-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .patient-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+
+        .patient-stat {
+            text-align: center;
+        }
+
+        .patient-stat-value {
+            font-size: var(--font-size-2xl);
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: var(--space-xs);
+        }
+
+        .patient-stat-label {
+            font-size: var(--font-size-xs);
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .patient-details {
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: var(--space-md);
+        }
+
+        .patient-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-sm);
+        }
+
+        .patient-detail-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .patient-detail-label {
+            font-size: var(--font-size-sm);
+            opacity: 0.8;
+        }
+
+        .patient-detail-value {
+            font-weight: 600;
+        }
+
+        /* Cartes Métriques Ultra-Modernes */
+        .metric-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .metric-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-12px) scale(1.03);
+            box-shadow: var(--shadow-2xl);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .metric-card:hover::before {
+            height: 6px;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .metric-card-body {
+            padding: var(--space-xl);
+            position: relative;
+            z-index: 2;
+        }
+
+        .metric-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-2xl);
+            margin-bottom: var(--space-lg);
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-icon::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: rotate(45deg);
+            transition: var(--transition-slow);
+        }
+
+        .metric-card:hover .metric-icon {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .metric-card:hover .metric-icon::before {
+            animation: shimmer 1.5s ease-in-out;
+        }
+
+        .metric-icon.blue {
+            background: var(--medical-info);
+            color: white;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+        }
+
+        .metric-icon.green {
+            background: var(--health-gradient);
+            color: white;
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+        }
+
+        .metric-icon.purple {
+            background: var(--neural-gradient);
+            color: white;
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
+        }
+
+        .metric-icon.orange {
+            background: var(--medical-warning);
+            color: white;
+            box-shadow: 0 8px 32px rgba(245, 158, 11, 0.3);
+        }
+
+        .metric-title {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: var(--space-sm);
+            line-height: 1.3;
+        }
+
+        .metric-value {
+            font-size: var(--font-size-3xl);
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: var(--space-sm);
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metric-subtitle {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font-size: var(--font-size-sm);
+            color: var(--gray-500);
+            margin-bottom: var(--space-md);
+        }
+
+        .metric-progress {
+            height: 8px;
+            background: var(--gray-100);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+            margin-bottom: var(--space-sm);
+        }
+
+        .metric-progress-bar {
+            height: 100%;
+            border-radius: var(--radius-full);
+            transition: var(--transition-slow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .metric-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-xs) var(--space-sm);
+            background: var(--gray-100);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+            font-weight: 500;
+            color: var(--gray-600);
+            transition: var(--transition-fast);
+        }
+
+        .metric-card:hover .metric-badge {
+            background: var(--gray-200);
+            transform: scale(1.05);
+        }
+
+        /* Cartes d'alerte modernes */
+        .alert-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .alert-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--red-gradient);
+        }
+
+        .alert-card .card-header {
+            background: var(--red-gradient) !important;
+            border: none;
+        }
+
+        /* Timeline moderne */
+        .evolution-timeline {
+            position: relative;
+            padding-left: 3rem;
+        }
+
+        .evolution-timeline::before {
+            content: '';
+            position: absolute;
+            left: 1.5rem;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding-left: 2rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -0.75rem;
+            top: 1rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            border: 4px solid white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+            z-index: 2;
+        }
+
+        .timeline-item .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .timeline-item .card:hover {
+            transform: translateX(10px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        /* Badges de risque modernes */
+        .risk-badge {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .risk-faible {
+            background: var(--health-gradient);
+            color: white;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+        }
+        .risk-modere, .risk-modéré {
+            background: var(--medical-warning);
+            color: white;
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+        }
+        .risk-eleve, .risk-élevé {
+            background: var(--alert-gradient);
+            color: white;
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+        }
+        .risk-critique {
+            background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #b91c1c 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(185, 28, 28, 0.4);
+        }
+
+        /* Conteneurs de graphiques modernes */
+        .chart-container {
+            position: relative;
+            height: 350px;
+            margin: 1rem 0;
+            padding: 20px;
+        }
+
+        .chart-container canvas {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: calc(100% - 40px) !important;
+            height: calc(100% - 40px) !important;
+        }
+
+        /* Cartes de Contenu Ultra-Modernes */
+        .modern-card {
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%),
+                var(--glass-primary);
+            backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: var(--radius-2xl);
+            box-shadow:
+                var(--shadow-lg),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            transition: var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modern-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, transparent 30%),
+                linear-gradient(225deg, rgba(139, 92, 246, 0.02) 0%, transparent 30%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .modern-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow:
+                var(--shadow-2xl),
+                0 0 40px rgba(99, 102, 241, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .modern-card .card-header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+            padding: var(--space-xl);
+            position: relative;
+            z-index: 2;
+        }
+
+        .modern-card .card-body {
+            padding: var(--space-xl);
+            position: relative;
+            z-index: 2;
+        }
+
+        .card-header-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-lg);
+            color: white;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition-normal);
+        }
+
+        .modern-card:hover .card-header-icon {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-title {
+            font-size: var(--font-size-xl);
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: var(--space-xs);
+            line-height: 1.2;
+        }
+
+        .card-subtitle {
+            font-size: var(--font-size-sm);
+            color: var(--gray-500);
+            margin-bottom: 0;
+            line-height: 1.4;
+        }
+
+        /* Conteneurs de Graphiques Modernes */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: var(--space-lg) 0;
+            padding: var(--space-lg);
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: var(--radius-xl);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .chart-container canvas {
+            position: absolute;
+            top: var(--space-lg);
+            left: var(--space-lg);
+            width: calc(100% - 2 * var(--space-lg)) !important;
+            height: calc(100% - 2 * var(--space-lg)) !important;
+            border-radius: var(--radius-lg);
+        }
+
+        .chart-loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: var(--space-xs);
+            margin-bottom: var(--space-md);
+        }
+
+        .chart-control-btn {
+            padding: var(--space-xs) var(--space-sm);
+            border: 1px solid var(--gray-300);
+            background: white;
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            color: var(--gray-600);
+            transition: var(--transition-fast);
+            cursor: pointer;
+        }
+
+        .chart-control-btn:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+            transform: translateY(-1px);
+        }
+
+        .chart-control-btn.active {
+            background: var(--primary-gradient);
+            border-color: var(--color-primary);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .chart-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: var(--space-md);
+            margin-top: var(--space-lg);
+        }
+
+        .chart-stat {
+            text-align: center;
+            padding: var(--space-md);
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: var(--transition-fast);
+        }
+
+        .chart-stat:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .chart-stat-value {
+            font-size: var(--font-size-xl);
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: var(--space-xs);
+        }
+
+        .chart-stat-label {
+            font-size: var(--font-size-xs);
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Boutons Ultra-Modernes */
+        .modern-btn {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: var(--radius-xl);
+            padding: var(--space-md) var(--space-xl);
+            color: white;
+            font-weight: 600;
+            font-size: var(--font-size-base);
+            transition: var(--transition-normal);
+            box-shadow:
+                var(--shadow-lg),
+                0 0 20px rgba(99, 102, 241, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-sm);
+            min-height: 48px;
+        }
+
+        .modern-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: var(--transition-normal);
+        }
+
+        .modern-btn:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: var(--shadow-2xl);
+            color: white;
+        }
+
+        .modern-btn:hover::before {
+            left: 100%;
+        }
+
+        .modern-btn:active {
+            transform: translateY(-2px) scale(1.01);
+        }
+
+        .modern-btn.success {
+            background: var(--health-gradient);
+            box-shadow:
+                var(--shadow-lg),
+                0 0 20px rgba(16, 185, 129, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .modern-btn.info {
+            background: var(--medical-info);
+            box-shadow:
+                var(--shadow-lg),
+                0 0 20px rgba(59, 130, 246, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .modern-btn.warning {
+            background: var(--medical-warning);
+            box-shadow:
+                var(--shadow-lg),
+                0 0 20px rgba(245, 158, 11, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .modern-btn.danger {
+            background: var(--alert-gradient);
+            box-shadow:
+                var(--shadow-lg),
+                0 0 20px rgba(239, 68, 68, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .modern-btn-outline {
+            background: transparent;
+            border: 2px solid var(--color-primary);
+            color: var(--color-primary);
+            backdrop-filter: blur(10px);
+        }
+
+        .modern-btn-outline:hover {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .modern-btn-ghost {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--gray-700);
+            backdrop-filter: blur(10px);
+        }
+
+        .modern-btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--gray-900);
+            transform: translateY(-2px);
+        }
+
+        .btn-group-modern {
+            display: flex;
+            gap: var(--space-xs);
+            background: rgba(255, 255, 255, 0.1);
+            padding: var(--space-xs);
+            border-radius: var(--radius-xl);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-group-modern .btn {
+            border-radius: var(--radius-lg);
+            border: none;
+            background: transparent;
+            color: var(--gray-600);
+            font-weight: 500;
+            transition: var(--transition-fast);
+            padding: var(--space-sm) var(--space-md);
+        }
+
+        .btn-group-modern .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--gray-800);
+            transform: translateY(-1px);
+        }
+
+        .btn-group-modern .btn.active {
+            background: white;
+            color: var(--color-primary);
+            box-shadow: var(--shadow-sm);
+            font-weight: 600;
+        }
+
+        /* Boutons d'Action Flottants */
+        .fab {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-full);
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-xl);
+            transition: var(--transition-normal);
+            position: fixed;
+            bottom: var(--space-xl);
+            right: var(--space-xl);
+            z-index: var(--z-fixed);
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-2xl);
+            color: white;
+        }
+
+        .fab:active {
+            transform: scale(1.05);
+        }
+
+        /* Tables Ultra-Modernes */
+        .modern-table {
+            border-radius: var(--radius-2xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            background: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .modern-table thead {
+            background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-700) 100%);
+            position: relative;
+        }
+
+        .modern-table thead::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        }
+
+        .modern-table thead th {
+            color: white;
+            font-weight: 600;
+            font-size: var(--font-size-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: var(--space-lg) var(--space-xl);
+            border: none;
+            position: relative;
+        }
+
+        .modern-table thead th::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 25%;
+            bottom: 25%;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modern-table thead th:last-child::after {
+            display: none;
+        }
+
+        .modern-table tbody tr {
+            transition: var(--transition-fast);
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .modern-table tbody tr:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
+            transform: translateX(4px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .modern-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .modern-table tbody td {
+            padding: var(--space-lg) var(--space-xl);
+            font-size: var(--font-size-sm);
+            color: var(--gray-700);
+            vertical-align: middle;
+            border: none;
+        }
+
+        .modern-table .table-actions {
+            display: flex;
+            gap: var(--space-xs);
+            justify-content: flex-end;
+        }
+
+        .modern-table .table-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--gray-200);
+            background: white;
+            color: var(--gray-500);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition-fast);
+            cursor: pointer;
+        }
+
+        .modern-table .table-action-btn:hover {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+            transform: scale(1.1);
+        }
+
+        /* Éléments de Formulaire Modernes */
+        .modern-input {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: var(--space-md) var(--space-lg);
+            font-size: var(--font-size-base);
+            color: var(--gray-800);
+            transition: var(--transition-fast);
+            width: 100%;
+        }
+
+        .modern-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .modern-select {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: var(--space-md) var(--space-lg);
+            font-size: var(--font-size-base);
+            color: var(--gray-800);
+            transition: var(--transition-fast);
+            cursor: pointer;
+        }
+
+        .modern-select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-group-modern {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group-modern .input-icon {
+            position: absolute;
+            left: var(--space-lg);
+            color: var(--gray-400);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .input-group-modern .modern-input {
+            padding-left: calc(var(--space-lg) + 24px);
+        }
+
+        /* Badges et Labels Modernes */
+        .modern-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: var(--transition-fast);
+        }
+
+        .modern-badge.success {
+            background: linear-gradient(135deg, var(--success-light) 0%, rgba(16, 185, 129, 0.15) 100%);
+            color: var(--medical-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+        }
+
+        .modern-badge.warning {
+            background: linear-gradient(135deg, var(--warning-light) 0%, rgba(245, 158, 11, 0.15) 100%);
+            color: var(--medical-orange);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+        }
+
+        .modern-badge.danger {
+            background: linear-gradient(135deg, var(--error-light) 0%, rgba(239, 68, 68, 0.15) 100%);
+            color: var(--medical-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
+        }
+
+        .modern-badge.info {
+            background: linear-gradient(135deg, var(--info-light) 0%, rgba(59, 130, 246, 0.15) 100%);
+            color: var(--medical-blue);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+        }
+
+        .modern-badge:hover {
+            transform: scale(1.05);
+        }
+
+        /* Modals modernes */
+        .modal-content {
+            border-radius: var(--border-radius);
+            border: none;
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .modal-header {
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+
+        /* Design Responsive Ultra-Moderne */
+
+        /* Large Desktop (1400px+) */
+        @media (min-width: 1400px) {
+            .container {
+                max-width: 1320px;
+            }
+
+            .patient-stats {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .chart-container {
+                height: 450px;
+            }
+        }
+
+        /* Desktop (1200px - 1399px) */
+        @media (max-width: 1399px) {
+            .patient-title {
+                font-size: clamp(2rem, 4vw, 3rem);
+            }
+
+            .metric-icon {
+                width: 64px;
+                height: 64px;
+            }
+        }
+
+        /* Tablet Landscape (992px - 1199px) */
+        @media (max-width: 1199px) {
+            .patient-header {
+                padding: var(--space-2xl) 0;
+            }
+
+            .patient-avatar {
+                width: 120px;
+                height: 120px;
+                font-size: 3rem;
+            }
+
+            .chart-container {
+                height: 350px;
+                padding: var(--space-md);
+            }
+
+            .modern-card .card-header,
+            .modern-card .card-body {
+                padding: var(--space-lg);
+            }
+        }
+
+        /* Tablet Portrait (768px - 991px) */
+        @media (max-width: 991px) {
+            .patient-header {
+                min-height: 300px;
+                padding: var(--space-xl) 0;
+            }
+
+            .patient-title {
+                font-size: clamp(1.5rem, 6vw, 2.5rem);
+                text-align: center;
+            }
+
+            .patient-subtitle {
+                text-align: center;
+                font-size: var(--font-size-lg);
+            }
+
+            .patient-badges {
+                justify-content: center;
+            }
+
+            .patient-stats {
+                grid-template-columns: repeat(3, 1fr);
+                gap: var(--space-sm);
+            }
+
+            .metric-card-body {
+                padding: var(--space-lg);
+                text-align: center;
+            }
+
+            .chart-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .modern-table {
+                font-size: var(--font-size-sm);
+            }
+
+            .modern-table thead th,
+            .modern-table tbody td {
+                padding: var(--space-md);
+            }
+        }
+
+        /* Mobile Landscape (576px - 767px) */
+        @media (max-width: 767px) {
+            .patient-header {
+                min-height: 250px;
+                padding: var(--space-lg) 0;
+            }
+
+            .patient-avatar {
+                width: 100px;
+                height: 100px;
+                font-size: 2.5rem;
+                margin-bottom: var(--space-md);
+            }
+
+            .patient-info-panel {
+                padding: var(--space-lg);
+            }
+
+            .patient-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chart-container {
+                height: 280px;
+                padding: var(--space-sm);
+            }
+
+            .metric-card {
+                margin-bottom: var(--space-md);
+            }
+
+            .metric-icon {
+                width: 56px;
+                height: 56px;
+                font-size: var(--font-size-xl);
+            }
+
+            .metric-value {
+                font-size: var(--font-size-2xl);
+            }
+
+            .modern-card .card-header,
+            .modern-card .card-body {
+                padding: var(--space-md);
+            }
+
+            .timeline-item {
+                padding-left: var(--space-md);
+            }
+
+            .evolution-timeline {
+                padding-left: var(--space-lg);
+            }
+
+            .modern-btn {
+                width: 100%;
+                justify-content: center;
+                margin-bottom: var(--space-sm);
+            }
+
+            .btn-group-modern {
+                flex-direction: column;
+                gap: var(--space-xs);
+            }
+
+            .fab {
+                bottom: var(--space-lg);
+                right: var(--space-lg);
+                width: 48px;
+                height: 48px;
+            }
+        }
+
+        /* Mobile Portrait (< 576px) */
+        @media (max-width: 575px) {
+            .container {
+                padding-left: var(--space-md);
+                padding-right: var(--space-md);
+            }
+
+            .patient-header {
+                min-height: 200px;
+                padding: var(--space-md) 0;
+            }
+
+            .patient-avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 2rem;
+            }
+
+            .patient-title {
+                font-size: clamp(1.25rem, 8vw, 2rem);
+                margin-bottom: var(--space-sm);
+            }
+
+            .patient-subtitle {
+                font-size: var(--font-size-base);
+            }
+
+            .patient-badges {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .patient-stats {
+                grid-template-columns: 1fr;
+                gap: var(--space-sm);
+            }
+
+            .chart-container {
+                height: 250px;
+                padding: var(--space-xs);
+                margin: var(--space-md) 0;
+            }
+
+            .chart-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .metric-card-body {
+                padding: var(--space-md);
+            }
+
+            .modern-card .card-header,
+            .modern-card .card-body {
+                padding: var(--space-sm);
+            }
+
+            .modern-table {
+                font-size: var(--font-size-xs);
+            }
+
+            .modern-table thead th,
+            .modern-table tbody td {
+                padding: var(--space-sm);
+            }
+
+            .modern-btn {
+                padding: var(--space-sm) var(--space-md);
+                font-size: var(--font-size-sm);
+                min-height: 40px;
+            }
+
+            .navbar-brand {
+                font-size: var(--font-size-lg);
+            }
+
+            .navbar-brand .brand-icon {
+                width: 32px;
+                height: 32px;
+                font-size: var(--font-size-base);
+            }
+        }
+
+        /* Améliorations pour les écrans tactiles */
+        @media (hover: none) and (pointer: coarse) {
+            .hover-lift:hover {
+                transform: none;
+            }
+
+            .metric-card:hover {
+                transform: none;
+            }
+
+            .modern-card:hover {
+                transform: none;
+            }
+
+            .modern-btn:hover {
+                transform: none;
+            }
+
+            /* Augmenter les zones de clic sur mobile */
+            .modern-btn {
+                min-height: 48px;
+                padding: var(--space-md) var(--space-lg);
+            }
+
+            .table-action-btn {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        /* Mode sombre (si supporté) */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --gray-50: #1f2937;
+                --gray-100: #374151;
+                --gray-200: #4b5563;
+                --gray-800: #f9fafb;
+                --gray-900: #ffffff;
+            }
+
+            body {
+                background: linear-gradient(135deg, #1f2937 0%, #111827 50%, #0f172a 100%);
+                color: var(--gray-100);
+            }
+
+            .modern-card {
+                background: rgba(31, 41, 55, 0.8);
+                border-color: rgba(75, 85, 99, 0.3);
+            }
+
+            .modern-table {
+                background: rgba(31, 41, 55, 0.8);
+            }
+        }
+
+        /* Réduction de mouvement pour l'accessibilité */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Amélioration du contraste pour l'accessibilité */
+        @media (prefers-contrast: high) {
+            .modern-card {
+                border-width: 2px;
+                border-color: var(--gray-400);
+            }
+
+            .modern-btn {
+                border: 2px solid rgba(255, 255, 255, 0.3);
+            }
+
+            .modern-badge {
+                border-width: 2px;
+            }
+        }
+
+        /* Loading states */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Progress bars modernes */
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar {
+            border-radius: 4px;
+            background: var(--primary-gradient);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Ultra-Professionnelle -->
+    <nav class="navbar navbar-expand-lg modern-navbar sticky-top" id="mainNavbar">
+        <div class="container">
+            <!-- Logo et Brand -->
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+                <div class="brand-logo">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div class="brand-text">
+                    <div class="brand-name">NeuroScan</div>
+                    <div class="brand-tagline">AI Medical Platform</div>
+                </div>
+            </a>
+
+            <!-- Bouton Mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- Navigation Items -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Navigation Links -->
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-chart-line me-1"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('patients_list') }}">
+                            <i class="fas fa-users me-1"></i>
+                            Patients
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showAnalyticsModal()">
+                            <i class="fas fa-analytics me-1"></i>
+                            Analytics
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Profil Utilisateur et Actions -->
+                <div class="navbar-nav">
+                    <!-- Notifications -->
+                    <div class="nav-item dropdown me-3">
+                        <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                                3
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">Notifications</h6></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-info-circle me-2 text-info"></i>Nouvelle analyse disponible</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Alerte patient critique</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-check-circle me-2 text-success"></i>Rapport généré</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center" href="#">Voir toutes les notifications</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Profil Utilisateur -->
+                    <div class="navbar-user-profile dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="d-flex align-items-center">
+                            <div class="navbar-user-avatar">
+                                <i class="fas fa-user-md"></i>
+                            </div>
+                            <div class="navbar-user-info d-none d-lg-block">
+                                <div class="navbar-user-name">Dr. {{ doctor.full_name }}</div>
+                                <div class="navbar-user-role">Neurologue</div>
+                            </div>
+                            <i class="fas fa-chevron-down ms-2 d-none d-lg-block" style="font-size: 0.7rem; color: var(--gray-400);"></i>
+                        </div>
+
+                        <!-- Dropdown Menu -->
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">Dr. {{ doctor.full_name }}</h6></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Mon Profil</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Paramètres</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-chart-bar me-2"></i>Mes Statistiques</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-question-circle me-2"></i>Aide & Support</a></li>
+                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- En-tête Patient Ultra-Moderne -->
+    <div class="patient-header">
+        <div class="container">
+            <div class="patient-header-content">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <div class="fade-in-up">
+                            <div class="d-flex flex-column flex-md-row align-items-center align-items-md-start mb-4">
+                                <div class="patient-avatar me-md-4 mb-3 mb-md-0">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <div class="text-center text-md-start">
+                                    <h1 class="patient-title">{{ patient.patient_name }}</h1>
+                                    <p class="patient-subtitle">ID Patient: {{ patient.patient_id }}</p>
+                                    <div class="patient-badges">
+                                        <div class="patient-badge">
+                                            <i class="fas fa-calendar-plus"></i>
+                                            <span>Suivi personnalisé</span>
+                                        </div>
+                                        <div class="patient-badge">
+                                            <i class="fas fa-chart-line"></i>
+                                            <span>Analyses avancées</span>
+                                        </div>
+                                        <div class="patient-badge">
+                                            <i class="fas fa-shield-alt"></i>
+                                            <span>Données sécurisées</span>
+                                        </div>
+                                        <div class="patient-badge premium">
+                                            <i class="fas fa-crown"></i>
+                                            <span>Suivi Premium</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="slide-in-right">
+                            <div class="patient-info-panel">
+                                <h5 class="patient-info-title">
+                                    <i class="fas fa-info-circle"></i>
+                                    Informations Générales
+                                </h5>
+                                <div class="patient-stats">
+                                    <div class="patient-stat">
+                                        <div class="patient-stat-value">{{ patient.total_analyses }}</div>
+                                        <div class="patient-stat-label">Analyses</div>
+                                    </div>
+                                    <div class="patient-stat">
+                                        <div class="patient-stat-value" id="followUpDays">-</div>
+                                        <div class="patient-stat-label">Jours</div>
+                                    </div>
+                                    <div class="patient-stat">
+                                        <div class="patient-stat-value" id="avgConfidenceHeader">-</div>
+                                        <div class="patient-stat-label">Confiance</div>
+                                    </div>
+                                </div>
+                                <div class="patient-details">
+                                    <div class="patient-detail-row">
+                                        <span class="patient-detail-label">Première analyse:</span>
+                                        <span class="patient-detail-value">{{ patient.first_analysis_date }}</span>
+                                    </div>
+                                    <div class="patient-detail-row">
+                                        <span class="patient-detail-label">Dernière analyse:</span>
+                                        <span class="patient-detail-value">{{ patient.last_analysis_date }}</span>
+                                    </div>
+                                    <div class="patient-detail-row">
+                                        <span class="patient-detail-label">Statut:</span>
+                                        <span class="patient-detail-value">
+                                            <span class="modern-badge success">
+                                                <i class="fas fa-check-circle"></i>
+                                                Actif
+                                            </span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Alertes et niveau de risque -->
+        <div id="alertsSection" class="row mb-4" style="display: none;">
+            <div class="col-12">
+                <div class="card alert-card">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Alertes Médicales</h5>
+                    </div>
+                    <div class="card-body" id="alertsContent">
+                        <!-- Alertes dynamiques -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Métriques Principales Ultra-Modernes -->
+        <div class="row mb-5">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="metric-card hover-lift fade-in-up" style="animation-delay: 0.1s;">
+                    <div class="metric-card-body">
+                        <div class="metric-icon blue">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h5 class="metric-title">Période de Suivi</h5>
+                        <div class="metric-value" id="followUpPeriod">
+                            <span class="loading-shimmer">-</span>
+                        </div>
+                        <div class="metric-subtitle">
+                            <i class="fas fa-clock"></i>
+                            <span>Suivi continu</span>
+                        </div>
+                        <div class="metric-badge">
+                            <i class="fas fa-trending-up"></i>
+                            <span>En cours</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="metric-card hover-lift fade-in-up" style="animation-delay: 0.2s;">
+                    <div class="metric-card-body">
+                        <div class="metric-icon green">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h5 class="metric-title">Confiance Moyenne</h5>
+                        <div class="metric-value" id="avgConfidence">
+                            <span class="loading-shimmer">-</span>
+                        </div>
+                        <div class="metric-subtitle">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Fiabilité élevée</span>
+                        </div>
+                        <div class="metric-progress">
+                            <div class="metric-progress-bar" id="confidenceProgressBar"
+                                 style="width: 0%; background: var(--success-gradient);">
+                            </div>
+                        </div>
+                        <div class="metric-badge">
+                            <i class="fas fa-shield-check"></i>
+                            <span>Validé</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="metric-card hover-lift fade-in-up" style="animation-delay: 0.3s;">
+                    <div class="metric-card-body">
+                        <div class="metric-icon purple">
+                            <i class="fas fa-stethoscope"></i>
+                        </div>
+                        <h5 class="metric-title">Diagnostic Principal</h5>
+                        <div class="metric-value">
+                            <span class="modern-badge info" id="mainDiagnosisBadge">
+                                <span id="mainDiagnosis">-</span>
+                            </span>
+                        </div>
+                        <div class="metric-subtitle">
+                            <i class="fas fa-microscope"></i>
+                            <span>Diagnostic principal</span>
+                        </div>
+                        <div class="metric-badge">
+                            <i class="fas fa-brain"></i>
+                            <span>IA Assisté</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="metric-card hover-lift fade-in-up" style="animation-delay: 0.4s;">
+                    <div class="metric-card-body">
+                        <div class="metric-icon orange">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h5 class="metric-title">Niveau de Risque</h5>
+                        <div class="metric-value">
+                            <span id="riskLevel" class="modern-badge warning">-</span>
+                        </div>
+                        <div class="metric-subtitle">
+                            <i class="fas fa-heartbeat"></i>
+                            <span>Surveillance active</span>
+                        </div>
+                        <div class="metric-progress">
+                            <div class="metric-progress-bar" id="riskProgressBar"
+                                 style="width: 0%; background: var(--warning-gradient);">
+                            </div>
+                        </div>
+                        <div class="metric-badge">
+                            <i class="fas fa-eye"></i>
+                            <span>Surveillé</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphiques d'évolution -->
+        <div class="row mb-5">
+            <div class="col-lg-6 mb-4">
+                <div class="modern-card fade-in-up" style="animation-delay: 0.5s;">
+                    <div class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
+                        <div class="mb-2 mb-sm-0">
+                            <h5 class="mb-1 fw-bold">
+                                <i class="fas fa-chart-line me-2 text-primary"></i>
+                                Évolution de la Confiance
+                            </h5>
+                            <p class="text-muted mb-0 small">Tendance de fiabilité des diagnostics</p>
+                        </div>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary active" onclick="toggleChartType('confidence', 'line')">
+                                <i class="fas fa-chart-line me-1"></i>Ligne
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="toggleChartType('confidence', 'bar')">
+                                <i class="fas fa-chart-bar me-1"></i>Barres
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="confidenceChart"></canvas>
+                            <div id="confidenceChartLoader" class="position-absolute top-50 start-50 translate-middle d-none">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="modern-card fade-in-up" style="animation-delay: 0.6s;">
+                    <div class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
+                        <div class="mb-2 mb-sm-0">
+                            <h5 class="mb-1 fw-bold">
+                                <i class="fas fa-expand-arrows-alt me-2 text-success"></i>
+                                Évolution de la Taille
+                            </h5>
+                            <p class="text-muted mb-0 small">Progression dimensionnelle des anomalies</p>
+                        </div>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-success active" onclick="toggleChartType('size', 'line')">
+                                <i class="fas fa-chart-line me-1"></i>Ligne
+                            </button>
+                            <button type="button" class="btn btn-outline-success" onclick="toggleChartType('size', 'scatter')">
+                                <i class="fas fa-braille me-1"></i>Points
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="sizeChart"></canvas>
+                            <div id="sizeChartLoader" class="position-absolute top-50 start-50 translate-middle d-none">
+                                <div class="spinner-border text-success" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphiques avancés -->
+        <div class="row mb-5">
+            <div class="col-lg-6 mb-4">
+                <div class="modern-card fade-in-up" style="animation-delay: 0.7s;">
+                    <div class="card-header">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3 p-2 rounded-lg" style="background: var(--purple-gradient);">
+                                <i class="fas fa-chart-pie text-white"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1 fw-bold">Distribution des Diagnostics</h5>
+                                <p class="text-muted mb-0 small">Répartition des types de diagnostics</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="diagnosisChart"></canvas>
+                            <div id="diagnosisChartLoader" class="position-absolute top-50 start-50 translate-middle d-none">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Légende personnalisée -->
+                        <div id="diagnosisLegend" class="mt-3">
+                            <!-- Sera rempli dynamiquement -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="modern-card fade-in-up" style="animation-delay: 0.8s;">
+                    <div class="card-header">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3 p-2 rounded-lg" style="background: var(--red-gradient);">
+                                <i class="fas fa-chart-area text-white"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1 fw-bold">Tendance de Risque</h5>
+                                <p class="text-muted mb-0 small">Évolution du score de risque calculé</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="riskChart"></canvas>
+                            <div id="riskChartLoader" class="position-absolute top-50 start-50 translate-middle d-none">
+                                <div class="spinner-border text-danger" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Indicateurs de risque -->
+                        <div class="mt-3">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="p-2 rounded" style="background: rgba(40, 167, 69, 0.1);">
+                                        <small class="text-success fw-bold">0-30</small>
+                                        <div class="small text-muted">Faible</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 rounded" style="background: rgba(255, 193, 7, 0.1);">
+                                        <small class="text-warning fw-bold">30-60</small>
+                                        <div class="small text-muted">Modéré</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="p-2 rounded" style="background: rgba(220, 53, 69, 0.1);">
+                                        <small class="text-danger fw-bold">60+</small>
+                                        <div class="small text-muted">Élevé</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphique de comparaison temporelle -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="modern-card fade-in-up" style="animation-delay: 0.9s;">
+                    <div class="card-header d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center">
+                        <div class="mb-3 mb-lg-0">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 p-2 rounded-lg" style="background: var(--blue-gradient);">
+                                    <i class="fas fa-chart-bar text-white"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1 fw-bold">Comparaison Temporelle des Probabilités</h5>
+                                    <p class="text-muted mb-0 small">Évolution détaillée des probabilités par diagnostic</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="stackedMode" onchange="toggleStackedMode()">
+                                <label class="form-check-label fw-medium" for="stackedMode">
+                                    <i class="fas fa-layer-group me-1"></i>Mode empilé
+                                </label>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="resetProbabilitiesZoom()">
+                                <i class="fas fa-search-minus me-1"></i>Reset Zoom
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 450px;">
+                            <canvas id="probabilitiesChart"></canvas>
+                            <div id="probabilitiesChartLoader" class="position-absolute top-50 start-50 translate-middle d-none">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Statistiques rapides -->
+                        <div class="mt-4">
+                            <div class="row text-center">
+                                <div class="col-lg-3 col-6 mb-3">
+                                    <div class="p-3 rounded-3" style="background: rgba(40, 167, 69, 0.1);">
+                                        <div class="fw-bold text-success fs-5" id="normalCount">-</div>
+                                        <small class="text-muted">Analyses Normales</small>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-6 mb-3">
+                                    <div class="p-3 rounded-3" style="background: rgba(220, 53, 69, 0.1);">
+                                        <div class="fw-bold text-danger fs-5" id="gliomeCount">-</div>
+                                        <small class="text-muted">Gliomes Détectés</small>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-6 mb-3">
+                                    <div class="p-3 rounded-3" style="background: rgba(255, 193, 7, 0.1);">
+                                        <div class="fw-bold text-warning fs-5" id="meningiomeCount">-</div>
+                                        <small class="text-muted">Méningiomes</small>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-6 mb-3">
+                                    <div class="p-3 rounded-3" style="background: rgba(23, 162, 184, 0.1);">
+                                        <div class="fw-bold text-info fs-5" id="pituitaryCount">-</div>
+                                        <small class="text-muted">Tumeurs Pituitaires</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historique détaillé -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="modern-card fade-in-up" style="animation-delay: 1.0s;">
+                    <div class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
+                        <div class="mb-3 mb-sm-0">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 p-2 rounded-lg" style="background: var(--green-gradient);">
+                                    <i class="fas fa-history text-white"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1 fw-bold">Historique Détaillé des Analyses</h5>
+                                    <p class="text-muted mb-0 small">Chronologie complète des examens et résultats</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary btn-sm" onclick="exportAnalysesHistory()">
+                                <i class="fas fa-download me-1"></i>Exporter
+                            </button>
+                            <button class="btn btn-outline-success btn-sm" onclick="refreshAnalysesTable()">
+                                <i class="fas fa-sync-alt me-1"></i>Actualiser
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Filtres rapides -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="analysesSearch" placeholder="Rechercher dans l'historique...">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select form-select-sm" id="diagnosisFilter">
+                                    <option value="">Tous les diagnostics</option>
+                                    <option value="Normal">Normal</option>
+                                    <option value="Gliome">Gliome</option>
+                                    <option value="Méningiome">Méningiome</option>
+                                    <option value="Tumeur pituitaire">Tumeur pituitaire</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select form-select-sm" id="evolutionFilter">
+                                    <option value="">Toutes les évolutions</option>
+                                    <option value="amélioration">Amélioration</option>
+                                    <option value="dégradation">Dégradation</option>
+                                    <option value="stable">Stable</option>
+                                    <option value="croissance">Croissance</option>
+                                    <option value="réduction">Réduction</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-outline-secondary btn-sm w-100" onclick="resetAnalysesFilters()">
+                                    <i class="fas fa-undo me-1"></i>Reset
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table modern-table" id="analysesTable">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4 py-3">
+                                            <i class="fas fa-calendar me-2"></i>Date
+                                        </th>
+                                        <th class="px-4 py-3">
+                                            <i class="fas fa-stethoscope me-2"></i>Diagnostic
+                                        </th>
+                                        <th class="px-4 py-3">
+                                            <i class="fas fa-percentage me-2"></i>Confiance
+                                        </th>
+                                        <th class="px-4 py-3">
+                                            <i class="fas fa-ruler me-2"></i>Taille Estimée
+                                        </th>
+                                        <th class="px-4 py-3">
+                                            <i class="fas fa-chart-line me-2"></i>Évolution
+                                        </th>
+                                        <th class="px-4 py-3">
+                                            <i class="fas fa-cog me-2"></i>Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="analysesTableBody">
+                                    <!-- État de chargement -->
+                                    <tr id="analysesLoadingState">
+                                        <td colspan="6" class="text-center py-5">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Chargement...</span>
+                                            </div>
+                                            <p class="mt-3 text-muted">Chargement de l'historique...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <div class="text-muted small">
+                                Affichage de <span id="analysesShowingFrom">0</span> à <span id="analysesShowingTo">0</span>
+                                sur <span id="analysesShowingTotal">0</span> analyses
+                            </div>
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0" id="analysesPagination">
+                                    <!-- Pagination dynamique -->
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline d'évolution -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="modern-card fade-in-up" style="animation-delay: 1.1s;">
+                    <div class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
+                        <div class="mb-3 mb-sm-0">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 p-2 rounded-lg" style="background: var(--purple-gradient);">
+                                    <i class="fas fa-timeline text-white"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1 fw-bold">Timeline d'Évolution</h5>
+                                    <p class="text-muted mb-0 small">Chronologie visuelle des changements et évolutions</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary btn-sm" onclick="toggleTimelineView()">
+                                <i class="fas fa-eye me-1"></i>
+                                <span id="timelineViewToggle">Vue Compacte</span>
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" onclick="exportTimeline()">
+                                <i class="fas fa-file-export me-1"></i>Exporter Timeline
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="evolutionTimeline" class="evolution-timeline">
+                            <!-- État de chargement -->
+                            <div id="timelineLoadingState" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                                <p class="mt-3 text-muted">Construction de la timeline...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions et rapports -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="modern-card fade-in-up" style="animation-delay: 1.2s;">
+                    <div class="card-header" style="background: var(--green-gradient); color: white;">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3 p-2 rounded-lg" style="background: rgba(255, 255, 255, 0.2);">
+                                <i class="fas fa-tools text-white"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1 fw-bold">Actions Rapides</h5>
+                                <p class="mb-0 small opacity-90">Outils de gestion et d'analyse du patient</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-lg-4 col-md-6">
+                                <button class="modern-btn w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4" onclick="generateEvolutionReport()">
+                                    <i class="fas fa-file-medical fs-2 mb-3"></i>
+                                    <span class="fw-bold">Rapport d'Évolution</span>
+                                    <small class="text-white-50 mt-1">Générer un rapport détaillé</small>
+                                </button>
+                            </div>
+                            <div class="col-lg-4 col-md-6">
+                                <button class="modern-btn info w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4" onclick="scheduleFollowUp()">
+                                    <i class="fas fa-calendar-plus fs-2 mb-3"></i>
+                                    <span class="fw-bold">Programmer Suivi</span>
+                                    <small class="text-white-50 mt-1">Planifier le prochain RDV</small>
+                                </button>
+                            </div>
+                            <div class="col-lg-4 col-md-6">
+                                <button class="modern-btn warning w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4" onclick="exportData()">
+                                    <i class="fas fa-download fs-2 mb-3"></i>
+                                    <span class="fw-bold">Exporter Données</span>
+                                    <small class="text-white-50 mt-1">Télécharger les données</small>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Actions secondaires -->
+                        <hr class="my-4">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-primary btn-sm w-100" onclick="printPatientSummary()">
+                                    <i class="fas fa-print me-1"></i>Imprimer Résumé
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-success btn-sm w-100" onclick="shareWithColleague()">
+                                    <i class="fas fa-share me-1"></i>Partager
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-info btn-sm w-100" onclick="addNote()">
+                                    <i class="fas fa-sticky-note me-1"></i>Ajouter Note
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-warning btn-sm w-100" onclick="setReminder()">
+                                    <i class="fas fa-bell me-1"></i>Rappel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommandations -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="modern-card fade-in-up" style="animation-delay: 1.3s;">
+                    <div class="card-header" style="background: var(--blue-gradient); color: white;">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3 p-2 rounded-lg" style="background: rgba(255, 255, 255, 0.2);">
+                                <i class="fas fa-lightbulb text-white"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1 fw-bold">Recommandations Intelligentes</h5>
+                                <p class="mb-0 small opacity-90">Suggestions basées sur l'analyse des données</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-4" id="recommendationsContent">
+                        <!-- État de chargement -->
+                        <div id="recommendationsLoadingState" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                            <p class="mt-3 text-muted">Génération des recommandations...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour détails d'analyse -->
+    <div class="modal fade" id="analysisModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Détails de l'Analyse</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="analysisModalBody">
+                    <!-- Contenu dynamique -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour rapport d'évolution -->
+    <div class="modal fade" id="reportModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Rapport d'Évolution</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="reportContent" style="white-space: pre-wrap; font-family: monospace; font-size: 12px;">
+                        <!-- Contenu du rapport -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="button" class="btn btn-primary" onclick="downloadReport()">
+                        <i class="fas fa-download me-1"></i>Télécharger
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour programmer un suivi -->
+    <div class="modal fade" id="followUpModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Programmer un Suivi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="followUpForm">
+                        <div class="mb-3">
+                            <label for="followUpDate" class="form-label">Date de suivi</label>
+                            <input type="date" class="form-control" id="followUpDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="followUpNotes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="followUpNotes" rows="3"
+                                      placeholder="Notes additionnelles pour le suivi..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" onclick="saveFollowUp()">
+                        <i class="fas fa-save me-1"></i>Programmer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const patientId = '{{ patient.patient_id }}';
+        let patientData = null;
+        let confidenceChart = null;
+        let sizeChart = null;
+        let diagnosisChart = null;
+        let riskChart = null;
+        let probabilitiesChart = null;
+
+        // Charger les données du patient au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vérifier que Chart.js est chargé
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js n\'est pas chargé');
+                showNotification('Erreur de chargement des graphiques', 'error');
+                return;
+            }
+
+            // Initialiser l'interface moderne
+            initializeModernInterface();
+            initializeNavbarInteractions();
+            initializeAnimations();
+            loadPatientData();
+            setupEventListeners();
+
+            // Délai pour s'assurer que tout est initialisé
+            setTimeout(() => {
+                showNotification('Profil patient chargé avec succès', 'success');
+            }, 500);
+        });
+
+        // Initialisation de l'interface moderne
+        function initializeModernInterface() {
+            // Gestion du scroll pour la navbar
+            const navbar = document.getElementById('mainNavbar');
+            if (navbar) {
+                let lastScrollTop = 0;
+
+                window.addEventListener('scroll', function() {
+                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+                    if (scrollTop > 100) {
+                        navbar.classList.add('scrolled');
+                    } else {
+                        navbar.classList.remove('scrolled');
+                    }
+
+                    // Auto-hide navbar on scroll down (mobile)
+                    if (window.innerWidth <= 768) {
+                        if (scrollTop > lastScrollTop && scrollTop > 200) {
+                            navbar.style.transform = 'translateY(-100%)';
+                        } else {
+                            navbar.style.transform = 'translateY(0)';
+                        }
+                    }
+
+                    lastScrollTop = scrollTop;
+                });
+            }
+
+            // Parallax effect pour l'en-tête
+            const patientHeader = document.querySelector('.patient-header');
+            if (patientHeader) {
+                window.addEventListener('scroll', function() {
+                    const scrolled = window.pageYOffset;
+                    const rate = scrolled * -0.3;
+                    patientHeader.style.transform = `translateY(${rate}px)`;
+                });
+            }
+
+            // Intersection Observer pour les animations
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-in');
+
+                        // Ajouter un délai pour les éléments en série
+                        const delay = entry.target.dataset.delay || 0;
+                        setTimeout(() => {
+                            entry.target.style.opacity = '1';
+                            entry.target.style.transform = 'translateY(0) scale(1)';
+                        }, delay);
+                    }
+                });
+            }, observerOptions);
+
+            // Observer tous les éléments avec animation
+            document.querySelectorAll('.hover-lift, .metric-card, .modern-card').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        function initializeAnimations() {
+            // Animation d'entrée pour les éléments
+            const animatedElements = document.querySelectorAll('.fade-in-up, .slide-in-right, .slide-in-left');
+            animatedElements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = el.classList.contains('fade-in-up') ? 'translateY(40px) scale(0.95)' :
+                                   el.classList.contains('slide-in-right') ? 'translateX(40px) scale(0.95)' :
+                                   'translateX(-40px) scale(0.95)';
+
+                setTimeout(() => {
+                    el.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+                    el.style.opacity = '1';
+                    el.style.transform = 'translate(0, 0) scale(1)';
+                }, index * 150);
+            });
+
+            // Animation pour les cartes métriques
+            const metricCards = document.querySelectorAll('.metric-card');
+            metricCards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px) scale(0.9)';
+
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0) scale(1)';
+                }, (index + 1) * 200);
+            });
+        }
+
+        function setupEventListeners() {
+            // Recherche dans l'historique
+            const analysesSearch = document.getElementById('analysesSearch');
+            if (analysesSearch) {
+                let searchTimeout;
+                analysesSearch.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        filterAnalysesTable();
+                    }, 300);
+                });
+            }
+
+            // Filtres de l'historique
+            const diagnosisFilter = document.getElementById('diagnosisFilter');
+            const evolutionFilter = document.getElementById('evolutionFilter');
+
+            if (diagnosisFilter) diagnosisFilter.addEventListener('change', filterAnalysesTable);
+            if (evolutionFilter) evolutionFilter.addEventListener('change', filterAnalysesTable);
+        }
+
+        async function loadPatientData() {
+            try {
+                const response = await fetch(`/api/patients/${patientId}/detailed-history`);
+                const data = await response.json();
+
+                if (data.success) {
+                    patientData = data.data;
+                    displayPatientMetrics(patientData.metrics);
+                    displayAlerts(patientData.metrics.alerts);
+                    displayRecommendations(patientData.metrics.recommendations);
+                    createCharts(patientData.analyses);
+                    displayAnalysesTable(patientData.analyses, patientData.evolution_details);
+                    displayEvolutionTimeline(patientData.analyses, patientData.evolution_details);
+
+                    // S'assurer que les statistiques sont mises à jour même si les graphiques échouent
+                    updateDiagnosisStatistics(patientData.analyses);
+                } else {
+                    console.error('Erreur lors du chargement des données:', data.error);
+                    // Afficher des valeurs par défaut en cas d'erreur
+                    updateDiagnosisStatistics([]);
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des données:', error);
+            }
+        }
+
+        function displayPatientMetrics(metrics) {
+            // Mise à jour des métriques principales
+            const followUpPeriodEl = document.getElementById('followUpPeriod');
+            const avgConfidenceEl = document.getElementById('avgConfidence');
+            const mainDiagnosisEl = document.getElementById('mainDiagnosis');
+            const riskLevelEl = document.getElementById('riskLevel');
+
+            if (followUpPeriodEl) {
+                followUpPeriodEl.textContent = `${metrics.follow_up_months} mois`;
+            }
+
+            if (avgConfidenceEl) {
+                avgConfidenceEl.textContent = `${Math.round(metrics.avg_confidence)}%`;
+
+                // Mise à jour de la barre de progression
+                const progressBar = document.getElementById('confidenceProgressBar');
+                if (progressBar) {
+                    progressBar.style.width = `${metrics.avg_confidence}%`;
+                }
+            }
+
+            if (mainDiagnosisEl) {
+                mainDiagnosisEl.textContent = metrics.most_common_diagnosis;
+
+                // Mise à jour du badge de diagnostic
+                const badge = document.getElementById('mainDiagnosisBadge');
+                if (badge) {
+                    const colors = {
+                        'Normal': 'var(--green-gradient)',
+                        'Gliome': 'var(--red-gradient)',
+                        'Méningiome': 'var(--orange-gradient)',
+                        'Tumeur pituitaire': 'var(--blue-gradient)'
+                    };
+                    badge.style.background = colors[metrics.most_common_diagnosis] || 'var(--purple-gradient)';
+                }
+            }
+
+            if (riskLevelEl) {
+                const riskLevel = metrics.risk_level.replace(/é/g, 'e');
+                riskLevelEl.textContent = metrics.risk_level.charAt(0).toUpperCase() + metrics.risk_level.slice(1);
+                riskLevelEl.className = `risk-badge risk-${riskLevel} fs-6`;
+
+                // Mise à jour de la barre de progression du risque
+                const riskProgressBar = document.getElementById('riskProgressBar');
+                if (riskProgressBar) {
+                    const riskPercentage = {
+                        'faible': 25,
+                        'modéré': 50,
+                        'modere': 50,
+                        'élevé': 75,
+                        'eleve': 75,
+                        'critique': 100
+                    }[riskLevel] || 0;
+
+                    riskProgressBar.style.width = `${riskPercentage}%`;
+                    riskProgressBar.className = `progress-bar ${riskPercentage > 60 ? 'bg-danger' : riskPercentage > 30 ? 'bg-warning' : 'bg-success'}`;
+                }
+            }
+
+            // Mise à jour des informations dans l'en-tête
+            const followUpDaysEl = document.getElementById('followUpDays');
+            const avgConfidenceHeaderEl = document.getElementById('avgConfidenceHeader');
+
+            if (followUpDaysEl) {
+                followUpDaysEl.textContent = metrics.follow_up_days;
+            }
+
+            if (avgConfidenceHeaderEl) {
+                avgConfidenceHeaderEl.textContent = `${Math.round(metrics.avg_confidence)}%`;
+            }
+        }
+
+        function displayAlerts(alerts) {
+            const alertsSection = document.getElementById('alertsSection');
+            const alertsContent = document.getElementById('alertsContent');
+
+            if (alerts && alerts.length > 0) {
+                alertsSection.style.display = 'block';
+                alertsContent.innerHTML = alerts.map(alert => `
+                    <div class="alert alert-${alert.severity === 'high' ? 'danger' : alert.severity === 'medium' ? 'warning' : 'info'} mb-2">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>${alert.type.replace('_', ' ').toUpperCase()}:</strong> ${alert.message}
+                    </div>
+                `).join('');
+            } else {
+                alertsSection.style.display = 'none';
+            }
+        }
+
+        function displayRecommendations(recommendations) {
+            const content = document.getElementById('recommendationsContent');
+            const loadingState = document.getElementById('recommendationsLoadingState');
+
+            // Masquer l'état de chargement
+            if (loadingState) loadingState.style.display = 'none';
+
+            if (recommendations && recommendations.length > 0) {
+                content.innerHTML = `
+                    <div class="row">
+                        ${recommendations.map((rec, index) => `
+                            <div class="col-lg-6 mb-3">
+                                <div class="d-flex align-items-start p-3 rounded-3" style="background: rgba(40, 167, 69, 0.1);">
+                                    <div class="me-3 p-2 rounded-circle" style="background: var(--green-gradient); min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-lightbulb text-white"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="fw-bold mb-1 text-success">Recommandation ${index + 1}</h6>
+                                        <p class="mb-0 text-dark">${rec}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="mt-4 p-3 rounded-3" style="background: rgba(23, 162, 184, 0.1);">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle text-info me-2"></i>
+                            <small class="text-muted">
+                                Ces recommandations sont générées automatiquement basées sur l'analyse des données du patient.
+                                Consultez toujours votre jugement clinique.
+                            </small>
+                        </div>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-lightbulb text-muted" style="font-size: 3rem; opacity: 0.3;"></i>
+                        </div>
+                        <h6 class="text-muted">Aucune recommandation spécifique</h6>
+                        <p class="text-muted mb-0">Les recommandations seront générées automatiquement lors de la prochaine analyse.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function createCharts(analyses) {
+            if (!analyses || analyses.length === 0) {
+                // Afficher des valeurs par défaut si pas de données
+                updateDiagnosisStatistics([]);
+                return;
+            }
+
+            createConfidenceChart(analyses);
+            createSizeChart(analyses);
+            createDiagnosisChart(analyses);
+            createRiskChart(analyses);
+            createProbabilitiesChart(analyses);
+
+            // Les statistiques sont mises à jour dans createProbabilitiesChart
+        }
+
+        function createConfidenceChart(analyses) {
+            const dates = analyses.map(a => a.exam_date);
+            const confidences = analyses.map(a => a.confidence);
+
+            const confidenceCtx = document.getElementById('confidenceChart').getContext('2d');
+            if (confidenceChart) confidenceChart.destroy();
+
+            confidenceChart = new Chart(confidenceCtx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Confiance (%)',
+                        data: confidences,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#007bff',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Confiance (%)'
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date d\'examen'
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            callbacks: {
+                                label: function(context) {
+                                    return `Confiance: ${context.parsed.y}%`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
+
+        function createSizeChart(analyses) {
+            const sizesFiltered = analyses.filter(a => a.tumor_size_estimate);
+
+            if (sizesFiltered.length === 0) {
+                const container = document.getElementById('sizeChart').parentElement;
+                container.innerHTML = '<p class="text-muted text-center mt-4">Aucune donnée de taille disponible</p>';
+                return;
+            }
+
+            const sizeCtx = document.getElementById('sizeChart').getContext('2d');
+            if (sizeChart) sizeChart.destroy();
+
+            const labels = sizesFiltered.map(a => a.exam_date);
+            const data = sizesFiltered.map(a => a.tumor_size_estimate);
+
+            sizeChart = new Chart(sizeCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Taille estimée (cm)',
+                        data: data,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#28a745',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Taille (cm)'
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date d\'examen'
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            callbacks: {
+                                label: function(context) {
+                                    return `Taille: ${context.parsed.y} cm`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
+
+        function createDiagnosisChart(analyses) {
+            const diagnosisCounts = {};
+            analyses.forEach(a => {
+                diagnosisCounts[a.predicted_label] = (diagnosisCounts[a.predicted_label] || 0) + 1;
+            });
+
+            const labels = Object.keys(diagnosisCounts);
+            const data = Object.values(diagnosisCounts);
+            const colors = {
+                'Normal': '#28a745',
+                'Gliome': '#dc3545',
+                'Méningiome': '#ffc107',
+                'Tumeur pituitaire': '#17a2b8'
+            };
+
+            const diagnosisCtx = document.getElementById('diagnosisChart').getContext('2d');
+            if (diagnosisChart) diagnosisChart.destroy();
+
+            diagnosisChart = new Chart(diagnosisCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: labels.map(label => colors[label] || '#6c757d'),
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed * 100) / total).toFixed(1);
+                                    return `${context.label}: ${context.parsed} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        duration: 1000
+                    }
+                }
+            });
+        }
+
+        function createRiskChart(analyses) {
+            // Simuler un score de risque basé sur les diagnostics et la confiance
+            const riskData = analyses.map(a => {
+                let riskScore = 0;
+                if (a.predicted_label !== 'Normal') {
+                    riskScore = 30 + (a.confidence * 0.7);
+                    if (a.predicted_label === 'Gliome') riskScore += 20;
+                    if (a.predicted_label === 'Méningiome') riskScore += 10;
+                    if (a.predicted_label === 'Tumeur pituitaire') riskScore += 15;
+                }
+                return Math.min(100, riskScore);
+            });
+
+            const riskCtx = document.getElementById('riskChart').getContext('2d');
+            if (riskChart) riskChart.destroy();
+
+            riskChart = new Chart(riskCtx, {
+                type: 'line',
+                data: {
+                    labels: analyses.map(a => a.exam_date),
+                    datasets: [{
+                        label: 'Score de Risque',
+                        data: riskData,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#dc3545',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Score de Risque'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    if (value < 30) return value + ' (Faible)';
+                                    if (value < 60) return value + ' (Modéré)';
+                                    return value + ' (Élevé)';
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date d\'examen'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    let level = 'Faible';
+                                    if (value >= 60) level = 'Élevé';
+                                    else if (value >= 30) level = 'Modéré';
+                                    return `Score: ${value.toFixed(1)} (${level})`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createProbabilitiesChart(analyses) {
+            const probabilitiesCtx = document.getElementById('probabilitiesChart').getContext('2d');
+            if (probabilitiesChart) probabilitiesChart.destroy();
+
+            const labels = analyses.map(a => a.exam_date);
+            const datasets = [
+                {
+                    label: 'Normal',
+                    data: analyses.map(a => ((a.probabilities?.Normal || 0) * 100).toFixed(1)),
+                    backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                    borderColor: '#28a745',
+                    borderWidth: 2
+                },
+                {
+                    label: 'Gliome',
+                    data: analyses.map(a => ((a.probabilities?.Gliome || 0) * 100).toFixed(1)),
+                    backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                    borderColor: '#dc3545',
+                    borderWidth: 2
+                },
+                {
+                    label: 'Méningiome',
+                    data: analyses.map(a => ((a.probabilities?.Méningiome || 0) * 100).toFixed(1)),
+                    backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                    borderColor: '#ffc107',
+                    borderWidth: 2
+                },
+                {
+                    label: 'Tumeur pituitaire',
+                    data: analyses.map(a => ((a.probabilities?.['Tumeur pituitaire'] || 0) * 100).toFixed(1)),
+                    backgroundColor: 'rgba(23, 162, 184, 0.7)',
+                    borderColor: '#17a2b8',
+                    borderWidth: 2
+                }
+            ];
+
+            probabilitiesChart = new Chart(probabilitiesCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date d\'examen'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Probabilité (%)'
+                            },
+                            stacked: false
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y}%`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+
+            // Mettre à jour les statistiques rapides
+            updateDiagnosisStatistics(analyses);
+        }
+
+        function updateDiagnosisStatistics(analyses) {
+            // Compter les diagnostics
+            const counts = {
+                'Normal': 0,
+                'Gliome': 0,
+                'Méningiome': 0,
+                'Tumeur pituitaire': 0
+            };
+
+            if (analyses && analyses.length > 0) {
+                analyses.forEach(analysis => {
+                    const diagnosis = analysis.predicted_label;
+                    if (counts.hasOwnProperty(diagnosis)) {
+                        counts[diagnosis]++;
+                    }
+                });
+            }
+
+            // Mettre à jour les éléments DOM
+            const normalCountEl = document.getElementById('normalCount');
+            const gliomeCountEl = document.getElementById('gliomeCount');
+            const meningiomeCountEl = document.getElementById('meningiomeCount');
+            const pituitaryCountEl = document.getElementById('pituitaryCount');
+
+            if (normalCountEl) {
+                normalCountEl.textContent = counts['Normal'];
+                // Ajouter une animation si la valeur change
+                if (counts['Normal'] > 0) {
+                    normalCountEl.classList.add('text-success');
+                    normalCountEl.parentElement.classList.add('pulse');
+                }
+            }
+
+            if (gliomeCountEl) {
+                gliomeCountEl.textContent = counts['Gliome'];
+                if (counts['Gliome'] > 0) {
+                    gliomeCountEl.classList.add('text-danger');
+                    gliomeCountEl.parentElement.classList.add('pulse');
+                }
+            }
+
+            if (meningiomeCountEl) {
+                meningiomeCountEl.textContent = counts['Méningiome'];
+                if (counts['Méningiome'] > 0) {
+                    meningiomeCountEl.classList.add('text-warning');
+                    meningiomeCountEl.parentElement.classList.add('pulse');
+                }
+            }
+
+            if (pituitaryCountEl) {
+                pituitaryCountEl.textContent = counts['Tumeur pituitaire'];
+                if (counts['Tumeur pituitaire'] > 0) {
+                    pituitaryCountEl.classList.add('text-info');
+                    pituitaryCountEl.parentElement.classList.add('pulse');
+                }
+            }
+
+            // Log pour débogage
+            console.log('Statistiques des diagnostics mises à jour:', counts);
+        }
+
+        function toggleChartType(chartName, type) {
+            // Mettre à jour les boutons actifs
+            const buttons = document.querySelectorAll(`button[onclick*="${chartName}"]`);
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Recréer le graphique avec le nouveau type
+            if (chartName === 'confidence' && confidenceChart) {
+                const oldData = confidenceChart.data;
+                const oldOptions = confidenceChart.options;
+                confidenceChart.destroy();
+
+                const ctx = document.getElementById('confidenceChart').getContext('2d');
+                confidenceChart = new Chart(ctx, {
+                    type: type,
+                    data: oldData,
+                    options: oldOptions
+                });
+            } else if (chartName === 'size' && sizeChart) {
+                const oldData = sizeChart.data;
+                const oldOptions = sizeChart.options;
+                sizeChart.destroy();
+
+                const ctx = document.getElementById('sizeChart').getContext('2d');
+                sizeChart = new Chart(ctx, {
+                    type: type,
+                    data: oldData,
+                    options: oldOptions
+                });
+            }
+        }
+
+        function toggleStackedMode() {
+            if (!probabilitiesChart) return;
+
+            const isStacked = document.getElementById('stackedMode').checked;
+            probabilitiesChart.options.scales.y.stacked = isStacked;
+            probabilitiesChart.options.scales.x.stacked = isStacked;
+            probabilitiesChart.update();
+        }
+
+        function displayAnalysesTable(analyses, evolutionDetails) {
+            const tbody = document.getElementById('analysesTableBody');
+
+            tbody.innerHTML = analyses.map((analysis, index) => {
+                const evolution = evolutionDetails.find(e => e.exam_date === analysis.exam_date);
+                const prevAnalysis = index > 0 ? analyses[index - 1] : null;
+
+                let evolutionBadge = '';
+                if (evolution) {
+                    const badgeClass = {
+                        'amélioration': 'success',
+                        'dégradation': 'danger',
+                        'croissance': 'warning',
+                        'réduction': 'info',
+                        'stable': 'secondary'
+                    }[evolution.evolution_type] || 'secondary';
+
+                    evolutionBadge = `<span class="badge bg-${badgeClass}">${evolution.evolution_type}</span>`;
+                }
+
+                return `
+                    <tr>
+                        <td>${analysis.exam_date}</td>
+                        <td>
+                            <span class="badge bg-${analysis.predicted_label === 'Normal' ? 'success' : 'warning'}">
+                                ${analysis.predicted_label}
+                            </span>
+                        </td>
+                        <td>${analysis.confidence}%</td>
+                        <td>${analysis.tumor_size_estimate ? analysis.tumor_size_estimate + ' cm' : '-'}</td>
+                        <td>${evolutionBadge}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="showAnalysisDetails(${analysis.id})">
+                                <i class="fas fa-eye"></i> Détails
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function displayEvolutionTimeline(analyses, evolutionDetails) {
+            const timeline = document.getElementById('evolutionTimeline');
+
+            timeline.innerHTML = analyses.map((analysis, index) => {
+                const evolution = evolutionDetails.find(e => e.exam_date === analysis.exam_date);
+
+                return `
+                    <div class="timeline-item">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title mb-0">${analysis.exam_date}</h6>
+                                    <span class="badge bg-${analysis.predicted_label === 'Normal' ? 'success' : 'warning'}">
+                                        ${analysis.predicted_label}
+                                    </span>
+                                </div>
+                                <p class="card-text">
+                                    <strong>Confiance:</strong> ${analysis.confidence}%<br>
+                                    ${analysis.tumor_size_estimate ? `<strong>Taille:</strong> ${analysis.tumor_size_estimate} cm<br>` : ''}
+                                    ${evolution ? `<strong>Évolution:</strong> ${evolution.notes}` : ''}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showAnalysisDetails(analysisId) {
+            const analysis = patientData.analyses.find(a => a.id === analysisId);
+            if (!analysis) return;
+
+            const modalBody = document.getElementById('analysisModalBody');
+            modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Informations Générales</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Date d'examen:</strong></td><td>${analysis.exam_date}</td></tr>
+                            <tr><td><strong>Fichier:</strong></td><td>${analysis.filename}</td></tr>
+                            <tr><td><strong>Temps de traitement:</strong></td><td>${analysis.processing_time}s</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Diagnostic</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Diagnostic:</strong></td><td>${analysis.predicted_label}</td></tr>
+                            <tr><td><strong>Confiance:</strong></td><td>${analysis.confidence}%</td></tr>
+                            <tr><td><strong>Taille estimée:</strong></td><td>${analysis.tumor_size_estimate ? analysis.tumor_size_estimate + ' cm' : 'N/A'}</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Probabilités par classe</h6>
+                        <div class="row">
+                            ${Object.entries(analysis.probabilities).map(([label, prob]) => `
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <div class="progress mb-1" style="height: 20px;">
+                                            <div class="progress-bar" style="width: ${(prob * 100).toFixed(1)}%">
+                                                ${(prob * 100).toFixed(1)}%
+                                            </div>
+                                        </div>
+                                        <small>${label}</small>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                ${analysis.description ? `
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Description</h6>
+                            <p>${analysis.description}</p>
+                        </div>
+                    </div>
+                ` : ''}
+                ${analysis.recommendations && analysis.recommendations.length > 0 ? `
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Recommandations</h6>
+                            <ul>
+                                ${analysis.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+
+            new bootstrap.Modal(document.getElementById('analysisModal')).show();
+        }
+
+        async function generateEvolutionReport() {
+            try {
+                const response = await fetch(`/api/patients/${patientId}/generate-evolution-report`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('reportContent').textContent = data.report_content;
+                    new bootstrap.Modal(document.getElementById('reportModal')).show();
+                } else {
+                    alert('Erreur lors de la génération du rapport: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erreur lors de la génération du rapport:', error);
+                alert('Erreur lors de la génération du rapport');
+            }
+        }
+
+        function downloadReport() {
+            const content = document.getElementById('reportContent').textContent;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rapport_evolution_${patientId}_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function scheduleFollowUp() {
+            // Définir la date minimale à demain
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('followUpDate').min = tomorrow.toISOString().split('T')[0];
+
+            new bootstrap.Modal(document.getElementById('followUpModal')).show();
+        }
+
+        async function saveFollowUp() {
+            const date = document.getElementById('followUpDate').value;
+            const notes = document.getElementById('followUpNotes').value;
+
+            if (!date) {
+                alert('Veuillez sélectionner une date de suivi');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/patients/${patientId}/schedule-follow-up`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        follow_up_date: date,
+                        notes: notes
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('followUpModal')).hide();
+                    showToast('Suivi programmé avec succès', 'success');
+
+                    // Réinitialiser le formulaire
+                    document.getElementById('followUpForm').reset();
+                } else {
+                    alert('Erreur lors de la programmation du suivi: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erreur lors de la programmation du suivi:', error);
+                alert('Erreur lors de la programmation du suivi');
+            }
+        }
+
+        function exportData() {
+            if (!patientData) {
+                alert('Aucune donnée à exporter');
+                return;
+            }
+
+            const exportData = {
+                patient: {
+                    patient_id: patientId,
+                    patient_name: '{{ patient.patient_name }}',
+                    export_date: new Date().toISOString()
+                },
+                analyses: patientData.analyses,
+                evolution_details: patientData.evolution_details,
+                metrics: patientData.metrics
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `donnees_patient_${patientId}_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showToast('Données exportées avec succès', 'success');
+        }
+
+        function showToast(message, type) {
+            // Créer un toast Bootstrap simple
+            const toastContainer = document.createElement('div');
+            toastContainer.style.position = 'fixed';
+            toastContainer.style.top = '20px';
+            toastContainer.style.right = '20px';
+            toastContainer.style.zIndex = '9999';
+
+            toastContainer.innerHTML = `
+                <div class="toast show" role="alert">
+                    <div class="toast-header">
+                        <i class="fas fa-${type === 'success' ? 'check-circle text-success' : 'exclamation-circle text-danger'} me-2"></i>
+                        <strong class="me-auto">NeuroScan</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(toastContainer);
+
+            setTimeout(() => {
+                toastContainer.remove();
+            }, 5000);
+        }
+
+        // Nouvelles fonctions pour les fonctionnalités modernes
+        function showNotification(message, type = 'info') {
+            showToast(message, type);
+        }
+
+        function filterAnalysesTable() {
+            const searchTerm = document.getElementById('analysesSearch')?.value.toLowerCase() || '';
+            const diagnosisFilter = document.getElementById('diagnosisFilter')?.value || '';
+            const evolutionFilter = document.getElementById('evolutionFilter')?.value || '';
+
+            if (!patientData || !patientData.analyses) return;
+
+            const filteredAnalyses = patientData.analyses.filter(analysis => {
+                const matchesSearch = !searchTerm ||
+                    analysis.predicted_label.toLowerCase().includes(searchTerm) ||
+                    analysis.exam_date.toLowerCase().includes(searchTerm) ||
+                    (analysis.description && analysis.description.toLowerCase().includes(searchTerm));
+
+                const matchesDiagnosis = !diagnosisFilter || analysis.predicted_label === diagnosisFilter;
+
+                const evolution = patientData.evolution_details.find(e => e.exam_date === analysis.exam_date);
+                const matchesEvolution = !evolutionFilter || (evolution && evolution.evolution_type === evolutionFilter);
+
+                return matchesSearch && matchesDiagnosis && matchesEvolution;
+            });
+
+            displayAnalysesTable(filteredAnalyses, patientData.evolution_details);
+            updateAnalysesPagination(filteredAnalyses.length);
+        }
+
+        function resetAnalysesFilters() {
+            const searchInput = document.getElementById('analysesSearch');
+            const diagnosisFilter = document.getElementById('diagnosisFilter');
+            const evolutionFilter = document.getElementById('evolutionFilter');
+
+            if (searchInput) searchInput.value = '';
+            if (diagnosisFilter) diagnosisFilter.value = '';
+            if (evolutionFilter) evolutionFilter.value = '';
+
+            if (patientData && patientData.analyses) {
+                displayAnalysesTable(patientData.analyses, patientData.evolution_details);
+                updateAnalysesPagination(patientData.analyses.length);
+            }
+
+            showNotification('Filtres réinitialisés', 'info');
+        }
+
+        function updateAnalysesPagination(totalItems) {
+            const fromEl = document.getElementById('analysesShowingFrom');
+            const toEl = document.getElementById('analysesShowingTo');
+            const totalEl = document.getElementById('analysesShowingTotal');
+
+            if (fromEl) fromEl.textContent = totalItems > 0 ? '1' : '0';
+            if (toEl) toEl.textContent = totalItems.toString();
+            if (totalEl) totalEl.textContent = totalItems.toString();
+        }
+
+        function exportAnalysesHistory() {
+            if (!patientData || !patientData.analyses) {
+                showNotification('Aucune donnée à exporter', 'warning');
+                return;
+            }
+
+            const csvContent = convertAnalysesToCSV(patientData.analyses);
+            downloadCSV(csvContent, `historique_analyses_${patientId}_${new Date().toISOString().split('T')[0]}.csv`);
+            showNotification('Historique exporté avec succès', 'success');
+        }
+
+        function convertAnalysesToCSV(analyses) {
+            const headers = ['Date', 'Diagnostic', 'Confiance', 'Taille Estimée', 'Temps de Traitement', 'Fichier'];
+            const csvContent = [
+                headers.join(','),
+                ...analyses.map(analysis => [
+                    `"${analysis.exam_date}"`,
+                    `"${analysis.predicted_label}"`,
+                    `${analysis.confidence}%`,
+                    `"${analysis.tumor_size_estimate || 'N/A'}"`,
+                    `${analysis.processing_time}s`,
+                    `"${analysis.filename}"`
+                ].join(','))
+            ].join('\n');
+
+            return csvContent;
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', filename);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function refreshAnalysesTable() {
+            showNotification('Actualisation en cours...', 'info');
+            loadPatientData();
+        }
+
+        function toggleTimelineView() {
+            const timeline = document.getElementById('evolutionTimeline');
+            const toggleBtn = document.getElementById('timelineViewToggle');
+
+            if (timeline && toggleBtn) {
+                const isCompact = timeline.classList.contains('compact-view');
+
+                if (isCompact) {
+                    timeline.classList.remove('compact-view');
+                    toggleBtn.textContent = 'Vue Compacte';
+                } else {
+                    timeline.classList.add('compact-view');
+                    toggleBtn.textContent = 'Vue Détaillée';
+                }
+
+                showNotification(`Vue ${isCompact ? 'détaillée' : 'compacte'} activée`, 'info');
+            }
+        }
+
+        function exportTimeline() {
+            if (!patientData || !patientData.analyses) {
+                showNotification('Aucune donnée de timeline à exporter', 'warning');
+                return;
+            }
+
+            const timelineData = patientData.analyses.map(analysis => {
+                const evolution = patientData.evolution_details.find(e => e.exam_date === analysis.exam_date);
+                return {
+                    date: analysis.exam_date,
+                    diagnostic: analysis.predicted_label,
+                    confiance: analysis.confidence,
+                    taille: analysis.tumor_size_estimate || 'N/A',
+                    evolution: evolution ? evolution.evolution_type : 'N/A',
+                    notes: evolution ? evolution.notes : ''
+                };
+            });
+
+            const jsonContent = JSON.stringify(timelineData, null, 2);
+            const blob = new Blob([jsonContent], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `timeline_${patientId}_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showNotification('Timeline exportée avec succès', 'success');
+        }
+
+        function resetProbabilitiesZoom() {
+            if (probabilitiesChart) {
+                probabilitiesChart.resetZoom();
+                showNotification('Zoom réinitialisé', 'info');
+            }
+        }
+
+        // Nouvelles fonctions d'action
+        function printPatientSummary() {
+            window.print();
+        }
+
+        function shareWithColleague() {
+            const shareData = {
+                title: `Profil Patient - ${document.title}`,
+                text: `Consultez le profil détaillé du patient ${patientId}`,
+                url: window.location.href
+            };
+
+            if (navigator.share) {
+                navigator.share(shareData);
+            } else {
+                // Fallback: copier l'URL
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    showNotification('Lien copié dans le presse-papiers', 'success');
+                });
+            }
+        }
+
+        function addNote() {
+            const note = prompt('Ajouter une note pour ce patient:');
+            if (note && note.trim()) {
+                // Ici, vous pourriez envoyer la note au serveur
+                showNotification('Note ajoutée avec succès', 'success');
+            }
+        }
+
+        function setReminder() {
+            const date = prompt('Date du rappel (YYYY-MM-DD):');
+            if (date) {
+                // Ici, vous pourriez programmer un rappel
+                showNotification(`Rappel programmé pour le ${date}`, 'success');
+            }
+        }
+
+        // Fonctions pour la Navbar Moderne
+        function showAnalyticsModal() {
+            // Créer un modal d'analytics moderne
+            const modalHtml = `
+                <div class="modal fade" id="analyticsModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content modern-card">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-chart-bar me-2 text-primary"></i>
+                                    Analytics Avancées
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="metric-card">
+                                            <div class="metric-card-body text-center">
+                                                <div class="metric-icon blue mx-auto">
+                                                    <i class="fas fa-users"></i>
+                                                </div>
+                                                <h6 class="metric-title">Patients Actifs</h6>
+                                                <div class="metric-value">127</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="metric-card">
+                                            <div class="metric-card-body text-center">
+                                                <div class="metric-icon green mx-auto">
+                                                    <i class="fas fa-chart-line"></i>
+                                                </div>
+                                                <h6 class="metric-title">Analyses ce Mois</h6>
+                                                <div class="metric-value">1,234</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-muted">Fonctionnalité en développement...</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="modern-btn secondary" data-bs-dismiss="modal">Fermer</button>
+                                <button type="button" class="modern-btn primary">Voir Détails</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Ajouter le modal au DOM s'il n'existe pas
+            if (!document.getElementById('analyticsModal')) {
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            }
+
+            // Afficher le modal
+            const modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
+            modal.show();
+        }
+
+        // Initialisation des interactions navbar
+        function initializeNavbarInteractions() {
+            // Gestion du scroll pour la navbar
+            let lastScrollTop = 0;
+            const navbar = document.getElementById('mainNavbar');
+
+            window.addEventListener('scroll', function() {
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+                // Ajouter la classe scrolled
+                if (scrollTop > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+
+                // Auto-hide sur mobile lors du scroll vers le bas
+                if (window.innerWidth <= 768) {
+                    if (scrollTop > lastScrollTop && scrollTop > 100) {
+                        navbar.style.transform = 'translateY(-100%)';
+                    } else {
+                        navbar.style.transform = 'translateY(0)';
+                    }
+                }
+
+                lastScrollTop = scrollTop;
+            });
+
+            // Animation des dropdowns
+            const dropdowns = document.querySelectorAll('.dropdown');
+            dropdowns.forEach(dropdown => {
+                const menu = dropdown.querySelector('.dropdown-menu');
+
+                dropdown.addEventListener('show.bs.dropdown', function() {
+                    if (menu) {
+                        menu.style.opacity = '0';
+                        menu.style.transform = 'translateY(-10px) scale(0.95)';
+
+                        setTimeout(() => {
+                            menu.style.transition = 'all 0.2s ease-out';
+                            menu.style.opacity = '1';
+                            menu.style.transform = 'translateY(0) scale(1)';
+                        }, 10);
+                    }
+                });
+
+                dropdown.addEventListener('hide.bs.dropdown', function() {
+                    if (menu) {
+                        menu.style.opacity = '0';
+                        menu.style.transform = 'translateY(-10px) scale(0.95)';
+                    }
+                });
+            });
+
+            // Fermeture automatique du menu mobile lors du clic sur un lien
+            const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+            const navbarCollapse = document.getElementById('navbarNav');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 991 && navbarCollapse.classList.contains('show')) {
+                        const bsCollapse = new bootstrap.Collapse(navbarCollapse);
+                        bsCollapse.hide();
+                    }
+                });
+            });
+
+            // Effet de typing pour le tagline
+            const tagline = document.querySelector('.brand-tagline');
+            if (tagline) {
+                const text = tagline.textContent;
+                tagline.textContent = '';
+
+                let i = 0;
+                const typeWriter = () => {
+                    if (i < text.length) {
+                        tagline.textContent += text.charAt(i);
+                        i++;
+                        setTimeout(typeWriter, 100);
+                    }
+                };
+
+                setTimeout(typeWriter, 1000);
+            }
+        }
+    </script>
+</body>
+</html>

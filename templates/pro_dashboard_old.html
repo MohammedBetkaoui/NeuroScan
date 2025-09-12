@@ -1,0 +1,1309 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Tableau de Bord Pro - NeuroScan{% endblock %}
+
+{% block page_subtitle %}Analyse & Statistiques{% endblock %}
+
+{% block page_title %}Tableau de Bord Professionnel{% endblock %}
+
+{% block page_description %}Analyses détaillées, statistiques avancées et tendances de vos diagnostics{% endblock %}
+
+{% block extra_css %}
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --blue-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --green-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --purple-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --orange-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-heavy: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            --border-radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        /* Cards modernes */
+        .modern-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .modern-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        /* Stat cards avec gradients modernes */
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            z-index: 1;
+        }
+
+        .stat-card > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .stat-card.blue {
+            background: var(--blue-gradient);
+        }
+
+        .stat-card.green {
+            background: var(--green-gradient);
+        }
+
+        .stat-card.purple {
+            background: var(--purple-gradient);
+        }
+
+        .stat-card.orange {
+            background: var(--orange-gradient);
+        }
+
+        /* Header moderne */
+        .modern-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Boutons modernes */
+        .modern-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            color: white;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--shadow-light);
+        }
+
+        .modern-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .modern-btn.secondary {
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+        }
+
+        .modern-btn.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        /* Period buttons */
+        .period-btn {
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .period-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: var(--shadow-light);
+        }
+
+        .period-btn:not(.active) {
+            background: rgba(255, 255, 255, 0.8);
+            color: #6b7280;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .period-btn:not(.active):hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-1px);
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .chart-container canvas {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: calc(100% - 40px) !important;
+            height: calc(100% - 40px) !important;
+        }
+
+        /* Table moderne */
+        .modern-table {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+        }
+
+        .modern-table thead {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+        }
+
+        .modern-table tbody tr {
+            transition: var(--transition);
+        }
+
+        .modern-table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+            transform: scale(1.01);
+        }
+
+        /* Loading states */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 280px;
+                padding: 10px;
+            }
+
+            .stat-card {
+                margin-bottom: 1rem;
+            }
+
+            .modern-btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+
+        /* Scrollbar personnalisée */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="modern-header sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div class="flex items-center fade-in-up">
+                    <div class="flex-shrink-0 mr-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <i class="fas fa-brain text-white text-xl"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                            NeuroScan Pro
+                        </h1>
+                        <p class="text-sm text-gray-600 font-medium">Tableau de bord analytique avancé</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3 slide-in-right">
+                    <!-- Refresh Button -->
+                    <button id="refreshBtn" class="modern-btn success" title="Actualiser les données">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        <span class="hidden sm:inline">Actualiser</span>
+                    </button>
+
+                    <!-- Export Dropdown -->
+                    <div class="relative">
+                        <button id="exportBtn" class="modern-btn">
+                            <i class="fas fa-download mr-2"></i>
+                            <span class="hidden sm:inline">Exporter</span>
+                            <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                        </button>
+                        <div id="exportMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-20 overflow-hidden">
+                            <div class="py-2">
+                                <a href="/api/analytics/export/csv" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-file-csv text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Exporter CSV</div>
+                                        <div class="text-xs text-gray-500">Données tabulaires</div>
+                                    </div>
+                                </a>
+                                <a href="/api/analytics/export/json" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-file-code text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Exporter JSON</div>
+                                        <div class="text-xs text-gray-500">Format structuré</div>
+                                    </div>
+                                </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <button onclick="exportToPDF()" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-file-pdf text-red-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Rapport PDF</div>
+                                        <div class="text-xs text-gray-500">Rapport complet</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Mode -->
+                    <a href="/pro-dashboard-advanced" class="modern-btn secondary">
+                        <i class="fas fa-rocket mr-2"></i>
+                        <span class="hidden sm:inline">Mode Avancé</span>
+                    </a>
+
+                    <!-- Back to Dashboard -->
+                    <a href="/dashboard" class="p-3 text-gray-600 hover:text-indigo-600 transition-colors rounded-lg hover:bg-white/50" title="Retour au tableau de bord">
+                        <i class="fas fa-arrow-left text-lg"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Analyses -->
+            <div class="stat-card blue text-white p-6 fade-in-up" style="animation-delay: 0.1s;">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-chart-line text-lg mr-2 opacity-80"></i>
+                            <p class="text-blue-100 text-sm font-medium uppercase tracking-wide">Total Analyses</p>
+                        </div>
+                        <p id="totalAnalyses" class="text-4xl font-bold mb-1">-</p>
+                        <div class="flex items-center text-blue-200 text-xs">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span id="totalAnalysesChange">+0%</span>
+                            <span class="ml-1">ce mois</span>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-2xl">
+                        <i class="fas fa-brain text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confiance Moyenne -->
+            <div class="stat-card green text-white p-6 fade-in-up" style="animation-delay: 0.2s;">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-check-circle text-lg mr-2 opacity-80"></i>
+                            <p class="text-green-100 text-sm font-medium uppercase tracking-wide">Confiance Moyenne</p>
+                        </div>
+                        <p id="avgConfidence" class="text-4xl font-bold mb-1">-%</p>
+                        <div class="flex items-center text-green-200 text-xs">
+                            <i class="fas fa-shield-alt mr-1"></i>
+                            <span>Fiabilité élevée</span>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-2xl">
+                        <i class="fas fa-award text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Jours Actifs -->
+            <div class="stat-card purple text-white p-6 fade-in-up" style="animation-delay: 0.3s;">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-calendar-alt text-lg mr-2 opacity-80"></i>
+                            <p class="text-purple-100 text-sm font-medium uppercase tracking-wide">Jours Actifs</p>
+                        </div>
+                        <p id="activeDays" class="text-4xl font-bold mb-1">-</p>
+                        <div class="flex items-center text-purple-200 text-xs">
+                            <i class="fas fa-clock mr-1"></i>
+                            <span>Derniers 30 jours</span>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-2xl">
+                        <i class="fas fa-calendar-check text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Temps Moyen -->
+            <div class="stat-card orange text-white p-6 fade-in-up" style="animation-delay: 0.4s;">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-clock text-lg mr-2 opacity-80"></i>
+                            <p class="text-orange-100 text-sm font-medium uppercase tracking-wide">Temps Moyen</p>
+                        </div>
+                        <p id="avgProcessingTime" class="text-4xl font-bold mb-1">-s</p>
+                        <div class="flex items-center text-orange-200 text-xs">
+                            <i class="fas fa-tachometer-alt mr-1"></i>
+                            <span>Performance optimale</span>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-2xl">
+                        <i class="fas fa-stopwatch text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+            <!-- Period Analysis Chart -->
+            <div class="xl:col-span-2 modern-card p-6 fade-in-up" style="animation-delay: 0.5s;">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1">Analyses par Période</h3>
+                        <p class="text-gray-600 text-sm">Évolution temporelle de votre activité</p>
+                    </div>
+                    <div class="flex space-x-2 bg-gray-100 p-1 rounded-xl">
+                        <button id="dayBtn" class="period-btn active text-sm">
+                            <i class="fas fa-clock mr-1"></i>Jour
+                        </button>
+                        <button id="monthBtn" class="period-btn text-sm">
+                            <i class="fas fa-calendar-day mr-1"></i>Mois
+                        </button>
+                        <button id="yearBtn" class="period-btn text-sm">
+                            <i class="fas fa-calendar mr-1"></i>Année
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container relative">
+                    <canvas id="periodChart"></canvas>
+                    <div id="periodChartLoader" class="absolute inset-0 flex items-center justify-center hidden">
+                        <div class="bg-white rounded-lg p-4 shadow-lg">
+                            <i class="fas fa-spinner fa-spin text-indigo-600 mr-2"></i>
+                            <span class="text-gray-700">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tumor Distribution Chart -->
+            <div class="modern-card p-6 fade-in-up" style="animation-delay: 0.6s;">
+                <div class="mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-1">Diagnostics</h3>
+                    <p class="text-gray-600 text-sm">Répartition par type</p>
+                </div>
+                <div class="chart-container relative">
+                    <canvas id="tumorChart"></canvas>
+                    <div id="tumorChartLoader" class="absolute inset-0 flex items-center justify-center hidden">
+                        <div class="bg-white rounded-lg p-4 shadow-lg">
+                            <i class="fas fa-spinner fa-spin text-indigo-600 mr-2"></i>
+                            <span class="text-gray-700">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Légende personnalisée -->
+                <div id="tumorLegend" class="mt-4 space-y-2">
+                    <!-- Sera rempli dynamiquement -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Métriques supplémentaires -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Tendance hebdomadaire -->
+            <div class="modern-card p-6 fade-in-up" style="animation-delay: 0.7s;">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-lg font-semibold text-gray-800">Tendance 7 jours</h4>
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-trending-up text-blue-600"></i>
+                    </div>
+                </div>
+                <div class="text-3xl font-bold text-gray-900 mb-1" id="weeklyTrend">+0%</div>
+                <p class="text-sm text-gray-600">vs semaine précédente</p>
+            </div>
+
+            <!-- Pic d'activité -->
+            <div class="modern-card p-6 fade-in-up" style="animation-delay: 0.8s;">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-lg font-semibold text-gray-800">Pic d'activité</h4>
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-bar text-green-600"></i>
+                    </div>
+                </div>
+                <div class="text-3xl font-bold text-gray-900 mb-1" id="peakHour">--h</div>
+                <p class="text-sm text-gray-600">Heure la plus active</p>
+            </div>
+
+            <!-- Précision globale -->
+            <div class="modern-card p-6 fade-in-up" style="animation-delay: 0.9s;">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-lg font-semibold text-gray-800">Précision globale</h4>
+                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-bullseye text-purple-600"></i>
+                    </div>
+                </div>
+                <div class="text-3xl font-bold text-gray-900 mb-1" id="globalAccuracy">--%</div>
+                <p class="text-sm text-gray-600">Confiance moyenne</p>
+            </div>
+        </div>
+
+        <!-- Recent Analyses Table -->
+        <div class="modern-card fade-in-up" style="animation-delay: 1s;">
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1">Analyses Récentes</h3>
+                        <p class="text-gray-600 text-sm">Historique détaillé de vos dernières analyses</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="refreshRecentAnalyses()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium">
+                            <i class="fas fa-sync-alt mr-2"></i>Actualiser
+                        </button>
+                        <button onclick="viewAllAnalyses()" class="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg transition-colors text-sm font-medium">
+                            <i class="fas fa-eye mr-2"></i>Voir tout
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full modern-table">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-clock mr-2"></i>Date/Heure
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-file-medical mr-2"></i>Fichier
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-stethoscope mr-2"></i>Diagnostic
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-percentage mr-2"></i>Confiance
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-stopwatch mr-2"></i>Temps
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-cog mr-2"></i>Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentAnalysesTable" class="bg-white divide-y divide-gray-100">
+                        <!-- Loader -->
+                        <tr id="tableLoader">
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center space-y-4">
+                                    <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                                    <p class="text-gray-500 font-medium">Chargement des analyses...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        Total : <span class="font-medium" id="tableTotal">0</span> analyses
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <i class="fas fa-list mr-1"></i>Toutes les analyses affichées
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let periodChart = null;
+        let tumorChart = null;
+        let currentPeriod = 'day';
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                // Load overview data
+                const overviewResponse = await fetch('/api/analytics/overview');
+                const overviewData = await overviewResponse.json();
+                
+                if (overviewData.success) {
+                    updateOverviewStats(overviewData.data);
+                    updateTumorChart(overviewData.data.tumor_distribution);
+                }
+
+                // Load period data
+                await loadPeriodData(currentPeriod);
+
+                // Load recent analyses
+                const recentResponse = await fetch('/api/analytics/recent');
+                const recentData = await recentResponse.json();
+
+                if (recentData.success) {
+                    allAnalysesData = recentData.data;
+                    console.log('📋 Données chargées:', {
+                        totalAnalyses: allAnalysesData.length
+                    });
+                    updateRecentAnalysesTable(allAnalysesData);
+                    updateTotalCount();
+                }
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        function updateOverviewStats(data) {
+            document.getElementById('totalAnalyses').textContent = data.total_analyses;
+            document.getElementById('avgConfidence').textContent = data.avg_confidence + '%';
+            document.getElementById('activeDays').textContent = data.active_days;
+            document.getElementById('avgProcessingTime').textContent = data.avg_processing_time + 's';
+        }
+
+        async function loadPeriodData(period) {
+            try {
+                const response = await fetch(`/api/analytics/period/${period}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    updatePeriodChart(data.data);
+                } else {
+                    console.error('Error from API:', data.error);
+                    // Afficher un graphique vide avec message d'erreur
+                    updatePeriodChart({
+                        labels: ['Aucune donnée'],
+                        values: [0],
+                        period: period
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading period data:', error);
+                // Afficher un graphique vide en cas d'erreur réseau
+                updatePeriodChart({
+                    labels: ['Erreur de chargement'],
+                    values: [0],
+                    period: period
+                });
+            }
+        }
+
+        function updatePeriodChart(data) {
+            const ctx = document.getElementById('periodChart').getContext('2d');
+
+            if (periodChart) {
+                periodChart.destroy();
+            }
+
+            // Déterminer le titre basé sur la période
+            let chartTitle = 'Analyses';
+            if (data.period === 'day') {
+                chartTitle = 'Analyses par heure';
+            } else if (data.period === 'month') {
+                chartTitle = 'Analyses par jour';
+            } else if (data.period === 'year') {
+                chartTitle = 'Analyses par mois';
+            }
+
+            periodChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: chartTitle,
+                        data: data.values,
+                        borderColor: 'rgb(99, 102, 241)',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: 'rgb(99, 102, 241)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: data.period === 'day' ? 'Heures' :
+                                      data.period === 'month' ? 'Jours' : 'Mois'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Nombre d\'analyses'
+                            },
+                            ticks: {
+                                stepSize: 1,
+                                precision: 0
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    },
+                    layout: {
+                        padding: {
+                            top: 10,
+                            bottom: 10
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTumorChart(distribution) {
+            const ctx = document.getElementById('tumorChart').getContext('2d');
+
+            if (tumorChart) {
+                tumorChart.destroy();
+            }
+
+            const labels = Object.keys(distribution);
+            const values = Object.values(distribution);
+            const colors = ['#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+            tumorChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors,
+                        borderWidth: 3,
+                        borderColor: '#ffffff',
+                        hoverBorderWidth: 5,
+                        hoverBorderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            display: false // Désactiver la légende par défaut
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#ffffff',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${label}: ${value} cas (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    layout: {
+                        padding: {
+                            top: 10,
+                            bottom: 10
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'point'
+                    }
+                }
+            });
+
+            // Mettre à jour la légende personnalisée
+            updateTumorLegend(distribution);
+        }
+
+        function updateRecentAnalysesTable(analyses) {
+            const tbody = document.getElementById('recentAnalysesTable');
+
+            // Vider le tableau
+            tbody.innerHTML = '';
+
+            if (!analyses || analyses.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center space-y-4">
+                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-chart-line text-gray-400 text-2xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900 mb-1">Aucune analyse récente</h3>
+                                    <p class="text-gray-500">Commencez par analyser une image IRM</p>
+                                </div>
+                                <a href="/" class="modern-btn">
+                                    <i class="fas fa-plus mr-2"></i>Nouvelle analyse
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                updatePaginationControls();
+                return;
+            }
+
+            analyses.forEach((analysis, index) => {
+                const row = document.createElement('tr');
+                row.className = 'fade-in-up';
+                row.style.animationDelay = `${index * 0.1}s`;
+
+                const date = new Date(analysis.timestamp);
+                const relativeTime = getRelativeTime(date);
+
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${date.toLocaleDateString('fr-FR')}</div>
+                        <div class="text-xs text-gray-500">${date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}</div>
+                        <div class="text-xs text-blue-600">${relativeTime}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-file-medical text-blue-600"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 truncate max-w-xs" title="${analysis.filename}">
+                                    ${analysis.filename}
+                                </div>
+                                <div class="text-xs text-gray-500">Image IRM</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getBadgeClass(analysis.predicted_label)}">
+                                ${analysis.predicted_label}
+                            </span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-1">
+                                <div class="text-sm font-medium text-gray-900">${analysis.confidence}%</div>
+                                <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                    <div class="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full transition-all duration-500"
+                                         style="width: ${analysis.confidence}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${analysis.processing_time}s</div>
+                        <div class="text-xs text-gray-500">${getPerformanceLabel(analysis.processing_time)}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex space-x-2">
+                            <button onclick="viewAnalysisDetails(${analysis.id})" class="text-indigo-600 hover:text-indigo-900 p-2 rounded-lg hover:bg-indigo-50 transition-colors" title="Voir détails">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="downloadAnalysis(${analysis.id})" class="text-green-600 hover:text-green-900 p-2 rounded-lg hover:bg-green-50 transition-colors" title="Télécharger">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Mettre à jour les contrôles de pagination
+            updatePaginationControls();
+        }
+
+        function getBadgeClass(label) {
+            const classes = {
+                'Normal': 'bg-green-100 text-green-800 border border-green-200',
+                'Gliome': 'bg-red-100 text-red-800 border border-red-200',
+                'Méningiome': 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+                'Tumeur pituitaire': 'bg-purple-100 text-purple-800 border border-purple-200'
+            };
+            return classes[label] || 'bg-gray-100 text-gray-800 border border-gray-200';
+        }
+
+        function getRelativeTime(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffMins < 1) return 'À l\'instant';
+            if (diffMins < 60) return `Il y a ${diffMins} min`;
+            if (diffHours < 24) return `Il y a ${diffHours}h`;
+            if (diffDays < 7) return `Il y a ${diffDays}j`;
+            return `Il y a ${Math.floor(diffDays / 7)} sem`;
+        }
+
+        function getPerformanceLabel(time) {
+            if (time < 2) return 'Très rapide';
+            if (time < 5) return 'Rapide';
+            if (time < 10) return 'Normal';
+            return 'Lent';
+        }
+
+
+
+        function getCurrentPageData() {
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageData = allAnalysesData.slice(start, end);
+            console.log('getCurrentPageData:', {
+                currentPage,
+                start,
+                end,
+                totalData: allAnalysesData.length,
+                pageDataLength: pageData.length
+            });
+            return pageData;
+        }
+
+        function updatePaginationControls() {
+            const prevBtn = document.getElementById('prevPage');
+            const nextBtn = document.getElementById('nextPage');
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            console.log('updatePaginationControls:', {
+                currentPage,
+                totalPages,
+                totalItems,
+                itemsPerPage
+            });
+
+            // Mettre à jour l'état des boutons
+            if (prevBtn) {
+                const isFirstPage = currentPage <= 1;
+                prevBtn.disabled = isFirstPage;
+                if (isFirstPage) {
+                    prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+
+            if (nextBtn) {
+                const isLastPage = currentPage >= totalPages || totalPages <= 1;
+                nextBtn.disabled = isLastPage;
+                if (isLastPage) {
+                    nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+
+            updatePaginationInfo();
+        }
+
+        function goToPreviousPage() {
+            console.log('goToPreviousPage called, currentPage:', currentPage);
+            if (currentPage > 1) {
+                currentPage--;
+                console.log('Moving to page:', currentPage);
+                const pageData = getCurrentPageData();
+                console.log('Page data:', pageData);
+                updateRecentAnalysesTable(pageData);
+                updatePaginationControls();
+                showNotification(`Page ${currentPage} affichée`, 'info');
+            } else {
+                console.log('Already on first page');
+            }
+        }
+
+        function goToNextPage() {
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            console.log('goToNextPage called, currentPage:', currentPage, 'totalPages:', totalPages, 'totalItems:', totalItems);
+            if (currentPage < totalPages) {
+                currentPage++;
+                console.log('Moving to page:', currentPage);
+                const pageData = getCurrentPageData();
+                console.log('Page data:', pageData);
+                updateRecentAnalysesTable(pageData);
+                updatePaginationControls();
+                showNotification(`Page ${currentPage} affichée`, 'info');
+            } else {
+                console.log('Already on last page');
+            }
+        }
+
+        function showErrorInTable(message) {
+            const tbody = document.getElementById('recentAnalysesTable');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center">
+                        <div class="flex flex-col items-center space-y-4">
+                            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900 mb-1">Erreur de chargement</h3>
+                                <p class="text-gray-500">${message}</p>
+                            </div>
+                            <button onclick="refreshRecentAnalyses()" class="modern-btn">
+                                <i class="fas fa-sync-alt mr-2"></i>Réessayer
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Variable pour stocker toutes les analyses
+        let allAnalysesData = [];
+
+        // Fonction pour actualiser les analyses
+        function refreshRecentAnalyses() {
+            const tbody = document.getElementById('recentAnalysesTable');
+
+            // Créer et afficher le loader
+            tbody.innerHTML = `
+                <tr id="tableLoader">
+                    <td colspan="6" class="px-6 py-12 text-center">
+                        <div class="flex flex-col items-center space-y-4">
+                            <div class="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                            <p class="text-gray-500 font-medium">Actualisation des données...</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+
+            // Recharger les données
+            setTimeout(async () => {
+                try {
+                    const response = await fetch('/api/analytics/recent');
+                    const data = await response.json();
+
+                    if (data.success) {
+                        allAnalysesData = data.data;
+                        updateRecentAnalysesTable(allAnalysesData);
+                        updateTotalCount();
+                    } else {
+                        showErrorInTable('Erreur lors du chargement des données');
+                    }
+                } catch (error) {
+                    console.error('Erreur lors du rechargement:', error);
+                    showErrorInTable('Erreur de connexion');
+                }
+            }, 1000);
+        }
+
+        function viewAllAnalyses() {
+            window.location.href = '/pro-dashboard-advanced';
+        }
+
+        function viewAnalysisDetails(analysisId) {
+            // Ouvrir les détails de l'analyse dans un modal ou une nouvelle page
+            console.log('Voir détails de l\'analyse:', analysisId);
+            // TODO: Implémenter la vue détaillée
+        }
+
+        function downloadAnalysis(analysisId) {
+            // Télécharger le rapport d'analyse
+            window.location.href = `/api/analytics/download/${analysisId}`;
+        }
+
+        function exportToPDF() {
+            // Générer un rapport PDF
+            window.location.href = '/api/analytics/export/pdf';
+        }
+
+        function updateTotalCount() {
+            document.getElementById('tableTotal').textContent = allAnalysesData.length;
+        }
+
+        // Fonction pour mettre à jour la légende personnalisée du graphique en secteurs
+        function updateTumorLegend(distribution) {
+            const legendContainer = document.getElementById('tumorLegend');
+            const colors = ['#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+            const icons = {
+                'Normal': 'fa-check-circle',
+                'Méningiome': 'fa-exclamation-triangle',
+                'Gliome': 'fa-times-circle',
+                'Tumeur pituitaire': 'fa-info-circle'
+            };
+
+            legendContainer.innerHTML = '';
+
+            Object.entries(distribution).forEach(([label, count], index) => {
+                const total = Object.values(distribution).reduce((a, b) => a + b, 0);
+                const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+
+                const legendItem = document.createElement('div');
+                legendItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+                legendItem.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded-full mr-3" style="background-color: ${colors[index]}"></div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">${label}</div>
+                            <div class="text-xs text-gray-500">
+                                <i class="fas ${icons[label] || 'fa-circle'} mr-1"></i>
+                                ${count} cas
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-lg font-bold text-gray-900">${percentage}%</div>
+                    </div>
+                `;
+                legendContainer.appendChild(legendItem);
+            });
+        }
+
+        // Initialisation de l'application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animation d'entrée pour les éléments
+            const animatedElements = document.querySelectorAll('.fade-in-up, .slide-in-right');
+            animatedElements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = el.classList.contains('fade-in-up') ? 'translateY(30px)' : 'translateX(30px)';
+
+                setTimeout(() => {
+                    el.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                    el.style.opacity = '1';
+                    el.style.transform = 'translate(0, 0)';
+                }, index * 100);
+            });
+
+            // Export menu handler
+            const exportBtn = document.getElementById('exportBtn');
+            const exportMenu = document.getElementById('exportMenu');
+
+            exportBtn?.addEventListener('click', function(e) {
+                e.stopPropagation();
+                exportMenu.classList.toggle('hidden');
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!exportMenu.contains(e.target) && !exportBtn.contains(e.target)) {
+                    exportMenu.classList.add('hidden');
+                }
+            });
+
+            // Refresh button handler
+            const refreshBtn = document.getElementById('refreshBtn');
+            refreshBtn?.addEventListener('click', function() {
+                this.classList.add('loading');
+                this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span class="hidden sm:inline">Actualisation...</span>';
+
+                loadDashboardData().finally(() => {
+                    this.classList.remove('loading');
+                    this.innerHTML = '<i class="fas fa-sync-alt mr-2"></i><span class="hidden sm:inline">Actualiser</span>';
+                });
+            });
+
+            // Period button handlers
+            const periodButtons = document.querySelectorAll('.period-btn');
+
+            periodButtons.forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    // Update button styles
+                    periodButtons.forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+
+                    // Show loader
+                    const loader = document.getElementById('periodChartLoader');
+                    if (loader) loader.classList.remove('hidden');
+
+                    // Update period and reload data
+                    currentPeriod = this.id.replace('Btn', '');
+                    await loadPeriodData(currentPeriod);
+
+                    // Hide loader
+                    if (loader) loader.classList.add('hidden');
+                });
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'r':
+                            e.preventDefault();
+                            refreshBtn?.click();
+                            break;
+                        case 'e':
+                            e.preventDefault();
+                            exportBtn?.click();
+                            break;
+                    }
+                }
+            });
+
+            // Load initial data
+            loadDashboardData();
+
+            // Auto-refresh every 60 seconds (augmenté pour éviter la surcharge)
+            setInterval(loadDashboardData, 60000);
+
+            // Notification de bienvenue
+            setTimeout(() => {
+                showNotification('Tableau de bord chargé avec succès', 'success');
+            }, 1000);
+        });
+
+        // Fonction de notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+
+            const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+            notification.className += ` ${bgColor} text-white`;
+
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'} mr-2"></i>
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Animation d'entrée
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+
+            // Auto-suppression après 5 secondes
+            setTimeout(() => {
+                notification.style.transform = 'translateX(full)';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

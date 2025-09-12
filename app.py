@@ -11,6 +11,8 @@ import time
 import requests
 import json
 import sqlite3
+import secrets
+import random
 from datetime import datetime, timedelta
 from collections import defaultdict, Counter
 from werkzeug.utils import secure_filename
@@ -484,10 +486,19 @@ def calculate_patient_metrics(analyses, evolution_details):
 
         # Période de suivi
         if total_analyses > 1:
-            first_date = datetime.strptime(analyses[0]['exam_date'], '%Y-%m-%d')
-            last_date = datetime.strptime(analyses[-1]['exam_date'], '%Y-%m-%d')
-            follow_up_days = (last_date - first_date).days
-            follow_up_months = round(follow_up_days / 30.44, 1)
+            first_date_str = analyses[0]['exam_date']
+            last_date_str = analyses[-1]['exam_date']
+            
+            # S'assurer que les dates sont des chaînes de caractères avant de les parser
+            if isinstance(first_date_str, str) and isinstance(last_date_str, str):
+                first_date = datetime.strptime(first_date_str, '%Y-%m-%d')
+                last_date = datetime.strptime(last_date_str, '%Y-%m-%d')
+                follow_up_days = (last_date - first_date).days
+                follow_up_months = round(follow_up_days / 30.44, 1)
+            else:
+                # Gérer le cas où les dates ne sont pas des chaînes (improbable mais sécuritaire)
+                follow_up_days = 0
+                follow_up_months = 0
         else:
             follow_up_days = 0
             follow_up_months = 0
@@ -811,7 +822,6 @@ def get_current_doctor():
 def create_doctor_session(doctor_id, ip_address, user_agent):
     """Créer une session pour un médecin"""
     try:
-        import secrets
         session_token = secrets.token_urlsafe(32)
         expires_at = datetime.now() + timedelta(days=7)  # Session valide 7 jours
 
@@ -935,7 +945,6 @@ def predict_tumor(image_path):
     """Prédire le type de tumeur"""
     if model is None:
         # Mode démo - générer des prédictions simulées réalistes
-        import random
         
         # Simuler différents scénarios de diagnostic
         demo_scenarios = [
@@ -1759,7 +1768,7 @@ def get_my_patients():
             patients.append({
                 'patient_id': row[0],
                 'patient_name': row[1],
-                'date_of_birth': row[2],
+                'date_of_birth': datetime.strptime(row[2], '%Y-%m-%d') if row[2] else None,
                 'gender': row[3],
                 'phone': row[4],
                 'email': row[5],
@@ -2755,7 +2764,10 @@ def patient_profile(patient_id):
         # Vérifier que le patient appartient au médecin connecté
         cursor.execute('''
             SELECT patient_id, patient_name, date_of_birth, gender,
-                   first_analysis_date, last_analysis_date, total_analyses
+                   first_analysis_date, last_analysis_date, total_analyses,
+                   phone, email, address, emergency_contact_name,
+                   emergency_contact_phone, medical_history, allergies,
+                   current_medications, insurance_number, notes
             FROM patients
             WHERE patient_id = ? AND doctor_id = ?
         ''', (patient_id, doctor['id']))
@@ -2768,15 +2780,103 @@ def patient_profile(patient_id):
         patient = {
             'patient_id': patient_data[0],
             'patient_name': patient_data[1],
-            'date_of_birth': patient_data[2],
+            'date_of_birth': datetime.strptime(patient_data[2], '%Y-%m-%d') if patient_data[2] else None,
             'gender': patient_data[3],
-            'first_analysis_date': patient_data[4],
-            'last_analysis_date': patient_data[5],
-            'total_analyses': patient_data[6]
+            'first_analysis_date': datetime.strptime(patient_data[4], '%Y-%m-%d') if patient_data[4] else None,
+            'last_analysis_date': datetime.strptime(patient_data[5], '%Y-%m-%d') if patient_data[5] else None,
+            'total_analyses': patient_data[6],
+            'phone': patient_data[7],
+            'email': patient_data[8],
+            'address': patient_data[9],
+            'emergency_contact_name': patient_data[10],
+            'emergency_contact_phone': patient_data[11],
+            'medical_history': patient_data[12],
+            'allergies': patient_data[13],
+            'current_medications': patient_data[14],
+            'insurance_number': patient_data[15],
+            'notes': patient_data[16]
         }
 
+        # Récupérer les analyses du patient
+        cursor.execute('''
+            SELECT id, timestamp, filename, predicted_class, predicted_label,
+                   confidence, probabilities, description, recommendations,
+                   processing_time, exam_date, tumor_size_estimate
+            FROM analyses
+            WHERE patient_id = ? AND doctor_id = ?
+            ORDER BY exam_date DESC, timestamp DESC
+        ''', (patient_id, doctor['id']))
+
+        analyses = []
+        for row in cursor.fetchall():
+            probabilities = json.loads(row[6]) if row[6] else {}
+            recommendations = json.loads(row[8]) if row[8] else []
+
+            # Convertir le timestamp en datetime si c'est une chaîne
+            timestamp_dt = datetime.strptime(row[1], '%Y-%m-%d %H:%M:%S') if isinstance(row[1], str) and row[1] else datetime.now()
+            
+            analyses.append({
+                'id': row[0],
+                'timestamp': timestamp_dt,  # Stocker comme datetime pour les calculs
+                'filename': row[2],
+                'predicted_class': row[3],
+                'predicted_label': row[4],
+                'confidence': row[5],
+                'probabilities': probabilities,
+                'description': row[7],
+                'recommendations': recommendations,
+                'processing_time': row[9],
+                'exam_date': row[10],
+                'tumor_size_estimate': row[11],
+                'date_uploaded': timestamp_dt,  # Garder comme objet datetime pour le template
+                'date_uploaded_str': str(row[1]) if row[1] else str(datetime.now()),  # Version chaîne pour JSON
+                'image_name': row[2],
+                'image_path': f'/uploads/{row[2]}',
+                'medical_notes': row[7],
+                'risk_level': 'Élevé' if row[3] != 0 else 'Faible'
+            })
+
+        # Calculer les statistiques
+        normal_count = sum(1 for a in analyses if a['predicted_class'] == 0)
+        abnormal_count = len(analyses) - normal_count
+
+        # Récupérer les alertes médicales
+        alerts = get_patient_alerts(cursor, patient_id, doctor['id'])
+
+        # Calculer le niveau de risque du patient
+        risk_level = 'Faible'
+        if abnormal_count > 0:
+            if abnormal_count >= 3:
+                risk_level = 'Critique'
+            elif abnormal_count >= 2:
+                risk_level = 'Élevé'
+            else:
+                risk_level = 'Modéré'
+
+        patient['risk_level'] = risk_level
+
+        # Trier les analyses par date (du plus récent au plus ancien)
+        sorted_analyses = sorted(analyses, key=lambda x: x['date_uploaded'], reverse=True)
+        
+        # Préparer les données JSON pour les graphiques
+        analyses_json = json.dumps([{
+            'date_uploaded': a['date_uploaded_str'],  # Utiliser la version chaîne pour JSON
+            'confidence': a['confidence'],
+            'predicted_class': a['predicted_class'],
+            'predicted_label': a['predicted_label']
+        } for a in sorted_analyses])
+
         conn.close()
-        return render_template('patient_profile.html', patient=patient, doctor=doctor)
+
+        return render_template('patient_profile_pro.html',
+                               patient=patient,
+                               doctor=doctor,
+                               analyses=sorted_analyses,  # Utiliser les analyses triées
+                               alerts=alerts,
+                               normal_count=normal_count,
+                               abnormal_count=abnormal_count,
+                               analyses_json=analyses_json,
+                               current_date=datetime.now())
 
     except Exception as e:
         print(f"Erreur lors du chargement du profil patient: {e}")
@@ -3707,7 +3807,7 @@ def get_patient_details(patient_id):
         patient = {
             'patient_id': patient_data[0],
             'patient_name': patient_data[1],
-            'date_of_birth': patient_data[2],
+            'date_of_birth': datetime.strptime(patient_data[2], '%Y-%m-%d') if patient_data[2] else None,
             'gender': patient_data[3],
             'phone': patient_data[4],
             'email': patient_data[5],

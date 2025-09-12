@@ -2,6 +2,11 @@
 
 Application Flask utilisant l'intelligence artificielle pour l'analyse et la détection de tumeurs cérébrales à partir d'images IRM.
 
+Nouveautés (09/2025)
+- Nouvelle interface PRO du profil patient (vue moderne, responsive) avec KPIs, courbe d'évolution de la confiance, tableau des analyses, notes et export JSON.
+- Unification des dashboards et cohérence UI via `base_dashboard.html` et `dashboard-unified.css`.
+- Endpoints APIs étendus pour analytics et historique détaillé du patient.
+
 ## Fonctionnalités
 
 - **Interface web moderne** : Interface utilisateur intuitive avec design responsive
@@ -9,6 +14,12 @@ Application Flask utilisant l'intelligence artificielle pour l'analyse et la dé
 - **Support multi-formats** : Compatible avec les formats DICOM, NIfTI, JPEG, PNG
 - **Résultats détaillés** : Probabilités pour chaque type de tumeur et recommandations cliniques
 - **Visualisation** : Affichage des zones suspectes sur l'image analysée
+- **Profil Patient PRO** : Nouvelle page `patient_profile_pro.html` avec:
+   - Carte patient (infos clés, badge de risque, premières/dernières analyses)
+   - KPIs (analyses totales, normal/anormal, confiance moyenne)
+   - Graphique d'évolution (confiance) avec Chart.js
+   - Tableau des analyses (date, diagnostic, confiance, lien image)
+   - Notes/recommandations et export JSON
 
 ## Types de tumeurs détectées
 
@@ -77,6 +88,10 @@ Assurez-vous que les fichiers suivants sont présents :
 
 ## Utilisation
 
+### Authentification et accès
+- Créez un compte médecin via `/register` ou connectez-vous via `/login`.
+- Les sessions sont persistées et les routes privées nécessitent une connexion.
+
 ### Mode démo (recommandé pour tester)
 
 ```bash
@@ -92,20 +107,24 @@ python3 app.py
 
 L'application sera accessible à l'adresse : `http://localhost:5000`
 
-### Utilisation de l'interface
+### Parcours d'utilisation
+1. Connectez-vous (ou enregistrez-vous) en tant que médecin.
+2. Depuis le dashboard, uploadez une image avec les informations patient (ID, nom, date d'examen) via `/upload`.
+3. L'analyse est enregistrée et attribuée au patient et au médecin connecté.
+4. Ouvrez la liste des patients via `/patients` et cliquez sur un patient pour voir son profil PRO `/patient/<patient_id>`.
 
-1. **Upload d'image** : 
-   - Glissez-déposez une image IRM ou cliquez sur "Sélectionner un fichier"
-   - Formats supportés : .dcm, .nii, .jpg, .png
+### Page profil patient (PRO)
+- Route: `/patient/<patient_id>`
+- Template: `templates/patient_profile_pro.html`
+- Sections:
+   - Carte patient (avatar, infos, risque, dates clés)
+   - KPIs (totaux, normal/anormal, confiance moyenne)
+   - Onglets: Evolution (graph), Analyses (table), Notes (desc + reco)
+   - Actions: Exporter (JSON), Nouvelle analyse
 
-2. **Analyse** :
-   - Cliquez sur "Lancer l'analyse"
-   - Attendez que l'analyse se termine (quelques secondes)
-
-3. **Résultats** :
-   - Visualisez le diagnostic principal
-   - Consultez les probabilités pour chaque type de tumeur
-   - Lisez les recommandations cliniques
+Conseils d'utilisation:
+- Renseignez l'ID patient et la date d'examen lors de l'upload pour assurer le suivi.
+- Le graphique d'évolution utilise la confiance (0..1) transformée en % côté front.
 
 ## Architecture du modèle
 
@@ -147,6 +166,25 @@ Upload et analyse d'une image IRM
 ### `GET /health`
 Vérification de l'état de l'application
 
+### Routes principales (UI)
+- `GET /dashboard` — Tableau de bord médecin
+- `GET /patients` — Liste des patients du médecin
+- `GET /patient/<patient_id>` — Profil patient (interface PRO)
+- `GET /alerts` — Alertes médicales
+- `GET /pro-dashboard` — Statistiques pro
+- `GET /pro-dashboard-advanced` — Statistiques avancées
+- `GET /platform-stats` — Stats globales plateforme
+
+### API Patients et Analytics
+- `GET /api/my-patients` — Patients du médecin connecté
+- `GET /api/patients/<patient_id>/detailed-history` — Historique détaillé + métriques
+- `GET /api/patients/<patient_id>/comparison` — Comparaison 2 dernières analyses
+- `GET /api/evolution/summary` — Résumé global des évolutions
+- `GET /api/analytics/overview` — Stat perso du médecin
+- `GET /api/analytics/platform-overview` — Stat globales
+- `GET /api/analytics/filter-counts` — Compteurs filtres
+- `POST /api/analytics/filter-preview` — Prévisualisation filtres
+
 ## Sécurité et limitations
 
 ⚠️ **IMPORTANT** : Cette application est destinée à des fins éducatives et de recherche uniquement. Elle ne doit pas être utilisée pour des diagnostics médicaux réels sans validation par des professionnels de santé qualifiés.
@@ -171,7 +209,11 @@ neuroscan-project/
 ├── install_pytorch.sh              # Script d'installation PyTorch
 ├── create_test_image.py            # Générateur d'images de test
 ├── templates/
-│   └── index.html                  # Interface utilisateur
+│   ├── base_dashboard.html         # Layout unifié
+│   ├── dashboard.html              # Dashboard
+│   ├── patients_list.html          # Liste des patients
+│   ├── patient_profile_pro.html    # Nouveau profil patient (PRO)
+│   └── index.html                  # Interface d'accueil
 ├── test_images/                    # Images de test générées
 │   ├── brain_normal.jpg            # Image de cerveau normal
 │   └── brain_with_tumor.jpg        # Image avec tumeur simulée
@@ -201,6 +243,11 @@ Cela créera deux images dans le dossier `test_images/` :
 3. Uploadez une des images de test
 4. Observez les résultats de l'analyse
 
+## Base de données
+- SQLite: `neuroscan_analytics.db` (créée automatiquement)
+- Tables principales: `analyses`, `patients`, `medical_alerts`, `daily_stats`, `doctors` (+ sessions)
+- Migrations légères: Ajouts de colonnes conditionnels au démarrage dans `app.py`
+
 ## Développement
 
 ### Variables d'environnement
@@ -213,13 +260,13 @@ Cela créera deux images dans le dossier `test_images/` :
 Pour adapter le modèle ou l'interface :
 1. Modifiez la classe `BrainTumorCNN` dans `app.py` selon votre architecture
 2. Ajustez les transformations d'image si nécessaire
-3. Personnalisez l'interface dans `templates/index.html`
+3. Personnalisez l'interface dans `templates/*` (notamment `patient_profile_pro.html`)
 
 ## Support
 
 Pour toute question ou problème :
 1. Vérifiez que toutes les dépendances sont installées
-2. Assurez-vous que le modèle `best_brain_tumor_model.pth` est présent
+2. Assurez-vous que le modèle `best_brain_tumor_model.pth` est présent (sinon le mode démo s'active)
 3. Consultez les logs de l'application pour les erreurs
 
 ## Licence

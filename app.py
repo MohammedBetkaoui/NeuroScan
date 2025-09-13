@@ -1199,6 +1199,61 @@ def dashboard():
 
     return render_template('dashboard.html', doctor=doctor)
 
+@app.route('/nouvelle-analyse')
+@login_required
+def new_analysis_page():
+    """Page dédiée pour la nouvelle analyse"""
+    doctor = get_current_doctor()
+    if not doctor:
+        return redirect(url_for('login'))
+
+    # Récupérer les patients du médecin connecté
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT id, patient_id, patient_name, date_of_birth, gender, phone, email, 
+               medical_history, allergies, total_analyses
+        FROM patients 
+        WHERE doctor_id = ? 
+        ORDER BY patient_name
+    ''', (doctor['id'],))
+    patients = cursor.fetchall()
+    conn.close()
+
+    # Convertir en liste de dictionnaires
+    patient_list = []
+    for patient in patients:
+        # Calculer l'âge si date de naissance disponible
+        age = None
+        if patient[3]:  # date_of_birth
+            try:
+                birth_date = datetime.strptime(patient[3], '%Y-%m-%d')
+                age = datetime.now().year - birth_date.year
+                if datetime.now().month < birth_date.month or (datetime.now().month == birth_date.month and datetime.now().day < birth_date.day):
+                    age -= 1
+            except:
+                age = None
+        
+        patient_list.append({
+            'id': patient[0],
+            'patient_id': patient[1],
+            'patient_name': patient[2],
+            'date_of_birth': patient[3],
+            'age': age,
+            'gender': patient[4],
+            'phone': patient[5],
+            'email': patient[6],
+            'medical_history': patient[7],
+            'allergies': patient[8],
+            'total_analyses': patient[9] or 0,
+            'full_name': patient[2] or f"Patient {patient[1]}"
+        })
+
+    # Date d'aujourd'hui par défaut
+    today = datetime.now().strftime('%Y-%m-%d')
+    
+    return render_template('new_analysis.html', doctor=doctor, patients=patient_list, today=today)
+
 @app.route('/')
 def index():
     """Page d'accueil"""

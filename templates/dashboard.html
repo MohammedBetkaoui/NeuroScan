@@ -14,25 +14,33 @@
 <!-- Actions rapides -->
 <div class="dashboard-grid cols-4 mb-8">
     <!-- Nouvelle analyse -->
-    <div class="dashboard-card clickable p-6" onclick="window.location.href='{{ url_for('index') }}'">
-        <div class="dashboard-card-header">
-            <div class="dashboard-card-icon primary">
-                <i class="fas fa-upload"></i>
+    <div class="dashboard-card clickable p-0 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-blue-50 via-white to-indigo-50 border-l-4 border-blue-500" onclick="navigateTo('new_analysis')">
+        <div class="p-6">
+            <div class="dashboard-card-header mb-4">
+                <div class="dashboard-card-icon primary bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
+                    <i class="fas fa-brain text-white"></i>
+                </div>
+                <div>
+                    <h3 class="dashboard-card-title text-xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">Analyse IA Avancée</h3>
+                    <p class="dashboard-card-subtitle text-blue-600 font-medium">Diagnostic neurologique intelligent</p>
+                </div>
             </div>
-            <div>
-                <h3 class="dashboard-card-title">Nouvelle Analyse</h3>
-                <p class="dashboard-card-subtitle">Analyser une IRM cérébrale</p>
+            <div class="dashboard-card-content space-y-3">
+                <p class="text-gray-700 text-sm leading-relaxed">
+                    Intelligence artificielle de dernière génération pour l'analyse d'imagerie cérébrale avec précision de 99.7%.
+                </p>
+                <div class="flex items-center space-x-4 text-xs text-gray-600">
+                    <span class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-1"></i> DICOM/NIfTI</span>
+                    <span class="flex items-center"><i class="fas fa-clock text-blue-500 mr-1"></i> < 30s</span>
+                    <span class="flex items-center"><i class="fas fa-shield-alt text-purple-500 mr-1"></i> Sécurisé</span>
+                </div>
             </div>
         </div>
-        <div class="dashboard-card-content">
-            <p class="text-gray-600 text-sm">
-                Téléchargez et analysez une nouvelle image IRM pour détecter d'éventuelles tumeurs cérébrales.
-            </p>
-        </div>
+        <div class="h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
     </div>
 
     <!-- Tableau de bord pro -->
-    <div class="dashboard-card clickable p-6" onclick="window.location.href='{{ url_for('pro_dashboard') }}'">
+    <div class="dashboard-card clickable p-6" onclick="navigateTo('pro_dashboard')">
         <div class="dashboard-card-header">
             <div class="dashboard-card-icon success">
                 <i class="fas fa-chart-bar"></i>
@@ -50,7 +58,7 @@
     </div>
 
     <!-- Suivi patients -->
-    <div class="dashboard-card clickable p-6" onclick="window.location.href='{{ url_for('patients_list') }}'">
+    <div class="dashboard-card clickable p-6" onclick="navigateTo('patients_list')">
         <div class="dashboard-card-header">
             <div class="dashboard-card-icon purple">
                 <i class="fas fa-users"></i>
@@ -68,7 +76,7 @@
     </div>
 
     <!-- Gestion patients -->
-    <div class="dashboard-card clickable p-6" onclick="window.location.href='{{ url_for('manage_patients_page') }}'">
+    <div class="dashboard-card clickable p-6" onclick="navigateTo('manage_patients_page')">
         <div class="dashboard-card-header">
             <div class="dashboard-card-icon success">
                 <i class="fas fa-users-cog"></i>
@@ -86,7 +94,7 @@
     </div>
 
     <!-- Statistiques plateforme -->
-    <div class="dashboard-card clickable p-6" onclick="window.location.href='{{ url_for('platform_stats') }}'">
+    <div class="dashboard-card clickable p-6" onclick="navigateTo('platform_stats')">
         <div class="dashboard-card-header">
             <div class="dashboard-card-icon indigo">
                 <i class="fas fa-globe"></i>
@@ -411,7 +419,23 @@
 
 {% block extra_js %}
 <script>
+    // Navigation helper function
+    function navigateTo(routeName) {
+        const routes = {
+            'pro_dashboard': '{{ url_for("pro_dashboard") }}',
+            'patients_list': '{{ url_for("patients_list") }}',
+            'manage_patients_page': '{{ url_for("manage_patients_page") }}',
+            'platform_stats': '{{ url_for("platform_stats") }}',
+            'new_analysis': '{{ url_for("new_analysis_page") }}'
+        };
+        
+        if (routes[routeName]) {
+            window.location.href = routes[routeName];
+        }
+    }
+
     // Fonctions spécifiques au dashboard
+
     function openUserGuideModal() {
         document.getElementById('userGuideModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';

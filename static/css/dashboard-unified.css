@@ -487,6 +487,12 @@ body {
     z-index: 50;
 }
 
+/* Quand la classe utility 'hidden' est présente, on force la modale à être masquée.
+   Cela évite que display:flex de .modal-overlay prenne le dessus dans la cascade CSS. */
+.modal-overlay.hidden {
+    display: none;
+}
+
 .modal-content {
     background: var(--surface-primary);
     border-radius: var(--radius-2xl);

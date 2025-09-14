@@ -807,7 +807,7 @@
                 </td>
                 <td>
                     <div class="text-sm text-gray-500">
-                        ${formatRelativeTime(new Date(patient.updated_at || patient.created_at))}
+                        ${formatRelativeTime(patient.updated_at || patient.created_at)}
                     </div>
                 </td>
                 <td>
@@ -1035,11 +1035,16 @@
         const statusFilter = document.getElementById('statusFilter').value;
 
         let filtered = allPatients.filter(patient => {
-            const matchesSearch = !searchTerm || 
-                patient.patient_name?.toLowerCase().includes(searchTerm) ||
-                patient.patient_id.toLowerCase().includes(searchTerm) ||
-                patient.phone?.toLowerCase().includes(searchTerm) ||
-                patient.email?.toLowerCase().includes(searchTerm);
+            const nameStr = (patient.patient_name ?? '').toString();
+            const idStr = (patient.patient_id ?? '').toString();
+            const phoneStr = (patient.phone ?? '').toString();
+            const emailStr = (patient.email ?? '').toString();
+
+            const matchesSearch = !searchTerm ||
+                nameStr.toLowerCase().includes(searchTerm) ||
+                idStr.toLowerCase().includes(searchTerm) ||
+                phoneStr.toLowerCase().includes(searchTerm) ||
+                emailStr.toLowerCase().includes(searchTerm);
 
             const matchesGender = !genderFilter || patient.gender === genderFilter;
             
@@ -1078,8 +1083,14 @@
 
     // Fonctions utilitaires
     function getInitials(name) {
-        if (!name) return '??';
-        return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        if (!name || typeof name !== 'string') return '??';
+        const parts = name
+            .trim()
+            .split(/[\s-]+/)
+            .filter(Boolean);
+        if (parts.length === 0) return '??';
+        const initials = parts.slice(0, 2).map(p => p.charAt(0)).join('');
+        return (initials || '??').toUpperCase();
     }
 
     function getGenderText(gender) {
@@ -1087,17 +1098,34 @@
         return genders[gender] || gender;
     }
 
-    function formatDate(dateString) {
-        if (!dateString) return '';
-        return new Date(dateString).toLocaleDateString('fr-FR');
+    function safeParseDate(input) {
+        if (!input) return null;
+        const d = (input instanceof Date) ? input : new Date(input);
+        return isNaN(d.getTime()) ? null : d;
     }
 
-    function formatRelativeTime(date) {
+    function formatDate(dateInput) {
+        const d = safeParseDate(dateInput);
+        if (!d) return '-';
+        try {
+            return d.toLocaleDateString('fr-FR');
+        } catch {
+            return '-';
+        }
+    }
+
+    function formatRelativeTime(dateInput) {
+        const date = safeParseDate(dateInput);
+        if (!date) return '-';
         const now = new Date();
-        const diffMs = now - date;
+        let diffMs = now - date;
+        if (!isFinite(diffMs)) return '-';
+        if (diffMs < 0) diffMs = 0; // éviter les valeurs futures
+        const diffMins = Math.floor(diffMs / (1000 * 60));
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        
-        if (diffDays === 0) return "Aujourd'hui";
+        if (diffMins < 1) return "À l'instant";
+        if (diffMins < 60) return `Il y a ${diffMins} min`;
+        if (diffDays === 0) return `Il y a ${Math.floor(diffMins/60)} h`;
         if (diffDays === 1) return "Hier";
         if (diffDays < 7) return `Il y a ${diffDays} jours`;
         if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaines`;
@@ -1105,16 +1133,17 @@
     }
 
     function calculateAge(birthDate) {
+        const birth = safeParseDate(birthDate);
+        if (!birth) return '-';
         const today = new Date();
-        const birth = new Date(birthDate);
+        if (birth > today) return '-';
         let age = today.getFullYear() - birth.getFullYear();
         const monthDiff = today.getMonth() - birth.getMonth();
         
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
             age--;
         }
-        
-        return age;
+        return isFinite(age) && age >= 0 ? age : '-';
     }
 
     function showTableLoader() {

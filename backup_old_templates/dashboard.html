@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - NeuroScan</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/tailwind.build.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -112,7 +112,7 @@
         <!-- Actions rapides -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <!-- Nouvelle analyse -->
-            <div class="card-hover bg-white rounded-xl shadow-sm border p-6 cursor-pointer" onclick="window.location.href='{{ url_for('index') }}'">
+            <a href="{{ url_for('index') }}" class="card-hover bg-white rounded-xl shadow-sm border p-6 cursor-pointer block">
                 <div class="flex items-center mb-4">
                     <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
                         <i class="fas fa-upload text-blue-600 text-xl"></i>
@@ -125,10 +125,10 @@
                 <p class="text-gray-600 text-sm">
                     Téléchargez et analysez une nouvelle image IRM pour détecter d'éventuelles tumeurs cérébrales.
                 </p>
-            </div>
+            </a>
 
             <!-- Tableau de bord pro -->
-            <div class="card-hover bg-white rounded-xl shadow-sm border p-6 cursor-pointer" onclick="window.location.href='{{ url_for('pro_dashboard') }}'">
+            <a href="{{ url_for('pro_dashboard') }}" class="card-hover bg-white rounded-xl shadow-sm border p-6 cursor-pointer block">
                 <div class="flex items-center mb-4">
                     <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
                         <i class="fas fa-chart-bar text-green-600 text-xl"></i>
@@ -141,10 +141,10 @@
                 <p class="text-gray-600 text-sm">
                     Consultez les statistiques détaillées de vos analyses et suivez les tendances.
                 </p>
-            </div>
+            </a>
 
             <!-- Suivi patients -->
-            <div class="card-hover bg-white rounded-xl shadow-sm border p-6 cursor-pointer" onclick="window.location.href='{{ url_for('patients_list') }}'">
+            <a href="{{ url_for('patients_list') }}" class="card-hover bg-white rounded-xl shadow-sm border p-6 cursor-pointer block">
                 <div class="flex items-center mb-4">
                     <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
                         <i class="fas fa-users text-purple-600 text-xl"></i>
@@ -157,10 +157,10 @@
                 <p class="text-gray-600 text-sm">
                     Accédez à la liste complète de vos patients avec historique et évolution détaillée.
                 </p>
-            </div>
+            </a>
 
             <!-- Gestion patients -->
-            <div class="card-hover bg-white rounded-xl shadow-sm border p-6 cursor-pointer" onclick="window.location.href='{{ url_for('manage_patients_page') }}'">
+            <a href="{{ url_for('manage_patients_page') }}" class="card-hover bg-white rounded-xl shadow-sm border p-6 cursor-pointer block">
                 <div class="flex items-center mb-4">
                     <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
                         <i class="fas fa-users-cog text-green-600 text-xl"></i>
@@ -173,10 +173,10 @@
                 <p class="text-gray-600 text-sm">
                     Ajouter, modifier, supprimer et gérer toutes les informations de vos patients.
                 </p>
-            </div>
+            </a>
 
             <!-- Statistiques plateforme -->
-            <div class="card-hover bg-white rounded-xl shadow-sm border p-6 cursor-pointer" onclick="window.location.href='{{ url_for('platform_stats') }}'">
+            <a href="{{ url_for('platform_stats') }}" class="card-hover bg-white rounded-xl shadow-sm border p-6 cursor-pointer block">
                 <div class="flex items-center mb-4">
                     <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mr-4">
                         <i class="fas fa-globe text-indigo-600 text-xl"></i>
@@ -189,7 +189,7 @@
                 <p class="text-gray-600 text-sm">
                     Consultez les statistiques générales de tous les médecins utilisant NeuroScan.
                 </p>
-            </div>
+            </a>
         </div>
 
         <!-- Informations du compte -->

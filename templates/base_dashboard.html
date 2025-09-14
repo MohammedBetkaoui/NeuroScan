@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}NeuroScan{% endblock %}</title>
     
-    <!-- CSS Framework et Fonts -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- CSS Framework et Fonts (Tailwind compiled locally) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.build.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
@@ -17,32 +17,7 @@
     <!-- CSS spécifiques aux pages -->
     {% block extra_css %}{% endblock %}
     
-    <!-- Configuration Tailwind pour cohérence -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'sans': ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        'neuroscan': {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            200: '#bfdbfe',
-                            300: '#93c5fd',
-                            400: '#60a5fa',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Configuration Tailwind (migrated to tailwind.config.cjs in build) -->
     
     <style>
         body {
@@ -351,16 +326,25 @@
 
     <!-- Scripts de base -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
+    <!-- Données utilisateur (JSON) pour éviter le JS cassé si doctor est nul) -->
+    <script id="doctor-data" type="application/json">
+        {{ ({
+            'id': doctor.id,
+            'name': (doctor.first_name ~ ' ' ~ doctor.last_name),
+            'email': doctor.email
+        } if doctor else {}) | tojson }}
+    </script>
+
     <!-- Scripts unifiés -->
     <script>
         // Variables globales
         let alertsData = [];
-        let currentDoctor = {
-            id: {{ doctor.id if doctor else 'null' }},
-            name: '{{ doctor.first_name }} {{ doctor.last_name }}' if doctor else '',
-            email: '{{ doctor.email }}' if doctor else ''
-        };
+        let currentDoctor = {};
+        try {
+            const el = document.getElementById('doctor-data');
+            if (el) currentDoctor = JSON.parse(el.textContent || '{}') || {};
+        } catch (e) { currentDoctor = {}; }
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
@@ -556,9 +540,11 @@
         }
 
         function formatDate(dateString) {
+            if (!dateString) return '-';
             const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '-';
             const now = new Date();
-            const diffMs = now - date;
+            const diffMs = now.getTime() - date.getTime();
             const diffMins = Math.floor(diffMs / 60000);
             const diffHours = Math.floor(diffMins / 60);
             const diffDays = Math.floor(diffHours / 24);
@@ -567,7 +553,7 @@
             if (diffMins < 60) return `Il y a ${diffMins} min`;
             if (diffHours < 24) return `Il y a ${diffHours}h`;
             if (diffDays < 7) return `Il y a ${diffDays}j`;
-            return date.toLocaleDateString('fr-FR');
+            try { return date.toLocaleDateString('fr-FR'); } catch { return '-'; }
         }
 
         // Gestion des modales

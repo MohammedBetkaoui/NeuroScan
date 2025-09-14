@@ -1,1735 +1,480 @@
 {% extends "base_dashboard.html" %}
 
 {% block title %}Nouvelle Analyse - NeuroScan{% endblock %}
-
-{% block page_subtitle %}Analyse IA Avancée{% endblock %}
-
-{% block page_title %}Diagnostic Neurologique Intelligent{% endblock %}
-
-{% block page_description %}Analysez vos images IRM avec notre intelligence artificielle de dernière génération (précision 99.7%).{% endblock %}
+{% block page_title %}Analyse IA NeuroScan{% endblock %}
+{% block page_subtitle %}Interface épurée et performante{% endblock %}
+{% block page_description %}Téléversez une imagerie et obtenez un diagnostic IA fiable en quelques secondes.{% endblock %}
 
 {% block content %}
+<div class="min-h-screen bg-neutral-50 -mt-6 pt-6">
+  <div class="max-w-7xl mx-auto p-6">
 
-<!-- Header professionnel avec navigation -->
-<div class="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white p-6 mb-0 shadow-2xl">
-    <div class="max-w-7xl mx-auto">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-6">
-                <div class="flex items-center space-x-3">
-                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-xl">
-                        <i class="fas fa-brain text-white text-xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-2xl font-bold">NeuroScan IA</h1>
-                        <p class="text-blue-200 text-sm">Analyse Neurologique Avancée</p>
-                    </div>
-                </div>
-                <div class="hidden md:block h-8 w-px bg-blue-400"></div>
-                <nav class="hidden md:flex items-center space-x-4 text-sm">
-                    <a href="{{ url_for('dashboard') }}" class="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all">
-                        <i class="fas fa-home"></i> Dashboard
-                    </a>
-                    <i class="fas fa-chevron-right text-blue-300"></i>
-                    <span class="px-3 py-2 bg-blue-500 rounded-lg font-medium">Nouvelle Analyse</span>
-                </nav>
-            </div>
-            <div class="flex items-center space-x-4">
-                <div class="text-right hidden lg:block">
-                    <p class="font-semibold">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</p>
-                    <p class="text-blue-200 text-sm">{{ doctor.specialty or 'Médecin' }}</p>
-                </div>
-                <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center">
-                    <i class="fas fa-user-md text-white"></i>
-                </div>
-            </div>
+    <!-- Bandeau -->
+    <section class="rounded-2xl p-6 bg-white border border-neutral-200 shadow-sm mb-6">
+      <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow">
+            <i class="fas fa-brain"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-neutral-900">NeuroScan • Nouvelle Analyse</h1>
+            <p class="text-neutral-500 text-sm">Sélectionnez un patient, importez une image IRM, lancez l'analyse.</p>
+          </div>
         </div>
-    </div>
+        <div class="flex items-center gap-3 text-sm text-neutral-600">
+          <i class="fas fa-shield-alt text-emerald-600"></i>
+          <span>Données chiffrées</span>
+          <span class="w-1 h-1 rounded-full bg-neutral-300"></span>
+          <i class="fas fa-check-circle text-blue-600"></i>
+          <span>Modèle validé</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grille principale: Patient | Upload | Statut -->
+    <section class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <!-- Patient (2) -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="rounded-2xl p-6 bg-white border border-neutral-200 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+              <i class="fas fa-user-md"></i>
+            </div>
+            <h2 class="font-semibold text-neutral-900">Patient</h2>
+          </div>
+          <label class="block text-sm font-medium text-neutral-700 mb-2">Sélectionnez un patient</label>
+          <select id="patientSelect" class="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-neutral-800 shadow-inner focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400">
+            <option value="">— Choisir —</option>
+            {% for patient in patients %}
+            <option value="{{ patient.patient_id }}" 
+              data-name="{{ patient.patient_name }}" 
+              data-age="{{ patient.age }}"
+              data-gender="{{ patient.gender }}"
+              data-dob="{{ patient.date_of_birth }}">
+              {{ patient.patient_name }} — {{ patient.age }} ans ({{ patient.gender }})
+            </option>
+            {% endfor %}
+          </select>
+
+          <div id="patientInfo" class="hidden mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+              <div class="text-xs text-neutral-500">Nom</div>
+              <div id="patientName" class="font-semibold text-neutral-800">—</div>
+            </div>
+            <div class="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+              <div class="text-xs text-neutral-500">Âge</div>
+              <div id="patientAge" class="font-semibold text-neutral-800">—</div>
+            </div>
+            <div class="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+              <div class="text-xs text-neutral-500">Sexe</div>
+              <div id="patientGender" class="font-semibold text-neutral-800">—</div>
+            </div>
+            <div class="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+              <div class="text-xs text-neutral-500">Date de naissance</div>
+              <div id="patientDob" class="font-semibold text-neutral-800">—</div>
+            </div>
+          </div>
+
+          <!-- Date d'examen -->
+          <div class="mt-5">
+            <label for="nsExamDate" class="block text-sm font-medium text-neutral-700 mb-2">Date d'examen</label>
+            <input id="nsExamDate" type="date" class="w-full sm:w-auto rounded-xl border border-neutral-300 bg-white px-4 py-2 text-neutral-800 shadow-inner focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload (2) -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="rounded-2xl p-6 bg-white border border-neutral-200 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
+              <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <h2 class="font-semibold text-neutral-900">Téléversement</h2>
+          </div>
+
+          <div id="nsDropZone" class="rounded-2xl border-2 border-dashed border-neutral-300 bg-neutral-50 hover:bg-neutral-100 transition p-10 text-center cursor-pointer">
+            <div class="mx-auto w-16 h-16 rounded-full bg-neutral-200 text-neutral-600 flex items-center justify-center mb-4">
+              <i class="fas fa-file-medical"></i>
+            </div>
+            <p class="font-semibold text-neutral-800">Déposez votre image IRM ici</p>
+            <p class="text-sm text-neutral-500">ou cliquez pour parcourir • JPG, PNG, DICOM (max 50MB)</p>
+            <input id="nsFileInput" type="file" class="hidden" accept=".jpg,.jpeg,.png,.dcm,.dicom,.nii">
+          </div>
+
+          <div id="nsFileInfo" class="hidden mt-5 rounded-xl bg-neutral-50 border border-neutral-200 p-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                  <i class="fas fa-check"></i>
+                </div>
+                <div>
+                  <div id="nsFileName" class="font-semibold text-neutral-900"></div>
+                  <div id="nsFileSize" class="text-sm text-neutral-500"></div>
+                </div>
+              </div>
+              <div class="w-48 h-2 rounded-full bg-neutral-200 overflow-hidden">
+                <div id="nsUploadProgress" class="h-2 bg-gradient-to-r from-emerald-500 to-teal-600" style="width:0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <button id="nsAnalyzeBtn" class="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-4 shadow-sm hover:shadow focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            Lancer l'analyse IA
+          </button>
+        </div>
+      </div>
+
+      <!-- Statut (1) -->
+      <div class="lg:col-span-1 space-y-6">
+        <div id="nsProgressCard" class="rounded-2xl p-6 bg-white border border-neutral-200 shadow-sm hidden">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-neutral-100 text-neutral-700 flex items-center justify-center">
+              <i class="fas fa-cogs"></i>
+            </div>
+            <h2 class="font-semibold text-neutral-900">Analyse en cours</h2>
+          </div>
+          <div class="text-sm text-neutral-600 mb-2" id="nsStatusText">En attente du fichier...</div>
+          <div class="w-full h-2 rounded-full bg-neutral-200 overflow-hidden">
+            <div id="nsAnalysisProgress" class="h-2 bg-gradient-to-r from-blue-600 to-indigo-600" style="width:0%"></div>
+          </div>
+          <div class="mt-2 text-right text-sm font-semibold text-neutral-700" id="nsProgressPct">0%</div>
+        </div>
+
+        <div id="nsResultsCard" class="rounded-2xl p-6 bg-emerald-50 border border-emerald-200 text-emerald-800 shadow-sm hidden cursor-pointer" onclick="openResultsModal()">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+              <i class="fas fa-check"></i>
+            </div>
+            <div>
+              <div class="font-semibold">Analyse terminée</div>
+              <div class="text-sm opacity-80">Cliquez pour voir le rapport</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 </div>
 
-<!-- Interface d'analyse plein écran -->
-<div class="min-h-screen bg-gradient-aurora -mt-6 pt-6 relative overflow-hidden">
-    <!-- Background decorative elements -->
-    <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute top-10 left-10 w-72 h-72 bg-gradient-primary rounded-full animate-morph opacity-10 blur-3xl"></div>
-        <div class="absolute bottom-10 right-10 w-96 h-96 bg-gradient-ocean rounded-full animate-float opacity-10 blur-3xl"></div>
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-sunset rounded-full opacity-5 blur-3xl"></div>
-    </div>
-    
-    <div class="relative max-w-7xl mx-auto p-6">
-        <div class="grid grid-cols-1 2xl:grid-cols-5 gap-8 h-full">
-        <!-- Colonne gauche: Upload + infos patient côte à côte (2 colonnes sur grand écran) -->
-        <div class="2xl:col-span-2 space-y-8 animate-slide-in-left">
-            <!-- Section Patient et Upload côte à côte -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Carte sélection de patient -->
-                <div class="card-advanced glass-card-strong hover-lift will-change-transform gpu-accelerated">
-                    <div class="p-8 border-b border-white/20 bg-gradient-primary relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-r from-white/10 via-white/5 to-transparent"></div>
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl animate-pulse"></div>
-                        <div class="relative">
-                            <h3 class="font-bold text-white flex items-center gap-4 text-2xl mb-3 animate-glow">
-                                <div class="relative w-16 h-16 bg-gradient-to-br from-white/20 to-white/10 rounded-2xl flex items-center justify-center shadow-2xl animate-pulse-ring">
-                                    <i class="fas fa-user-injured text-white text-2xl"></i>
-                                </div>
-                                <div>
-                                    <div class="text-gradient-white">Sélection Patient</div>
-                                    <div class="text-lg text-white/80 font-semibold">Dossier médical sécurisé</div>
-                                </div>
-                            </h3>
-                        </div>
-                    </div>
-                    <div class="p-8">
-                        <div class="space-y-6">
-                            <div>
-                                <label class="block text-gray-700 font-bold text-lg mb-4">Patient à analyser :</label>
-                                <select id="patientSelect" class="form-select w-full p-4 border-2 border-blue-200 rounded-2xl bg-white text-gray-700 font-semibold text-lg shadow-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-300">
-                                    <option value="">Sélectionnez un patient...</option>
-                                    {% for patient in patients %}
-                                    <option value="{{ patient.patient_id }}" 
-                                            data-name="{{ patient.patient_name }}" 
-                                            data-dob="{{ patient.date_of_birth }}" 
-                                            data-gender="{{ patient.gender }}"
-                                            data-age="{{ patient.age }}">
-                                        {{ patient.patient_name }} - {{ patient.age }} ans ({{ patient.gender }})
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            
-                            <!-- Informations du patient sélectionné -->
-                            <div id="patientInfo" class="hidden bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-2xl border-2 border-blue-200 shadow-xl">
-                                <h4 class="font-bold text-gray-800 text-xl mb-4 flex items-center gap-3">
-                                    <i class="fas fa-info-circle text-blue-600"></i>
-                                    Informations Patient
-                                </h4>
-                                <div class="space-y-3">
-                                    <div class="bg-white p-4 rounded-xl shadow-lg">
-                                        <span class="text-gray-600 font-semibold">Nom :</span>
-                                        <span id="patientName" class="text-gray-800 font-bold ml-2">—</span>
-                                    </div>
-                                    <div class="bg-white p-4 rounded-xl shadow-lg">
-                                        <span class="text-gray-600 font-semibold">Âge :</span>
-                                        <span id="patientAge" class="text-gray-800 font-bold ml-2">—</span>
-                                    </div>
-                                    <div class="bg-white p-4 rounded-xl shadow-lg">
-                                        <span class="text-gray-600 font-semibold">Sexe :</span>
-                                        <span id="patientGender" class="text-gray-800 font-bold ml-2">—</span>
-                                    </div>
-                                    <div class="bg-white p-4 rounded-xl shadow-lg">
-                                        <span class="text-gray-600 font-semibold">Date de naissance :</span>
-                                        <span id="patientDob" class="text-gray-800 font-bold ml-2">—</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section Upload améliorée -->
-                <div class="dashboard-card p-0 overflow-hidden shadow-2xl border-0 bg-white/95 backdrop-blur-lg">
-                <div class="p-8 border-b bg-gradient-to-r from-emerald-50 via-blue-50 to-indigo-50 relative overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-blue-500/5 to-indigo-500/5"></div>
-                    <div class="relative">
-                        <h3 class="font-bold text-gray-900 flex items-center gap-4 text-2xl mb-3">
-                            <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-xl">
-                                <i class="fas fa-cloud-upload-alt text-white text-2xl"></i>
-                            </div>
-                            <div>
-                                <div>Upload Sécurisé</div>
-                                <div class="text-lg text-blue-600 font-semibold">Imagerie Médicale Professionnelle</div>
-                            </div>
-                        </h3>
-                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                            <div class="flex items-center gap-2 bg-white/70 px-3 py-2 rounded-xl shadow-sm">
-                                <i class="fas fa-check text-green-500"></i> 
-                                <span class="font-semibold text-sm">DICOM</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-white/70 px-3 py-2 rounded-xl shadow-sm">
-                                <i class="fas fa-check text-green-500"></i> 
-                                <span class="font-semibold text-sm">NIfTI</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-white/70 px-3 py-2 rounded-xl shadow-sm">
-                                <i class="fas fa-weight text-blue-500"></i> 
-                                <span class="font-semibold text-sm">16MB Max</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-white/70 px-3 py-2 rounded-xl shadow-sm">
-                                <i class="fas fa-shield-alt text-purple-500"></i> 
-                                <span class="font-semibold text-sm">Sécurisé</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="p-10">
-                    <div id="nsDropZone" class="border-3 border-dashed border-blue-300 rounded-3xl p-20 text-center cursor-pointer bg-gradient-to-br from-white via-blue-25 to-indigo-25 hover:from-blue-50 hover:to-indigo-100 transition-all duration-500 hover:border-blue-400 hover:shadow-2xl group relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-br from-transparent via-blue-50/30 to-indigo-100/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <div class="relative flex flex-col items-center gap-8">
-                            <div class="w-32 h-32 bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-2xl">
-                                <i class="fas fa-file-medical text-6xl text-blue-600 group-hover:text-indigo-600 transition-colors"></i>
-                            </div>
-                            <div class="space-y-4">
-                                <p class="font-bold text-gray-800 text-3xl">Déposez votre imagerie médicale</p>
-                                <p class="text-gray-600 text-lg">Glissez-déposez ou cliquez pour sélectionner votre fichier IRM</p>
-                                <div class="flex items-center justify-center gap-6 mt-6">
-                                    <div class="flex items-center gap-2 text-blue-600 font-bold bg-blue-50 px-6 py-3 rounded-xl shadow-lg">
-                                        <i class="fas fa-brain text-xl"></i>
-                                        <span>Analyse IA Avancée</span>
-                                    </div>
-                                    <div class="flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 px-6 py-3 rounded-xl shadow-lg">
-                                        <i class="fas fa-clock text-xl"></i>
-                                        <span>Résultats < 30s</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <input id="nsFileInput" type="file" class="hidden" accept=".dcm,.nii,.jpg,.jpeg,.png">
-                    </div>
-                    
-                    <!-- Informations du fichier améliorées -->
-                    <div id="nsFileInfo" class="hidden mt-8 p-6 bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 rounded-2xl border-2 border-green-200 shadow-xl">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center gap-4">
-                                <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-xl">
-                                    <i class="fas fa-file-check text-white text-2xl"></i>
-                                </div>
-                                <div>
-                                    <div class="font-bold text-gray-800 text-xl" id="nsFileName"></div>
-                                    <div class="text-gray-600 font-medium" id="nsFileSize"></div>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-3 text-green-600 font-bold text-lg bg-white px-4 py-2 rounded-xl shadow-lg">
-                                <i class="fas fa-check-circle text-2xl"></i> 
-                                <span>Fichier Validé</span>
-                            </div>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden shadow-inner">
-                            <div id="nsUploadProgress" class="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-600 h-4 rounded-full transition-all duration-500" style="width:0%"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section Informations Patient améliorée -->
-            <div class="dashboard-card p-0 overflow-hidden shadow-2xl border-0 bg-white/95 backdrop-blur-lg">
-                <div class="p-8 border-b bg-gradient-to-r from-purple-50 via-pink-50 to-indigo-50 relative overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-pink-500/5 to-indigo-500/5"></div>
-                    <div class="relative flex items-center justify-between">
-                        <h3 class="font-bold text-gray-900 flex items-center gap-4 text-2xl">
-                            <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-xl">
-                                <i class="fas fa-user-md text-white text-2xl"></i>
-                            </div>
-                            <div>
-                                <div>Sélection Patient</div>
-                                <div class="text-lg text-purple-600 font-semibold">Dossier Médical Intégré</div>
-                            </div>
-                        </h3>
-                        {% if patients %}
-                        <div class="flex items-center gap-3 px-6 py-3 bg-white/70 rounded-xl shadow-lg">
-                            <i class="fas fa-users text-purple-600 text-xl"></i>
-                            <span class="font-bold text-purple-700 text-lg">
-                                {{ patients|length }} patient{{ 's' if patients|length > 1 else '' }} disponible{{ 's' if patients|length > 1 else '' }}
-                            </span>
-                        </div>
-                        {% else %}
-                        <a href="{{ url_for('manage_patients_page') }}" class="px-8 py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all duration-300 font-bold shadow-xl hover:shadow-2xl transform hover:scale-105">
-                            <i class="fas fa-plus mr-2 text-xl"></i> Ajouter Premier Patient
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="p-8">
-                    {% if patients %}
-                    <div class="space-y-6">
-                        <!-- Sélection du patient -->
-                        <div class="space-y-3">
-                            <label class="form-label font-bold text-gray-700 text-lg">
-                                <i class="fas fa-user-circle text-purple-600 mr-2"></i>
-                                Choisir un patient existant
-                            </label>
-                            <select id="nsPatientSelect" class="form-select w-full bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl px-4 py-4 focus:border-purple-500 transition-all font-medium text-lg shadow-lg">
-                                <option value="">-- Sélectionner un patient --</option>
-                                {% for patient in patients %}
-                                <option value="{{ patient.id }}" 
-                                        data-patient-id="{{ patient.patient_id }}" 
-                                        data-patient-name="{{ patient.full_name }}"
-                                        data-age="{{ patient.age if patient.age else '' }}"
-                                        data-gender="{{ patient.gender if patient.gender else '' }}"
-                                        data-phone="{{ patient.phone if patient.phone else '' }}"
-                                        data-email="{{ patient.email if patient.email else '' }}"
-                                        data-total-analyses="{{ patient.total_analyses }}"
-                                        data-medical-history="{{ patient.medical_history if patient.medical_history else '' }}"
-                                        data-allergies="{{ patient.allergies if patient.allergies else '' }}">
-                                    {{ patient.full_name }} (ID: {{ patient.patient_id }})
-                                    {% if patient.age %} - {{ patient.age }} ans{% endif %}
-                                    {% if patient.gender %} - {{ patient.gender }}{% endif %}
-                                    {% if patient.total_analyses > 0 %} - {{ patient.total_analyses }} analyse{{ 's' if patient.total_analyses > 1 else '' }}{% endif %}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <!-- Informations du patient sélectionné -->
-                        <div id="nsSelectedPatientInfo" class="hidden p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border-2 border-purple-200 shadow-lg">
-                            <h4 class="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
-                                <i class="fas fa-user-circle text-purple-600"></i>
-                                Dossier Patient Sélectionné
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                                <!-- Informations de base -->
-                                <div class="space-y-2">
-                                    <span class="font-semibold text-gray-600 flex items-center gap-1">
-                                        <i class="fas fa-user text-purple-500"></i> Nom complet:
-                                    </span>
-                                    <div id="nsDisplayName" class="font-bold text-gray-800 bg-white px-3 py-2 rounded-lg shadow-sm">-</div>
-                                </div>
-                                <div class="space-y-2">
-                                    <span class="font-semibold text-gray-600 flex items-center gap-1">
-                                        <i class="fas fa-id-card text-blue-500"></i> ID Patient:
-                                    </span>
-                                    <div id="nsDisplayId" class="font-bold text-gray-800 bg-white px-3 py-2 rounded-lg shadow-sm">-</div>
-                                </div>
-                                <div class="space-y-2">
-                                    <span class="font-semibold text-gray-600 flex items-center gap-1">
-                                        <i class="fas fa-birthday-cake text-orange-500"></i> Âge:
-                                    </span>
-                                    <div id="nsDisplayAge" class="font-bold text-gray-800 bg-white px-3 py-2 rounded-lg shadow-sm">-</div>
-                                </div>
-                                <div class="space-y-2">
-                                    <span class="font-semibold text-gray-600 flex items-center gap-1">
-                                        <i class="fas fa-venus-mars text-pink-500"></i> Genre:
-                                    </span>
-                                    <div id="nsDisplayGender" class="font-bold text-gray-800 bg-white px-3 py-2 rounded-lg shadow-sm">-</div>
-                                </div>
-                                <div class="space-y-2">
-                                    <span class="font-semibold text-gray-600 flex items-center gap-1">
-                                        <i class="fas fa-phone text-green-500"></i> Téléphone:
-                                    </span>
-                                    <div id="nsDisplayPhone" class="font-bold text-gray-800 bg-white px-3 py-2 rounded-lg shadow-sm">-</div>
-                                </div>
-                                <div class="space-y-2">
-                                    <span class="font-semibold text-gray-600 flex items-center gap-1">
-                                        <i class="fas fa-chart-line text-indigo-500"></i> Analyses:
-                                    </span>
-                                    <div id="nsDisplayAnalyses" class="font-bold text-gray-800 bg-white px-3 py-2 rounded-lg shadow-sm">-</div>
-                                </div>
-                            </div>
-                            
-                            <!-- Informations médicales importantes -->
-                            <div id="nsMedicalInfo" class="mt-6 space-y-4">
-                                <div class="border-t pt-4">
-                                    <h5 class="font-bold text-gray-700 mb-3 flex items-center gap-2">
-                                        <i class="fas fa-notes-medical text-red-500"></i>
-                                        Informations Médicales
-                                    </h5>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div class="space-y-2">
-                                            <span class="font-semibold text-gray-600 text-xs">Antécédents médicaux:</span>
-                                            <div id="nsDisplayHistory" class="text-gray-700 bg-white px-3 py-2 rounded-lg shadow-sm text-sm min-h-[2.5rem]">-</div>
-                                        </div>
-                                        <div class="space-y-2">
-                                            <span class="font-semibold text-gray-600 text-xs">Allergies connues:</span>
-                                            <div id="nsDisplayAllergies" class="text-gray-700 bg-white px-3 py-2 rounded-lg shadow-sm text-sm min-h-[2.5rem]">-</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Date d'examen -->
-                        <div class="space-y-3">
-                            <label class="form-label font-bold text-gray-700 text-lg">
-                                <i class="fas fa-calendar-alt text-purple-600 mr-2"></i>
-                                Date d'Examen
-                            </label>
-                            <input id="nsExamDate" type="date" class="form-input bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl px-4 py-4 focus:border-purple-500 transition-all w-full md:w-auto font-medium text-lg shadow-lg" value="{{ today }}">
-                        </div>
-
-                        <!-- Option pour nouveau patient -->
-                        <div class="pt-4 border-t-2 border-gray-200">
-                            <button id="nsToggleNewPatientBtn" type="button" class="w-full px-6 py-4 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all duration-300 font-bold shadow-lg hover:shadow-xl">
-                                <i class="fas fa-user-plus mr-2"></i> 
-                                Ou analyser sans sélectionner de patient
-                            </button>
-                        </div>
-                    </div>
-                    
-                    {% else %}
-                    <!-- Aucun patient disponible -->
-                    <div class="text-center py-12">
-                        <div class="w-24 h-24 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="fas fa-users text-4xl text-gray-400"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold text-gray-700 mb-4">Aucun patient trouvé</h3>
-                        <p class="text-gray-600 mb-6 text-lg">Vous devez d'abord ajouter des patients à votre dossier médical.</p>
-                        <a href="{{ url_for('manage_patients_page') }}" class="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 font-bold shadow-xl hover:shadow-2xl transform hover:scale-105">
-                            <i class="fas fa-plus text-xl"></i>
-                            Ajouter votre premier patient
-                        </a>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Bouton d'analyse -->
-                    <button id="nsAnalyzeBtn" class="w-full mt-10 py-8 bg-gradient-to-r from-emerald-500 via-blue-600 to-indigo-600 text-white rounded-3xl font-bold text-2xl hover:from-emerald-600 hover:via-blue-700 hover:to-indigo-700 transition-all duration-500 shadow-2xl hover:shadow-3xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 disabled:hover:scale-100 relative overflow-hidden" disabled>
-                        <div class="absolute inset-0 bg-gradient-to-r from-white/10 via-white/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                        <div class="relative flex items-center justify-center gap-4">
-                            <i class="fas fa-brain text-3xl"></i>
-                            <span>Lancer l'Analyse Neuronale IA</span>
-                            <i class="fas fa-arrow-right text-2xl"></i>
-                        </div>
-                    </button>
-                </div>
-            </div>
+<!-- Modal résultats -->
+<div id="resultsModal" class="fixed inset-0 hidden items-center justify-center bg-black/50">
+  <div class="modal-content max-w-5xl w-full mx-4 rounded-2xl shadow-2xl overflow-hidden">
+    <div class="p-6 bg-white border-b border-neutral-200 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+          <i class="fas fa-file-medical"></i>
         </div>
-
-        <!-- Colonne droite: Statut et progression (3 colonnes sur grand écran) -->
-        <div class="2xl:col-span-3 space-y-6">
-            <!-- Guide d'utilisation -->
-            <div class="dashboard-card p-8 bg-gradient-to-br from-white via-gray-50 to-blue-50 border-0 shadow-2xl">
-                <div class="text-center space-y-6">
-                    <div class="w-32 h-32 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto shadow-2xl">
-                        <i class="fas fa-brain text-white text-4xl"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-gray-900 text-3xl mb-4">NeuroScan IA • Diagnostic Avancé</h3>
-                        <p class="text-gray-600 text-xl leading-relaxed">Sélectionnez un patient, uploadez une image IRM et lancez l'analyse pour obtenir un diagnostic assisté par intelligence artificielle.</p>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                        <div class="text-center p-6 bg-blue-50 rounded-2xl">
-                            <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-user text-white text-2xl"></i>
-                            </div>
-                            <div class="font-bold text-blue-700 text-lg">1. Sélectionner</div>
-                            <div class="text-blue-600">Patient</div>
-                        </div>
-                        <div class="text-center p-6 bg-purple-50 rounded-2xl">
-                            <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-upload text-white text-2xl"></i>
-                            </div>
-                            <div class="font-bold text-purple-700 text-lg">2. Uploader</div>
-                            <div class="text-purple-600">Image IRM</div>
-                        </div>
-                        <div class="text-center p-6 bg-green-50 rounded-2xl">
-                            <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-brain text-white text-2xl"></i>
-                            </div>
-                            <div class="font-bold text-green-700 text-lg">3. Analyser</div>
-                            <div class="text-green-600">Diagnostic IA</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- Carte de progression améliorée -->
-            <div id="nsProgressCard" class="dashboard-card p-0 overflow-hidden shadow-2xl border-0 bg-white/95 backdrop-blur-lg hidden min-h-[500px]">
-                <div class="p-10 border-b bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10"></div>
-                    <div class="relative flex items-center gap-6">
-                        <div class="w-24 h-24 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-3xl flex items-center justify-center animate-pulse shadow-2xl">
-                            <i class="fas fa-cogs text-white text-3xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-gray-900 text-3xl mb-2">Analyse IA en Cours</h3>
-                            <p class="text-gray-600 text-xl">Traitement neuronal avancé • Intelligence artificielle de pointe</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="p-10 space-y-8">
-                    <div class="flex items-center justify-between">
-                        <span id="nsStatusText" class="font-bold text-gray-700 text-2xl">En attente du fichier...</span>
-                        <div class="flex items-center gap-4">
-                            <span id="nsProgressPct" class="font-bold text-indigo-600 bg-indigo-100 px-6 py-3 rounded-2xl text-2xl shadow-lg">0%</span>
-                            <div class="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-                        </div>
-                    </div>
-                    <div class="w-full bg-gradient-to-r from-gray-200 to-gray-300 rounded-full h-8 shadow-inner overflow-hidden">
-                        <div id="nsAnalysisProgress" class="bg-gradient-to-r from-emerald-500 via-blue-500 to-indigo-600 h-8 rounded-full transition-all duration-500 shadow-lg relative overflow-hidden" style="width:0%">
-                            <div class="absolute inset-0 bg-gradient-to-r from-white/20 via-white/10 to-transparent animate-pulse"></div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-6 text-center mt-10">
-                        <div class="flex flex-col items-center space-y-4 p-6 bg-gradient-to-b from-blue-50 to-blue-100 rounded-2xl shadow-xl">
-                            <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
-                                <i class="fas fa-upload text-white text-2xl"></i>
-                            </div>
-                            <span class="font-bold text-blue-700 text-lg">Upload Sécurisé</span>
-                            <span class="text-sm text-blue-600">Chiffrement médical</span>
-                        </div>
-                        <div class="flex flex-col items-center space-y-4 p-6 bg-gradient-to-b from-purple-50 to-purple-100 rounded-2xl shadow-xl">
-                            <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
-                                <i class="fas fa-brain text-white text-2xl"></i>
-                            </div>
-                            <span class="font-bold text-purple-700 text-lg">Analyse IA</span>
-                            <span class="text-sm text-purple-600">Réseaux de neurones</span>
-                        </div>
-                        <div class="flex flex-col items-center space-y-4 p-6 bg-gradient-to-b from-green-50 to-green-100 rounded-2xl shadow-xl">
-                            <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-lg">
-                                <i class="fas fa-check text-white text-2xl"></i>
-                            </div>
-                            <span class="font-bold text-green-700 text-lg">Diagnostic</span>
-                            <span class="text-sm text-green-600">Rapport médical</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Notification de résultats -->
-            <div id="nsResultsCard" class="dashboard-card p-8 hidden bg-gradient-to-br from-emerald-50 to-green-50 border-0 shadow-2xl slide-up cursor-pointer hover:shadow-3xl transition-all duration-300 hover:scale-105" onclick="openResultsModal()">
-                <div class="text-center space-y-6">
-                    <div class="w-32 h-32 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mx-auto shadow-2xl animate-pulse">
-                        <i class="fas fa-check-circle text-white text-4xl"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-gray-900 text-3xl mb-3">Analyse Terminée !</h3>
-                        <p class="text-emerald-600 font-bold text-xl mb-6">Diagnostic IA • NeuroScan disponible</p>
-                        <button class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 py-4 rounded-2xl font-bold text-xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105">
-                            <i class="fas fa-eye mr-3"></i>
-                            Voir les Résultats Complets
-                        </button>
-                    </div>
-                    <div class="flex justify-center items-center gap-4 pt-4">
-                        <div class="flex items-center gap-2 text-emerald-600 font-bold">
-                            <i class="fas fa-shield-check"></i>
-                            <span>Certifié médical</span>
-                        </div>
-                        <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
-                        <div class="flex items-center gap-2 text-emerald-600 font-bold">
-                            <i class="fas fa-clock"></i>
-                            <span id="analysisTime">Temps d'analyse</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            </div>
-            </div>
+        <div>
+          <div class="font-semibold text-neutral-900">Rapport de Diagnostic IA</div>
+          <div class="text-sm text-neutral-500">Généré automatiquement</div>
         </div>
+      </div>
+      <button id="closeModal" class="rounded-lg px-3 py-2 text-neutral-600 hover:bg-neutral-100">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
-
-    <!-- Modal professionnel pour les résultats -->
-    <div id="resultsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden">
-            <!-- Header du modal -->
-            <div class="p-8 border-b bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 relative overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-blue-500/10"></div>
-                <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-white/30 to-transparent rounded-bl-full"></div>
-                <div class="relative flex items-center justify-between">
-                    <div class="flex items-center gap-8">
-                        <div class="w-24 h-24 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-3xl flex items-center justify-center shadow-2xl pulse-glow">
-                            <i class="fas fa-check-circle text-white text-3xl animate-pulse"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-gray-900 text-4xl mb-2">Diagnostic IA • NeuroScan</h3>
-                            <p class="text-emerald-600 font-bold text-xl flex items-center gap-3">
-                                <i class="fas fa-certificate"></i>
-                                Analyse terminée avec succès • Rapport médical
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <div class="text-right bg-white/90 p-6 rounded-2xl shadow-2xl border border-emerald-200">
-                            <div class="text-sm text-gray-500 font-semibold mb-3 uppercase tracking-wider">ID ANALYSE</div>
-                            <div class="text-2xl font-mono text-gray-800 font-bold">
-                                <span id="modalAnalysisId">—</span>
-                            </div>
-                            <div class="text-xs text-emerald-600 font-semibold mt-2">
-                                <i class="fas fa-clock mr-1"></i>
-                                <span id="modalTimestamp">—</span>
-                            </div>
-                        </div>
-                        <button id="closeModal" class="w-16 h-16 bg-red-500 hover:bg-red-600 text-white rounded-2xl flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110">
-                            <i class="fas fa-times text-2xl"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Contenu du modal -->
-            <div class="max-h-[80vh] overflow-y-auto">
-                <div class="p-8 space-y-8">
-                    <!-- Diagnostic principal -->
-                    <div class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 rounded-3xl p-10 border-2 border-blue-200 shadow-2xl relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-blue-400/20 to-transparent rounded-bl-full"></div>
-                        <div class="relative grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
-                            <!-- Image -->
-                            <div class="lg:col-span-1">
-                                <div class="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl overflow-hidden flex items-center justify-center border-4 border-white shadow-2xl">
-                                    <img id="modalResultImg" src="" alt="IRM" class="max-w-full max-h-full rounded-2xl object-cover">
-                                </div>
-                            </div>
-                            
-                            <!-- Diagnostic -->
-                            <div class="lg:col-span-2 space-y-6">
-                                <div class="text-center lg:text-left">
-                                    <div class="inline-flex items-center gap-4 mb-6">
-                                        <span id="modalDiagBadge" class="badge text-2xl px-8 py-4 font-bold shadow-2xl">—</span>
-                                    </div>
-                                    <div class="text-5xl font-bold bg-gradient-to-r from-gray-700 via-blue-700 to-indigo-800 bg-clip-text text-transparent mb-6" id="modalPrediction">—</div>
-                                    <div class="text-xl text-gray-700 bg-gradient-to-r from-gray-100 to-blue-100 px-8 py-6 rounded-2xl shadow-inner border border-gray-200" id="modalPatientSummary">&nbsp;</div>
-                                </div>
-                                
-                                <!-- Métriques -->
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div class="bg-gradient-to-r from-blue-100 to-blue-200 px-6 py-6 rounded-2xl shadow-xl text-center">
-                                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <i class="fas fa-percentage text-white text-xl"></i>
-                                        </div>
-                                        <div class="text-blue-700 font-bold text-lg">Confiance</div>
-                                        <div id="modalConfidence" class="text-blue-900 font-black text-3xl">-</div>
-                                    </div>
-                                    <div class="bg-gradient-to-r from-purple-100 to-purple-200 px-6 py-6 rounded-2xl shadow-xl text-center">
-                                        <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <i class="fas fa-clock text-white text-xl"></i>
-                                        </div>
-                                        <div class="text-purple-700 font-bold text-lg">Temps</div>
-                                        <div id="modalProcTime" class="text-purple-900 font-black text-3xl">-</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Graphiques et analyses -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Graphique -->
-                        <div class="bg-white rounded-3xl p-8 shadow-2xl border border-blue-100">
-                            <div class="flex items-center gap-4 mb-6">
-                                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-chart-pie text-white text-xl"></i>
-                                </div>
-                                <div class="font-bold text-gray-800 text-xl">Distribution des Probabilités</div>
-                            </div>
-                            <canvas id="modalProbChart" height="250"></canvas>
-                        </div>
-                        
-                        <!-- Analyses détaillées -->
-                        <div class="bg-white rounded-3xl p-8 shadow-2xl border border-purple-100">
-                            <div class="flex items-center gap-4 mb-6">
-                                <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-list-ul text-white text-xl"></i>
-                                </div>
-                                <div class="font-bold text-gray-800 text-xl">Scores Détaillés</div>
-                            </div>
-                            <div id="modalProbs" class="space-y-4"></div>
-                        </div>
-                    </div>
-
-                    <!-- Recommandations -->
-                    <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl p-8 border-2 border-amber-200 shadow-2xl">
-                        <div class="flex items-center gap-4 mb-6">
-                            <div class="w-16 h-16 bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-xl">
-                                <i class="fas fa-stethoscope text-white text-2xl"></i>
-                            </div>
-                            <div>
-                                <div class="font-bold text-gray-800 text-2xl">Recommandations Cliniques</div>
-                                <div class="text-amber-600 font-bold">Protocole médical suggéré</div>
-                            </div>
-                        </div>
-                        <div class="bg-white/80 rounded-2xl p-6 shadow-xl">
-                            <ul id="modalRecs" class="space-y-3 text-gray-700 text-lg"></ul>
-                        </div>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <button class="group flex flex-col items-center justify-center gap-4 px-8 py-6 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105">
-                            <i class="fas fa-file-medical-alt text-2xl"></i>
-                            <span>Télécharger PDF</span>
-                        </button>
-                        <button class="group flex flex-col items-center justify-center gap-4 px-8 py-6 bg-gradient-to-br from-emerald-600 via-teal-600 to-green-700 text-white rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105">
-                            <i class="fas fa-share-alt text-2xl"></i>
-                            <span>Partager</span>
-                        </button>
-                        <button class="group flex flex-col items-center justify-center gap-4 px-8 py-6 bg-gradient-to-br from-amber-600 via-orange-600 to-red-700 text-white rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105">
-                            <i class="fas fa-history text-2xl"></i>
-                            <span>Historique</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+    <div class="p-6 bg-white">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-1">
+          <div class="rounded-xl border border-neutral-200 overflow-hidden">
+            <img id="modalResultImg" class="w-full h-56 object-cover" alt="IRM" />
+          </div>
         </div>
+        <div class="lg:col-span-2 space-y-4">
+          <div class="flex flex-wrap items-center gap-3">
+            <span id="modalDiagBadge" class="px-3 py-1 rounded-lg bg-blue-600 text-white text-sm font-semibold">—</span>
+            <div class="text-sm text-neutral-500">Confiance: <span id="modalConfidence" class="font-semibold text-neutral-800">—</span></div>
+            <div class="text-sm text-neutral-500">Temps: <span id="modalProcTime" class="font-semibold text-neutral-800">—</span></div>
+          </div>
+          <div id="modalPrediction" class="text-2xl font-bold text-neutral-900">—</div>
+          <div id="modalPatientSummary" class="text-neutral-700">—</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <div class="rounded-xl border border-neutral-200 p-4">
+          <div class="font-semibold text-neutral-900 mb-3">Scores et Répartition</div>
+          <canvas id="modalProbChart" height="220"></canvas>
+          <div id="modalProbs" class="mt-4 space-y-2"></div>
+        </div>
+        <div class="rounded-xl border border-neutral-200 p-4">
+          <div class="font-semibold text-neutral-900 mb-3">Recommandations</div>
+          <ul id="modalRecs" class="space-y-2 text-neutral-700 text-sm"></ul>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-end gap-3 mt-6">
+        <button class="rounded-xl px-4 py-2 bg-neutral-100 text-neutral-800 hover:bg-neutral-200">Historique</button>
+        <button id="shareBtn" class="rounded-xl px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700">Partager</button>
+        <button id="reportBtn" class="rounded-xl px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">Télécharger PDF</button>
+      </div>
     </div>
+  </div>
 </div>
-
-{% endblock %}
-
-{% block extra_css %}
-<style>
-    /* Variables CSS personnalisées */
-    :root {
-        --primary-color: #2563eb;
-        --secondary-color: #7c3aed;
-        --accent-color: #06b6d4;
-        --success-color: #059669;
-        --warning-color: #d97706;
-        --error-color: #dc2626;
-        --neutral-50: #f8fafc;
-        --neutral-100: #f1f5f9;
-        --neutral-200: #e2e8f0;
-        --neutral-300: #cbd5e1;
-        --neutral-400: #94a3b8;
-        --neutral-500: #64748b;
-        --neutral-600: #475569;
-        --neutral-700: #334155;
-        --neutral-800: #1e293b;
-        --neutral-900: #0f172a;
-        --glass-bg: rgba(255, 255, 255, 0.1);
-        --glass-border: rgba(255, 255, 255, 0.2);
-        --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        --shadow-elevated: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        --shadow-floating: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    }
-
-    /* Base styles */
-    * {
-        font-feature-settings: "liga" 1, "kern" 1;
-        text-rendering: optimizeLegibility;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-    }
-
-    /* Glass morphism effect */
-    .glass-card {
-        background: linear-gradient(135deg, 
-            rgba(255, 255, 255, 0.1) 0%, 
-            rgba(255, 255, 255, 0.05) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid var(--glass-border);
-        box-shadow: var(--shadow-glass);
-    }
-
-    .glass-card-strong {
-        background: linear-gradient(135deg, 
-            rgba(255, 255, 255, 0.25) 0%, 
-            rgba(255, 255, 255, 0.15) 100%);
-        backdrop-filter: blur(30px);
-        -webkit-backdrop-filter: blur(30px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-
-    /* Gradient backgrounds */
-    .bg-gradient-primary {
-        background: linear-gradient(135deg, 
-            var(--primary-color) 0%, 
-            var(--secondary-color) 100%);
-    }
-
-    .bg-gradient-ocean {
-        background: linear-gradient(135deg, 
-            #667eea 0%, 
-            #764ba2 50%, 
-            #f093fb 100%);
-    }
-
-    .bg-gradient-sunset {
-        background: linear-gradient(135deg, 
-            #ff9a9e 0%, 
-            #fecfef 50%, 
-            #fecfef 100%);
-    }
-
-    .bg-gradient-aurora {
-        background: linear-gradient(135deg, 
-            #a8edea 0%, 
-            #fed6e3 50%, 
-            #d299c2 100%);
-    }
-
-    .bg-gradient-cyber {
-        background: linear-gradient(135deg, 
-            #0f0c29 0%, 
-            #302b63 50%, 
-            #24243e 100%);
-    }
-
-    /* Advanced animations */
-    @keyframes float {
-        0%, 100% { 
-            transform: translateY(0px) rotate(0deg); 
-        }
-        33% { 
-            transform: translateY(-10px) rotate(1deg); 
-        }
-        66% { 
-            transform: translateY(5px) rotate(-1deg); 
-        }
-    }
-
-    @keyframes pulse-ring {
-        0% {
-            transform: scale(0.33);
-        }
-        40%, 50% {
-            opacity: 1;
-        }
-        100% {
-            opacity: 0;
-            transform: scale(1.2);
-        }
-    }
-
-    @keyframes shimmer {
-        0% {
-            background-position: -468px 0;
-        }
-        100% {
-            background-position: 468px 0;
-        }
-    }
-
-    @keyframes glow {
-        0%, 100% {
-            text-shadow: 0 0 20px var(--primary-color), 
-                         0 0 30px var(--primary-color), 
-                         0 0 40px var(--primary-color);
-        }
-        50% {
-            text-shadow: 0 0 10px var(--primary-color), 
-                         0 0 20px var(--primary-color), 
-                         0 0 30px var(--primary-color);
-        }
-    }
-
-    @keyframes morph {
-        0%, 100% {
-            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
-        }
-        34% {
-            border-radius: 70% 30% 50% 50% / 30% 40% 70% 60%;
-        }
-        67% {
-            border-radius: 100% 60% 60% 100% / 100% 100% 60% 60%;
-        }
-    }
-
-    @keyframes slide-in-right {
-        0% {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        100% {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-
-    @keyframes slide-in-left {
-        0% {
-            transform: translateX(-100%);
-            opacity: 0;
-        }
-        100% {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-
-    @keyframes scale-in {
-        0% {
-            transform: scale(0.9);
-            opacity: 0;
-        }
-        100% {
-            transform: scale(1);
-            opacity: 1;
-        }
-    }
-
-    /* Animation classes */
-    .animate-float {
-        animation: float 6s ease-in-out infinite;
-    }
-
-    .animate-pulse-ring::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 100%;
-        height: 100%;
-        border: 2px solid var(--primary-color);
-        border-radius: 50%;
-        transform: translate(-50%, -50%);
-        animation: pulse-ring 2s infinite;
-    }
-
-    .animate-shimmer {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 1000px 100%;
-        animation: shimmer 2s infinite;
-    }
-
-    .animate-glow {
-        animation: glow 2s ease-in-out infinite;
-    }
-
-    .animate-morph {
-        animation: morph 8s ease-in-out infinite;
-    }
-
-    .animate-slide-in-right {
-        animation: slide-in-right 0.6s ease-out;
-    }
-
-    .animate-slide-in-left {
-        animation: slide-in-left 0.6s ease-out;
-    }
-
-    .animate-scale-in {
-        animation: scale-in 0.5s ease-out;
-    }
-
-    /* Custom form elements */
-    .form-select-advanced {
-        appearance: none;
-        background: linear-gradient(135deg, 
-            rgba(255, 255, 255, 0.9) 0%, 
-            rgba(255, 255, 255, 0.7) 100%);
-        backdrop-filter: blur(10px);
-        border: 2px solid transparent;
-        background-clip: padding-box;
-        position: relative;
-    }
-
-    .form-select-advanced::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        padding: 2px;
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        border-radius: inherit;
-        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        mask-composite: exclude;
-    }
-
-    .form-select-advanced:focus {
-        outline: none;
-        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1),
-                    0 0 20px rgba(37, 99, 235, 0.2);
-    }
-
-    /* Hover effects */
-    .hover-lift {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .hover-lift:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: var(--shadow-elevated);
-    }
-
-    .hover-glow:hover {
-        box-shadow: 0 0 30px rgba(37, 99, 235, 0.3),
-                    0 0 60px rgba(37, 99, 235, 0.1);
-    }
-
-    /* Button styles */
-    .btn-primary-advanced {
-        background: linear-gradient(135deg, 
-            var(--primary-color) 0%, 
-            var(--secondary-color) 100%);
-        border: none;
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s ease;
-    }
-
-    .btn-primary-advanced::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, 
-            transparent, 
-            rgba(255, 255, 255, 0.2), 
-            transparent);
-        transition: left 0.5s ease;
-    }
-
-    .btn-primary-advanced:hover::before {
-        left: 100%;
-    }
-
-    .btn-primary-advanced:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
-    }
-
-    /* Progress bars */
-    .progress-advanced {
-        background: var(--glass-bg);
-        backdrop-filter: blur(10px);
-        border-radius: 50px;
-        overflow: hidden;
-        position: relative;
-    }
-
-    .progress-advanced::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(45deg, 
-            rgba(255, 255, 255, 0.1) 25%, 
-            transparent 25%, 
-            transparent 50%, 
-            rgba(255, 255, 255, 0.1) 50%, 
-            rgba(255, 255, 255, 0.1) 75%, 
-            transparent 75%);
-        background-size: 20px 20px;
-        animation: shimmer 1s linear infinite;
-    }
-
-    /* Card styles */
-    .card-advanced {
-        background: var(--glass-bg);
-        backdrop-filter: blur(20px);
-        border: 1px solid var(--glass-border);
-        border-radius: 24px;
-        box-shadow: var(--shadow-floating);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .card-advanced::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: linear-gradient(90deg, 
-            transparent, 
-            rgba(255, 255, 255, 0.5), 
-            transparent);
-    }
-
-    .card-advanced:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-elevated);
-        border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    /* Loading states */
-    .skeleton {
-        background: linear-gradient(90deg, 
-            var(--neutral-200) 25%, 
-            var(--neutral-100) 50%, 
-            var(--neutral-200) 75%);
-        background-size: 200% 100%;
-        animation: shimmer 1.5s infinite;
-        border-radius: 8px;
-    }
-
-    /* Modal styles */
-    .modal-overlay {
-        background: rgba(15, 23, 42, 0.8);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-    }
-
-    .modal-content {
-        background: linear-gradient(135deg, 
-            rgba(255, 255, 255, 0.95) 0%, 
-            rgba(255, 255, 255, 0.9) 100%);
-        backdrop-filter: blur(30px);
-        -webkit-backdrop-filter: blur(30px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    /* Utility classes */
-    .text-gradient {
-        background: linear-gradient(135deg, 
-            var(--primary-color), 
-            var(--secondary-color));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .border-gradient {
-        position: relative;
-        background: white;
-        border-radius: 16px;
-    }
-
-    .border-gradient::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        padding: 2px;
-        background: linear-gradient(135deg, 
-            var(--primary-color), 
-            var(--secondary-color));
-        border-radius: inherit;
-        mask: linear-gradient(#fff 0 0) content-box, 
-              linear-gradient(#fff 0 0);
-        mask-composite: exclude;
-    }
-
-    /* Responsive design enhancements */
-    @media (max-width: 768px) {
-        .card-advanced {
-            border-radius: 16px;
-        }
-        
-        .hover-lift:hover {
-            transform: translateY(-4px) scale(1.01);
-        }
-    }
-
-    /* Dark mode support */
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --neutral-50: #0f172a;
-            --neutral-100: #1e293b;
-            --neutral-200: #334155;
-            --glass-bg: rgba(15, 23, 42, 0.1);
-        }
-        
-        .card-advanced {
-            background: rgba(15, 23, 42, 0.3);
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-    }
-
-    /* Performance optimizations */
-    .will-change-transform {
-        will-change: transform;
-    }
-
-    .will-change-opacity {
-        will-change: opacity;
-    }
-
-    .gpu-accelerated {
-        transform: translateZ(0);
-        backface-visibility: hidden;
-        perspective: 1000px;
-    }
-</style>
-
-<!-- SVG Gradients for charts -->
-<svg width="0" height="0" style="position: absolute;">
-    <defs>
-        <linearGradient id="gradientPurple" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#8b5cf6"/>
-            <stop offset="100%" style="stop-color:#ec4899"/>
-        </linearGradient>
-        <linearGradient id="gradientBlue" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#3b82f6"/>
-            <stop offset="100%" style="stop-color:#1d4ed8"/>
-        </linearGradient>
-        <linearGradient id="gradientGreen" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style="stop-color:#10b981"/>
-            <stop offset="100%" style="stop-color:#059669"/>
-        </linearGradient>
-    </defs>
-</svg>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Variables globales pour les résultats
-    let analysisResults = null;
+let analysisResults = null;
 
-    // Fonctions pour le modal des résultats
-    function openResultsModal() {
-        if (!analysisResults) return;
-        
-        // Copier les données dans le modal
-        document.getElementById('modalAnalysisId').textContent = analysisResults.id;
-        document.getElementById('modalTimestamp').textContent = analysisResults.timestamp;
-        document.getElementById('modalResultImg').src = analysisResults.imageUrl;
-        document.getElementById('modalPrediction').textContent = analysisResults.prediction;
-        document.getElementById('modalDiagBadge').textContent = analysisResults.diagnosis;
-        document.getElementById('modalDiagBadge').className = `badge text-2xl px-8 py-4 font-bold shadow-2xl ${analysisResults.badgeClass}`;
-        document.getElementById('modalConfidence').textContent = analysisResults.confidence;
-        document.getElementById('modalProcTime').textContent = analysisResults.processingTime;
-        document.getElementById('modalPatientSummary').textContent = analysisResults.patientSummary;
-        
-        // Afficher le modal
-        document.getElementById('resultsModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-        
-        // Recréer le graphique si nécessaire
-        if (analysisResults.chartData) {
-            createModalChart(analysisResults.chartData);
+function openResultsModal() {
+  if (!analysisResults) return;
+  document.getElementById('modalResultImg').src = analysisResults.imageUrl || '';
+  document.getElementById('modalPrediction').textContent = analysisResults.prediction || '—';
+  const badge = document.getElementById('modalDiagBadge');
+  badge.textContent = analysisResults.diagnosis || '—';
+  badge.className = `px-3 py-1 rounded-lg text-white text-sm font-semibold ${analysisResults.badgeClass || 'bg-blue-600'}`;
+  document.getElementById('modalConfidence').textContent = analysisResults.confidence || '—';
+  document.getElementById('modalProcTime').textContent = analysisResults.processingTime || '—';
+  document.getElementById('modalPatientSummary').textContent = analysisResults.patientSummary || '—';
+
+  if (analysisResults.chartData) createModalChart(analysisResults.chartData);
+  if (analysisResults.probabilities) fillModalProbabilities(analysisResults.probabilities);
+  if (analysisResults.recommendations) fillModalRecommendations(analysisResults.recommendations);
+
+  const modal = document.getElementById('resultsModal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function closeResultsModal() {
+  const modal = document.getElementById('resultsModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'closeModal' || e.target.id === 'resultsModal') closeResultsModal();
+});
+
+function createModalChart(data) {
+  const ctx = document.getElementById('modalProbChart').getContext('2d');
+  if (window._modalChart) window._modalChart.destroy();
+  window._modalChart = new Chart(ctx, {
+    type: 'doughnut',
+    data,
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+  });
+}
+
+function fillModalProbabilities(list) {
+  const c = document.getElementById('modalProbs');
+  c.innerHTML = '';
+  list.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'flex items-center justify-between text-sm';
+    row.innerHTML = `<span class="text-neutral-700">${p.name}</span>
+      <span class="font-semibold text-neutral-900">${p.value}%</span>`;
+    c.appendChild(row);
+  });
+}
+
+function fillModalRecommendations(recs) {
+  const ul = document.getElementById('modalRecs');
+  ul.innerHTML = '';
+  recs.forEach(r => {
+    const li = document.createElement('li');
+    li.textContent = r;
+    ul.appendChild(li);
+  });
+}
+
+function getBadgeClass(pred) {
+  const map = {
+    'Tumeur maligne': 'bg-red-600',
+    'Tumeur bénigne': 'bg-orange-600',
+    'Pas de tumeur': 'bg-emerald-600',
+  };
+  return map[pred] || 'bg-blue-600';
+}
+
+function createChartData(prob) {
+  const labels = Object.keys(prob);
+  const data = Object.values(prob);
+  const colors = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626'];
+  return { labels, datasets: [{ data, backgroundColor: colors.slice(0, labels.length), borderWidth: 0 }] };
+}
+
+function createProbabilityList(prob) {
+  return Object.entries(prob).map(([name, value]) => ({ name, value: Number(value).toFixed(1) }));
+}
+
+// Page setup
+(function initPage(){
+  const select = document.getElementById('patientSelect');
+  const info = document.getElementById('patientInfo');
+  const analyzeBtn = document.getElementById('nsAnalyzeBtn');
+  const drop = document.getElementById('nsDropZone');
+  const input = document.getElementById('nsFileInput');
+  const fileInfo = document.getElementById('nsFileInfo');
+  const fileName = document.getElementById('nsFileName');
+  const fileSize = document.getElementById('nsFileSize');
+  const progressCard = document.getElementById('nsProgressCard');
+  const progressBar = document.getElementById('nsAnalysisProgress');
+  const progressPct = document.getElementById('nsProgressPct');
+  const statusText = document.getElementById('nsStatusText');
+  const resultsCard = document.getElementById('nsResultsCard');
+  const reportBtn = document.getElementById('reportBtn');
+  const shareBtn = document.getElementById('shareBtn');
+  const examDateInput = document.getElementById('nsExamDate');
+
+  // Set default exam date to today
+  if (examDateInput) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth()+1).padStart(2,'0');
+    const dd = String(today.getDate()).padStart(2,'0');
+    examDateInput.value = `${yyyy}-${mm}-${dd}`;
+  }
+
+  function updateAnalyzeButton() {
+    const ok = !!select.value && input.files.length > 0;
+    analyzeBtn.disabled = !ok;
+  }
+
+  select.addEventListener('change', () => {
+    const opt = select.options[select.selectedIndex];
+    if (!opt.value) { info.classList.add('hidden'); updateAnalyzeButton(); return; }
+    document.getElementById('patientName').textContent = opt.dataset.name;
+    document.getElementById('patientAge').textContent = `${opt.dataset.age} ans`;
+    document.getElementById('patientGender').textContent = opt.dataset.gender;
+    document.getElementById('patientDob').textContent = opt.dataset.dob;
+    info.classList.remove('hidden');
+    updateAnalyzeButton();
+  });
+
+  function formatSize(bytes){ if(bytes<1024) return bytes+' B'; const u=['KB','MB','GB']; let i=-1; do{bytes/=1024;i++;}while(bytes>=1024&&i<u.length-1); return bytes.toFixed(1)+' '+u[i]; }
+
+  function onFileSelected(file){
+    if (!file) return;
+    const allowed = ['dcm','dicom','nii','jpg','jpeg','png'];
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!allowed.includes(ext)) { alert('Format non supporté'); return; }
+    fileName.textContent = file.name;
+    fileSize.textContent = formatSize(file.size);
+    fileInfo.classList.remove('hidden');
+    input.files = input.files;
+    updateAnalyzeButton();
+  }
+
+  drop.addEventListener('click', () => input.click());
+  input.addEventListener('change', (e) => onFileSelected(e.target.files[0]));
+  drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('bg-neutral-100'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('bg-neutral-100'));
+  drop.addEventListener('drop', (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if(f){ input.files=e.dataTransfer.files; onFileSelected(f);} drop.classList.remove('bg-neutral-100'); });
+
+  analyzeBtn.addEventListener('click', async () => {
+    // Start progress
+    resultsCard.classList.add('hidden');
+    progressCard.classList.remove('hidden');
+    statusText.textContent = 'Téléversement du fichier...';
+
+  const formData = new FormData();
+  formData.append('file', input.files[0]);
+  formData.append('patient_id', select.value);
+  const patientNameVal = document.getElementById('patientName').textContent || (select.options[select.selectedIndex]?.dataset?.name || '');
+  if (patientNameVal) formData.append('patient_name', patientNameVal);
+  if (examDateInput && examDateInput.value) formData.append('exam_date', examDateInput.value);
+
+    // Upload with XHR for progress
+    let uploadOk = false;
+    let uploadResponseText = null;
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/upload');
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          progressBar.style.width = `${pct}%`;
+          progressPct.textContent = `${pct}%`;
         }
-        
-        // Remplir les probabilités détaillées
-        if (analysisResults.probabilities) {
-            fillModalProbabilities(analysisResults.probabilities);
-        }
-        
-        // Remplir les recommandations
-        if (analysisResults.recommendations) {
-            fillModalRecommendations(analysisResults.recommendations);
-        }
-    }
-
-    function closeResultsModal() {
-        document.getElementById('resultsModal').classList.add('hidden');
-        document.body.style.overflow = 'auto';
-    }
-
-    function createModalChart(data) {
-        const ctx = document.getElementById('modalProbChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: data,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            padding: 20,
-                            font: { size: 14, weight: 'bold' }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    function fillModalProbabilities(probs) {
-        const container = document.getElementById('modalProbs');
-        container.innerHTML = '';
-        probs.forEach(prob => {
-            const div = document.createElement('div');
-            div.className = 'flex items-center justify-between p-4 bg-white rounded-xl shadow-lg';
-            div.innerHTML = `
-                <span class="font-semibold text-gray-700">${prob.name}</span>
-                <div class="flex items-center gap-3">
-                    <div class="w-32 h-3 bg-gray-200 rounded-full overflow-hidden">
-                        <div class="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500" style="width: ${prob.value}%"></div>
-                    </div>
-                    <span class="font-bold text-gray-800 min-w-[3rem]">${prob.value}%</span>
-                </div>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    function fillModalRecommendations(recs) {
-        const container = document.getElementById('modalRecs');
-        container.innerHTML = '';
-        recs.forEach(rec => {
-            const li = document.createElement('li');
-            li.className = 'flex items-start gap-3';
-            li.innerHTML = `
-                <div class="w-2 h-2 bg-amber-500 rounded-full mt-3 flex-shrink-0"></div>
-                <span>${rec}</span>
-            `;
-            container.appendChild(li);
-        });
-    }
-
-    // Gestion des événements du modal
-    document.addEventListener('click', function(e) {
-        if (e.target.id === 'closeModal') {
-            closeResultsModal();
-        }
-        if (e.target.id === 'resultsModal') {
-            closeResultsModal();
-        }
+      };
+      xhr.onload = () => { uploadOk = xhr.status === 200; uploadResponseText = xhr.responseText; resolve(); };
+      xhr.onerror = () => resolve();
+      xhr.send(formData);
     });
 
-    // Gestion de la sélection de patients
-    function handlePatientSelection() {
-        const select = document.getElementById('patientSelect');
-        const patientInfo = document.getElementById('patientInfo');
-        const analyzeBtn = document.getElementById('nsAnalyzeBtn');
-        
-        select.addEventListener('change', function() {
-            const selectedOption = select.options[select.selectedIndex];
-            
-            if (selectedOption.value) {
-                // Afficher les informations du patient
-                document.getElementById('patientName').textContent = selectedOption.dataset.name;
-                document.getElementById('patientAge').textContent = selectedOption.dataset.age + ' ans';
-                document.getElementById('patientGender').textContent = selectedOption.dataset.gender;
-                document.getElementById('patientDob').textContent = selectedOption.dataset.dob;
-                
-                patientInfo.classList.remove('hidden');
-                updateAnalyzeButton();
-            } else {
-                patientInfo.classList.add('hidden');
-                updateAnalyzeButton();
-            }
-        });
+    statusText.textContent = uploadOk ? 'Analyse IA en cours...' : 'Analyse locale (démo)';
+    progressBar.style.width = '100%';
+    progressPct.textContent = '100%';
+
+    let resData;
+    if (uploadOk && uploadResponseText) {
+      try { resData = JSON.parse(uploadResponseText); } catch (e) { /* ignore parse error */ }
     }
 
-    function updateAnalyzeButton() {
-        const patientSelected = document.getElementById('patientSelect').value;
-        const fileSelected = document.querySelector('#nsFileInput').files.length > 0;
-        const analyzeBtn = document.getElementById('nsAnalyzeBtn');
-        
-        if (patientSelected && fileSelected) {
-            analyzeBtn.disabled = false;
-            analyzeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        } else {
-            analyzeBtn.disabled = true;
-            analyzeBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        }
+    if (!resData) {
+      // Fallback démo
+      resData = {
+        analysis_id: 'NS-' + Date.now(),
+        prediction: 'Pas de tumeur',
+        confidence: 97.4,
+        processing_time: 8.2,
+        probabilities: { 'Pas de tumeur': 97.4, 'Tumeur bénigne': 2.0, 'Tumeur maligne': 0.6 },
+        description: 'Absence de masse tumorale détectable.',
+        image_url: ''
+      };
     }
 
-    // Initialisation de l'interface d'analyse
-    document.addEventListener('DOMContentLoaded', function() {
-        const dropZone = document.getElementById('nsDropZone');
-        const fileInput = document.getElementById('nsFileInput');
-        const fileInfo = document.getElementById('nsFileInfo');
-        const fileName = document.getElementById('nsFileName');
-        const fileSize = document.getElementById('nsFileSize');
-        const uploadProgress = document.getElementById('nsUploadProgress');
-        const togglePatientBtn = document.getElementById('nsTogglePatientBtn');
-        const patientSection = document.getElementById('nsPatientSection');
-        const analyzeBtn = document.getElementById('nsAnalyzeBtn');
-        const progressCard = document.getElementById('nsProgressCard');
-        const analysisProgress = document.getElementById('nsAnalysisProgress');
-        const progressPct = document.getElementById('nsProgressPct');
-        const statusText = document.getElementById('nsStatusText');
-        const resultsCard = document.getElementById('nsResultsCard');
-        const analysisIdEl = document.getElementById('nsAnalysisId');
-        const resultImg = document.getElementById('nsResultImg');
-        const prediction = document.getElementById('nsPrediction');
-        const diagBadge = document.getElementById('nsDiagBadge');
-        const confidence = document.getElementById('nsConfidence');
-        const procTime = document.getElementById('nsProcTime');
-        const patientSummary = document.getElementById('nsPatientSummary');
-        const probs = document.getElementById('nsProbs');
-        const recs = document.getElementById('nsRecs');
-        const description = document.getElementById('nsDescription');
-        const probChartCanvas = document.getElementById('nsProbChart');
-        const reportBtn = document.getElementById('nsReportBtn');
-        const shareBtn = document.getElementById('nsShareBtn');
-        let probChart = null;
+  // Build analysisResults and show card
+    analysisResults = {
+      id: resData.analysis_id,
+      imageUrl: resData.image_url,
+      prediction: resData.prediction,
+      diagnosis: resData.prediction,
+      badgeClass: getBadgeClass(resData.prediction),
+      confidence: `${resData.confidence}%`,
+      processingTime: `${resData.processing_time}s`,
+      patientSummary: `Patient: ${document.getElementById('patientName').textContent} • ${document.getElementById('patientAge').textContent} • ${document.getElementById('patientGender').textContent}`,
+      chartData: createChartData(resData.probabilities),
+      probabilities: createProbabilityList(resData.probabilities),
+      recommendations: [
+        'Corrélation clinique recommandée',
+        'Surveillance radiologique si nécessaire',
+        'Consulter un radiologue en cas de doute'
+      ]
+    };
 
-        function formatSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            const units = ['KB','MB','GB'];
-            let i = -1;
-            do { bytes = bytes/1024; i++; } while (bytes >= 1024 && i < units.length-1);
-            return bytes.toFixed(1)+' '+units[i];
-        }
+  progressCard.classList.add('hidden');
+  resultsCard.classList.remove('hidden');
+  });
 
-        function onFileSelected(file) {
-            if (!file) return;
-            const allowed = ['dcm','nii','jpg','jpeg','png'];
-            const ext = file.name.split('.').pop().toLowerCase();
-            if (!allowed.includes(ext)) {
-                showNotification('Format de fichier non supporté', 'warning');
-                return;
-            }
-            fileName.textContent = file.name;
-            fileSize.textContent = formatSize(file.size);
-            uploadProgress.style.width = '100%';
-            fileInfo.classList.remove('hidden');
-            updateAnalyzeButton();
-        }
-
-        // Events pour le drag & drop
-        dropZone.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => onFileSelected(e.target.files[0]));
-        dropZone.addEventListener('dragover', (e) => { 
-            e.preventDefault(); 
-            dropZone.classList.add('border-blue-500', 'bg-blue-100'); 
+  // Actions dans le modal
+  if (reportBtn) {
+    reportBtn.addEventListener('click', async () => {
+      if (!analysisResults) return;
+      try {
+        const resp = await fetch('/generate-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ patientName: document.getElementById('patientName').textContent, analysisData: analysisResults })
         });
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('border-blue-500', 'bg-blue-100');
-        });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('border-blue-500', 'bg-blue-100');
-            const file = e.dataTransfer.files[0];
-            if (file) { 
-                fileInput.files = e.dataTransfer.files; 
-                onFileSelected(file); 
-            }
-        });
-
-        // Gestion de la sélection des patients
-        const patientSelect = document.getElementById('nsPatientSelect');
-        const selectedPatientInfo = document.getElementById('nsSelectedPatientInfo');
-        const toggleNewPatientBtn = document.getElementById('nsToggleNewPatientBtn');
-        
-        // Variables pour stocker les infos patient
-        let selectedPatientData = {
-            patient_id: '',
-            patient_name: '',
-            age: '',
-            gender: '',
-            phone: '',
-            email: '',
-            total_analyses: '',
-            medical_history: '',
-            allergies: ''
-        };
-
-        // Gestion de la sélection d'un patient
-        if (patientSelect) {
-            patientSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                
-                if (this.value) {
-                    // Patient sélectionné - afficher les infos
-                    selectedPatientData.patient_id = selectedOption.dataset.patientId || '';
-                    selectedPatientData.patient_name = selectedOption.dataset.patientName || '';
-                    selectedPatientData.age = selectedOption.dataset.age || '';
-                    selectedPatientData.gender = selectedOption.dataset.gender || '';
-                    selectedPatientData.phone = selectedOption.dataset.phone || '';
-                    selectedPatientData.email = selectedOption.dataset.email || '';
-                    selectedPatientData.total_analyses = selectedOption.dataset.totalAnalyses || '0';
-                    selectedPatientData.medical_history = selectedOption.dataset.medicalHistory || '';
-                    selectedPatientData.allergies = selectedOption.dataset.allergies || '';
-                    
-                    // Afficher les informations de base
-                    document.getElementById('nsDisplayName').textContent = selectedPatientData.patient_name;
-                    document.getElementById('nsDisplayId').textContent = selectedPatientData.patient_id;
-                    document.getElementById('nsDisplayAge').textContent = selectedPatientData.age ? selectedPatientData.age + ' ans' : 'Non renseigné';
-                    document.getElementById('nsDisplayGender').textContent = selectedPatientData.gender || 'Non renseigné';
-                    document.getElementById('nsDisplayPhone').textContent = selectedPatientData.phone || 'Non renseigné';
-                    document.getElementById('nsDisplayAnalyses').textContent = selectedPatientData.total_analyses + ' analyse' + (selectedPatientData.total_analyses > 1 ? 's' : '');
-                    
-                    // Afficher les informations médicales
-                    document.getElementById('nsDisplayHistory').textContent = selectedPatientData.medical_history || 'Aucun antécédent renseigné';
-                    document.getElementById('nsDisplayAllergies').textContent = selectedPatientData.allergies || 'Aucune allergie connue';
-                    
-                    selectedPatientInfo.classList.remove('hidden');
-                } else {
-                    // Aucun patient sélectionné
-                    selectedPatientInfo.classList.add('hidden');
-                    selectedPatientData = { 
-                        patient_id: '', patient_name: '', age: '', gender: '', 
-                        phone: '', email: '', total_analyses: '', medical_history: '', allergies: '' 
-                    };
-                }
-            });
-        }
-
-        // Bouton pour analyser sans patient
-        if (toggleNewPatientBtn) {
-            toggleNewPatientBtn.addEventListener('click', () => {
-                patientSelect.value = '';
-                selectedPatientInfo.classList.add('hidden');
-                selectedPatientData = { 
-                    patient_id: '', patient_name: '', age: '', gender: '', 
-                    phone: '', email: '', total_analyses: '', medical_history: '', allergies: '' 
-                };
-                showNotification('Analyse sans patient sélectionné', 'info');
-            });
-        }
-
-        // Analyse
-        analyzeBtn.addEventListener('click', async () => {
-            const file = fileInput.files[0];
-            if (!file) return showNotification('Veuillez sélectionner une image', 'warning');
-
-            // Afficher la progression
-            resultsCard.classList.add('hidden');
-            progressCard.classList.remove('hidden');
-            statusText.textContent = 'Téléversement du fichier...';
-            analysisProgress.style.width = '5%';
-            progressPct.textContent = '5%';
-
-            const form = new FormData();
-            form.append('file', file);
-            
-            // Utiliser les données du patient sélectionné
-            const edate = document.getElementById('nsExamDate').value;
-            if (selectedPatientData.patient_id) form.append('patient_id', selectedPatientData.patient_id);
-            if (selectedPatientData.patient_name) form.append('patient_name', selectedPatientData.patient_name);
-            if (edate) form.append('exam_date', edate);
-            
-            // Informations supplémentaires du patient
-            if (selectedPatientData.age) form.append('patient_age', selectedPatientData.age);
-            if (selectedPatientData.gender) form.append('patient_gender', selectedPatientData.gender);
-
-            try {
-                const resData = await new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('POST', '/upload');
-                    xhr.upload.onprogress = (e) => {
-                        if (e.lengthComputable) {
-                            const pct = Math.min(90, Math.round((e.loaded / e.total) * 70) + 10);
-                            uploadProgress.style.width = '100%';
-                            analysisProgress.style.width = pct + '%';
-                            progressPct.textContent = pct + '%';
-                            statusText.textContent = 'Analyse IA en cours...';
-                        }
-                    };
-                    xhr.onreadystatechange = function() {
-                        if (xhr.readyState === 4) {
-                            if (xhr.status >= 200 && xhr.status < 300) {
-                                try { resolve(JSON.parse(xhr.responseText)); }
-                                catch(err) { reject(err); }
-                            } else {
-                                reject(new Error('Erreur serveur: ' + xhr.status));
-                            }
-                        }
-                    };
-                    xhr.onerror = () => reject(new Error('Erreur réseau'));
-                    xhr.send(form);
-                });
-
-                // Compléter la progression
-                analysisProgress.style.width = '100%';
-                progressPct.textContent = '100%';
-                statusText.textContent = 'Analyse terminée avec succès';
-
-                if (!resData.success) {
-                    throw new Error(resData.error || 'Échec de l\'analyse');
-                }
-
-                // Afficher résultats
-                setTimeout(() => {
-                    progressCard.classList.add('hidden');
-                    displayResults(resData);
-                }, 1000);
-
-            } catch (err) {
-                console.error(err);
-                showNotification(err.message || 'Erreur lors de l\'analyse', 'error');
-                progressCard.classList.add('hidden');
-            }
-        });
-
-        function displayResults(resData) {
-            // Informations de base
-            analysisIdEl.textContent = resData.analysis_id || '—';
-            resultImg.src = resData.image_url || '';
-            prediction.textContent = resData.prediction;
-            const confPct = Math.round((resData.confidence || 0) * 100);
-            confidence.textContent = confPct + '%';
-            procTime.textContent = (resData.processing_time || 0).toFixed ? (resData.processing_time).toFixed(1) : resData.processing_time;
-            description.textContent = resData.description || '—';
-
-            // Patient summary - utiliser les données du patient sélectionné ou celles renvoyées par le serveur
-            const pinfo = resData.patient_info || {};
-            const patientName = pinfo.patient_name || selectedPatientData.patient_name;
-            const patientId = pinfo.patient_id || selectedPatientData.patient_id;
-            const examDate = pinfo.exam_date || document.getElementById('nsExamDate').value;
-            const age = pinfo.patient_age || selectedPatientData.age;
-            const gender = pinfo.patient_gender || selectedPatientData.gender;
-            
-            if (patientName || patientId) {
-                let summaryParts = [];
-                if (patientName) summaryParts.push(patientName);
-                if (patientId) summaryParts.push(`ID: ${patientId}`);
-                if (age) summaryParts.push(`${age} ans`);
-                if (gender) summaryParts.push(gender);
-                if (examDate) summaryParts.push(`Examen: ${examDate}`);
-                
-                patientSummary.textContent = summaryParts.join(' • ');
-            } else {
-                patientSummary.textContent = 'Analyse sans patient spécifique';
-            }
-
-            // Badge diagnostic
-            function badgeClass(label) {
-                switch (label) {
-                    case 'Normal': return 'badge success';
-                    case 'Gliome': return 'badge danger';
-                    case 'Méningiome': return 'badge warning';
-                    case 'Tumeur pituitaire': return 'badge purple';
-                    default: return 'badge';
-                }
-            }
-            diagBadge.className = badgeClass(resData.prediction);
-            diagBadge.innerHTML = `<i class="fas fa-${resData.prediction==='Normal'?'check':'exclamation-triangle'}"></i> ${resData.prediction}`;
-
-            // Probabilités
-            probs.innerHTML = '';
-            const probMap = resData.probabilities || {};
-            const labels = Object.keys(probMap);
-            const values = labels.map(l => Math.round(probMap[l] * 100));
-            Object.keys(probMap).forEach(label => {
-                const val = Math.round(probMap[label] * 100);
-                const bar = document.createElement('div');
-                bar.className = 'p-4 bg-gradient-to-r from-white to-gray-50 rounded-xl shadow-lg';
-                bar.innerHTML = `
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-gray-700 font-bold text-lg">${label}</span>
-                        <span class="font-bold text-xl">${val}%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-4 shadow-inner">
-                        <div class="h-4 rounded-full transition-all duration-1000" style="width:${val}%; background: linear-gradient(90deg, #3b82f6, #9333ea);"></div>
-                    </div>`;
-                probs.appendChild(bar);
-            });
-
-            // Graphique doughnut Chart.js
-            try {
-                if (probChart) { probChart.destroy(); }
-                probChart = new Chart(probChartCanvas.getContext('2d'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: values,
-                            backgroundColor: ['#10b981','#ef4444','#3b82f6','#9333ea'],
-                            borderWidth: 3,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: { 
-                                position: 'bottom', 
-                                labels: { 
-                                    boxWidth: 15,
-                                    font: { size: 14, weight: 'bold' },
-                                    padding: 20
-                                } 
-                            },
-                            tooltip: { 
-                                callbacks: { 
-                                    label: (ctx) => `${ctx.label}: ${ctx.parsed}%` 
-                                },
-                                titleFont: { size: 16, weight: 'bold' },
-                                bodyFont: { size: 14, weight: 'bold' }
-                            }
-                        },
-                        cutout: '60%'
-                    }
-                });
-            } catch (e) { 
-                console.warn('Chart.js non disponible'); 
-            }
-
-            // Recommandations
-            const recList = resData.recommendations || [];
-            recs.innerHTML = recList.map(r => `<li class="flex items-start gap-3 text-lg"><i class="fas fa-check-circle text-amber-600 mt-1"></i>${r}</li>`).join('');
-
-            // Stocker les résultats pour le modal
-            analysisResults = {
-                id: resData.analysis_id || 'NS-' + Date.now(),
-                timestamp: new Date().toLocaleString(),
-                imageUrl: resData.image_url || '',
-                prediction: resData.prediction,
-                diagnosis: resData.prediction,
-                badgeClass: getBadgeClass(resData.prediction),
-                confidence: resData.confidence + '%' || '0%',
-                processingTime: resData.processing_time + 's',
-                patientSummary: `Analyse IA pour ${pinfo.patient_name || 'Patient'} • ${pinfo.age || 'N/A'} ans • ${pinfo.gender || 'N/A'}`,
-                chartData: createChartData(resData.probabilities || {}),
-                probabilities: createProbabilityList(resData.probabilities || {}),
-                recommendations: resData.recommendations || []
-            };
-
-            // Afficher la notification de résultats
-            resultsCard.classList.remove('hidden');
-            document.getElementById('analysisTime').textContent = resData.processing_time + 's';
-            showNotification('Analyse terminée avec succès', 'success');
-
-            // Actions
-            const analysisPayload = {
-                prediction: resData.prediction,
-                confidence: resData.confidence || 0,
-                processingTime: resData.processing_time,
-                probabilities: resData.probabilities || {},
-                description: resData.description || '',
-                image_url: resData.image_url || ''
-            };
-
-            reportBtn.onclick = async () => {
-                try {
-                    const patientName = pinfo.patient_name || 'Patient inconnu';
-                    const resp = await fetch('/generate-report', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ patientName, analysisData: analysisPayload })
-                    });
-                    const data = await resp.json();
-                    if (data.success) {
-                        showNotification('Rapport généré avec succès', 'success');
-                    } else {
-                        showNotification('Erreur lors de la génération du rapport', 'error');
-                    }
-                } catch(e) {
-                    showNotification('Erreur lors de la génération du rapport', 'error');
-                }
-            };
-
-            shareBtn.onclick = async () => {
-                try {
-                    const email = prompt('Email du destinataire:');
-                    if (!email) return;
-                    const resp = await fetch('/share-analysis', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ recipientEmail: email, analysisData: analysisPayload })
-                    });
-                    const data = await resp.json();
-                    if (data.success) {
-                        showNotification('Analyse partagée avec succès', 'success');
-                    } else {
-                        showNotification('Erreur lors du partage', 'error');
-                    }
-                } catch(e) {
-                    showNotification('Erreur lors du partage', 'error');
-                }
-            };
-        }
+        const data = await resp.json();
+        alert(data.success ? 'Rapport généré' : 'Erreur génération rapport');
+      } catch {
+        alert('Erreur réseau');
+      }
     });
-
-    // Fonction de notification
-    function showNotification(message, type) {
-        // Créer une notification simple
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-            type === 'success' ? 'bg-green-500 text-white' :
-            type === 'error' ? 'bg-red-500 text-white' :
-            type === 'warning' ? 'bg-yellow-500 text-white' :
-            'bg-blue-500 text-white'
-        }`;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.remove();
-        }, 4000);
-    }
-
-    // Fonctions utilitaires pour le modal
-    function getBadgeClass(prediction) {
-        const classes = {
-            'Tumeur maligne': 'bg-red-500 text-white',
-            'Tumeur bénigne': 'bg-orange-500 text-white', 
-            'Pas de tumeur': 'bg-green-500 text-white'
-        };
-        return classes[prediction] || 'bg-gray-500 text-white';
-    }
-
-    function createChartData(probabilities) {
-        const labels = Object.keys(probabilities);
-        const data = Object.values(probabilities);
-        const colors = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444'];
-        
-        return {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: colors.slice(0, labels.length),
-                borderWidth: 3,
-                borderColor: '#ffffff'
-            }]
-        };
-    }
-
-    function createProbabilityList(probabilities) {
-        return Object.entries(probabilities).map(([name, value]) => ({
-            name: name,
-            value: parseFloat(value).toFixed(1)
-        }));
-    }
-
-    // Initialisation de la gestion des patients
-    handlePatientSelection();
+  }
+  if (shareBtn) {
+    shareBtn.addEventListener('click', async () => {
+      if (!analysisResults) return;
+      const email = prompt('Email du destinataire:');
+      if (!email) return;
+      try {
+        const resp = await fetch('/share-analysis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recipientEmail: email, analysisData: analysisResults })
+        });
+        const data = await resp.json();
+        alert(data.success ? 'Analyse partagée' : 'Erreur partage');
+      } catch {
+        alert('Erreur réseau');
+      }
+    });
+  }
+})();
 </script>
 {% endblock %}

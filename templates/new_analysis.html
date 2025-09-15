@@ -161,8 +161,8 @@
 </div>
 
 <!-- Modal résultats -->
-<div id="resultsModal" class="fixed inset-0 hidden items-start justify-center bg-black/50 overflow-y-auto p-4 md:p-6" aria-modal="true" role="dialog">
-  <div class="modal-content max-w-6xl w-full mx-0 md:mx-4 rounded-2xl shadow-2xl bg-white" onclick="event.stopPropagation()">
+<div id="resultsModal" class="fixed inset-0 hidden items-start justify-center bg-black/50 overflow-y-hidden p-4 md:p-6" aria-modal="true" role="dialog">
+  <div class="modal-content w-full mx-0 md:mx-4 rounded-2xl shadow-2xl bg-white" style="width: min(80vw, 1200px);" onclick="event.stopPropagation()">
     <div class="p-6 border-b border-neutral-200 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
@@ -178,24 +178,46 @@
       </button>
     </div>
     <div class="p-6 overflow-y-auto max-h-[80vh]">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-1">
-          <div class="rounded-xl border border-neutral-200 overflow-hidden">
-            <img id="modalResultImg" class="w-full h-56 object-cover" alt="IRM" />
+      <!-- En-tête patient -->
+      <div class="rounded-xl border border-neutral-200 p-4 mb-6 bg-neutral-50">
+        <div class="flex flex-wrap items-center gap-3 text-sm">
+          <div class="flex items-center gap-2 px-3 py-1 rounded-lg bg-white border border-neutral-200"><i class="fas fa-user text-neutral-600"></i><span id="hdrPatientName" class="font-semibold text-neutral-900">—</span></div>
+          <div class="flex items-center gap-2 px-3 py-1 rounded-lg bg-white border border-neutral-200"><i class="fas fa-birthday-cake text-neutral-600"></i><span id="hdrPatientAge">—</span></div>
+          <div class="flex items-center gap-2 px-3 py-1 rounded-lg bg-white border border-neutral-200"><i class="fas fa-venus-mars text-neutral-600"></i><span id="hdrPatientGender">—</span></div>
+          <div class="flex items-center gap-2 px-3 py-1 rounded-lg bg-white border border-neutral-200"><i class="fas fa-calendar-day text-neutral-600"></i><span id="hdrExamDate">—</span></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Image IRM -->
+        <div class="lg:col-span-5">
+          <div class="rounded-xl border border-neutral-200 overflow-hidden bg-black/5 flex items-center justify-center">
+            <img id="modalResultImg" class="w-full h-96 object-contain" alt="IRM" />
           </div>
         </div>
-        <div class="lg:col-span-2 space-y-4">
+        <!-- Informations diagnostic -->
+        <div class="lg:col-span-7 space-y-4">
           <div class="flex flex-wrap items-center gap-3">
             <span id="modalDiagBadge" class="px-3 py-1 rounded-lg bg-blue-600 text-white text-sm font-semibold">—</span>
-            <div class="text-sm text-neutral-500">Confiance: <span id="modalConfidence" class="font-semibold text-neutral-800">—</span></div>
-            <div class="text-sm text-neutral-500">Temps: <span id="modalProcTime" class="font-semibold text-neutral-800">—</span></div>
+            <div class="text-sm text-neutral-500">Temps d'analyse: <span id="modalProcTime" class="font-semibold text-neutral-800">—</span></div>
           </div>
-          <div id="modalPrediction" class="text-2xl font-bold text-neutral-900">—</div>
+          <div id="modalPrediction" class="text-3xl font-bold text-neutral-900">—</div>
+          <!-- Confiance visuelle -->
+          <div>
+            <div class="flex items-center justify-between text-sm text-neutral-600 mb-1">
+              <span>Niveau de confiance</span>
+              <span id="modalConfidence" class="font-semibold text-neutral-900">—</span>
+            </div>
+            <div class="w-full h-3 rounded-full bg-neutral-200 overflow-hidden">
+              <div id="modalConfidenceBar" class="h-3 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600" style="width:0%"></div>
+            </div>
+          </div>
+          <!-- Résumé patient -->
           <div id="modalPatientSummary" class="text-neutral-700">—</div>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
         <div class="rounded-xl border border-neutral-200 p-4">
           <div class="font-semibold text-neutral-900 mb-3">Scores et Répartition</div>
           <div class="relative h-80 mt-2">
@@ -206,6 +228,31 @@
         <div class="rounded-xl border border-neutral-200 p-4">
           <div class="font-semibold text-neutral-900 mb-3">Recommandations</div>
           <ul id="modalRecs" class="space-y-2 text-neutral-700 text-sm"></ul>
+        </div>
+        <!-- Analyse IA Avancée (Gemini) -->
+        <div class="rounded-xl border border-neutral-200 p-4 xl:col-span-1">
+          <div class="font-semibold text-neutral-900 mb-3 flex items-center"><i class="fas fa-microscope text-purple-600 mr-2"></i>Analyse IA Avancée</div>
+          <div id="advLoading" class="text-sm text-neutral-500">Analyse en cours…</div>
+          <div id="advContent" class="hidden space-y-3">
+            <div class="flex items-start gap-3">
+              <i class="fas fa-stethoscope text-emerald-600 mt-1"></i>
+              <div>
+                <div class="text-sm font-semibold text-neutral-800">Résumé clinique</div>
+                <div id="advSummary" class="text-sm text-neutral-700">—</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <i class="fas fa-brain text-blue-600 mt-1"></i>
+              <div>
+                <div class="text-sm font-semibold text-neutral-800">Explication du diagnostic</div>
+                <div id="advExplanation" class="text-sm text-neutral-700">—</div>
+              </div>
+            </div>
+            <div>
+              <div class="text-sm font-semibold text-neutral-800 mb-1 flex items-center"><i class="fas fa-notes-medical text-amber-600 mr-2"></i>Suggestions de suivi</div>
+              <ul id="advSuggestions" class="space-y-1 text-sm text-neutral-700"></ul>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -235,20 +282,43 @@ function openResultsModal() {
   document.getElementById('modalPatientSummary').textContent = analysisResults.patientSummary || '—';
   const idEl = document.getElementById('modalAnalysisId');
   if (idEl) idEl.textContent = analysisResults.id || '';
+  // Header patient chips
+  const hdrName = document.getElementById('hdrPatientName');
+  const hdrAge = document.getElementById('hdrPatientAge');
+  const hdrGender = document.getElementById('hdrPatientGender');
+  const hdrExam = document.getElementById('hdrExamDate');
+  if (hdrName) hdrName.textContent = analysisResults.patientName || '—';
+  if (hdrAge) hdrAge.textContent = analysisResults.patientAge || '—';
+  if (hdrGender) hdrGender.textContent = analysisResults.patientGender || '—';
+  if (hdrExam) hdrExam.textContent = analysisResults.examDate || '—';
+
+  // Confiance bar width
+  const confVal = (typeof analysisResults.confidence === 'string') ? parseFloat(analysisResults.confidence.replace('%','')) : (analysisResults.confidence || 0);
+  const bar = document.getElementById('modalConfidenceBar');
+  if (bar) bar.style.width = `${Math.max(0, Math.min(100, confVal))}%`;
 
   if (analysisResults.chartData) createModalChart(analysisResults.chartData);
   if (analysisResults.probabilities) fillModalProbabilities(analysisResults.probabilities);
   if (analysisResults.recommendations) fillModalRecommendations(analysisResults.recommendations);
 
+  // Analyse avancée (Gemini)
+  fetchAdvancedAnalysis(analysisResults).catch(()=>{});
+
   const modal = document.getElementById('resultsModal');
   modal.classList.remove('hidden');
   modal.classList.add('flex');
+  // Lock page scroll when modal is open
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
 }
 
 function closeResultsModal() {
   const modal = document.getElementById('resultsModal');
   modal.classList.add('hidden');
   modal.classList.remove('flex');
+  // Restore page scroll
+  document.documentElement.style.overflow = '';
+  document.body.style.overflow = '';
 }
 
 document.addEventListener('click', (e) => {
@@ -295,18 +365,22 @@ function fillModalProbabilities(list) {
 function fillModalRecommendations(recs) {
   const ul = document.getElementById('modalRecs');
   ul.innerHTML = '';
-  recs.forEach(r => {
+  const icons = ['fa-user-md text-emerald-600','fa-eye text-blue-600','fa-hospital text-purple-600','fa-vial text-amber-600'];
+  recs.forEach((r,i) => {
     const li = document.createElement('li');
-    li.textContent = r;
+    li.className = 'flex items-start gap-2';
+    li.innerHTML = `<i class="fas ${icons[i%icons.length]} mt-1"></i><span>${r}</span>`;
     ul.appendChild(li);
   });
 }
 
 function getBadgeClass(pred) {
+  // Couleurs distinctes par type: Méningiome violet, Gliome orange, Normal vert, Tumeur hypophysaire bleu
   const map = {
-    'Tumeur maligne': 'bg-red-600',
-    'Tumeur bénigne': 'bg-orange-600',
-    'Pas de tumeur': 'bg-emerald-600',
+    'Normal': 'bg-emerald-600',
+    'Gliome': 'bg-orange-600',
+    'Méningiome': 'bg-purple-600',
+    'Tumeur pituitaire': 'bg-blue-600'
   };
   return map[pred] || 'bg-blue-600';
 }
@@ -452,7 +526,7 @@ function createProbabilityList(prob) {
       xhr.send(formData);
     });
 
-    statusText.textContent = uploadOk ? 'Analyse IA en cours...' : 'Analyse locale (démo)';
+  statusText.textContent = uploadOk ? 'Analyse IA en cours...' : 'Analyse locale (démo)';
     progressBar.style.width = '100%';
     progressPct.textContent = '100%';
 
@@ -461,41 +535,52 @@ function createProbabilityList(prob) {
       try { resData = JSON.parse(uploadResponseText); } catch (e) { /* ignore parse error */ }
     }
 
-    if (!resData) {
+  if (!resData) {
       // Fallback démo
+      // En mode fallback (démo), rester sur la page actuelle et afficher la carte comme avant
+      // Mais si vous souhaitez forcer une redirection même en démo, on peut générer un faux id côté client
       resData = {
-        analysis_id: 'NS-' + Date.now(),
-        prediction: 'Pas de tumeur',
+        analysis_id: null,
+        prediction: 'Normal',
         confidence: 97.4,
         processing_time: 8.2,
-        probabilities: { 'Pas de tumeur': 97.4, 'Tumeur bénigne': 2.0, 'Tumeur maligne': 0.6 },
+        probabilities: { 'Normal': 97.4, 'Gliome': 1.2, 'Méningiome': 0.8, 'Tumeur pituitaire': 0.6 },
         description: 'Absence de masse tumorale détectable.',
         image_url: ''
       };
     }
 
-  // Build analysisResults and show card
-    analysisResults = {
-      id: resData.analysis_id,
-      imageUrl: resData.image_url,
-      prediction: resData.prediction,
-      diagnosis: resData.prediction,
-      badgeClass: getBadgeClass(resData.prediction),
-  confidence: formatPercent(resData.confidence),
-  processingTime: (typeof resData.processing_time === 'number' ? `${resData.processing_time.toFixed(1)}s` : `${resData.processing_time || ''}s`).trim(),
-      patientSummary: `Patient: ${document.getElementById('patientName').textContent} • ${document.getElementById('patientAge').textContent} • ${document.getElementById('patientGender').textContent}`,
-      chartData: createChartData(resData.probabilities),
-      probabilities: createProbabilityList(resData.probabilities),
-      recommendations: [
-        'Corrélation clinique recommandée',
-        'Surveillance radiologique si nécessaire',
-        'Consulter un radiologue en cas de doute'
-      ]
-    };
+  // Redirection vers la page dédiée si un analysis_id est retourné
+  if (resData && resData.analysis_id) {
+    window.location.href = `/analysis/${resData.analysis_id}`;
+    return;
+  }
+
+  // Fallback: conserver l'ancien affichage si aucun analysis_id (mode démo)
+  analysisResults = {
+    id: resData.analysis_id || 'DEMO',
+    imageUrl: resData.image_url,
+    prediction: resData.prediction,
+    diagnosis: resData.prediction,
+    badgeClass: getBadgeClass(resData.prediction),
+    confidence: formatPercent(resData.confidence),
+    processingTime: (typeof resData.processing_time === 'number' ? `${resData.processing_time.toFixed(1)}s` : `${resData.processing_time || ''}s`).trim(),
+    patientName: document.getElementById('patientName').textContent || '—',
+    patientAge: document.getElementById('patientAge').textContent || '—',
+    patientGender: document.getElementById('patientGender').textContent || '—',
+    examDate: document.getElementById('nsExamDate')?.value || '',
+    patientSummary: `Patient: ${document.getElementById('patientName').textContent} • ${document.getElementById('patientAge').textContent} • ${document.getElementById('patientGender').textContent}`,
+    chartData: createChartData(resData.probabilities),
+    probabilities: createProbabilityList(resData.probabilities),
+    recommendations: [
+      'Corrélation clinique recommandée',
+      'Surveillance radiologique si nécessaire',
+      'Consulter un radiologue en cas de doute'
+    ]
+  };
 
   progressCard.classList.add('hidden');
   resultsCard.classList.remove('hidden');
-  // Update mini card
   const miniBadge = document.getElementById('nsResultMiniBadge');
   if (miniBadge) { miniBadge.textContent = analysisResults.diagnosis; miniBadge.className = `px-2 py-1 rounded-md text-white text-xs font-semibold ${analysisResults.badgeClass || 'bg-blue-600'}`; }
   const miniSummary = document.getElementById('nsResultMiniSummary');
@@ -538,5 +623,32 @@ function createProbabilityList(prob) {
     });
   }
 })();
+
+// Appel backend Gemini avancé
+async function fetchAdvancedAnalysis(analysis) {
+  try {
+    const payload = {
+      predicted_label: analysis.diagnosis,
+      confidence: (typeof analysis.confidence === 'string') ? parseFloat(analysis.confidence.replace('%','')) : (analysis.confidence*100),
+      probabilities: (analysis.chartData && analysis.chartData.labels) ? Object.fromEntries(analysis.chartData.labels.map((l,idx)=>[l, analysis.chartData.datasets[0].data[idx]/100])) : {}
+    };
+    const res = await fetch('/api/advanced-analysis', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const json = await res.json();
+    const loading = document.getElementById('advLoading');
+    const content = document.getElementById('advContent');
+    if (!json.success) { if (loading) loading.textContent = "Indisponible pour le moment"; return; }
+    if (loading) loading.classList.add('hidden');
+    if (content) content.classList.remove('hidden');
+    if (json.data) {
+      if (json.data.summary) document.getElementById('advSummary').textContent = json.data.summary;
+      if (json.data.explanation) document.getElementById('advExplanation').textContent = json.data.explanation;
+      const ul = document.getElementById('advSuggestions');
+      ul.innerHTML = '';
+      (json.data.suggestions || []).forEach(s => { const li = document.createElement('li'); li.textContent = s; ul.appendChild(li); });
+    }
+  } catch (e) {
+    const loading = document.getElementById('advLoading'); if (loading) loading.textContent = "Indisponible";
+  }
+}
 </script>
 {% endblock %}

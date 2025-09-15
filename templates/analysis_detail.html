@@ -1,0 +1,258 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Analyse {{ analysis.id }} - NeuroScan{% endblock %}
+{% block page_title %}Rapport d'Analyse IA{% endblock %}
+{% block page_subtitle %}Détails complets et interprétation clinique{% endblock %}
+{% block page_description %}Vue dédiée pour l'analyse n° {{ analysis.id }}{% endblock %}
+
+{% block content %}
+<!-- En-tête rapport + actions -->
+<section class="rounded-2xl p-6 bg-white border border-neutral-200 shadow-sm mb-6">
+  <div class="flex items-center justify-between gap-4 flex-wrap">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow">
+        <i class="fas fa-file-medical"></i>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold text-neutral-900">Rapport d'Analyse IA • #{{ analysis.id }}</h2>
+        <p class="text-neutral-500 text-sm">Généré automatiquement • {{ analysis.timestamp }}</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      {% if analysis.patient_id %}
+      <a href="/patient/{{ analysis.patient_id }}" class="btn-dashboard secondary"><i class="fas fa-user"></i> Patient</a>
+      {% endif %}
+      <button id="detailShareBtn" class="btn-dashboard success"><i class="fas fa-share"></i> Partager</button>
+      <button id="detailPdfBtn" class="btn-dashboard primary"><i class="fas fa-file-download"></i> PDF</button>
+    </div>
+  </div>
+  <!-- Chips patient -->
+  <div class="mt-4 flex flex-wrap items-center gap-2 text-sm">
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-neutral-50 border border-neutral-200"><i class="fas fa-user text-neutral-600"></i>{{ analysis.patient_name }}</span>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-neutral-50 border border-neutral-200"><i class="fas fa-hashtag text-neutral-600"></i>{{ analysis.patient_id or '—' }}</span>
+    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-neutral-50 border border-neutral-200"><i class="fas fa-calendar-day text-neutral-600"></i>{{ analysis.exam_date or '—' }}</span>
+  </div>
+</section>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+  <div class="lg:col-span-5 space-y-4">
+    <div class="dashboard-card p-0 overflow-hidden">
+      <img src="{{ analysis.image_url }}" alt="IRM" class="w-full h-[480px] object-contain bg-black/5"/>
+    </div>
+    <div class="dashboard-card p-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <div class="text-sm text-gray-500">Horodatage</div>
+          <div class="font-semibold">{{ analysis.timestamp }}</div>
+        </div>
+        <div>
+          <div class="text-sm text-gray-500">Durée d'analyse</div>
+          <div class="font-semibold">{{ '%.2f'|format(analysis.processing_time or 0) }}s</div>
+        </div>
+        <div>
+          <div class="text-sm text-gray-500">Analyse précédente</div>
+          <div class="font-semibold">{{ analysis.previous_analysis_id or '—' }}</div>
+        </div>
+        <div>
+          <div class="text-sm text-gray-500">Fichier</div>
+          <div class="font-semibold truncate" title="{{ analysis.filename }}">{{ analysis.filename }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lg:col-span-7 space-y-4">
+    <div class="dashboard-card p-6">
+      <div class="flex items-center justify-between mb-3">
+        <div class="text-2xl font-bold text-gray-900">{{ analysis.predicted_label }}</div>
+        <span class="px-3 py-1 rounded-lg text-white text-sm font-semibold {{ 'bg-emerald-600' if analysis.predicted_label=='Normal' else ('bg-orange-600' if analysis.predicted_label=='Gliome' else ('bg-purple-600' if analysis.predicted_label=='Méningiome' else 'bg-blue-600')) }}">{{ analysis.predicted_label }}</span>
+      </div>
+      <div>
+        <div class="flex items-center justify-between text-sm text-gray-600 mb-1">
+          <span>Niveau de confiance</span>
+          <span class="font-semibold text-gray-900">{{ '%.1f'|format(analysis.confidence) }}%</span>
+        </div>
+        <div class="w-full h-3 rounded-full bg-gray-200 overflow-hidden" aria-hidden="true">
+          <div id="confBar" class="h-3 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600" data-width="{{ '%.1f'|format(analysis.confidence) }}"></div>
+        </div>
+      </div>
+      <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <div class="text-gray-500">Patient</div>
+          <div class="font-semibold">{{ analysis.patient_name }}</div>
+        </div>
+        <div>
+          <div class="text-gray-500">ID Patient</div>
+          <div class="font-semibold">{{ analysis.patient_id or '—' }}</div>
+        </div>
+        <div>
+          <div class="text-gray-500">Date d'examen</div>
+          <div class="font-semibold">{{ analysis.exam_date or '—' }}</div>
+        </div>
+        <div></div>
+      </div>
+    </div>
+
+    <div class="dashboard-card p-6">
+      <div class="flex items-center justify-between mb-3">
+        <div class="font-semibold text-gray-900">Répartition des scores</div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <div class="relative h-56">
+            <canvas id="probDonut" class="absolute inset-0 w-full h-full"></canvas>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 gap-3">
+  {% set colors = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626'] %}
+  {% for name, value in analysis.probabilities.items() %}
+        <div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-700">{{ name }}</span>
+            <span class="font-semibold text-gray-900">{{ '%.1f'|format(value) }}%</span>
+          </div>
+          <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div class="h-2 rounded-full prob-bar" data-width="{{ '%.1f'|format(value) }}" data-color="{{ colors[loop.index0 % colors|length] }}"></div>
+          </div>
+        </div>
+        {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {% if analysis.description %}
+    <div class="dashboard-card p-6">
+      <div class="font-semibold text-gray-900 mb-2">Résumé clinique</div>
+      <p class="text-gray-700">{{ analysis.description }}</p>
+    </div>
+    {% endif %}
+
+    <div class="dashboard-card p-6">
+      <div class="font-semibold text-gray-900 mb-3">Recommandations</div>
+      {% if analysis.recommendations and analysis.recommendations|length > 0 %}
+      <ul class="space-y-2 text-gray-700 text-sm">
+        {% for r in analysis.recommendations %}
+        <li class="flex items-start gap-2"><i class="fas fa-user-md text-emerald-600 mt-1"></i><span>{{ r }}</span></li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="text-gray-500 text-sm">Aucune recommandation enregistrée.</div>
+      {% endif %}
+    </div>
+
+    <!-- Analyse IA Avancée (Gemini) -->
+    <div class="dashboard-card p-6">
+      <div class="font-semibold text-gray-900 mb-3 flex items-center"><i class="fas fa-microscope text-purple-600 mr-2"></i>Analyse IA Avancée</div>
+      <div id="advLoading" class="text-sm text-neutral-500">Analyse en cours…</div>
+      <div id="advContent" class="hidden space-y-3">
+        <div class="flex items-start gap-3">
+          <i class="fas fa-stethoscope text-emerald-600 mt-1"></i>
+          <div>
+            <div class="text-sm font-semibold text-neutral-800">Résumé clinique</div>
+            <div id="advSummary" class="text-sm text-neutral-700">—</div>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <i class="fas fa-brain text-blue-600 mt-1"></i>
+          <div>
+            <div class="text-sm font-semibold text-neutral-800">Explication du diagnostic</div>
+            <div id="advExplanation" class="text-sm text-neutral-700">—</div>
+          </div>
+        </div>
+        <div>
+          <div class="text-sm font-semibold text-neutral-800 mb-1 flex items-center"><i class="fas fa-notes-medical text-amber-600 mr-2"></i>Suggestions de suivi</div>
+          <ul id="advSuggestions" class="space-y-1 text-sm text-neutral-700"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Données d'analyse (Jinja -> JSON) pour un JS valide et sans erreurs de lint
+  window.__analysisData = JSON.parse(document.getElementById('analysis-json')?.textContent || '{}');
+
+  (function(){
+    const conf = document.getElementById('confBar');
+    if (conf) {
+      const w = parseFloat(conf.dataset.width || '0');
+      conf.style.width = Math.max(0, Math.min(100, w)) + '%';
+    }
+    document.querySelectorAll('.prob-bar').forEach(el => {
+      const w = parseFloat(el.dataset.width || '0');
+      const c = el.dataset.color || '#2563eb';
+      el.style.width = Math.max(0, Math.min(100, w)) + '%';
+      el.style.background = c;
+    });
+  })();
+  // Donut des probabilités
+  (function(){
+    try {
+      const el = document.getElementById('probDonut');
+      if (!el) return;
+      const data = (window.__analysisData && window.__analysisData.probabilities) || {};
+      const labels = Object.keys(data);
+      const values = Object.values(data).map(v=>Number(v)||0);
+      const colors = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626'];
+      new Chart(el.getContext('2d'), {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data: values, backgroundColor: colors.slice(0, labels.length), borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
+    } catch (e) {}
+  })();
+
+  // Actions: PDF et Partage
+  (function(){
+    const pdfBtn = document.getElementById('detailPdfBtn');
+    const shareBtn = document.getElementById('detailShareBtn');
+    if (pdfBtn) pdfBtn.addEventListener('click', async ()=>{
+      try {
+        const data = window.__analysisData || {};
+        const resp = await fetch('/generate-report', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ patientName: data.patient_name, analysisData: data }) });
+        const out = await resp.json();
+        alert(out.success ? 'Rapport généré' : (out.error || 'Erreur génération rapport'));
+      } catch (e) { alert('Erreur réseau'); }
+    });
+    if (shareBtn) shareBtn.addEventListener('click', async ()=>{
+      const email = prompt('Email du destinataire:'); if (!email) return;
+      try {
+        const data = window.__analysisData || {};
+        const resp = await fetch('/share-analysis', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ recipientEmail: email, analysisData: data }) });
+        const out = await resp.json();
+        alert(out.success ? 'Analyse partagée' : (out.error || 'Erreur partage'));
+      } catch (e) { alert('Erreur réseau'); }
+    });
+  })();
+
+  // Analyse avancée (Gemini)
+  (async function(){
+    try {
+      const a = window.__analysisData || {};
+      const payload = {
+        predicted_label: a.predicted_label,
+        confidence: Number(a.confidence) || 0,
+        probabilities: Object.fromEntries(Object.entries(a.probabilities || {}).map(([k,v])=>[k, Number(v)/100]))
+      };
+      const res = await fetch('/api/advanced-analysis', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const result = await res.json();
+      const loading = document.getElementById('advLoading');
+      const content = document.getElementById('advContent');
+      if (!result.success) { if (loading) loading.textContent = 'Indisponible pour le moment'; return; }
+      if (loading) loading.classList.add('hidden');
+      if (content) content.classList.remove('hidden');
+      if (result.data) {
+        if (result.data.summary) document.getElementById('advSummary').textContent = result.data.summary;
+        if (result.data.explanation) document.getElementById('advExplanation').textContent = result.data.explanation;
+        const ul = document.getElementById('advSuggestions');
+        ul.innerHTML = '';
+        (result.data.suggestions || []).forEach(s => { const li = document.createElement('li'); li.textContent = s; ul.appendChild(li); });
+      }
+    } catch(e) {
+      const loading = document.getElementById('advLoading'); if (loading) loading.textContent = 'Indisponible';
+    }
+  })();
+</script>
+{% endblock %}

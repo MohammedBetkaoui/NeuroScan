@@ -1310,13 +1310,8 @@ def upload_file():
             # Calculer le temps de traitement
             processing_time = time.time() - start_time
 
-            # Convertir l'image en base64 pour l'affichage
-            with open(filepath, 'rb') as img_file:
-                img_data = base64.b64encode(img_file.read()).decode()
-                img_url = f"data:image/jpeg;base64,{img_data}"
-
-            # Nettoyer le fichier temporaire
-            os.remove(filepath)
+            # Conserver le fichier et fournir une URL servie par l'application
+            img_url = url_for('uploaded_file', filename=filename)
 
             # Sauvegarder l'analyse dans la base de données avec informations patient et médecin
             session_id = request.headers.get('X-Session-ID', 'anonymous')
@@ -1357,6 +1352,66 @@ def upload_file():
             return jsonify({'error': 'Erreur lors du traitement de l\'image'}), 500
 
     return jsonify({'error': 'Type de fichier non autorisé'}), 400
+
+@app.route('/uploads/<path:filename>')
+@login_required
+def uploaded_file(filename):
+    """Servir les fichiers uploadés (images IRM)"""
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/analysis/<int:analysis_id>')
+@login_required
+def analysis_detail(analysis_id: int):
+    """Page détaillée d'une analyse"""
+    try:
+        doctor = get_current_doctor()
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id, timestamp, filename, patient_id, patient_name, exam_date,
+                   predicted_class, predicted_label, confidence, probabilities,
+                   description, recommendations, processing_time, previous_analysis_id
+            FROM analyses WHERE id = ?
+        ''', (analysis_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if not row:
+            flash("Analyse introuvable", 'error')
+            return redirect(url_for('dashboard'))
+
+        probs = {}
+        recs = []
+        try:
+            probs = json.loads(row[9] or '{}')
+        except Exception:
+            probs = {}
+        try:
+            recs = json.loads(row[11] or '[]')
+        except Exception:
+            recs = []
+
+        analysis = {
+            'id': row[0],
+            'timestamp': row[1],
+            'filename': row[2],
+            'patient_id': row[3],
+            'patient_name': row[4] or 'Patient anonyme',
+            'exam_date': row[5],
+            'predicted_class': row[6],
+            'predicted_label': row[7],
+            'confidence': round((row[8] or 0) * 100, 1),
+            'probabilities': {k: round((v or 0) * 100, 1) for k, v in probs.items()},
+            'description': row[10] or '',
+            'recommendations': recs,
+            'processing_time': row[12],
+            'previous_analysis_id': row[13],
+            'image_url': url_for('uploaded_file', filename=row[2]) if row[2] else ''
+        }
+        return render_template('analysis_detail.html', doctor=doctor, analysis=analysis)
+    except Exception as e:
+        print(f"Erreur analysis_detail: {e}")
+        flash("Erreur lors du chargement de l'analyse", 'error')
+        return redirect(url_for('dashboard'))
 
 def call_gemini_api(prompt, context="medical"):
     """Appeler l'API Gemini avec un prompt"""
@@ -1469,6 +1524,64 @@ def get_gemini_analysis(results):
         print(f"Erreur lors de l'analyse Gemini: {e}")
 
     return None
+
+def get_gemini_advanced_analysis(results):
+    """Analyse avancée structurée (résumé, explication, suggestions) via Gemini"""
+    try:
+        prob = results.get('probabilities', {})
+        prompt = f"""
+        Contexte: Résultat d'une IRM cérébrale analysée par IA.
+        Données:
+        - Diagnostic principal: {results.get('predicted_label')}
+        - Confiance: {results.get('confidence', 0)*100:.1f}%
+        - Probabilités (en %): { {k: round(v*100,1) for k,v in prob.items()} }
+
+        Objectif: Fournir une analyse avancée et structurée pour un médecin.
+        Réponds STRICTEMENT en JSON avec les clés: summary, explanation, suggestions (array de 3 à 5 items).
+        Style: clinique, concis, sans disclaimer.
+        """
+
+        raw = call_gemini_api(prompt)
+        if not raw:
+            return None
+
+        # Essayer de trouver un bloc JSON dans la réponse
+        text = raw.strip()
+        start = text.find('{')
+        end = text.rfind('}')
+        if start != -1 and end != -1 and end > start:
+            try:
+                return json.loads(text[start:end+1])
+            except Exception:
+                pass
+
+        # Fallback: mapper la réponse libre
+        return {
+            'summary': text[:400],
+            'explanation': text[:800],
+            'suggestions': []
+        }
+    except Exception as e:
+        print(f"Erreur get_gemini_advanced_analysis: {e}")
+        return None
+
+@app.route('/api/advanced-analysis', methods=['POST'])
+@login_required
+def api_advanced_analysis():
+    """Endpoint sécurisé pour l'analyse IA avancée (Gemini)"""
+    try:
+        data = request.get_json() or {}
+        # Attendu: predicted_label, confidence (0-1 ou %), probabilities
+        results = {
+            'predicted_label': data.get('predicted_label'),
+            'confidence': (data.get('confidence')/100.0 if isinstance(data.get('confidence'), (int,float)) and data.get('confidence')>1 else data.get('confidence') or 0),
+            'probabilities': data.get('probabilities') or {}
+        }
+        adv = get_gemini_advanced_analysis(results)
+        return jsonify({'success': bool(adv), 'data': adv or {}})
+    except Exception as e:
+        print(f"Erreur api_advanced_analysis: {e}")
+        return jsonify({'success': False, 'error': 'Erreur serveur'}), 500
 
 def get_recommendations(results):
     """Générer des recommandations basées sur les résultats (fallback)"""

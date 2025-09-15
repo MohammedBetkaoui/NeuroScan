@@ -157,8 +157,8 @@
     </div>
 
     <!-- Liste des alertes -->
-    <div class="dashboard-card p-6">
-            <div class="flex items-center justify-between mb-4">
+    <div class="dashboard-card p-0" style="height: calc(100vh - 280px); display: flex; flex-direction: column;">
+            <div class="flex items-center justify-between p-6 pb-4">
                     <h3 class="text-lg font-semibold text-gray-900 flex items-center">
                             <i class="fas fa-bell text-neuroscan-600 mr-2"></i>
                             Alertes Actives
@@ -170,14 +170,14 @@
                     </div>
             </div>
 
-            <div id="alertsPageList" class="space-y-4">
+            <div id="alertsPageList" class="space-y-4 px-6 pb-4 overflow-y-auto" style="flex:1 1 auto; min-height: 0; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
                     <div class="text-center py-8 text-gray-500">
                             <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                             <p>Chargement des alertes...</p>
                     </div>
             </div>
 
-            <div class="flex items-center justify-center mt-6" id="paginationContainer"></div>
+            <div class="flex items-center justify-center p-4 border-t" id="paginationContainer" style="flex: 0 0 auto"></div>
     </div>
 
     <!-- Modal Détails Alerte -->
@@ -221,6 +221,10 @@
             document.getElementById('searchInput').addEventListener('input', debounce(alertsPage_applyFilters, 250));
             document.getElementById('alertDetailsResolveBtn').addEventListener('click', () => { if (CURRENT) alertsPage_resolve(CURRENT.id); });
             document.getElementById('alertDetailsViewBtn').addEventListener('click', () => { if (CURRENT) window.location.href = `/patient/${CURRENT.patient_id}`; });
+
+            // Empêcher la molette de faire défiler la page quand on est sur la liste
+            const scroller = document.getElementById('alertsPageList');
+            if (scroller) trapScroll(scroller);
         }
 
         async function alertsPage_loadAlerts() {
@@ -468,6 +472,47 @@
         window.alertsPage_markRead = alertsPage_markRead;
         window.alertsPage_resolve = alertsPage_resolve;
         window.alertsPage_closeDetails = alertsPage_closeDetails;
+
+        // Scroll trap util to keep wheel/touch/keys within a container
+        function trapScroll(el){
+            // Wheel
+            el.addEventListener('wheel', (e)=>{
+                const delta = e.deltaY;
+                const atTop = el.scrollTop === 0;
+                const atBottom = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight;
+                if ((delta < 0 && atTop) || (delta > 0 && atBottom)) {
+                    e.preventDefault();
+                }
+                e.stopPropagation();
+            }, { passive: false });
+
+            // Keys
+            el.addEventListener('keydown', (e)=>{
+                const keys = ['ArrowUp','ArrowDown','PageUp','PageDown','Home','End','Space'];
+                if (!keys.includes(e.key)) return;
+                const atTop = el.scrollTop === 0;
+                const atBottom = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight;
+                if ((e.key==='ArrowUp'||e.key==='PageUp'||e.key==='Home') && atTop) {
+                    e.preventDefault(); e.stopPropagation();
+                } else if ((e.key==='ArrowDown'||e.key==='PageDown'||e.key==='End'||e.key==='Space') && atBottom) {
+                    e.preventDefault(); e.stopPropagation();
+                }
+            });
+
+            // Touch
+            let startY = 0;
+            el.addEventListener('touchstart', (e)=>{ startY = e.touches[0].clientY; }, { passive: true });
+            el.addEventListener('touchmove', (e)=>{
+                const y = e.touches[0].clientY;
+                const delta = startY - y;
+                const atTop = el.scrollTop === 0;
+                const atBottom = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight;
+                if ((delta < 0 && atTop) || (delta > 0 && atBottom)) {
+                    e.preventDefault();
+                }
+                e.stopPropagation();
+            }, { passive: false });
+        }
     })();
     </script>
     {% endblock %}

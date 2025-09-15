@@ -102,6 +102,99 @@
             grid-template-columns: 1fr;
         }
     }
+    .patient-card {
+        position: relative;
+    }
+
+    /* Accents par niveau de risque */
+    .patient-card.risk-high { border-left: 4px solid #ef4444; }
+    .patient-card.risk-medium { border-left: 4px solid #f59e0b; }
+    .patient-card.risk-low { border-left: 4px solid #10b981; }
+
+    /* Chips d'information */
+    .info-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: #f3f4f6;
+        color: #374151;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .info-chip i { opacity: 0.7; }
+
+    /* Contact */
+    .contact-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .contact-item { display: inline-flex; align-items: center; gap: 8px; color: #4b5563; font-size: 13px; }
+    .contact-item i { color: #6b7280; }
+
+    /* Barre de confiance */
+    .confidence-bar { width: 100%; height: 8px; background: #e5e7eb; border-radius: 9999px; overflow: hidden; }
+    .confidence-indicator { height: 100%; background: linear-gradient(90deg, #34d399, #10b981); border-radius: 9999px; }
+
+    /* Alert chips (nouvelle palette) */
+    .alert-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .01em;
+        border: 1px solid transparent;
+    }
+    .alert-sev-high { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+    .alert-sev-medium { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+    .alert-sev-low { background: #eff6ff; color: #1e3a8a; border-color: #bfdbfe; }
+    .alert-sev-none { background: #f3f4f6; color: #374151; border-color: #e5e7eb; }
+    .alert-chip i { opacity: .9; }
+
+    /* Lampe d'alerte (indicateur lumineux) */
+    .alert-lamp { display: inline-flex; align-items: center; gap: 10px; }
+    .alert-lamp-dot { width: 12px; height: 12px; border-radius: 9999px; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset; position: relative; }
+    .alert-lamp-dot::after {
+        content: '';
+        position: absolute; inset: -4px; border-radius: 9999px; opacity: .6; filter: blur(4px);
+    }
+    .lamp-high { background: #ef4444; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset, 0 0 10px rgba(239,68,68,.9); }
+    .lamp-high::after { background: rgba(239,68,68,.8); }
+    .lamp-medium { background: #f59e0b; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset, 0 0 10px rgba(245,158,11,.8); }
+    .lamp-medium::after { background: rgba(245,158,11,.6); }
+    .lamp-low { background: #3b82f6; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset, 0 0 10px rgba(59,130,246,.7); }
+    .lamp-low::after { background: rgba(59,130,246,.5); }
+    .lamp-none { background: #9ca3af; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset; }
+    .lamp-pulse { animation: lampPulse 2s ease-in-out infinite; }
+    @keyframes lampPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+    /* Harmonisation des couleurs avec le thème */
+    .patient-card.risk-high { border-left: 4px solid rgba(239,68,68,.6); }
+    .patient-card.risk-medium { border-left: 4px solid rgba(245,158,11,.6); }
+    .patient-card.risk-low { border-left: 4px solid rgba(16,185,129,.6); }
+    .risk-low { background-color: #10b981; }
+    .risk-medium { background-color: #f59e0b; }
+    .risk-high { background-color: #ef4444; }
+    .patient-avatar { background: var(--primary-gradient); color: #fff; }
+    .confidence-indicator { background: linear-gradient(90deg,#93c5fd,#3b82f6); }
+    /* Chips d'alerte: rappeler la palette douce */
+    .alert-sev-high { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+    .alert-sev-medium { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .alert-sev-low { background: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
+    /* Lampes colorées et glow doux */
+    .lamp-high { background: #ef4444; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset, 0 0 10px rgba(239,68,68,.9); }
+    .lamp-high::after { background: rgba(239,68,68,.8); }
+    .lamp-medium { background: #f59e0b; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset, 0 0 10px rgba(245,158,11,.8); }
+    .lamp-medium::after { background: rgba(245,158,11,.6); }
+    .lamp-low { background: #3b82f6; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset, 0 0 10px rgba(59,130,246,.7); }
+    .lamp-low::after { background: rgba(59,130,246,.5); }
+    .lamp-pulse { animation: lampPulse 2s ease-in-out infinite; }
+    /* Rétablir les badges diagnostic thématisés */
+    .patient-card .badge.success { background: #d1fae5 !important; color: #065f46 !important; border: none; }
+    .patient-card .badge.warning { background: #fef3c7 !important; color: #92400e !important; border: none; }
+    .patient-card .badge.danger { background: #fee2e2 !important; color: #991b1b !important; border: none; }
+    .patient-card .badge.info { background: #dbeafe !important; color: #1e40af !important; border: none; }
 </style>
 {% endblock %}
 
@@ -217,13 +310,14 @@
             </div>
         </div>
         
-        <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2">
             <label class="text-sm text-gray-600">Tri:</label>
             <select id="sortSelect" class="form-select" style="min-width: 150px;">
                 <option value="name">Nom A-Z</option>
                 <option value="date">Date récente</option>
                 <option value="risk">Niveau de risque</option>
                 <option value="analyses">Nb d'analyses</option>
+                <option value="age">Âge</option>
             </select>
         </div>
     </div>
@@ -403,11 +497,13 @@
     let currentFilter = 'all';
     let currentSort = 'name';
 
-    // Initialisation
-    document.addEventListener('DOMContentLoaded', function() {
-        loadPatients();
-        loadStatistics();
-        setupEventListeners();
+    // Initialisation (attendre le chargement des patients avant de calculer les stats)
+    document.addEventListener('DOMContentLoaded', () => {
+        (async () => {
+            setupEventListeners();
+            await loadPatients();
+            await loadStatistics();
+        })();
     });
 
     // Configuration des event listeners
@@ -454,11 +550,40 @@
     // Chargement des statistiques
     async function loadStatistics() {
         try {
-            // Simulation des statistiques
-            document.getElementById('totalPatients').textContent = allPatients.length;
-            document.getElementById('newPatients').textContent = Math.floor(allPatients.length * 0.2);
-            document.getElementById('activeAlerts').textContent = Math.floor(allPatients.length * 0.1);
-            document.getElementById('regularFollow').textContent = Math.floor(allPatients.length * 0.8);
+            // 1) Totaux basés sur les patients chargés
+            const total = allPatients.length;
+
+            // Nouveaux ce mois (créés depuis le 1er du mois)
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
+
+            const newThisMonth = allPatients.filter(p => {
+                if (!p.created_at) return false;
+                const d = new Date(p.created_at);
+                return !isNaN(d) && d >= startOfMonth;
+            }).length;
+
+            // Suivi régulier: patients avec > 1 analyses
+            const regularFollow = allPatients.filter(p => (p.total_analyses || 0) > 1).length;
+
+            // 2) Alertes actives: requête API dédiée
+            let activeAlerts = 0;
+            try {
+                const res = await fetch('/api/alerts');
+                const json = await res.json();
+                if (json && json.success && Array.isArray(json.data)) {
+                    activeAlerts = json.data.length;
+                }
+            } catch (e) {
+                console.warn('Impossible de récupérer les alertes actives:', e);
+            }
+
+            // 3) Mise à jour de l'UI
+            document.getElementById('totalPatients').textContent = total;
+            document.getElementById('newPatients').textContent = newThisMonth;
+            document.getElementById('activeAlerts').textContent = activeAlerts;
+            document.getElementById('regularFollow').textContent = regularFollow;
         } catch (error) {
             console.error('Erreur lors du chargement des statistiques:', error);
         }
@@ -501,14 +626,21 @@
     }
 
     // Création d'une carte patient
-    function createPatientCard(patient) {
+        function createPatientCard(patient) {
         const riskLevel = calculateRiskLevel(patient);
         const initials = getInitials(patient.patient_name);
         const lastAnalysis = patient.last_analysis_date ? new Date(patient.last_analysis_date) : null;
         const analysisCount = patient.total_analyses || 0;
+                const age = patient.date_of_birth ? `${calculateAge(patient.date_of_birth)} ans` : null;
+                const gender = patient.gender || null;
+                const phone = patient.phone || null;
+                const email = patient.email || null;
+                const lastConfRaw = (patient.last_confidence !== undefined && patient.last_confidence !== null) ? patient.last_confidence : null;
+                const lastConf = lastConfRaw !== null ? formatPercent(lastConfRaw) : null;
+                const lastConfNum = lastConfRaw !== null ? normalizePercent(lastConfRaw) : null;
 
-        return `
-            <div class="patient-card p-6 animate-fade-in" onclick="viewPatient('${patient.patient_id}')">
+    return `
+                        <div class="patient-card p-6 animate-fade-in risk-${riskLevel}" onclick="viewPatient('${patient.patient_id}')">
                 <!-- En-tête patient -->
                 <div class="flex items-center space-x-4 mb-4">
                     <div class="patient-avatar">
@@ -520,7 +652,10 @@
                             <div class="risk-indicator risk-${riskLevel}" title="Niveau de risque: ${riskLevel}"></div>
                         </div>
                         <p class="text-sm text-gray-500">ID: ${patient.patient_id}</p>
-                        ${patient.date_of_birth ? `<p class="text-xs text-gray-400">${calculateAge(patient.date_of_birth)} ans</p>` : ''}
+                                                <div class="mt-1 flex items-center gap-2 flex-wrap">
+                                                    ${age ? `<span class="info-chip"><i class=\"fas fa-cake-candles\"></i>${age}</span>` : ''}
+                                                    ${gender ? `<span class="info-chip"><i class=\"fas fa-venus-mars\"></i>${gender}</span>` : ''}
+                                                </div>
                     </div>
                     <div class="text-right">
                         <button onclick="event.stopPropagation(); openPatientMenu('${patient.patient_id}')" class="text-gray-400 hover:text-gray-600 p-2">
@@ -531,6 +666,7 @@
 
                 <!-- Informations médicales -->
                 <div class="space-y-3 mb-4">
+                    ${renderAlertLamp(patient)}
                     <div class="flex items-center justify-between text-sm">
                         <span class="text-gray-600">Analyses totales</span>
                         <span class="font-medium">${analysisCount}</span>
@@ -545,7 +681,25 @@
                         <span class="badge ${getDiagnosticBadge(patient.last_diagnosis)}">${patient.last_diagnosis}</span>
                     </div>
                     ` : ''}
+                                        ${lastConf !== null ? `
+                                        <div class="text-sm">
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-gray-600">Confiance dernière IA</span>
+                                                    <span class="font-semibold">${lastConf}</span>
+                                                </div>
+                                                <div class="confidence-bar mt-1">
+                                                    <div class="confidence-indicator" style="width: ${lastConfNum}%;"></div>
+                                                </div>
+                                        </div>
+                                        ` : ''}
                 </div>
+
+                                ${phone || email ? `
+                                <div class="contact-row mb-4">
+                                    ${phone ? `<div class=\"contact-item\"><i class=\"fas fa-phone\"></i><span>${phone}</span></div>` : ''}
+                                    ${email ? `<div class=\"contact-item\"><i class=\"fas fa-envelope\"></i><span class=\"truncate\">${email}</span></div>` : ''}
+                                </div>
+                                ` : ''}
 
                 <!-- Actions rapides -->
                 <div class="flex space-x-2 pt-3 border-t border-gray-100">
@@ -562,6 +716,7 @@
             </div>
         `;
     }
+    
 
     // Fonctions utilitaires
     function getInitials(name) {
@@ -583,6 +738,20 @@
         return age;
     }
 
+    // Normalisation % (gère 0–1 et 0–100)
+    function normalizePercent(value) {
+        if (value == null) return null;
+        let n = (typeof value === 'string') ? parseFloat(value.replace('%','').trim()) : Number(value);
+        if (Number.isNaN(n)) return null;
+        if (n > 0 && n <= 1) n = n * 100;
+        if (n < 0) n = 0; if (n > 100) n = 100;
+        return n;
+    }
+    function formatPercent(value, decimals = 1) {
+        const n = normalizePercent(value);
+        return (n == null) ? null : `${n.toFixed(decimals)}%`;
+    }
+
     function calculateRiskLevel(patient) {
         // Logique de calcul du risque basée sur l'historique
         if (patient.total_analyses > 5 && patient.last_diagnosis !== 'Normal') {
@@ -591,6 +760,97 @@
             return 'medium';
         }
         return 'low';
+    }
+
+    // Alertes: helpers mapping couleur/label + rendu du chip
+    function getAlertSeverityClass(sev) {
+        switch ((sev || '').toLowerCase()) {
+            case 'high':
+            case 'critique':
+            case 'eleve':
+            case 'élevé':
+                return 'alert-sev-high';
+            case 'medium':
+            case 'moyen':
+                return 'alert-sev-medium';
+            case 'low':
+            case 'faible':
+            case 'info':
+                return 'alert-sev-low';
+            default:
+                return 'alert-sev-none';
+        }
+    }
+
+    function getAlertSeverityLabel(sev) {
+        switch ((sev || '').toLowerCase()) {
+            case 'high':
+            case 'critique':
+            case 'eleve':
+            case 'élevé':
+                return 'Alerte élevée';
+            case 'medium':
+            case 'moyen':
+                return 'Alerte moyenne';
+            case 'low':
+            case 'faible':
+            case 'info':
+                return 'Alerte faible';
+            default:
+                return 'Aucune alerte';
+        }
+    }
+
+    function getAlertLampClass(sev) {
+        switch ((sev || '').toLowerCase()) {
+            case 'high':
+            case 'critique':
+            case 'eleve':
+            case 'élevé':
+                return 'lamp-high';
+            case 'medium':
+            case 'moyen':
+                return 'lamp-medium';
+            case 'low':
+            case 'faible':
+            case 'info':
+                return 'lamp-low';
+            default:
+                return 'lamp-none';
+        }
+    }
+
+    function renderAlertLamp(patient) {
+        const count = patient.active_alerts ?? patient.alerts_count ?? 0;
+        const sev = patient.last_alert_severity ?? (count > 0 ? 'medium' : 'none');
+        const lampCls = getAlertLampClass(sev);
+        const label = getAlertSeverityLabel(sev);
+        return `<div class="flex items-center justify-between text-sm">
+            <span class="text-gray-600">Alertes</span>
+            <span class="alert-lamp" title="${label}">
+                <span class="alert-lamp-dot ${lampCls} ${count ? 'lamp-pulse' : ''}"></span>
+                <span class="text-gray-700 font-semibold">${count || 0}</span>
+            </span>
+        </div>`;
+    }
+
+    function renderAlertChip(patient) {
+        const count = patient.active_alerts ?? patient.alerts_count ?? 0;
+        const sev = patient.last_alert_severity ?? (count > 0 ? 'medium' : 'none');
+        const cls = getAlertSeverityClass(sev);
+        const label = getAlertSeverityLabel(sev);
+        // Masquer si aucune alerte active
+        if (!count) {
+            return `<div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600">Alertes</span>
+                <span class="alert-chip alert-sev-none"><i class=\"fas fa-check-circle\"></i> Aucune</span>
+            </div>`;
+        }
+        const icon = (cls === 'alert-sev-high') ? 'fa-exclamation-circle' : (cls === 'alert-sev-medium') ? 'fa-exclamation-triangle' : 'fa-info-circle';
+        return `<div class="flex items-center justify-between text-sm">
+            <span class="text-gray-600">Alertes</span>
+            <span class="alert-chip ${cls}"><i class="fas ${icon}"></i> ${label} • ${count}</span>
+        </div>`;
     }
 
     function getDiagnosticBadge(diagnosis) {
@@ -626,9 +886,11 @@
             filteredPatients = [...allPatients];
         } else {
             filteredPatients = allPatients.filter(patient => 
-                patient.patient_name.toLowerCase().includes(searchTerm) ||
-                patient.patient_id.toLowerCase().includes(searchTerm) ||
-                (patient.last_diagnosis && patient.last_diagnosis.toLowerCase().includes(searchTerm))
+                (patient.patient_name && patient.patient_name.toLowerCase().includes(searchTerm)) ||
+                (patient.patient_id && patient.patient_id.toLowerCase().includes(searchTerm)) ||
+                (patient.last_diagnosis && patient.last_diagnosis.toLowerCase().includes(searchTerm)) ||
+                (patient.phone && String(patient.phone).toLowerCase().includes(searchTerm)) ||
+                (patient.email && patient.email.toLowerCase().includes(searchTerm))
             );
         }
         
@@ -685,6 +947,10 @@
                     return riskOrder[calculateRiskLevel(b)] - riskOrder[calculateRiskLevel(a)];
                 case 'analyses':
                     return (b.total_analyses || 0) - (a.total_analyses || 0);
+                case 'age':
+                    const ageA = a.date_of_birth ? calculateAge(a.date_of_birth) : -1;
+                    const ageB = b.date_of_birth ? calculateAge(b.date_of_birth) : -1;
+                    return ageB - ageA; // du plus âgé au plus jeune
                 default:
                     return 0;
             }
@@ -762,7 +1028,7 @@
 
     function newAnalysis(patientId) {
         sessionStorage.setItem('preselectedPatient', patientId);
-        window.location.href = '/';
+    window.location.href = '{{ url_for("new_analysis_page") }}';
     }
 
     function viewHistory(patientId) {

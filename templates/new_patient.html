@@ -1,0 +1,319 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Nouveau Patient - NeuroScan{% endblock %}
+{% block page_title %}Nouveau Patient{% endblock %}
+{% block page_subtitle %}Créer un dossier patient{% endblock %}
+{% block page_description %}Renseignez les informations du patient. L'ID peut être généré automatiquement.{% endblock %}
+
+{% block secondary_nav %}
+<div class="dashboard-nav mb-8">
+  <a href="{{ url_for('dashboard') }}" class="dashboard-nav-item"><i class="fas fa-home mr-2"></i>Accueil</a>
+  <a href="{{ url_for('patients_list') }}" class="dashboard-nav-item"><i class="fas fa-users mr-2"></i>Mes Patients</a>
+  <a href="{{ url_for('new_patient_page') }}" class="dashboard-nav-item active"><i class="fas fa-user-plus mr-2"></i>Nouveau</a>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-sections { display: grid; gap: 16px; }
+  .form-section-card {
+    background: var(--surface-primary);
+    border: 1px solid rgba(229,231,235,0.5);
+    border-radius: var(--radius-xl);
+    padding: 18px;
+  }
+  .section-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .section-icon {
+    width: 36px; height:36px; border-radius: 10px; display:flex; align-items:center; justify-content:center;
+    background: var(--primary-gradient); color:#fff;
+  }
+  .section-title { font-weight:700; color: var(--gray-900); }
+  .hint { font-size:12px; color: var(--gray-500); }
+  .inline-input-actions { display:flex; gap:8px; align-items:center; }
+  .inline-input-actions .form-input { flex:1; }
+  .chip { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:12px; background:rgba(59,130,246,.08); color: var(--color-primary); border:1px solid rgba(59,130,246,.25) }
+  .status-badge { font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid transparent; }
+  .status-ok { color:#047857; background:rgba(16,185,129,.08); border-color:rgba(16,185,129,.25); }
+  .status-warn { color:#b45309; background:rgba(245,158,11,.08); border-color:rgba(245,158,11,.25); }
+  .status-err { color:#b91c1c; background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.25); }
+  .is-valid { border-color: rgba(16,185,129,.5) !important; }
+  .is-invalid { border-color: rgba(239,68,68,.7) !important; }
+  .help { font-size:12px; margin-top:4px; }
+  .help.ok { color:#047857; }
+  .help.err { color:#b91c1c; }
+  .counter { font-size:12px; color: var(--gray-500); float:right; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-card p-6 max-w-4xl mx-auto">
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-3">
+      <div class="section-icon"><i class="fas fa-id-card"></i></div>
+      <div>
+        <div class="font-bold text-lg">Créer un dossier patient</div>
+        <div class="hint">Remplissez les informations, l'ID peut être généré automatiquement.</div>
+      </div>
+    </div>
+    <span class="chip"><i class="fas fa-shield-check"></i> Données sécurisées</span>
+  </div>
+
+  <form id="newPatientForm" class="space-y-5" novalidate>
+    <div class="form-sections">
+      <!-- Section: Informations de base -->
+      <div class="form-section-card">
+        <div class="section-header"><div class="section-icon"><i class="fas fa-user"></i></div><div class="section-title">Informations de base</div></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="form-group">
+            <label class="form-label" for="patientName">Nom complet *</label>
+            <input type="text" id="patientName" name="patientName" class="form-input" required autofocus>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="patientId">ID Patient <span class="text-gray-400 text-xs font-normal">(laisser vide pour auto)</span></label>
+            <div class="inline-input-actions">
+              <input type="text" id="patientId" name="patientId" class="form-input" placeholder="Ex: P0001">
+              <button type="button" id="genIdBtn" class="btn-dashboard secondary" title="Générer ID">Générer</button>
+            </div>
+            <div class="flex items-center justify-between">
+              <p id="patientIdHelp" class="help">Sera généré automatiquement si vide.</p>
+              <span id="patientIdStatus" class="status-badge"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="dateOfBirth">Date de naissance</label>
+            <input type="date" id="dateOfBirth" name="dateOfBirth" class="form-input" max="">
+            <p id="dobHelp" class="help"></p>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="gender">Sexe</label>
+            <select id="gender" name="gender" class="form-select">
+              <option value="">Sélectionner</option>
+              <option value="M">Masculin</option>
+              <option value="F">Féminin</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Contact -->
+      <div class="form-section-card">
+        <div class="section-header"><div class="section-icon"><i class="fas fa-address-book"></i></div><div class="section-title">Coordonnées</div></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="form-group">
+            <label class="form-label" for="phone">Téléphone</label>
+            <input type="tel" id="phone" name="phone" class="form-input" placeholder="+33 6 12 34 56 78">
+            <p id="phoneHelp" class="help"></p>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="email">Email</label>
+            <input type="email" id="email" name="email" class="form-input" placeholder="patient@example.com">
+            <p id="emailHelp" class="help"></p>
+          </div>
+          <div class="form-group md:col-span-2">
+            <label class="form-label" for="address">Adresse</label>
+            <input type="text" id="address" name="address" class="form-input" placeholder="Numéro et rue, ville, code postal">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Dossier médical -->
+      <div class="form-section-card">
+        <div class="section-header"><div class="section-icon"><i class="fas fa-stethoscope"></i></div><div class="section-title">Dossier médical</div></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="form-group">
+            <label class="form-label" for="emergencyContact">Contact d'urgence</label>
+            <input type="text" id="emergencyContact" name="emergencyContact" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="emergencyPhone">Tél. d'urgence</label>
+            <input type="tel" id="emergencyPhone" name="emergencyPhone" class="form-input">
+          </div>
+          <div class="form-group md:col-span-2">
+            <label class="form-label" for="medicalHistory">Antécédents médicaux</label>
+            <div>
+              <span class="counter" id="medicalHistoryCounter">0/600</span>
+            </div>
+            <textarea id="medicalHistory" name="medicalHistory" rows="3" class="form-textarea" maxlength="600" data-max="600"></textarea>
+          </div>
+          <div class="form-group md:col-span-2">
+            <label class="form-label" for="currentMedications">Traitements actuels</label>
+            <div>
+              <span class="counter" id="currentMedicationsCounter">0/400</span>
+            </div>
+            <textarea id="currentMedications" name="currentMedications" rows="2" class="form-textarea" maxlength="400" data-max="400"></textarea>
+          </div>
+          <div class="form-group md:col-span-2">
+            <label class="form-label" for="allergies">Allergies</label>
+            <input type="text" id="allergies" name="allergies" class="form-input">
+          </div>
+          <div class="form-group md:col-span-2">
+            <label class="form-label" for="notes">Notes</label>
+            <div>
+              <span class="counter" id="notesCounter">0/400</span>
+            </div>
+            <textarea id="notes" name="notes" rows="2" class="form-textarea" maxlength="400" data-max="400"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+      <a href="{{ url_for('patients_list') }}" class="btn-dashboard secondary"><i class="fas fa-arrow-left"></i> Retour</a>
+      <div class="space-x-2">
+        <button type="button" id="resetBtn" class="btn-dashboard secondary">Réinitialiser</button>
+        <button type="submit" id="submitBtn" class="btn-dashboard success"><i class="fas fa-save"></i> Enregistrer</button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Proposer un ID automatiquement
+    fetch('/api/patients/next-id')
+      .then(r => r.ok ? r.json() : null)
+      .then(j => { if (j && j.success && j.next_id) { const el = document.getElementById('patientId'); if (!el.value) el.placeholder = j.next_id; }});
+
+    // Bouton Générer ID
+    const genBtn = document.getElementById('genIdBtn');
+    if (genBtn) {
+      genBtn.addEventListener('click', async () => {
+        try {
+          const r = await fetch('/api/patients/next-id');
+          const j = await r.json();
+          if (j.success && j.next_id) {
+            const el = document.getElementById('patientId');
+            el.value = j.next_id;
+            const help = document.getElementById('patientIdHelp');
+            if (help) { help.textContent = 'ID proposé automatiquement'; help.className = 'text-xs mt-1 text-gray-500'; }
+          }
+        } catch {}
+      });
+    }
+
+    // Vérif ID dispo en temps réel + statut
+    const pid = document.getElementById('patientId');
+    const help = document.getElementById('patientIdHelp');
+    const status = document.getElementById('patientIdStatus');
+    pid.addEventListener('input', debounce(async () => {
+      const v = (pid.value || '').trim();
+      pid.classList.remove('is-valid','is-invalid');
+      status.textContent = '';
+      status.className = 'status-badge';
+      if (!v) { help.textContent = 'Sera généré automatiquement si vide.'; help.className = 'help'; return; }
+      try {
+        const res = await fetch(`/api/patients/check-id/${encodeURIComponent(v)}`);
+        const j = await res.json();
+        if (j.success && j.available) {
+          help.textContent = 'ID disponible'; help.className = 'help ok';
+          pid.classList.add('is-valid');
+          status.textContent = 'Disponible'; status.classList.add('status-ok');
+        } else {
+          help.textContent = 'ID déjà utilisé'; help.className = 'help err';
+          pid.classList.add('is-invalid');
+          status.textContent = 'Indisponible'; status.classList.add('status-err');
+        }
+      } catch { help.textContent = 'Vérification impossible'; help.className = 'help'; }
+    }, 300));
+
+    // Limiter date de naissance au présent
+    const dob = document.getElementById('dateOfBirth');
+    if (dob) {
+      const today = new Date();
+      const m = String(today.getMonth()+1).padStart(2,'0');
+      const d = String(today.getDate()).padStart(2,'0');
+      dob.max = `${today.getFullYear()}-${m}-${d}`;
+      dob.addEventListener('change', () => {
+        const v = dob.value; const helpEl = document.getElementById('dobHelp');
+        if (!v) { helpEl.textContent=''; dob.classList.remove('is-invalid','is-valid'); return; }
+        const dt = new Date(v);
+        if (isNaN(dt.getTime()) || dt > today) { helpEl.textContent='Date invalide (future)'; helpEl.className='help err'; dob.classList.add('is-invalid'); }
+        else { helpEl.textContent=''; helpEl.className='help'; dob.classList.add('is-valid'); dob.classList.remove('is-invalid'); }
+      });
+    }
+
+    // Validation email/phone
+    const email = document.getElementById('email');
+    const phone = document.getElementById('phone');
+    email.addEventListener('input', () => validateEmail(email));
+    phone.addEventListener('input', () => validatePhone(phone));
+
+    // Réinitialiser le formulaire
+    document.getElementById('resetBtn').addEventListener('click', () => document.getElementById('newPatientForm').reset());
+
+    // Soumission
+    document.getElementById('newPatientForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBtn');
+      // Validation client légère
+      const nameEl = document.getElementById('patientName');
+      if (!nameEl.value.trim()) { nameEl.classList.add('is-invalid'); nameEl.focus(); showNotification('Veuillez renseigner le nom du patient', 'error'); return; }
+      if (!validateEmail(email)) { email.focus(); return; }
+      if (!validatePhone(phone)) { phone.focus(); return; }
+      // Loading state
+      const prevHTML = submitBtn.innerHTML; submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement…';
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      data.patientName = data.patientName || data.patient_name || data.patientName;
+      data.patientId = (data.patientId || data.patient_id || '').trim();
+      if (!data.patientId) delete data.patientId;
+      try {
+        const res = await fetch('/api/patients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        const json = await res.json();
+        if (json.success) {
+          const pid = json.patient_id ? ` (ID: ${json.patient_id})` : '';
+          showNotification(`Patient ajouté avec succès${pid}`, 'success');
+          window.location.href = "{{ url_for('patients_list') }}";
+        } else {
+          showNotification(json.error || 'Erreur lors de l\'ajout', 'error');
+          if ((json.error || '').toLowerCase().includes('existe déjà')) { help.textContent = 'ID déjà utilisé — choisissez un autre ID ou laissez vide pour auto.'; help.className = 'text-xs mt-1 text-red-600'; }
+        }
+      } catch (err) {
+        console.error(err);
+        showNotification('Erreur de connexion', 'error');
+      } finally { submitBtn.disabled = false; submitBtn.innerHTML = prevHTML; }
+    });
+
+    // Compteurs de caractères
+    bindCounter('medicalHistory','medicalHistoryCounter');
+    bindCounter('currentMedications','currentMedicationsCounter');
+    bindCounter('notes','notesCounter');
+  });
+
+  function debounce(fn, wait) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), wait); }; }
+
+  function validateEmail(el) {
+    const helpEl = document.getElementById('emailHelp');
+    const v = (el.value || '').trim();
+    el.classList.remove('is-valid','is-invalid'); helpEl.textContent=''; helpEl.className='help';
+    if (!v) return true; // facultatif
+    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+    if (!ok) { helpEl.textContent='Format email invalide'; helpEl.classList.add('err'); el.classList.add('is-invalid'); return false; }
+    el.classList.add('is-valid'); return true;
+  }
+
+  function validatePhone(el) {
+    const helpEl = document.getElementById('phoneHelp');
+    const v = (el.value || '').replace(/\s+/g,'');
+    el.classList.remove('is-valid','is-invalid'); helpEl.textContent=''; helpEl.className='help';
+    if (!v) return true; // facultatif
+    const digits = v.replace(/[^0-9+]/g,'');
+    const ok = /^(\+)?[0-9]{8,15}$/.test(digits);
+    if (!ok) { helpEl.textContent='Numéro invalide (min 8 chiffres)'; helpEl.classList.add('err'); el.classList.add('is-invalid'); return false; }
+    el.classList.add('is-valid'); return true;
+  }
+
+  function bindCounter(textareaId, counterId) {
+    const ta = document.getElementById(textareaId);
+    const ctr = document.getElementById(counterId);
+    if (!ta || !ctr) return;
+    const max = parseInt(ta.dataset.max || ta.getAttribute('maxlength') || '1000', 10);
+    const update = () => { ctr.textContent = `${ta.value.length}/${max}`; };
+    ta.addEventListener('input', update);
+    update();
+  }
+</script>
+{% endblock %}

@@ -12,7 +12,7 @@
 <style>
     /* Styles spécifiques à la liste des patients */
     .patient-card {
-        background: var(--surface-primary);
+    background: #ffffff; /* Fond blanc */
         border: 1px solid rgba(229, 231, 235, 0.3);
         border-radius: var(--radius-xl);
         transition: var(--transition-normal);
@@ -22,7 +22,7 @@
     .patient-card:hover {
         transform: translateY(-4px);
         box-shadow: var(--shadow-xl);
-        border-color: rgba(59, 130, 246, 0.3);
+    border-color: rgba(229, 231, 235, 0.6); /* Bordure neutre au survol */
     }
 
     .patient-avatar {
@@ -43,11 +43,12 @@
         height: 8px;
         border-radius: 50%;
         display: inline-block;
+        border: 1px solid #e5e7eb; /* visible sur fond blanc */
     }
-
-    .risk-low { background-color: #10b981; }
-    .risk-medium { background-color: #f59e0b; }
-    .risk-high { background-color: #ef4444; }
+    /* Neutralisation des couleurs (blanc) */
+    .risk-low { background-color: #ffffff; }
+    .risk-medium { background-color: #ffffff; }
+    .risk-high { background-color: #ffffff; }
 
     .analysis-trend {
         display: flex;
@@ -56,8 +57,8 @@
         font-size: 12px;
     }
 
-    .trend-up { color: #ef4444; }
-    .trend-down { color: #10b981; }
+    .trend-up { color: #6b7280; }
+    .trend-down { color: #6b7280; }
     .trend-stable { color: #6b7280; }
 
     .search-filters {
@@ -102,6 +103,10 @@
             grid-template-columns: 1fr;
         }
     }
+
+    /* Icônes des cartes statistiques en blanc/neutral */
+    .stat-card .w-12.h-12 { background: #ffffff !important; }
+    .stat-card .w-12.h-12 i { color: #6b7280 !important; }
 </style>
 {% endblock %}
 
@@ -311,8 +316,9 @@
                                 <input type="text" id="patientName" name="patientName" class="form-input" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="patientId">ID Patient *</label>
-                                <input type="text" id="patientId" name="patientId" class="form-input" required>
+                                <label class="form-label" for="patientId">ID Patient <span class="text-gray-400 text-xs font-normal">(laisser vide pour auto)</span></label>
+                                <input type="text" id="patientId" name="patientId" class="form-input" placeholder="Ex: P0001">
+                                <p id="patientIdHelp" class="text-xs mt-1 text-gray-500">Sera généré automatiquement si vide.</p>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="dateOfBirth">Date de naissance</label>
@@ -772,9 +778,44 @@
         document.getElementById('addPatientModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
         
-        // Générer un ID patient automatique
-        const nextId = 'P' + String(allPatients.length + 1).padStart(4, '0');
-        document.getElementById('patientId').value = nextId;
+        // Proposer un ID depuis l'API
+        fetch('/api/patients/next-id')
+            .then(r => r.ok ? r.json() : null)
+            .then(j => {
+                if (j && j.success && j.next_id) {
+                    const el = document.getElementById('patientId');
+                    if (!el.value) el.placeholder = j.next_id;
+                }
+            }).catch(()=>{});
+
+        // Vérification disponibilité en temps réel
+        const pid = document.getElementById('patientId');
+        const help = document.getElementById('patientIdHelp');
+        if (!pid._boundCheck) {
+            pid.addEventListener('input', debounce(async (val) => {
+                const v = (val || pid.value || '').trim();
+                if (!v) {
+                    help.textContent = 'Sera généré automatiquement si vide.';
+                    help.className = 'text-xs mt-1 text-gray-500';
+                    return;
+                }
+                try {
+                    const res = await fetch(`/api/patients/check-id/${encodeURIComponent(v)}`);
+                    const j = await res.json();
+                    if (j.success && j.available) {
+                        help.textContent = 'ID disponible';
+                        help.className = 'text-xs mt-1 text-green-600';
+                    } else {
+                        help.textContent = 'ID déjà utilisé';
+                        help.className = 'text-xs mt-1 text-red-600';
+                    }
+                } catch {
+                    help.textContent = 'Vérification impossible';
+                    help.className = 'text-xs mt-1 text-gray-500';
+                }
+            }, 300));
+            pid._boundCheck = true;
+        }
     }
 
     function closeAddPatientModal() {
@@ -788,6 +829,11 @@
         
         const formData = new FormData(e.target);
         const patientData = Object.fromEntries(formData.entries());
+
+        // Mapper pour l'API
+        patientData.patientName = patientData.patientName || patientData.patient_name || patientData.patientName;
+        patientData.patientId = (patientData.patientId || patientData.patient_id || '').trim();
+        if (!patientData.patientId) delete patientData.patientId;
         
         try {
             const response = await fetch('/api/patients', {
@@ -801,11 +847,17 @@
             const data = await response.json();
             
             if (data.success) {
-                showNotification('Patient ajouté avec succès', 'success');
+                const pid = data.patient_id ? ` (ID: ${data.patient_id})` : '';
+                showNotification(`Patient ajouté avec succès${pid}`, 'success');
                 closeAddPatientModal();
                 loadPatients(); // Recharger la liste
             } else {
                 showNotification(data.error || 'Erreur lors de l\'ajout', 'error');
+                if ((data.error || '').toLowerCase().includes('existe déjà')) {
+                    const help = document.getElementById('patientIdHelp');
+                    help.textContent = 'ID déjà utilisé — choisissez un autre ID ou laissez vide pour auto.';
+                    help.className = 'text-xs mt-1 text-red-600';
+                }
             }
         } catch (error) {
             console.error('Erreur lors de l\'ajout du patient:', error);

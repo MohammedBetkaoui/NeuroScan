@@ -360,10 +360,10 @@
         <i class="fas fa-sync-alt"></i>
         Actualiser
     </button>
-    <button onclick="showAddPatientModal()" class="btn-dashboard success">
+    <a href="{{ url_for('new_patient_page') }}" class="btn-dashboard success">
         <i class="fas fa-user-plus"></i>
         Nouveau Patient
-    </button>
+    </a>
 </div>
 {% endblock %}
 
@@ -735,10 +735,10 @@
                             <div class="empty-description">
                                 Commencez par ajouter votre premier patient pour démarrer la gestion
                             </div>
-                            <button onclick="showAddPatientModal()" class="btn-dashboard primary">
+                            <a href="{{ url_for('new_patient_page') }}" class="btn-dashboard primary">
                                 <i class="fas fa-plus"></i>
                                 Ajouter un Patient
-                            </button>
+                            </a>
                         </div>
                     </td>
                 </tr>
@@ -882,35 +882,8 @@
     }
 
     async function editPatient(patientId) {
-        try {
-            const response = await fetch(`/api/patients/${patientId}/details`);
-            const data = await response.json();
-
-            if (data.success) {
-                isEditMode = true;
-                currentPatient = data.data;
-                document.getElementById('patientModalTitle').innerHTML = `
-                    <i class="fas fa-user-edit text-neuroscan-600"></i>
-                    Modifier Patient
-                `;
-
-                // Remplir le formulaire
-                Object.keys(data.data).forEach(key => {
-                    const element = document.getElementById(key);
-                    if (element) {
-                        element.value = data.data[key] || '';
-                    }
-                });
-
-                document.getElementById('patient_id').disabled = true;
-                showAddPatientModal();
-            } else {
-                showNotification('Erreur lors du chargement: ' + data.error, 'error');
-            }
-        } catch (error) {
-            console.error('Erreur:', error);
-            showNotification('Erreur de connexion', 'error');
-        }
+        // Rediriger vers la nouvelle page d'édition dédiée
+        window.location.href = `/patients/${patientId}/edit`;
     }
 
     function showDeleteModal(patientId, patientName) {

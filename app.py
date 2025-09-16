@@ -1732,6 +1732,25 @@ def patients_list():
         return redirect(url_for('login'))
     return render_template('patients_list.html', doctor=doctor)
 
+@app.route('/patients/new')
+@login_required
+def new_patient_page():
+    """Page de création d'un nouveau patient"""
+    doctor = get_current_doctor()
+    if not doctor:
+        return redirect(url_for('login'))
+    return render_template('new_patient.html', doctor=doctor)
+
+@app.route('/patients/<patient_id>/edit')
+@login_required
+def edit_patient_page(patient_id):
+    """Page de modification d'un patient existant"""
+    doctor = get_current_doctor()
+    if not doctor:
+        return redirect(url_for('login'))
+    # La page fera un appel à /api/patients/<id>/details pour pré-remplir
+    return render_template('edit_patient.html', doctor=doctor, patient_id=patient_id)
+
 @app.route('/alerts')
 @login_required
 def alerts_page():
@@ -2843,6 +2862,69 @@ def get_patients_list():
         print(f"Erreur patients list: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/patients/next-id')
+@login_required
+def get_next_patient_id():
+    """Proposer un prochain ID patient unique pour le médecin connecté (format P0001)."""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT patient_id FROM patients WHERE doctor_id = ? AND patient_id LIKE 'P%'",
+            (doctor_id,)
+        )
+        existing_ids = [row[0] for row in cursor.fetchall()]
+        conn.close()
+
+        max_n = 0
+        for pid in existing_ids:
+            try:
+                if pid and pid.startswith('P'):
+                    n = int(pid[1:])
+                    if n > max_n:
+                        max_n = n
+            except Exception:
+                continue
+        next_id = f"P{max_n + 1:04d}"
+        return jsonify({'success': True, 'next_id': next_id})
+
+    except Exception as e:
+        print(f"Erreur next-id: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/patients/check-id/<patient_id>')
+@login_required
+def check_patient_id(patient_id):
+    """Vérifier la disponibilité d'un ID patient pour le médecin connecté."""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        pid = (patient_id or '').strip()
+        if not pid:
+            return jsonify({'success': True, 'available': False, 'reason': 'ID vide'})
+
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT COUNT(*) FROM patients WHERE doctor_id = ? AND patient_id = ?',
+            (doctor_id, pid)
+        )
+        exists = cursor.fetchone()[0] > 0
+        conn.close()
+
+        return jsonify({'success': True, 'available': not exists})
+
+    except Exception as e:
+        print(f"Erreur check-id: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/patients/<patient_id>/evolution')
 def get_patient_evolution(patient_id):
     """API pour obtenir l'évolution d'un patient spécifique"""
@@ -3778,12 +3860,56 @@ def create_patient():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        data = request.get_json()
+        data = request.get_json() or {}
+
+        # Normaliser les clés camelCase -> snake_case pour compatibilité front
+        key_map = {
+            'patientName': 'patient_name',
+            'patientId': 'patient_id',
+            'dateOfBirth': 'date_of_birth',
+            'emergencyContact': 'emergency_contact_name',
+            'emergencyPhone': 'emergency_contact_phone',
+            'medicalHistory': 'medical_history',
+            'currentMedications': 'current_medications',
+        }
+        for src, dst in key_map.items():
+            if src in data and dst not in data:
+                data[dst] = data[src]
+
+        # Nettoyage de base
+        if 'patient_id' in data and isinstance(data['patient_id'], str):
+            data['patient_id'] = data['patient_id'].strip()
+        if 'patient_name' in data and isinstance(data['patient_name'], str):
+            data['patient_name'] = data['patient_name'].strip()
 
         # Validation des données requises
         required_fields = ['patient_id', 'patient_name']
         for field in required_fields:
             if not data.get(field):
+                # Si l'ID est manquant, tenter de le générer automatiquement
+                if field == 'patient_id':
+                    # Connexion provisoire pour générer un ID unique basé sur les patients du médecin
+                    conn = sqlite3.connect(DATABASE_PATH)
+                    cursor = conn.cursor()
+                    cursor.execute('''
+                        SELECT patient_id FROM patients
+                        WHERE doctor_id = ? AND patient_id LIKE 'P%'
+                    ''', (doctor_id,))
+                    existing_ids = [row[0] for row in cursor.fetchall()]
+                    # Trouver le prochain numéro disponible
+                    max_n = 0
+                    for pid in existing_ids:
+                        try:
+                            if pid and pid.startswith('P'):
+                                n = int(pid[1:])
+                                if n > max_n:
+                                    max_n = n
+                        except Exception:
+                            continue
+                    generated_id = f"P{max_n + 1:04d}"
+                    data['patient_id'] = generated_id
+                    conn.close()
+                    continue
                 return jsonify({'success': False, 'error': f'Le champ {field} est requis'}), 400
 
         conn = sqlite3.connect(DATABASE_PATH)

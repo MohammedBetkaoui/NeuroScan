@@ -12,7 +12,7 @@
 <style>
     /* Styles spécifiques à la liste des patients */
     .patient-card {
-        background: var(--surface-primary);
+    background: #ffffff; /* Fond blanc demandé */
         border: 1px solid rgba(229, 231, 235, 0.3);
         border-radius: var(--radius-xl);
         transition: var(--transition-normal);
@@ -22,7 +22,8 @@
     .patient-card:hover {
         transform: translateY(-4px);
         box-shadow: var(--shadow-xl);
-        border-color: rgba(59, 130, 246, 0.3);
+    /* Couleur de bordure neutre au survol (supprime le bleu) */
+    border-color: rgba(229, 231, 235, 0.6);
     }
 
     .patient-avatar {
@@ -43,11 +44,14 @@
         height: 8px;
         border-radius: 50%;
         display: inline-block;
+        /* Ajout d'une bordure pour rester visible sur fond blanc */
+        border: 1px solid #e5e7eb;
     }
 
-    .risk-low { background-color: #10b981; }
-    .risk-medium { background-color: #f59e0b; }
-    .risk-high { background-color: #ef4444; }
+    /* Remplacement des couleurs (rouge/orange/vert) par blanc */
+    .risk-low { background-color: #ffffff; }
+    .risk-medium { background-color: #ffffff; }
+    .risk-high { background-color: #ffffff; }
 
     .analysis-trend {
         display: flex;
@@ -56,8 +60,9 @@
         font-size: 12px;
     }
 
-    .trend-up { color: #ef4444; }
-    .trend-down { color: #10b981; }
+    /* Couleurs de tendance neutralisées */
+    .trend-up { color: #6b7280; }
+    .trend-down { color: #6b7280; }
     .trend-stable { color: #6b7280; }
 
     .search-filters {
@@ -106,10 +111,10 @@
         position: relative;
     }
 
-    /* Accents par niveau de risque */
-    .patient-card.risk-high { border-left: 4px solid #ef4444; }
-    .patient-card.risk-medium { border-left: 4px solid #f59e0b; }
-    .patient-card.risk-low { border-left: 4px solid #10b981; }
+    /* Accents par niveau de risque supprimés (pas de barre colorée) */
+    .patient-card.risk-high,
+    .patient-card.risk-medium,
+    .patient-card.risk-low { border-left: none; }
 
     /* Chips d'information */
     .info-chip {
@@ -146,10 +151,10 @@
         letter-spacing: .01em;
         border: 1px solid transparent;
     }
-    .alert-sev-high { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
-    .alert-sev-medium { background: #fffbeb; color: #92400e; border-color: #fde68a; }
-    .alert-sev-low { background: #eff6ff; color: #1e3a8a; border-color: #bfdbfe; }
-    .alert-sev-none { background: #f3f4f6; color: #374151; border-color: #e5e7eb; }
+    /* Alertes neutralisées en blanc */
+    .alert-sev-high, .alert-sev-medium, .alert-sev-low, .alert-sev-none {
+        background: #ffffff; color: #374151; border-color: #e5e7eb;
+    }
     .alert-chip i { opacity: .9; }
 
     /* Lampe d'alerte (indicateur lumineux) */
@@ -159,29 +164,28 @@
         content: '';
         position: absolute; inset: -4px; border-radius: 9999px; opacity: .6; filter: blur(4px);
     }
-    .lamp-high { background: #ef4444; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset, 0 0 10px rgba(239,68,68,.9); }
-    .lamp-high::after { background: rgba(239,68,68,.8); }
-    .lamp-medium { background: #f59e0b; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset, 0 0 10px rgba(245,158,11,.8); }
-    .lamp-medium::after { background: rgba(245,158,11,.6); }
-    .lamp-low { background: #3b82f6; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset, 0 0 10px rgba(59,130,246,.7); }
-    .lamp-low::after { background: rgba(59,130,246,.5); }
-    .lamp-none { background: #9ca3af; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset; }
+    /* Lampes neutralisées (blanc) */
+    .lamp-high, .lamp-medium, .lamp-low, .lamp-none { background: #ffffff; box-shadow: 0 0 0 2px rgba(229,231,235,.9) inset; }
+    .lamp-high::after, .lamp-medium::after, .lamp-low::after, .lamp-none::after { background: transparent; }
     .lamp-pulse { animation: lampPulse 2s ease-in-out infinite; }
     @keyframes lampPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 
-    /* Harmonisation des couleurs avec le thème */
-    .patient-card.risk-high { border-left: 4px solid rgba(239,68,68,.6); }
-    .patient-card.risk-medium { border-left: 4px solid rgba(245,158,11,.6); }
-    .patient-card.risk-low { border-left: 4px solid rgba(16,185,129,.6); }
-    .risk-low { background-color: #10b981; }
-    .risk-medium { background-color: #f59e0b; }
-    .risk-high { background-color: #ef4444; }
+    /* Désactivation finale des accents de risque pour garder les cartes blanches */
+    .patient-card.risk-high,
+    .patient-card.risk-medium,
+    .patient-card.risk-low { border-left: none; }
+    /* Neutralisation répétée pour assurer la priorité */
+    .risk-low { background-color: #ffffff; }
+    .risk-medium { background-color: #ffffff; }
+    .risk-high { background-color: #ffffff; }
     .patient-avatar { background: var(--primary-gradient); color: #fff; }
-    .confidence-indicator { background: linear-gradient(90deg,#93c5fd,#3b82f6); }
+    /* Barre de confiance en blanc (sur fond gris de la barre) */
+    .confidence-indicator { background: #ffffff; }
     /* Chips d'alerte: rappeler la palette douce */
-    .alert-sev-high { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
-    .alert-sev-medium { background: #fef3c7; color: #92400e; border-color: #fde68a; }
-    .alert-sev-low { background: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
+    /* Override final: toutes les alertes blanches */
+    .alert-sev-high { background: #ffffff; color: #374151; border-color: #e5e7eb; }
+    .alert-sev-medium { background: #ffffff; color: #374151; border-color: #e5e7eb; }
+    .alert-sev-low { background: #ffffff; color: #374151; border-color: #e5e7eb; }
     /* Lampes colorées et glow doux */
     .lamp-high { background: #ef4444; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset, 0 0 10px rgba(239,68,68,.9); }
     .lamp-high::after { background: rgba(239,68,68,.8); }
@@ -191,10 +195,14 @@
     .lamp-low::after { background: rgba(59,130,246,.5); }
     .lamp-pulse { animation: lampPulse 2s ease-in-out infinite; }
     /* Rétablir les badges diagnostic thématisés */
-    .patient-card .badge.success { background: #d1fae5 !important; color: #065f46 !important; border: none; }
-    .patient-card .badge.warning { background: #fef3c7 !important; color: #92400e !important; border: none; }
-    .patient-card .badge.danger { background: #fee2e2 !important; color: #991b1b !important; border: none; }
-    .patient-card .badge.info { background: #dbeafe !important; color: #1e40af !important; border: none; }
+    .patient-card .badge.success,
+    .patient-card .badge.warning,
+    .patient-card .badge.danger,
+    .patient-card .badge.info { background: #ffffff !important; color: #374151 !important; border: 1px solid #e5e7eb; }
+
+    /* Icônes des cartes stats neutralisées */
+    .stat-card .w-12.h-12 { background: #ffffff !important; }
+    .stat-card .w-12.h-12 i { color: #6b7280 !important; }
 </style>
 {% endblock %}
 
@@ -221,10 +229,10 @@
         <i class="fas fa-download"></i>
         Exporter
     </button>
-    <button onclick="openAddPatientModal()" class="btn-dashboard success">
+    <a href="{{ url_for('new_patient_page') }}" class="btn-dashboard success">
         <i class="fas fa-user-plus"></i>
         Nouveau Patient
-    </button>
+    </a>
 </div>
 {% endblock %}
 
@@ -381,109 +389,7 @@
     </div>
 </div>
 
-<!-- Modal Ajout Patient -->
-<div id="addPatientModal" class="modal-overlay hidden">
-    <div class="modal-content" style="--modal-width: 600px;">
-        <div class="modal-header">
-            <h2 class="modal-title">
-                <i class="fas fa-user-plus text-neuroscan-600"></i>
-                Nouveau Patient
-            </h2>
-            <button onclick="closeAddPatientModal()" class="modal-close">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <form id="addPatientForm">
-            <div class="modal-body">
-                <div class="space-y-6">
-                    <!-- Informations de base -->
-                    <div class="dashboard-card p-4">
-                        <h3 class="font-semibold text-gray-900 mb-4">Informations Personnelles</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="form-group">
-                                <label class="form-label" for="patientName">Nom complet *</label>
-                                <input type="text" id="patientName" name="patientName" class="form-input" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="patientId">ID Patient *</label>
-                                <input type="text" id="patientId" name="patientId" class="form-input" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="dateOfBirth">Date de naissance</label>
-                                <input type="date" id="dateOfBirth" name="dateOfBirth" class="form-input">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="gender">Sexe</label>
-                                <select id="gender" name="gender" class="form-select">
-                                    <option value="">Sélectionner</option>
-                                    <option value="M">Masculin</option>
-                                    <option value="F">Féminin</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Informations de contact -->
-                    <div class="dashboard-card p-4">
-                        <h3 class="font-semibold text-gray-900 mb-4">Contact & Urgence</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="form-group">
-                                <label class="form-label" for="phone">Téléphone</label>
-                                <input type="tel" id="phone" name="phone" class="form-input">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="email">Email</label>
-                                <input type="email" id="email" name="email" class="form-input">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="emergencyContact">Contact d'urgence</label>
-                                <input type="text" id="emergencyContact" name="emergencyContact" class="form-input">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="emergencyPhone">Tél. d'urgence</label>
-                                <input type="tel" id="emergencyPhone" name="emergencyPhone" class="form-input">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Informations médicales -->
-                    <div class="dashboard-card p-4">
-                        <h3 class="font-semibold text-gray-900 mb-4">Informations Médicales</h3>
-                        <div class="space-y-4">
-                            <div class="form-group">
-                                <label class="form-label" for="medicalHistory">Antécédents médicaux</label>
-                                <textarea id="medicalHistory" name="medicalHistory" class="form-textarea" rows="3" placeholder="Antécédents médicaux pertinents..."></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="currentMedications">Traitements actuels</label>
-                                <textarea id="currentMedications" name="currentMedications" class="form-textarea" rows="2" placeholder="Médicaments et posologie..."></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="allergies">Allergies</label>
-                                <input type="text" id="allergies" name="allergies" class="form-input" placeholder="Allergies connues...">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <p class="text-sm text-gray-600">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    Les champs marqués d'un * sont obligatoires
-                </p>
-                <div class="flex space-x-3">
-                    <button type="button" onclick="closeAddPatientModal()" class="btn-dashboard secondary">
-                        Annuler
-                    </button>
-                    <button type="submit" class="btn-dashboard success">
-                        <i class="fas fa-save"></i>
-                        Enregistrer
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
+<!-- Modal d’ajout supprimé: la création se fait désormais sur la page /patients/new -->
 
 {% endblock %}
 
@@ -525,8 +431,7 @@
             handleSort(e.target.value);
         });
 
-        // Formulaire d'ajout patient
-        document.getElementById('addPatientForm').addEventListener('submit', handleAddPatient);
+    // Formulaire d'ajout patient déplacé sur /patients/new
     }
 
     // Chargement des patients
@@ -1041,50 +946,7 @@
     }
 
     // Gestion du modal d'ajout patient
-    function openAddPatientModal() {
-        document.getElementById('addPatientModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-        
-        // Générer un ID patient automatique
-        const nextId = 'P' + String(allPatients.length + 1).padStart(4, '0');
-        document.getElementById('patientId').value = nextId;
-    }
-
-    function closeAddPatientModal() {
-        document.getElementById('addPatientModal').classList.add('hidden');
-        document.body.style.overflow = 'auto';
-        document.getElementById('addPatientForm').reset();
-    }
-
-    async function handleAddPatient(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(e.target);
-        const patientData = Object.fromEntries(formData.entries());
-        
-        try {
-            const response = await fetch('/api/patients', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(patientData)
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                showNotification('Patient ajouté avec succès', 'success');
-                closeAddPatientModal();
-                loadPatients(); // Recharger la liste
-            } else {
-                showNotification(data.error || 'Erreur lors de l\'ajout', 'error');
-            }
-        } catch (error) {
-            console.error('Erreur lors de l\'ajout du patient:', error);
-            showNotification('Erreur de connexion', 'error');
-        }
-    }
+    // Fonctions de modal d'ajout supprimées — création déportée sur /patients/new
 
     // Export
     function exportPatients() {

@@ -1,0 +1,282 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Modifier Patient - NeuroScan{% endblock %}
+{% block page_title %}Modifier les informations du patient{% endblock %}
+{% block page_subtitle %}Mise à jour du dossier{% endblock %}
+{% block page_description %}Page dédiée pour modifier les informations d'un patient{% endblock %}
+
+{% block secondary_nav %}
+<div class="dashboard-nav mb-8">
+  <a href="{{ url_for('dashboard') }}" class="dashboard-nav-item">
+    <i class="fas fa-home mr-2"></i>Accueil
+  </a>
+  <a href="{{ url_for('patients_list') }}" class="dashboard-nav-item">
+    <i class="fas fa-users mr-2"></i>Mes Patients
+  </a>
+  <a href="{{ url_for('manage_patients_page') }}" class="dashboard-nav-item">
+    <i class="fas fa-users-cog mr-2"></i>Gestion
+  </a>
+  <span class="dashboard-nav-item active">
+    <i class="fas fa-user-edit mr-2"></i>Modifier
+  </span>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-sections { display: grid; gap: 16px; }
+  .form-section-card { background: var(--surface-primary); border:1px solid rgba(229,231,235,.5); border-radius: var(--radius-xl); padding:18px; }
+  .section-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .section-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; background: var(--primary-gradient); color:#fff; }
+  .section-title { font-weight:700; color: var(--gray-900); }
+  .hint { font-size:12px; color: var(--gray-500); }
+  .chip { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:12px; background:rgba(59,130,246,.08); color: var(--color-primary); border:1px solid rgba(59,130,246,.25) }
+  .is-valid { border-color: rgba(16,185,129,.5) !important; }
+  .is-invalid { border-color: rgba(239,68,68,.7) !important; }
+  .help { font-size:12px; margin-top:4px; color: var(--gray-500); }
+  .help.err { color:#b91c1c; }
+  .counter { font-size:12px; color: var(--gray-500); float:right; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="editPage" data-patient-id="{{ patient_id }}" class="dashboard-card p-6 max-w-4xl mx-auto">
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-3">
+      <div class="section-icon"><i class="fas fa-user-edit"></i></div>
+      <div>
+        <div class="font-bold text-lg">Modifier le patient</div>
+        <div class="hint">ID Patient: <span id="patientIdTxt">{{ patient_id }}</span></div>
+      </div>
+    </div>
+    <span class="chip"><i class="fas fa-history"></i> Suivi des modifications</span>
+  </div>
+
+  <form id="editPatientForm" class="space-y-5">
+    <div class="form-sections">
+      <div class="form-section-card">
+        <div class="section-header"><div class="section-icon"><i class="fas fa-user"></i></div><div class="section-title">Informations de base</div></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">Nom Complet</label>
+            <input type="text" class="form-input" id="patient_name" name="patient_name" required />
+          </div>
+          <div>
+            <label class="form-label">Date de Naissance</label>
+            <input type="date" class="form-input" id="date_of_birth" name="date_of_birth" max="" />
+            <p id="dobHelp" class="help"></p>
+          </div>
+          <div>
+            <label class="form-label">Genre</label>
+            <select class="form-input" id="gender" name="gender">
+              <option value="">Sélectionner...</option>
+              <option value="M">Masculin</option>
+              <option value="F">Féminin</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section-card">
+        <div class="section-header"><div class="section-icon"><i class="fas fa-address-book"></i></div><div class="section-title">Coordonnées</div></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">Téléphone</label>
+            <input type="tel" class="form-input" id="phone" name="phone" />
+            <p id="phoneHelp" class="help"></p>
+          </div>
+          <div>
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" id="email" name="email" />
+            <p id="emailHelp" class="help"></p>
+          </div>
+          <div class="md:col-span-2">
+            <label class="form-label">Adresse</label>
+            <textarea class="form-input" id="address" name="address" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section-card">
+        <div class="section-header"><div class="section-icon"><i class="fas fa-stethoscope"></i></div><div class="section-title">Dossier médical</div></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">Contact d'Urgence</label>
+            <input type="text" class="form-input" id="emergency_contact_name" name="emergency_contact_name" />
+          </div>
+          <div>
+            <label class="form-label">Téléphone d'Urgence</label>
+            <input type="tel" class="form-input" id="emergency_contact_phone" name="emergency_contact_phone" />
+          </div>
+          <div>
+            <label class="form-label">Antécédents Médicaux</label>
+            <div><span class="counter" id="medicalHistoryCounter">0/600</span></div>
+            <textarea class="form-input" id="medical_history" name="medical_history" rows="3" maxlength="600" data-max="600"></textarea>
+          </div>
+          <div>
+            <label class="form-label">Allergies</label>
+            <textarea class="form-input" id="allergies" name="allergies" rows="3"></textarea>
+          </div>
+          <div>
+            <label class="form-label">Médicaments Actuels</label>
+            <div><span class="counter" id="currentMedicationsCounter">0/400</span></div>
+            <textarea class="form-input" id="current_medications" name="current_medications" rows="3" maxlength="400" data-max="400"></textarea>
+          </div>
+          <div>
+            <label class="form-label">Notes</label>
+            <div><span class="counter" id="notesCounter">0/400</span></div>
+            <textarea class="form-input" id="notes" name="notes" rows="3" maxlength="400" data-max="400"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center pt-4 border-t border-gray-100">
+  <a href="{{ url_for('manage_patients_page') }}" class="btn-dashboard secondary"><i class="fas fa-arrow-left"></i> Annuler</a>
+  <button type="submit" id="submitBtn" class="btn-dashboard success"><i class="fas fa-save"></i> Enregistrer</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const patientId = document.getElementById('editPage').dataset.patientId;
+
+function toInputDate(value) {
+  if (!value) return '';
+  try {
+    // Accept already formatted YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return '';
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${d.getFullYear()}-${m}-${day}`;
+  } catch { return ''; }
+}
+
+async function loadPatient() {
+  try {
+    const res = await fetch(`/api/patients/${patientId}/details`);
+    const data = await res.json();
+    if (!data.success) {
+      showNotification(data.error || 'Patient introuvable', 'error');
+      return;
+    }
+    const p = data.data || {};
+    const keys = [
+      'patient_name','date_of_birth','gender','phone','email','address',
+      'emergency_contact_name','emergency_contact_phone','medical_history',
+      'allergies','current_medications','notes'
+    ];
+    for (const k of keys) {
+      const el = document.getElementById(k);
+      if (!el) continue;
+      let val = p[k] || '';
+      if (k === 'date_of_birth') {
+        val = toInputDate(val);
+      }
+      el.value = val;
+    }
+  } catch (e) {
+    console.error(e);
+    showNotification('Erreur de chargement', 'error');
+  }
+}
+
+async function submitEdit(e) {
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  const payload = Object.fromEntries(fd.entries());
+  // Validation légère côté client
+  const nameEl = document.getElementById('patient_name');
+  const emailEl = document.getElementById('email');
+  const phoneEl = document.getElementById('phone');
+  if (!nameEl.value.trim()) { nameEl.classList.add('is-invalid'); nameEl.focus(); showNotification('Veuillez renseigner le nom du patient', 'error'); return; }
+  if (!validateEmail(emailEl)) { emailEl.focus(); return; }
+  if (!validatePhone(phoneEl)) { phoneEl.focus(); return; }
+  const submitBtn = document.getElementById('submitBtn');
+  const prevHTML = submitBtn.innerHTML; submitBtn.disabled = true; submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement…';
+  try {
+    const res = await fetch(`/api/patients/${patientId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const out = await res.json();
+    if (out.success) {
+      showNotification(out.message || 'Patient mis à jour', 'success');
+      window.location.href = `/patient/${patientId}`;
+    } else {
+      showNotification(out.error || 'Échec de la mise à jour', 'error');
+    }
+  } catch (e) {
+    console.error(e);
+    showNotification('Erreur de connexion', 'error');
+  } finally { submitBtn.disabled = false; submitBtn.innerHTML = prevHTML; }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadPatient();
+  document.getElementById('editPatientForm').addEventListener('submit', submitEdit);
+  // Contraindre la date max au présent
+  const dob = document.getElementById('date_of_birth');
+  if (dob) {
+    const today = new Date();
+    const m = String(today.getMonth()+1).padStart(2,'0');
+    const d = String(today.getDate()).padStart(2,'0');
+    dob.max = `${today.getFullYear()}-${m}-${d}`;
+    dob.addEventListener('change', () => {
+      const v = dob.value; const helpEl = document.getElementById('dobHelp');
+      if (!v) { helpEl.textContent=''; dob.classList.remove('is-invalid','is-valid'); return; }
+      const dt = new Date(v);
+      if (isNaN(dt.getTime()) || dt > today) { helpEl.textContent='Date invalide (future)'; helpEl.classList.add('err'); dob.classList.add('is-invalid'); }
+      else { helpEl.textContent=''; helpEl.classList.remove('err'); dob.classList.add('is-valid'); dob.classList.remove('is-invalid'); }
+    });
+  }
+  // Validation live email/phone
+  const email = document.getElementById('email');
+  const phone = document.getElementById('phone');
+  email.addEventListener('input', () => validateEmail(email));
+  phone.addEventListener('input', () => validatePhone(phone));
+  // Compteurs
+  bindCounter('medical_history','medicalHistoryCounter');
+  bindCounter('current_medications','currentMedicationsCounter');
+  bindCounter('notes','notesCounter');
+});
+
+function validateEmail(el) {
+  const helpEl = document.getElementById('emailHelp');
+  const v = (el.value || '').trim();
+  el.classList.remove('is-valid','is-invalid'); helpEl.textContent=''; helpEl.className='help';
+  if (!v) return true; // optionnel
+  const ok = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+  if (!ok) { helpEl.textContent='Format email invalide'; helpEl.classList.add('err'); el.classList.add('is-invalid'); return false; }
+  el.classList.add('is-valid'); return true;
+}
+
+function validatePhone(el) {
+  const helpEl = document.getElementById('phoneHelp');
+  const v = (el.value || '').replace(/\s+/g,'');
+  el.classList.remove('is-valid','is-invalid'); helpEl.textContent=''; helpEl.className='help';
+  if (!v) return true; // optionnel
+  const digits = v.replace(/[^0-9+]/g,'');
+  const ok = /^(\+)?[0-9]{8,15}$/.test(digits);
+  if (!ok) { helpEl.textContent='Numéro invalide (min 8 chiffres)'; helpEl.classList.add('err'); el.classList.add('is-invalid'); return false; }
+  el.classList.add('is-valid'); return true;
+}
+
+function bindCounter(fieldId, counterId) {
+  const el = document.getElementById(fieldId);
+  const ctr = document.getElementById(counterId);
+  if (!el || !ctr) return;
+  const max = parseInt(el.dataset.max || el.getAttribute('maxlength') || '1000', 10);
+  const update = () => { ctr.textContent = `${el.value.length}/${max}`; };
+  el.addEventListener('input', update);
+  update();
+}
+</script>
+{% endblock %}

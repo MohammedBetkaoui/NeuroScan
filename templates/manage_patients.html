@@ -10,23 +10,42 @@
 
 {% block extra_css %}
 <style>
-    /* Styles spécifiques à la gestion des patients */
+    /* Variables CSS avancées pour la gestion des patients */
+    :root {
+        --patient-primary: #4f46e5;
+        --patient-secondary: #10b981;
+        --patient-accent: #f59e0b;
+        --patient-danger: #ef4444;
+        --patient-surface: #ffffff;
+        --patient-background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        --patient-border: rgba(226, 232, 240, 0.6);
+        --patient-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --patient-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        --patient-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+        background: var(--patient-background);
+    }
+
+    /* Grille de statistiques modernisée */
     .patient-management-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        margin-bottom: 32px;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
     }
 
     .management-stat-card {
-        background: var(--surface-primary);
-        border: 1px solid rgba(229, 231, 235, 0.3);
-        border-radius: var(--radius-xl);
-        padding: 24px;
+        background: var(--patient-surface);
+        border: 1px solid var(--patient-border);
+        border-radius: 20px;
+        padding: 32px 24px;
         text-align: center;
-        transition: var(--transition-normal);
+        transition: var(--patient-transition);
         position: relative;
         overflow: hidden;
+        backdrop-filter: blur(10px);
     }
 
     .management-stat-card::before {
@@ -35,25 +54,88 @@
         top: 0;
         left: 0;
         width: 100%;
-        height: 4px;
-        background: var(--primary-gradient);
+        height: 5px;
+        background: linear-gradient(90deg, var(--patient-primary), var(--patient-secondary));
+        transform: scaleX(0);
+        transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .management-stat-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at top right, rgba(79, 70, 229, 0.03), transparent 60%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .management-stat-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .management-stat-card:hover::after {
+        opacity: 1;
     }
 
     .management-stat-card:hover {
-        transform: translateY(-6px) scale(1.02);
-        box-shadow: var(--shadow-xl);
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: var(--patient-shadow-lg);
+        border-color: var(--patient-primary);
     }
 
-    .stat-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: var(--radius-lg);
+        .stat-icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 16px;
+        margin: 0 auto 20px;
+        font-size: 32px;
         color: white;
-        font-size: 24px;
+        position: relative;
+        overflow: hidden;
+        transition: var(--patient-transition);
+    }
+
+    .stat-icon::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+        transform: rotate(45deg) translateX(-100%);
+        transition: transform 0.6s ease;
+    }
+
+    .management-stat-card:hover .stat-icon::before {
+        transform: rotate(45deg) translateX(100%);
+    }
+
+    .management-stat-card:hover .stat-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    /* Icônes spécialisées par type */
+    .stat-icon.patients {
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+    }
+
+    .stat-icon.analyses {
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    .stat-icon.alerts {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .stat-icon.reports {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
     }
 
     .stat-icon.primary { background: var(--primary-gradient); }
@@ -62,41 +144,223 @@
     .stat-icon.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
 
     .stat-number {
-        font-size: 32px;
+        font-size: 3rem;
         font-weight: 800;
         line-height: 1;
         margin-bottom: 8px;
         color: var(--gray-900);
+        position: relative;
+        transition: var(--patient-transition);
+    }
+
+    .stat-number::after {
+        content: '';
+        position: absolute;
+        bottom: -4px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--patient-primary), var(--patient-secondary));
+        border-radius: 2px;
+        transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .management-stat-card:hover .stat-number::after {
+        width: 60%;
     }
 
     .stat-label {
-        font-size: 14px;
+        font-size: 1rem;
         color: var(--gray-600);
-        font-weight: 500;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 16px;
+    }
+
+    /* Indicateurs de tendance améliorés */
+    .stat-trend {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        transition: var(--patient-transition);
+        margin-top: 12px;
+    }
+
+    .stat-trend i {
+        animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-4px); }
+        60% { transform: translateY(-2px); }
+    }
+
+    .stat-trend.up {
+        background: rgba(16, 185, 129, 0.15);
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .stat-trend.down {
+        background: rgba(239, 68, 68, 0.15);
+        color: #dc2626;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .stat-trend.stable {
+        background: rgba(107, 114, 128, 0.15);
+        color: #6b7280;
+        border: 1px solid rgba(107, 114, 128, 0.3);
     }
 
     .search-section {
-        background: var(--surface-primary);
-        border: 1px solid rgba(229, 231, 235, 0.3);
-        border-radius: var(--radius-xl);
-        padding: 24px;
-        margin-bottom: 24px;
+        background: var(--patient-surface);
+        border: 1px solid var(--patient-border);
+        border-radius: 20px;
+        padding: 32px;
+        margin-bottom: 32px;
+        box-shadow: var(--patient-shadow);
+        backdrop-filter: blur(10px);
+        transition: var(--patient-transition);
+    }
+
+    .search-section:hover {
+        box-shadow: var(--patient-shadow-lg);
+        border-color: var(--patient-primary);
+    }
+
+    /* Champs de recherche modernisés */
+    .search-controls {
+        display: grid;
+        grid-template-columns: 1fr auto auto auto;
+        gap: 20px;
+        align-items: end;
+    }
+
+    .search-group {
+        position: relative;
+    }
+
+    .search-group label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .search-input, .search-select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid var(--patient-border);
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: var(--patient-transition);
+        background: var(--patient-surface);
+    }
+
+    .search-input:focus, .search-select:focus {
+        outline: none;
+        border-color: var(--patient-primary);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    /* Boutons d'action améliorés */
+    .action-btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: var(--patient-transition);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .action-btn.primary {
+        background: linear-gradient(135deg, var(--patient-primary), #6366f1);
+        color: white;
+    }
+
+    .action-btn.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+    }
+
+    .action-btn.secondary {
+        background: var(--patient-surface);
+        color: var(--patient-primary);
+        border: 2px solid var(--patient-primary);
+    }
+
+    .action-btn.secondary:hover {
+        background: var(--patient-primary);
+        color: white;
+        transform: translateY(-2px);
     }
 
     .patients-table-container {
-        background: var(--surface-primary);
-        border: 1px solid rgba(229, 231, 235, 0.3);
-        border-radius: var(--radius-xl);
+        background: var(--patient-surface);
+        border: 1px solid var(--patient-border);
+        border-radius: 20px;
         overflow: hidden;
+        box-shadow: var(--patient-shadow);
+        backdrop-filter: blur(10px);
+        transition: var(--patient-transition);
+    }
+
+    .patients-table-container:hover {
+        box-shadow: var(--patient-shadow-lg);
+        border-color: var(--patient-primary);
     }
 
     .table-header {
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        background: linear-gradient(135deg, var(--patient-primary), #6366f1);
         color: white;
-        padding: 20px 24px;
+        padding: 24px 32px;
         display: flex;
-        justify-content: between;
+        justify-content: space-between;
         align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .table-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.1) 50%, transparent 60%);
+        transform: translateX(-100%);
+        transition: transform 0.6s ease;
+    }
+
+    .table-header:hover::before {
+        transform: translateX(100%);
+    }
+
+    .table-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
     .modern-table {
@@ -105,30 +369,137 @@
     }
 
     .modern-table thead th {
-        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        background: linear-gradient(135deg, var(--patient-primary), #6366f1);
         color: white;
-        padding: 16px 20px;
-        font-weight: 600;
-        font-size: 14px;
+        padding: 20px 24px;
+        font-weight: 700;
+        font-size: 0.85rem;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 1px;
         border: none;
+        position: relative;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .modern-table thead th:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 25%;
+        height: 50%;
+        width: 1px;
+        background: rgba(255, 255, 255, 0.2);
     }
 
     .modern-table tbody tr {
-        border-bottom: 1px solid rgba(229, 231, 235, 0.3);
-        transition: var(--transition-fast);
+        border-bottom: 1px solid var(--patient-border);
+        transition: var(--patient-transition);
+        background: var(--patient-surface);
     }
 
     .modern-table tbody tr:hover {
-        background: rgba(59, 130, 246, 0.03);
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.05), rgba(99, 102, 241, 0.03));
+        transform: translateX(4px);
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.1);
         transform: scale(1.005);
     }
 
     .modern-table tbody td {
-        padding: 16px 20px;
+        padding: 20px 24px;
         vertical-align: middle;
         border: none;
+        font-size: 0.95rem;
+        color: var(--gray-700);
+    }
+
+    /* Styles spécifiques pour les cellules */
+    .patient-name {
+        font-weight: 600;
+        color: var(--patient-primary);
+        font-size: 1rem;
+    }
+
+    .patient-id {
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        color: var(--gray-600);
+        background: var(--gray-100);
+        padding: 4px 8px;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    .patient-age {
+        font-weight: 500;
+        color: var(--gray-700);
+    }
+
+    .analyses-count {
+        background: linear-gradient(135deg, var(--patient-primary), #6366f1);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+        min-width: 40px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+    }
+
+    .last-analysis {
+        color: var(--gray-600);
+        font-size: 0.9rem;
+    }
+
+    /* Actions dans le tableau */
+    .table-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .table-action-btn {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--patient-transition);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .table-action-btn.view {
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .table-action-btn.view:hover {
+        background: #16a34a;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+    }
+
+    .table-action-btn.edit {
+        background: rgba(249, 115, 22, 0.1);
+        color: #ea580c;
+        border: 1px solid rgba(249, 115, 22, 0.2);
+    }
+
+    .table-action-btn.edit:hover {
+        background: #ea580c;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
     }
 
     .patient-avatar-small {
@@ -309,28 +680,128 @@
         margin-bottom: 24px;
     }
 
+    /* Animations et effets avancés */
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: -1000px 0;
+        }
+        100% {
+            background-position: 1000px 0;
+        }
+    }
+
+    .stat-card {
+        animation: slideInUp 0.6s ease-out;
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+    .analyses-count:hover {
+        animation: pulse 0.3s ease-in-out;
+    }
+
+    .patients-table-container {
+        animation: slideInUp 0.8s ease-out 0.3s both;
+    }
+
+    /* Loading states */
+    .loading-skeleton {
+        background: linear-gradient(90deg, var(--gray-200) 25%, transparent 50%, var(--gray-200) 75%);
+        background-size: 1000px 100%;
+        animation: shimmer 2s infinite;
+    }
+
+    @media (max-width: 1200px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .search-controls {
+            grid-template-columns: 1fr 1fr auto;
+        }
+    }
+
     @media (max-width: 768px) {
         .patient-management-grid {
             grid-template-columns: repeat(2, 1fr);
         }
         
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .search-controls {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
         .action-buttons {
             flex-wrap: wrap;
+            gap: 12px;
         }
         
         .modern-table {
-            font-size: 14px;
+            font-size: 0.85rem;
         }
         
         .modern-table thead th,
         .modern-table tbody td {
-            padding: 12px 16px;
+            padding: 12px 8px;
+        }
+        
+        .table-actions {
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .table-action-btn {
+            font-size: 0.8rem;
+            padding: 6px 10px;
         }
     }
 
     @media (max-width: 576px) {
         .patient-management-grid {
             grid-template-columns: 1fr;
+        }
+        
+        .main-container {
+            padding: 12px;
+        }
+        
+        .search-section {
+            padding: 16px;
+        }
+        
+        .table-header {
+            padding: 16px 20px;
+        }
+        
+        .table-title {
+            font-size: 1rem;
         }
     }
 </style>

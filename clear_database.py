@@ -33,12 +33,70 @@ def init_database():
     
     print("📋 Création des tables...")
     
+    # Table des médecins (authentification)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS doctors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            first_name TEXT NOT NULL,
+            last_name TEXT NOT NULL,
+            specialty TEXT,
+            hospital TEXT,
+            license_number TEXT,
+            phone TEXT,
+            is_active BOOLEAN DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_login DATETIME,
+            login_count INTEGER DEFAULT 0
+        )
+    ''')
+    print("  ✅ Table 'doctors' créée")
+    
+    # Table des sessions de médecins
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS doctor_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            doctor_id INTEGER,
+            session_token TEXT UNIQUE,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expires_at DATETIME,
+            is_active BOOLEAN DEFAULT 1,
+            ip_address TEXT,
+            user_agent TEXT,
+            FOREIGN KEY (doctor_id) REFERENCES doctors (id)
+        )
+    ''')
+    print("  ✅ Table 'doctor_sessions' créée")
+    
+    # Table des patients
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS patients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            patient_id TEXT NOT NULL,
+            patient_name TEXT,
+            date_of_birth DATE,
+            gender TEXT,
+            first_analysis_date DATE,
+            last_analysis_date DATE,
+            total_analyses INTEGER DEFAULT 0,
+            doctor_id INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(patient_id, doctor_id),
+            FOREIGN KEY (doctor_id) REFERENCES doctors(id)
+        )
+    ''')
+    print("  ✅ Table 'patients' créée")
+    
     # Table des analyses
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS analyses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             filename TEXT,
+            patient_id TEXT,
+            patient_name TEXT,
+            exam_date DATE,
             predicted_class INTEGER,
             predicted_label TEXT,
             confidence REAL,
@@ -47,7 +105,12 @@ def init_database():
             recommendations TEXT,
             processing_time REAL,
             user_session TEXT,
-            ip_address TEXT
+            ip_address TEXT,
+            tumor_size_estimate REAL,
+            previous_analysis_id INTEGER,
+            doctor_id INTEGER NOT NULL,
+            FOREIGN KEY (previous_analysis_id) REFERENCES analyses(id),
+            FOREIGN KEY (doctor_id) REFERENCES doctors(id)
         )
     ''')
     print("  ✅ Table 'analyses' créée")
@@ -82,6 +145,64 @@ def init_database():
     ''')
     print("  ✅ Table 'user_sessions' créée")
     
+    # Table des évolutions tumorales
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS tumor_evolution (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            patient_id TEXT,
+            analysis_id INTEGER,
+            exam_date DATE,
+            diagnosis_change TEXT,
+            confidence_change REAL,
+            size_change REAL,
+            evolution_type TEXT,
+            notes TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (analysis_id) REFERENCES analyses(id),
+            FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+        )
+    ''')
+    print("  ✅ Table 'tumor_evolution' créée")
+    
+    # Table des alertes médicales
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS medical_alerts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            patient_id TEXT NOT NULL,
+            doctor_id INTEGER NOT NULL,
+            analysis_id INTEGER,
+            alert_type TEXT NOT NULL,
+            severity TEXT NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            is_read BOOLEAN DEFAULT 0,
+            is_resolved BOOLEAN DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            resolved_at DATETIME,
+            resolved_by INTEGER,
+            FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
+            FOREIGN KEY (doctor_id) REFERENCES doctors(id),
+            FOREIGN KEY (analysis_id) REFERENCES analyses(id),
+            FOREIGN KEY (resolved_by) REFERENCES doctors(id)
+        )
+    ''')
+    print("  ✅ Table 'medical_alerts' créée")
+    
+    # Table des notifications push
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            doctor_id INTEGER NOT NULL,
+            type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            is_read BOOLEAN DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (doctor_id) REFERENCES doctors(id)
+        )
+    ''')
+    print("  ✅ Table 'notifications' créée")
+    
     conn.commit()
     conn.close()
 
@@ -103,8 +224,23 @@ def show_database_stats():
         cursor.execute('SELECT COUNT(*) FROM user_sessions')
         sessions_count = cursor.fetchone()[0]
         
+        # Compter les médecins
+        cursor.execute('SELECT COUNT(*) FROM doctors')
+        doctors_count = cursor.fetchone()[0]
+        
+        # Compter les patients
+        cursor.execute('SELECT COUNT(*) FROM patients')
+        patients_count = cursor.fetchone()[0]
+        
+        # Compter les alertes médicales
+        cursor.execute('SELECT COUNT(*) FROM medical_alerts')
+        alerts_count = cursor.fetchone()[0]
+        
         print("\n📊 Statistiques de la base de données:")
         print(f"  📈 Analyses: {analyses_count}")
+        print(f"  👥 Patients: {patients_count}")
+        print(f"  👨‍⚕️ Médecins: {doctors_count}")
+        print(f"  🚨 Alertes médicales: {alerts_count}")
         print(f"  📅 Statistiques quotidiennes: {daily_stats_count}")
         print(f"  👥 Sessions utilisateur: {sessions_count}")
         

@@ -3086,6 +3086,523 @@ def get_performance_trends():
         print(f"Erreur performance trends: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/analytics/diagnostic-distribution')
+def get_diagnostic_distribution():
+    """API pour la distribution des diagnostics"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Distribution des diagnostics
+        cursor.execute('''
+            SELECT predicted_label, COUNT(*) as count
+            FROM analyses
+            WHERE predicted_label IS NOT NULL
+            GROUP BY predicted_label
+            ORDER BY count DESC
+        ''')
+
+        distribution = cursor.fetchall()
+        
+        # Calculer les pourcentages
+        total = sum(row[1] for row in distribution)
+        
+        data = {
+            'labels': [row[0] for row in distribution],
+            'counts': [row[1] for row in distribution],
+            'percentages': [round((row[1] / total) * 100, 1) if total > 0 else 0 for row in distribution]
+        }
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'data': data
+        })
+
+    except Exception as e:
+        print(f"Erreur diagnostic distribution: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/analytics/hourly-activity')
+def get_hourly_activity():
+    """API pour l'activité par heure"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Activité par heure pour les 7 derniers jours
+        cursor.execute('''
+            SELECT
+                strftime('%H', timestamp) as hour,
+                COUNT(*) as count
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-7 days')
+            GROUP BY strftime('%H', timestamp)
+            ORDER BY hour
+        ''')
+
+        hourly_data = cursor.fetchall()
+
+        # Créer un tableau avec toutes les heures (0-23)
+        activity_by_hour = [0] * 24
+        for row in hourly_data:
+            hour = int(row[0])
+            count = row[1]
+            activity_by_hour[hour] = count
+
+        # Statistiques
+        max_activity = max(activity_by_hour)
+        peak_hour = activity_by_hour.index(max_activity)
+        
+        # Trouver l'heure la plus calme (heure avec le moins d'activité, en excluant 0)
+        non_zero_activities = [(i, count) for i, count in enumerate(activity_by_hour) if count > 0]
+        quiet_hour = min(non_zero_activities, key=lambda x: x[1])[0] if non_zero_activities else 0
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'hourly_activity': activity_by_hour,
+                'peak_hour': peak_hour,
+                'max_hourly_analyses': max_activity,
+                'quiet_hour': quiet_hour
+            }
+        })
+
+    except Exception as e:
+        print(f"Erreur hourly activity: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/analytics/confidence-distribution')
+def get_confidence_distribution():
+    """API pour la distribution des niveaux de confiance"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Distribution par intervalles de confiance
+        cursor.execute('''
+            SELECT confidence
+            FROM analyses
+            WHERE confidence IS NOT NULL
+            ORDER BY confidence
+        ''')
+
+        confidences = [row[0] * 100 for row in cursor.fetchall()]
+
+        # Compter par intervalles
+        very_high = len([c for c in confidences if c >= 90])
+        high = len([c for c in confidences if 80 <= c < 90])
+        medium = len([c for c in confidences if 70 <= c < 80])
+        low = len([c for c in confidences if c < 70])
+
+        # Histogramme pour le graphique
+        histogram_data = []
+        for i in range(0, 101, 10):
+            count = len([c for c in confidences if i <= c < i + 10])
+            histogram_data.append(count)
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'histogram': histogram_data,
+                'intervals': {
+                    'very_high': very_high,
+                    'high': high,
+                    'medium': medium,
+                    'low': low
+                }
+            }
+        })
+
+    except Exception as e:
+        print(f"Erreur confidence distribution: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/analytics/processing-time-analysis')
+def get_processing_time_analysis():
+    """API pour l'analyse des temps de traitement"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Récupérer tous les temps de traitement
+        cursor.execute('''
+            SELECT processing_time
+            FROM analyses
+            WHERE processing_time IS NOT NULL
+            ORDER BY processing_time
+        ''')
+
+        times = [row[0] for row in cursor.fetchall()]
+
+        if not times:
+            return jsonify({
+                'success': True,
+                'data': {
+                    'histogram': [0] * 10,
+                    'stats': {
+                        'fast': 0,
+                        'normal': 0,
+                        'slow': 0,
+                        'median': 0
+                    }
+                }
+            })
+
+        # Calculer les statistiques
+        fast = len([t for t in times if t < 2])
+        normal = len([t for t in times if 2 <= t <= 5])
+        slow = len([t for t in times if t > 5])
+        median_time = times[len(times) // 2] if times else 0
+
+        # Histogramme par intervalles de 0.5s jusqu'à 10s
+        histogram_data = []
+        for i in range(0, 20):  # 0-10s par intervalles de 0.5s
+            min_time = i * 0.5
+            max_time = (i + 1) * 0.5
+            count = len([t for t in times if min_time <= t < max_time])
+            histogram_data.append(count)
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'histogram': histogram_data,
+                'stats': {
+                    'fast': fast,
+                    'normal': normal,
+                    'slow': slow,
+                    'median': round(median_time, 2)
+                }
+            }
+        })
+
+    except Exception as e:
+        print(f"Erreur processing time analysis: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/analytics/monthly-trends')
+def get_monthly_trends():
+    """API pour les tendances mensuelles"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Données mensuelles pour les 12 derniers mois
+        cursor.execute('''
+            SELECT
+                strftime('%Y-%m', timestamp) as month,
+                COUNT(*) as count,
+                AVG(confidence) as avg_confidence
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-12 months')
+            GROUP BY strftime('%Y-%m', timestamp)
+            ORDER BY month
+        ''')
+
+        monthly_data = cursor.fetchall()
+
+        if not monthly_data:
+            return jsonify({
+                'success': True,
+                'data': {
+                    'labels': [],
+                    'counts': [],
+                    'confidences': [],
+                    'growth_rate': 0,
+                    'most_active_month': 'N/A'
+                }
+            })
+
+        labels = [row[0] for row in monthly_data]
+        counts = [row[1] for row in monthly_data]
+        confidences = [round(row[2] * 100, 1) if row[2] else 0 for row in monthly_data]
+
+        # Calculer le taux de croissance mensuel moyen
+        if len(counts) > 1:
+            growth_rates = []
+            for i in range(1, len(counts)):
+                if counts[i-1] > 0:
+                    growth_rate = ((counts[i] - counts[i-1]) / counts[i-1]) * 100
+                    growth_rates.append(growth_rate)
+            avg_growth = round(sum(growth_rates) / len(growth_rates), 1) if growth_rates else 0
+        else:
+            avg_growth = 0
+
+        # Mois le plus actif
+        max_count = max(counts)
+        most_active_month_index = counts.index(max_count)
+        most_active_month = labels[most_active_month_index]
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'labels': labels,
+                'counts': counts,
+                'confidences': confidences,
+                'growth_rate': avg_growth,
+                'most_active_month': most_active_month
+            }
+        })
+
+    except Exception as e:
+        print(f"Erreur monthly trends: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/analytics/ai-insights')
+def get_ai_insights():
+    """API pour les insights et recommandations IA"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Calculer les métriques de base
+        cursor.execute('''
+            SELECT 
+                COUNT(*) as total,
+                AVG(confidence) as avg_confidence,
+                AVG(processing_time) as avg_time
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-30 days')
+        ''')
+        
+        base_metrics = cursor.fetchone()
+        total_analyses = base_metrics[0] if base_metrics[0] else 0
+        avg_confidence = base_metrics[1] if base_metrics[1] else 0
+        avg_time = base_metrics[2] if base_metrics[2] else 0
+
+        # Insights de performance
+        performance_insights = []
+        
+        # Tendance de confiance
+        cursor.execute('''
+            SELECT AVG(confidence) as conf_week1
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-7 days')
+        ''')
+        week1_conf = cursor.fetchone()[0] or 0
+        
+        cursor.execute('''
+            SELECT AVG(confidence) as conf_week2
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-14 days')
+            AND DATE(timestamp) < DATE('now', '-7 days')
+        ''')
+        week2_conf = cursor.fetchone()[0] or 0
+
+        if week1_conf and week2_conf:
+            conf_change = ((week1_conf - week2_conf) / week2_conf) * 100
+            if conf_change > 5:
+                performance_insights.append({
+                    'type': 'positive',
+                    'message': f'Amélioration de la confiance de {conf_change:.1f}% cette semaine'
+                })
+            elif conf_change < -5:
+                performance_insights.append({
+                    'type': 'warning',
+                    'message': f'Baisse de confiance de {abs(conf_change):.1f}% cette semaine'
+                })
+
+        # Insights de qualité
+        quality_insights = []
+        
+        # Distribution des diagnostics
+        cursor.execute('''
+            SELECT predicted_label, COUNT(*) as count
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-30 days')
+            GROUP BY predicted_label
+            ORDER BY count DESC
+        ''')
+        diagnostic_dist = cursor.fetchall()
+        
+        if diagnostic_dist:
+            most_common = diagnostic_dist[0]
+            quality_insights.append({
+                'type': 'info',
+                'message': f'Diagnostic le plus fréquent: {most_common[0]} ({most_common[1]} cas)'
+            })
+
+        # Analyses à faible confiance
+        cursor.execute('''
+            SELECT COUNT(*) as low_conf_count
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-7 days')
+            AND confidence < 0.7
+        ''')
+        low_conf_count = cursor.fetchone()[0] or 0
+        
+        if low_conf_count > 0:
+            quality_insights.append({
+                'type': 'warning',
+                'message': f'{low_conf_count} analyses avec confiance <70% cette semaine'
+            })
+
+        # Recommandations
+        recommendations = []
+        
+        # Recommandation basée sur le temps de traitement
+        if avg_time > 3:
+            recommendations.append({
+                'type': 'optimization',
+                'message': 'Considérer l\'optimisation du modèle (temps moyen >3s)'
+            })
+        
+        # Recommandation basée sur la confiance
+        if avg_confidence < 0.8:
+            recommendations.append({
+                'type': 'model_improvement',
+                'message': 'Entraînement avec plus de données recommandé'
+            })
+
+        # Recommandation générale
+        if total_analyses > 100:
+            recommendations.append({
+                'type': 'analysis',
+                'message': 'Analyser les patterns pour identifier les améliorations'
+            })
+
+        # Calculer les scores
+        accuracy_score = min(100, max(0, int(avg_confidence * 100)))
+        efficiency_score = min(100, max(0, int((10 - avg_time) * 10))) if avg_time > 0 else 100
+        reliability_score = min(100, max(0, int(100 - (low_conf_count * 5))))
+        overall_score = int((accuracy_score + efficiency_score + reliability_score) / 3)
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'performance_insights': performance_insights,
+                'quality_insights': quality_insights,
+                'recommendations': recommendations,
+                'scores': {
+                    'accuracy': accuracy_score,
+                    'efficiency': efficiency_score,
+                    'reliability': reliability_score,
+                    'overall': overall_score
+                }
+            }
+        })
+
+    except Exception as e:
+        print(f"Erreur AI insights: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/analytics/advanced-metrics')
+def get_advanced_metrics():
+    """API pour les métriques avancées du système"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Calcul des métriques de débit (analyses par jour)
+        cursor.execute('''
+            SELECT COUNT(*) as daily_avg
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-30 days')
+        ''')
+        total_last_30_days = cursor.fetchone()[0] or 0
+        throughput_rate = round(total_last_30_days / 30, 1)
+
+        # Calcul du changement de débit par rapport au mois précédent
+        cursor.execute('''
+            SELECT COUNT(*) as prev_month
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-60 days')
+            AND DATE(timestamp) < DATE('now', '-30 days')
+        ''')
+        prev_month_total = cursor.fetchone()[0] or 0
+        prev_throughput = prev_month_total / 30 if prev_month_total > 0 else 0
+        throughput_change = round(((throughput_rate - prev_throughput) / prev_throughput) * 100, 1) if prev_throughput > 0 else 0
+
+        # Taux de précision basé sur la confiance moyenne
+        cursor.execute('''
+            SELECT AVG(confidence) as avg_accuracy
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-30 days')
+        ''')
+        accuracy_rate = cursor.fetchone()[0] or 0
+        accuracy_percentage = round(accuracy_rate * 100, 1)
+
+        # Temps de réponse moyen
+        cursor.execute('''
+            SELECT AVG(processing_time) as avg_time
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-30 days')
+        ''')
+        avg_response_time = cursor.fetchone()[0] or 0
+
+        # Simulation de la disponibilité système (99.9% par défaut, peut être calculé selon les besoins)
+        system_uptime = 99.9
+
+        # Métriques pour la comparaison annuelle
+        cursor.execute('''
+            SELECT 
+                strftime('%Y-%m', timestamp) as month,
+                COUNT(*) as count
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-12 months')
+            GROUP BY strftime('%Y-%m', timestamp)
+            ORDER BY month
+        ''')
+        
+        yearly_data = cursor.fetchall()
+        
+        # Calculer la croissance annuelle
+        if len(yearly_data) >= 2:
+            first_month = yearly_data[0][1]
+            last_month = yearly_data[-1][1]
+            year_growth = round(((last_month - first_month) / first_month) * 100, 1) if first_month > 0 else 0
+        else:
+            year_growth = 0
+
+        # Prédiction simple pour le mois prochain (moyenne des 3 derniers mois)
+        if len(yearly_data) >= 3:
+            last_3_months = [row[1] for row in yearly_data[-3:]]
+            next_month_prediction = round(sum(last_3_months) / len(last_3_months))
+        else:
+            next_month_prediction = throughput_rate * 30
+
+        # Direction de la tendance
+        if len(yearly_data) >= 2:
+            recent_trend = yearly_data[-1][1] - yearly_data[-2][1]
+            trend_direction = "↗️ Croissance" if recent_trend > 0 else "↘️ Décroissance" if recent_trend < 0 else "→ Stable"
+        else:
+            trend_direction = "→ Stable"
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'throughput_rate': throughput_rate,
+                'throughput_change': throughput_change,
+                'accuracy_rate': accuracy_percentage,
+                'avg_response_time': round(avg_response_time, 2),
+                'system_uptime': system_uptime,
+                'year_growth': year_growth,
+                'next_month_prediction': next_month_prediction,
+                'trend_direction': trend_direction,
+                'yearly_data': {
+                    'labels': [row[0] for row in yearly_data],
+                    'counts': [row[1] for row in yearly_data]
+                }
+            }
+        })
+
+    except Exception as e:
+        print(f"Erreur advanced metrics: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # ===== APIs pour le suivi de l'évolution des tumeurs =====
 
 @app.route('/api/patients')
@@ -4411,6 +4928,814 @@ def get_patient_details(patient_id):
 
     except Exception as e:
         print(f"Erreur détails patient: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ===== APIs spécifiques pour le Dashboard Professionnel =====
+
+@app.route('/api/pro-dashboard/overview')
+@login_required  
+def pro_dashboard_overview():
+    """API pour les statistiques du dashboard professionnel du médecin connecté"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Statistiques principales du médecin
+        cursor.execute('SELECT COUNT(*) FROM analyses WHERE doctor_id = ?', (doctor_id,))
+        total_analyses = cursor.fetchone()[0] or 0
+
+        cursor.execute('SELECT COUNT(*) FROM analyses WHERE doctor_id = ? AND predicted_class != 0', (doctor_id,))
+        tumors_detected = cursor.fetchone()[0] or 0
+
+        cursor.execute('SELECT COUNT(DISTINCT patient_id) FROM patients WHERE doctor_id = ?', (doctor_id,))
+        patients_count = cursor.fetchone()[0] or 0
+
+        cursor.execute('SELECT AVG(confidence) FROM analyses WHERE doctor_id = ?', (doctor_id,))
+        avg_confidence = cursor.fetchone()[0] or 0
+
+        # Répartition par type de diagnostic
+        cursor.execute('''
+            SELECT predicted_label, COUNT(*) 
+            FROM analyses 
+            WHERE doctor_id = ? 
+            GROUP BY predicted_label
+        ''', (doctor_id,))
+        distribution = dict(cursor.fetchall())
+
+        # Analyses par période (30 derniers jours)
+        cursor.execute('''
+            SELECT DATE(timestamp) as date, COUNT(*) as count
+            FROM analyses 
+            WHERE doctor_id = ? AND timestamp >= datetime('now', '-30 days')
+            GROUP BY DATE(timestamp)
+            ORDER BY date
+        ''', (doctor_id,))
+        daily_data = cursor.fetchall()
+
+        # Calcul des changements (simulation basée sur les données existantes)
+        # Analyses ce mois vs mois précédent
+        cursor.execute('''
+            SELECT COUNT(*) FROM analyses 
+            WHERE doctor_id = ? AND timestamp >= date('now', 'start of month')
+        ''', (doctor_id,))
+        current_month = cursor.fetchone()[0] or 0
+
+        cursor.execute('''
+            SELECT COUNT(*) FROM analyses 
+            WHERE doctor_id = ? 
+            AND timestamp >= date('now', 'start of month', '-1 month')
+            AND timestamp < date('now', 'start of month')
+        ''', (doctor_id,))
+        previous_month = cursor.fetchone()[0] or 1
+
+        analyses_change = ((current_month - previous_month) / previous_month * 100) if previous_month > 0 else 0
+
+        # Tumeurs détectées ce mois vs mois précédent
+        cursor.execute('''
+            SELECT COUNT(*) FROM analyses 
+            WHERE doctor_id = ? AND predicted_class != 0 
+            AND timestamp >= date('now', 'start of month')
+        ''', (doctor_id,))
+        current_month_tumors = cursor.fetchone()[0] or 0
+
+        cursor.execute('''
+            SELECT COUNT(*) FROM analyses 
+            WHERE doctor_id = ? AND predicted_class != 0
+            AND timestamp >= date('now', 'start of month', '-1 month')
+            AND timestamp < date('now', 'start of month')
+        ''', (doctor_id,))
+        previous_month_tumors = cursor.fetchone()[0] or 1
+
+        tumors_change = ((current_month_tumors - previous_month_tumors) / previous_month_tumors * 100) if previous_month_tumors > 0 else 0
+
+        # Nouveaux patients ce mois
+        cursor.execute('''
+            SELECT COUNT(*) FROM patients 
+            WHERE doctor_id = ? AND created_at >= date('now', 'start of month')
+        ''', (doctor_id,))
+        new_patients_month = cursor.fetchone()[0] or 0
+
+        cursor.execute('''
+            SELECT COUNT(*) FROM patients 
+            WHERE doctor_id = ? 
+            AND created_at >= date('now', 'start of month', '-1 month')
+            AND created_at < date('now', 'start of month')
+        ''', (doctor_id,))
+        previous_month_patients = cursor.fetchone()[0] or 1
+
+        patients_change = ((new_patients_month - previous_month_patients) / previous_month_patients * 100) if previous_month_patients > 0 else 0
+
+        # Confiance moyenne ce mois vs mois précédent
+        cursor.execute('''
+            SELECT AVG(confidence) FROM analyses 
+            WHERE doctor_id = ? AND timestamp >= date('now', 'start of month')
+        ''', (doctor_id,))
+        current_avg_confidence = cursor.fetchone()[0] or 0
+
+        cursor.execute('''
+            SELECT AVG(confidence) FROM analyses 
+            WHERE doctor_id = ? 
+            AND timestamp >= date('now', 'start of month', '-1 month')
+            AND timestamp < date('now', 'start of month')
+        ''', (doctor_id,))
+        previous_avg_confidence = cursor.fetchone()[0] or 1
+
+        confidence_change = ((current_avg_confidence - previous_avg_confidence) / previous_avg_confidence * 100) if previous_avg_confidence > 0 else 0
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'total_analyses': total_analyses,
+                'tumors_detected': tumors_detected,
+                'patients_count': patients_count,
+                'avg_confidence': avg_confidence,
+                'normal_count': distribution.get('Normal', 0),
+                'glioma_count': distribution.get('Gliome', 0),
+                'meningioma_count': distribution.get('Méningiome', 0),
+                'pituitary_count': distribution.get('Tumeur pituitaire', 0),
+                'daily_analyses': daily_data,
+                'changes': {
+                    'analyses_change': round(analyses_change, 1),
+                    'tumors_change': round(tumors_change, 1),
+                    'patients_change': round(patients_change, 1),
+                    'confidence_change': round(confidence_change, 1)
+                }
+            }
+        })
+
+    except Exception as e:
+        print(f"Erreur pro dashboard overview: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/pro-dashboard/recent-analyses')
+@login_required
+def pro_dashboard_recent_analyses():
+    """API pour les analyses récentes du dashboard professionnel"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT a.id, a.timestamp, a.patient_name, a.patient_id, 
+                   a.predicted_label, a.confidence, a.filename
+            FROM analyses a
+            WHERE a.doctor_id = ?
+            ORDER BY a.timestamp DESC
+            LIMIT 10
+        ''', (doctor_id,))
+
+        analyses = []
+        for row in cursor.fetchall():
+            analyses.append({
+                'id': row[0],
+                'timestamp': row[1],
+                'patient_name': row[2] or f'Patient {row[3]}' if row[3] else 'Patient anonyme',
+                'patient_id': row[3],
+                'predicted_label': row[4],
+                'confidence': row[5],
+                'filename': row[6]
+            })
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'data': analyses
+        })
+
+    except Exception as e:
+        print(f"Erreur recent analyses: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/alerts')
+@login_required
+def get_medical_alerts():
+    """API pour obtenir les alertes médicales du médecin connecté"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT ma.id, ma.patient_id, p.patient_name, ma.alert_type, 
+                   ma.severity, ma.title, ma.message, ma.is_read, 
+                   ma.is_resolved, ma.created_at
+            FROM medical_alerts ma
+            LEFT JOIN patients p ON ma.patient_id = p.patient_id AND ma.doctor_id = p.doctor_id
+            WHERE ma.doctor_id = ? AND ma.is_resolved = 0
+            ORDER BY ma.created_at DESC
+            LIMIT 20
+        ''', (doctor_id,))
+
+        alerts = []
+        for row in cursor.fetchall():
+            alerts.append({
+                'id': row[0],
+                'patient_id': row[1],
+                'patient_name': row[2] or f'Patient {row[1]}',
+                'alert_type': row[3],
+                'severity': row[4],
+                'title': row[5],
+                'message': row[6],
+                'is_read': bool(row[7]),
+                'is_resolved': bool(row[8]),
+                'created_at': row[9]
+            })
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'data': alerts
+        })
+
+    except Exception as e:
+        print(f"Erreur medical alerts: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/pro-dashboard/time-range/<time_range>')
+@login_required
+def pro_dashboard_time_range(time_range):
+    """API pour les données du dashboard sur différentes périodes"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        # Déterminer la période
+        if time_range == '7d':
+            days = 7
+            date_format = '%d/%m'
+        elif time_range == '30d':
+            days = 30
+            date_format = '%d/%m'
+        elif time_range == '90d':
+            days = 90
+            date_format = '%d/%m'
+        else:
+            return jsonify({'success': False, 'error': 'Période invalide'}), 400
+
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Données par jour pour la période
+        cursor.execute(f'''
+            SELECT DATE(timestamp) as date, COUNT(*) as count
+            FROM analyses 
+            WHERE doctor_id = ? AND timestamp >= datetime('now', '-{days} days')
+            GROUP BY DATE(timestamp)
+            ORDER BY date
+        ''', (doctor_id,))
+
+        daily_data = cursor.fetchall()
+
+        # Créer une série complète de dates
+        from datetime import datetime, timedelta
+        
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=days-1)
+        
+        # Créer un dictionnaire avec toutes les dates
+        date_counts = {}
+        current_date = start_date
+        while current_date <= end_date:
+            date_counts[current_date.isoformat()] = 0
+            current_date += timedelta(days=1)
+
+        # Remplir avec les données réelles
+        for date_str, count in daily_data:
+            if date_str in date_counts:
+                date_counts[date_str] = count
+
+        # Convertir en format pour Chart.js
+        labels = []
+        data = []
+        for date_str in sorted(date_counts.keys()):
+            date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+            labels.append(date_obj.strftime(date_format))
+            data.append(date_counts[date_str])
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'labels': labels,
+                'data': data,
+                'period': time_range
+            }
+        })
+
+    except Exception as e:
+        print(f"Erreur time range data: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/pro-dashboard/advanced-stats')
+@login_required
+def pro_dashboard_advanced_stats():
+    """API pour les statistiques avancées du dashboard professionnel"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Statistiques de performance temporelle
+        try:
+            cursor.execute('''
+                SELECT 
+                    strftime('%H', timestamp) as hour,
+                    COUNT(*) as count,
+                    AVG(COALESCE(confidence, 0)) as avg_confidence,
+                    AVG(COALESCE(processing_time, 0)) as avg_processing_time
+                FROM analyses 
+                WHERE doctor_id = ? AND timestamp >= datetime('now', '-30 days')
+                GROUP BY strftime('%H', timestamp)
+                ORDER BY hour
+            ''', (doctor_id,))
+            hourly_stats = cursor.fetchall()
+        except Exception as e:
+            print(f"Erreur hourly stats: {e}")
+            hourly_stats = []
+
+        # Évolution de la confiance dans le temps
+        try:
+            cursor.execute('''
+                SELECT 
+                    DATE(timestamp) as date,
+                    AVG(COALESCE(confidence, 0)) as avg_confidence,
+                    MIN(COALESCE(confidence, 0)) as min_confidence,
+                    MAX(COALESCE(confidence, 1)) as max_confidence,
+                    COUNT(*) as daily_count
+                FROM analyses 
+                WHERE doctor_id = ? AND timestamp >= datetime('now', '-30 days')
+                GROUP BY DATE(timestamp)
+                ORDER BY date
+            ''', (doctor_id,))
+            confidence_trends = cursor.fetchall()
+        except Exception as e:
+            print(f"Erreur confidence trends: {e}")
+            confidence_trends = []
+
+        # Analyse par type de diagnostic avec évolution
+        cursor.execute('''
+            SELECT 
+                predicted_label,
+                COUNT(*) as total_count,
+                AVG(confidence) as avg_confidence,
+                MIN(confidence) as min_confidence,
+                MAX(confidence) as max_confidence,
+                AVG(processing_time) as avg_processing_time
+            FROM analyses 
+            WHERE doctor_id = ? AND timestamp >= datetime('now', '-90 days')
+            GROUP BY predicted_label
+            ORDER BY total_count DESC
+        ''', (doctor_id,))
+
+        diagnostic_analysis = cursor.fetchall()
+
+        # Analyse des temps de traitement
+        cursor.execute('''
+            SELECT 
+                processing_time,
+                COUNT(*) as count,
+                CASE 
+                    WHEN processing_time < 2 THEN 'Très rapide'
+                    WHEN processing_time < 5 THEN 'Rapide'
+                    WHEN processing_time < 10 THEN 'Normal'
+                    ELSE 'Lent'
+                END as category
+            FROM analyses 
+            WHERE doctor_id = ? AND processing_time IS NOT NULL
+            GROUP BY category
+        ''', (doctor_id,))
+
+        processing_time_analysis = cursor.fetchall()
+
+        # Analyse de la productivité hebdomadaire
+        cursor.execute('''
+            SELECT 
+                strftime('%W', timestamp) as week,
+                strftime('%Y', timestamp) as year,
+                COUNT(*) as weekly_count,
+                AVG(confidence) as weekly_avg_confidence,
+                COUNT(DISTINCT patient_id) as unique_patients
+            FROM analyses 
+            WHERE doctor_id = ? AND timestamp >= datetime('now', '-12 weeks')
+            GROUP BY strftime('%Y-%W', timestamp)
+            ORDER BY year, week
+        ''', (doctor_id,))
+
+        weekly_productivity = cursor.fetchall()
+
+        # Analyse des patients à risque
+        cursor.execute('''
+            SELECT 
+                p.patient_id,
+                p.patient_name,
+                COUNT(a.id) as total_analyses,
+                AVG(a.confidence) as avg_confidence,
+                MAX(a.timestamp) as last_analysis,
+                SUM(CASE WHEN a.predicted_class != 0 THEN 1 ELSE 0 END) as tumor_detections
+            FROM patients p
+            LEFT JOIN analyses a ON p.patient_id = a.patient_id AND p.doctor_id = a.doctor_id
+            WHERE p.doctor_id = ?
+            GROUP BY p.patient_id, p.patient_name
+            HAVING tumor_detections > 0
+            ORDER BY tumor_detections DESC, avg_confidence ASC
+            LIMIT 10
+        ''', (doctor_id,))
+
+        high_risk_patients = cursor.fetchall()
+
+        # Taux de détection mensuel
+        cursor.execute('''
+            SELECT 
+                strftime('%Y-%m', timestamp) as month,
+                COUNT(*) as total_analyses,
+                SUM(CASE WHEN predicted_class != 0 THEN 1 ELSE 0 END) as tumor_detections,
+                ROUND(
+                    CAST(SUM(CASE WHEN predicted_class != 0 THEN 1 ELSE 0 END) AS FLOAT) / 
+                    COUNT(*) * 100, 2
+                ) as detection_rate
+            FROM analyses 
+            WHERE doctor_id = ? AND timestamp >= datetime('now', '-12 months')
+            GROUP BY strftime('%Y-%m', timestamp)
+            ORDER BY month
+        ''', (doctor_id,))
+
+        monthly_detection_rates = cursor.fetchall()
+
+        conn.close()
+
+        # Formater les données pour le frontend
+        hourly_performance = {
+            'labels': [f"{str(row[0]).zfill(2)}h" if row[0] else '00h' for row in hourly_stats],
+            'analyses_count': [row[1] for row in hourly_stats],
+            'avg_confidence': [round(row[2] * 100, 1) if row[2] else 0 for row in hourly_stats],
+            'avg_processing_time': [round(row[3], 2) if row[3] else 0 for row in hourly_stats]
+        }
+
+        confidence_evolution = {
+            'labels': [row[0] for row in confidence_trends],
+            'avg_confidence': [round(row[1] * 100, 1) if row[1] else 0 for row in confidence_trends],
+            'min_confidence': [round(row[2] * 100, 1) if row[2] else 0 for row in confidence_trends],
+            'max_confidence': [round(row[3] * 100, 1) if row[3] else 0 for row in confidence_trends],
+            'daily_count': [row[4] for row in confidence_trends]
+        }
+
+        diagnostic_stats = {}
+        for row in diagnostic_analysis:
+            diagnostic_stats[row[0]] = {
+                'total_count': row[1],
+                'avg_confidence': round(row[2] * 100, 1) if row[2] else 0,
+                'min_confidence': round(row[3] * 100, 1) if row[3] else 0,
+                'max_confidence': round(row[4] * 100, 1) if row[4] else 0,
+                'avg_processing_time': round(row[5], 2) if row[5] else 0
+            }
+
+        performance_categories = {}
+        for row in processing_time_analysis:
+            performance_categories[row[2]] = row[1]
+
+        productivity_trends = {
+            'labels': [f"S{row[0]}/{row[1]}" for row in weekly_productivity],
+            'weekly_counts': [row[2] for row in weekly_productivity],
+            'weekly_confidence': [round(row[3] * 100, 1) if row[3] else 0 for row in weekly_productivity],
+            'unique_patients': [row[4] for row in weekly_productivity]
+        }
+
+        risk_patients = []
+        for row in high_risk_patients:
+            risk_patients.append({
+                'patient_id': row[0],
+                'patient_name': row[1] or f"Patient {row[0]}",
+                'total_analyses': row[2],
+                'avg_confidence': round(row[3] * 100, 1) if row[3] else 0,
+                'last_analysis': row[4],
+                'tumor_detections': row[5],
+                'risk_level': 'Critique' if row[5] >= 3 else 'Élevé' if row[5] >= 2 else 'Modéré'
+            })
+
+        detection_trends = {
+            'labels': [row[0] for row in monthly_detection_rates],
+            'detection_rates': [row[3] for row in monthly_detection_rates],
+            'total_analyses': [row[1] for row in monthly_detection_rates],
+            'tumor_detections': [row[2] for row in monthly_detection_rates]
+        }
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'hourly_performance': hourly_performance,
+                'confidence_evolution': confidence_evolution,
+                'diagnostic_stats': diagnostic_stats,
+                'performance_categories': performance_categories,
+                'productivity_trends': productivity_trends,
+                'high_risk_patients': risk_patients,
+                'detection_trends': detection_trends
+            }
+        })
+
+    except Exception as e:
+        print(f"Erreur advanced stats: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Retourner des données par défaut en cas d'erreur
+        return jsonify({
+            'success': True,
+            'data': {
+                'hourly_performance': {
+                    'labels': [],
+                    'analyses_count': [],
+                    'avg_confidence': [],
+                    'avg_processing_time': []
+                },
+                'confidence_evolution': {
+                    'labels': [],
+                    'avg_confidence': [],
+                    'min_confidence': [],
+                    'max_confidence': [],
+                    'daily_count': []
+                },
+                'diagnostic_stats': {},
+                'performance_categories': {},
+                'productivity_trends': {
+                    'labels': [],
+                    'weekly_counts': [],
+                    'weekly_confidence': [],
+                    'unique_patients': []
+                },
+                'high_risk_patients': [],
+                'detection_trends': {
+                    'labels': [],
+                    'detection_rates': [],
+                    'total_analyses': [],
+                    'tumor_detections': []
+                }
+            }
+        })
+
+@app.route('/api/pro-dashboard/patient-insights')
+@login_required
+def pro_dashboard_patient_insights():
+    """API pour les insights sur les patients"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Distribution par âge (si disponible)
+        try:
+            cursor.execute('''
+                SELECT 
+                    CASE 
+                        WHEN date_of_birth IS NULL OR date_of_birth = '' THEN 'Non renseigné'
+                        WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 18 THEN 'Moins de 18 ans'
+                        WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 30 THEN '18-30 ans'
+                        WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 50 THEN '30-50 ans'
+                        WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 70 THEN '50-70 ans'
+                        ELSE 'Plus de 70 ans'
+                    END as age_group,
+                    COUNT(*) as count
+                FROM patients 
+                WHERE doctor_id = ?
+                GROUP BY age_group
+                ORDER BY count DESC
+            ''', (doctor_id,))
+            age_distribution = dict(cursor.fetchall())
+        except Exception as e:
+            print(f"Erreur age distribution: {e}")
+            age_distribution = {'Non renseigné': 0}
+
+        # Distribution par genre
+        try:
+            cursor.execute('''
+                SELECT 
+                    CASE 
+                        WHEN gender IS NULL OR gender = '' THEN 'Non renseigné'
+                        ELSE gender
+                    END as gender_group,
+                    COUNT(*) as count
+                FROM patients 
+                WHERE doctor_id = ?
+                GROUP BY gender_group
+            ''', (doctor_id,))
+            gender_distribution = dict(cursor.fetchall())
+        except Exception as e:
+            print(f"Erreur gender distribution: {e}")
+            gender_distribution = {'Non renseigné': 0}
+
+        # Patients les plus suivis
+        try:
+            cursor.execute('''
+                SELECT 
+                    p.patient_id,
+                    p.patient_name,
+                    COALESCE(p.total_analyses, 0) as total_analyses,
+                    p.first_analysis_date,
+                    p.last_analysis_date,
+                    CASE 
+                        WHEN p.last_analysis_date IS NOT NULL AND p.first_analysis_date IS NOT NULL
+                        THEN ROUND(julianday(p.last_analysis_date) - julianday(p.first_analysis_date))
+                        ELSE 0
+                    END as follow_up_days,
+                    COALESCE(AVG(a.confidence), 0) as avg_confidence
+                FROM patients p
+                LEFT JOIN analyses a ON p.patient_id = a.patient_id AND p.doctor_id = a.doctor_id
+                WHERE p.doctor_id = ? AND COALESCE(p.total_analyses, 0) > 0
+                GROUP BY p.patient_id, p.patient_name, p.total_analyses, p.first_analysis_date, p.last_analysis_date
+                ORDER BY COALESCE(p.total_analyses, 0) DESC
+                LIMIT 10
+            ''', (doctor_id,))
+            most_followed_patients = cursor.fetchall()
+        except Exception as e:
+            print(f"Erreur most followed patients: {e}")
+            most_followed_patients = []
+
+        # Analyse de l'engagement patient (fréquence des visites)
+        try:
+            cursor.execute('''
+                SELECT 
+                    CASE 
+                        WHEN last_analysis_date IS NULL THEN 'Jamais analysé'
+                        WHEN julianday('now') - julianday(last_analysis_date) <= 7 THEN 'Actif (< 7j)'
+                        WHEN julianday('now') - julianday(last_analysis_date) <= 30 THEN 'Récent (< 30j)'
+                        WHEN julianday('now') - julianday(last_analysis_date) <= 90 THEN 'Inactif (< 90j)'
+                        ELSE 'Très inactif (> 90j)'
+                    END as activity_level,
+                    COUNT(*) as patient_count
+                FROM patients 
+                WHERE doctor_id = ?
+                GROUP BY activity_level
+            ''', (doctor_id,))
+            patient_activity = dict(cursor.fetchall())
+        except Exception as e:
+            print(f"Erreur patient activity: {e}")
+            patient_activity = {'Jamais analysé': 0}
+
+        # Nouveaux patients par mois
+        try:
+            cursor.execute('''
+                SELECT 
+                    strftime('%Y-%m', COALESCE(created_at, 'now')) as month,
+                    COUNT(*) as new_patients
+                FROM patients 
+                WHERE doctor_id = ? AND COALESCE(created_at, 'now') >= datetime('now', '-12 months')
+                GROUP BY strftime('%Y-%m', COALESCE(created_at, 'now'))
+                ORDER BY month
+            ''', (doctor_id,))
+            new_patients_trend = cursor.fetchall()
+        except Exception as e:
+            print(f"Erreur new patients trend: {e}")
+            new_patients_trend = []
+
+        conn.close()
+
+        # Formater les données des patients les plus suivis
+        top_patients = []
+        for row in most_followed_patients:
+            try:
+                top_patients.append({
+                    'patient_id': row[0] or '',
+                    'patient_name': row[1] or f"Patient {row[0] or 'Inconnu'}",
+                    'total_analyses': row[2] or 0,
+                    'first_analysis': row[3] or '',
+                    'last_analysis': row[4] or '',
+                    'follow_up_days': int(row[5]) if row[5] is not None else 0,
+                    'avg_confidence': round(row[6] * 100, 1) if row[6] is not None else 0
+                })
+            except Exception as e:
+                print(f"Erreur formatage patient: {e}")
+                continue
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'age_distribution': age_distribution or {'Non renseigné': 1},
+                'gender_distribution': gender_distribution or {'Non renseigné': 1},
+                'top_patients': top_patients or [],
+                'patient_activity': patient_activity or {'Jamais analysé': 1},
+                'new_patients_trend': {
+                    'labels': [row[0] for row in new_patients_trend] if new_patients_trend else [],
+                    'data': [row[1] for row in new_patients_trend] if new_patients_trend else []
+                }
+            }
+        })
+
+    except Exception as e:
+        print(f"Erreur patient insights: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Retourner des données par défaut en cas d'erreur
+        return jsonify({
+            'success': True,
+            'data': {
+                'age_distribution': {'Non renseigné': 1},
+                'gender_distribution': {'Non renseigné': 1},
+                'top_patients': [],
+                'patient_activity': {'Jamais analysé': 1},
+                'new_patients_trend': {
+                    'labels': [],
+                    'data': []
+                }
+            }
+        })
+
+@app.route('/api/pro-dashboard/export-data')
+@login_required
+def pro_dashboard_export_data():
+    """API pour exporter les données du dashboard"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Récupérer toutes les analyses du médecin
+        cursor.execute('''
+            SELECT 
+                a.timestamp,
+                a.patient_id,
+                a.patient_name,
+                a.exam_date,
+                a.predicted_label,
+                a.confidence,
+                a.processing_time,
+                a.filename
+            FROM analyses a
+            WHERE a.doctor_id = ?
+            ORDER BY a.timestamp DESC
+        ''', (doctor_id,))
+
+        analyses = cursor.fetchall()
+
+        # Récupérer les patients
+        cursor.execute('''
+            SELECT 
+                patient_id,
+                patient_name,
+                date_of_birth,
+                gender,
+                total_analyses,
+                first_analysis_date,
+                last_analysis_date
+            FROM patients
+            WHERE doctor_id = ?
+            ORDER BY patient_name
+        ''', (doctor_id,))
+
+        patients = cursor.fetchall()
+
+        conn.close()
+
+        # Créer le CSV des analyses
+        analyses_csv = "Date/Heure,ID Patient,Nom Patient,Date Examen,Diagnostic,Confiance (%),Temps Traitement (s),Fichier\n"
+        for row in analyses:
+            analyses_csv += f'"{row[0]}","{row[1] or ""}","{row[2] or ""}","{row[3] or ""}","{row[4]}",{(row[5]*100):.1f},{row[6]:.2f},"{row[7]}"\n'
+
+        # Créer le CSV des patients
+        patients_csv = "ID Patient,Nom,Date Naissance,Genre,Total Analyses,Première Analyse,Dernière Analyse\n"
+        for row in patients:
+            patients_csv += f'"{row[0]}","{row[1] or ""}","{row[2] or ""}","{row[3] or ""}",{row[4]},"{row[5] or ""}","{row[6] or ""}"\n'
+
+        export_data = {
+            'analyses_csv': analyses_csv,
+            'patients_csv': patients_csv,
+            'export_date': datetime.now().isoformat(),
+            'total_analyses': len(analyses),
+            'total_patients': len(patients)
+        }
+
+        return jsonify({
+            'success': True,
+            'data': export_data
+        })
+
+    except Exception as e:
+        print(f"Erreur export data: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':

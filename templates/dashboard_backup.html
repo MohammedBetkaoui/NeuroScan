@@ -69,7 +69,14 @@
             </p>
         </div>
     </div>
-</div>
+</div> %}Dashboard Médecin{% endblock %}
+
+{% block page_title %}Bienvenue, Dr. {{ doctor.first_name }}{% endblock %}
+
+{% block page_description %}Accédez à vos outils d'analyse d'imagerie cérébrale et gérez vos patients.{% endblock %}
+
+{% block content %}
+
 
 <!-- Actions rapides -->
 <div class="dashboard-grid cols-4 mb-8">
@@ -172,178 +179,62 @@
     </div>
 </div>
 
-<!-- Profil médecin -->
-<div class="dashboard-card p-0 overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50 border-l-4 border-indigo-500">
-    <div class="dashboard-card-header p-6 bg-gradient-to-r from-indigo-600 to-purple-600">
-        <div class="dashboard-card-icon bg-white shadow-lg">
-            <i class="fas fa-user-md text-indigo-600"></i>
+<!-- Informations du compte -->
+<div class="dashboard-card p-6 mb-8">
+    <div class="dashboard-card-header">
+        <div class="dashboard-card-icon primary">
+            <i class="fas fa-user-circle"></i>
         </div>
-        <div class="text-white">
-            <h3 class="dashboard-card-title text-xl font-bold text-white">Profil Médecin</h3>
-            <p class="dashboard-card-subtitle text-indigo-100">Vos informations professionnelles et statistiques</p>
-        </div>
-        <button onclick="toggleEditProfile()" class="ml-auto px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-all duration-200 flex items-center">
-            <i class="fas fa-edit mr-2"></i>
-            <span id="editButtonText">Modifier</span>
-        </button>
-    </div>
-    
-    <!-- Statistiques personnelles -->
-    <div class="p-6 bg-white bg-opacity-50">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="text-center p-4 bg-white rounded-xl shadow-sm">
-                <div class="text-2xl font-bold text-indigo-600" id="patientCount">{{ doctor_stats.total_patients or 0 }}</div>
-                <div class="text-sm text-gray-600 mt-1">Patients</div>
-            </div>
-            <div class="text-center p-4 bg-white rounded-xl shadow-sm">
-                <div class="text-2xl font-bold text-green-600" id="analysisCount">{{ doctor_stats.total_analyses or 0 }}</div>
-                <div class="text-sm text-gray-600 mt-1">Analyses</div>
-            </div>
-            <div class="text-center p-4 bg-white rounded-xl shadow-sm">
-                <div class="text-2xl font-bold text-purple-600" id="chatCount">{{ doctor_stats.total_conversations or 0 }}</div>
-                <div class="text-sm text-gray-600 mt-1">Consultations IA</div>
-            </div>
-            <div class="text-center p-4 bg-white rounded-xl shadow-sm">
-                <div class="text-2xl font-bold text-orange-600">{{ doctor_stats.account_age or '0' }}</div>
-                <div class="text-sm text-gray-600 mt-1">Jours d'activité</div>
-            </div>
+        <div>
+            <h3 class="dashboard-card-title">Informations du compte</h3>
+            <p class="dashboard-card-subtitle">Vos données professionnelles</p>
         </div>
     </div>
-
-    <div class="dashboard-card-content p-6">
-        <!-- Informations personnelles -->
-        <div id="profileView" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="dashboard-card-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <label class="form-label flex items-center">
-                        <i class="fas fa-user text-indigo-500 mr-2"></i>
-                        Nom complet
-                    </label>
-                    <div class="mt-2">
-                        <p class="text-gray-900 font-semibold text-lg">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</p>
+                <div>
+                    <label class="form-label">Nom complet</label>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <p class="text-gray-900 font-medium">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</p>
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <label class="form-label flex items-center">
-                        <i class="fas fa-envelope text-blue-500 mr-2"></i>
-                        Email professionnel
-                    </label>
-                    <div class="mt-2">
+                <div>
+                    <label class="form-label">Email</label>
+                    <div class="p-3 bg-gray-50 rounded-lg">
                         <p class="text-gray-900">{{ doctor.email }}</p>
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <label class="form-label flex items-center">
-                        <i class="fas fa-stethoscope text-green-500 mr-2"></i>
-                        Spécialité médicale
-                    </label>
-                    <div class="mt-2">
+                <div>
+                    <label class="form-label">Spécialité</label>
+                    <div class="p-3 bg-gray-50 rounded-lg">
                         <p class="text-gray-900">{{ doctor.specialty or 'Non spécifiée' }}</p>
-                        {% if not doctor.specialty %}
-                        <p class="text-sm text-amber-600 mt-1">
-                            <i class="fas fa-exclamation-triangle mr-1"></i>
-                            Veuillez renseigner votre spécialité
-                        </p>
-                        {% endif %}
                     </div>
                 </div>
             </div>
             <div class="space-y-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <label class="form-label flex items-center">
-                        <i class="fas fa-hospital text-red-500 mr-2"></i>
-                        Établissement de santé
-                    </label>
-                    <div class="mt-2">
+                <div>
+                    <label class="form-label">Établissement</label>
+                    <div class="p-3 bg-gray-50 rounded-lg">
                         <p class="text-gray-900">{{ doctor.hospital or 'Non spécifié' }}</p>
-                        {% if not doctor.hospital %}
-                        <p class="text-sm text-amber-600 mt-1">
-                            <i class="fas fa-exclamation-triangle mr-1"></i>
-                            Veuillez renseigner votre établissement
-                        </p>
-                        {% endif %}
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <label class="form-label flex items-center">
-                        <i class="fas fa-id-card text-purple-500 mr-2"></i>
-                        Numéro RPPS/ADELI
-                    </label>
-                    <div class="mt-2">
-                        <p class="text-gray-900 font-mono">{{ doctor.license_number or 'Non renseigné' }}</p>
-                        {% if not doctor.license_number %}
-                        <p class="text-sm text-amber-600 mt-1">
-                            <i class="fas fa-exclamation-triangle mr-1"></i>
-                            Veuillez renseigner votre numéro professionnel
-                        </p>
-                        {% endif %}
+                <div>
+                    <label class="form-label">Numéro RPPS/ADELI</label>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <p class="text-gray-900">{{ doctor.license_number or 'Non renseigné' }}</p>
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <label class="form-label flex items-center">
-                        <i class="fas fa-shield-check text-green-500 mr-2"></i>
-                        Statut du compte
-                    </label>
-                    <div class="mt-2 flex items-center justify-between">
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                            <i class="fas fa-check-circle mr-2"></i>
-                            Compte Actif et Vérifié
+                <div>
+                    <label class="form-label">Statut du compte</label>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <span class="badge success">
+                            <i class="fas fa-check-circle"></i>
+                            Compte Actif
                         </span>
-                        <div class="text-xs text-gray-500">
-                            Depuis {{ doctor.created_at.strftime('%d/%m/%Y') if doctor.created_at else 'N/A' }}
-                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Formulaire d'édition (caché par défaut) -->
-        <div id="profileEdit" class="hidden">
-            <form id="profileForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-4">
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                        <label class="form-label" for="editSpecialty">Spécialité médicale</label>
-                        <select id="editSpecialty" name="specialty" class="form-input mt-2">
-                            <option value="">Sélectionnez votre spécialité</option>
-                            <option value="Neurologie" {{ 'selected' if doctor.specialty == 'Neurologie' else '' }}>Neurologie</option>
-                            <option value="Neurochirurgie" {{ 'selected' if doctor.specialty == 'Neurochirurgie' else '' }}>Neurochirurgie</option>
-                            <option value="Radiologie" {{ 'selected' if doctor.specialty == 'Radiologie' else '' }}>Radiologie</option>
-                            <option value="Neuroradiologie" {{ 'selected' if doctor.specialty == 'Neuroradiologie' else '' }}>Neuroradiologie</option>
-                            <option value="Médecine générale" {{ 'selected' if doctor.specialty == 'Médecine générale' else '' }}>Médecine générale</option>
-                            <option value="Oncologie" {{ 'selected' if doctor.specialty == 'Oncologie' else '' }}>Oncologie</option>
-                            <option value="Autre" {{ 'selected' if doctor.specialty and doctor.specialty not in ['Neurologie', 'Neurochirurgie', 'Radiologie', 'Neuroradiologie', 'Médecine générale', 'Oncologie'] else '' }}>Autre</option>
-                        </select>
-                    </div>
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                        <label class="form-label" for="editHospital">Établissement de santé</label>
-                        <input type="text" id="editHospital" name="hospital" value="{{ doctor.hospital or '' }}" 
-                               class="form-input mt-2" placeholder="Nom de votre établissement">
-                    </div>
-                </div>
-                <div class="space-y-4">
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                        <label class="form-label" for="editLicense">Numéro RPPS/ADELI</label>
-                        <input type="text" id="editLicense" name="license_number" value="{{ doctor.license_number or '' }}" 
-                               class="form-input mt-2" placeholder="Votre numéro professionnel">
-                    </div>
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                        <label class="form-label" for="editPhone">Téléphone professionnel (optionnel)</label>
-                        <input type="tel" id="editPhone" name="phone" value="{{ doctor.phone or '' }}" 
-                               class="form-input mt-2" placeholder="Numéro de téléphone">
-                    </div>
-                </div>
-                <div class="md:col-span-2 flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="toggleEditProfile()" 
-                            class="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors">
-                        Annuler
-                    </button>
-                    <button type="submit" 
-                            class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors flex items-center">
-                        <i class="fas fa-save mr-2"></i>
-                        Sauvegarder
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
@@ -658,116 +549,6 @@
             form.querySelector('textarea').value = '';
             showNotification('Email de support ouvert dans votre client de messagerie', 'success');
         }, 1000);
-    }
-
-    // Fonctions pour l'édition du profil
-    function toggleEditProfile() {
-        const profileView = document.getElementById('profileView');
-        const profileEdit = document.getElementById('profileEdit');
-        const editButtonText = document.getElementById('editButtonText');
-        
-        if (profileView.classList.contains('hidden')) {
-            // Retour à la vue normale
-            profileView.classList.remove('hidden');
-            profileEdit.classList.add('hidden');
-            editButtonText.textContent = 'Modifier';
-        } else {
-            // Passage en mode édition
-            profileView.classList.add('hidden');
-            profileEdit.classList.remove('hidden');
-            editButtonText.textContent = 'Annuler';
-        }
-    }
-
-    // Gestion du formulaire de profil
-    document.addEventListener('DOMContentLoaded', function() {
-        const profileForm = document.getElementById('profileForm');
-        if (profileForm) {
-            profileForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(this);
-                const data = {};
-                formData.forEach((value, key) => {
-                    data[key] = value;
-                });
-                
-                try {
-                    const response = await fetch('/api/doctor/update-profile', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(data)
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        showNotification('Profil mis à jour avec succès', 'success');
-                        setTimeout(() => {
-                            location.reload(); // Recharger pour afficher les nouvelles données
-                        }, 1500);
-                    } else {
-                        showNotification('Erreur lors de la mise à jour: ' + result.error, 'error');
-                    }
-                } catch (error) {
-                    showNotification('Erreur de connexion', 'error');
-                }
-            });
-        }
-
-        // Charger les statistiques dynamiquement
-        loadDoctorStats();
-    });
-
-    async function loadDoctorStats() {
-        try {
-            const response = await fetch('/api/doctor/stats');
-            const data = await response.json();
-            
-            if (data.success) {
-                document.getElementById('patientCount').textContent = data.stats.total_patients;
-                document.getElementById('analysisCount').textContent = data.stats.total_analyses;
-                document.getElementById('chatCount').textContent = data.stats.total_conversations;
-            }
-        } catch (error) {
-            console.error('Erreur chargement statistiques:', error);
-        }
-    }
-
-    function showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 px-6 py-4 rounded-lg shadow-lg z-50 max-w-sm ${
-            type === 'success' ? 'bg-green-500 text-white' : 
-            type === 'error' ? 'bg-red-500 text-white' : 
-            type === 'warning' ? 'bg-yellow-500 text-white' :
-            'bg-blue-500 text-white'
-        }`;
-        
-        notification.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas fa-${
-                    type === 'success' ? 'check-circle' : 
-                    type === 'error' ? 'exclamation-circle' : 
-                    type === 'warning' ? 'exclamation-triangle' :
-                    'info-circle'
-                } mr-2"></i>
-                <span>${message}</span>
-            </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            if (document.body.contains(notification)) {
-                notification.style.opacity = '0';
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    document.body.removeChild(notification);
-                }, 300);
-            }
-        }, 3000);
     }
 </script>
 {% endblock %}

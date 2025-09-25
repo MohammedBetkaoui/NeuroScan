@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Médical - NeuroScan</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .chat-container {
+            height: calc(100vh - 80px);
+        }
+        .messages-container {
+            height: calc(100% - 120px);
+        }
+        .sidebar {
+            width: 320px;
+        }
+        .chat-main {
+            width: calc(100% - 320px);
+        }
+        .message-bubble {
+            animation: fadeInUp 0.3s ease-out;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .typing-indicator {
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .medical-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        .conversation-item:hover {
+            background-color: #f8fafc;
+        }
+        .conversation-item.active {
+            background-color: #e0f2fe;
+            border-left: 4px solid #0ea5e9;
+        }
+        .medical-indicator {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .delete-conversation-btn {
+            transition: all 0.2s ease;
+        }
+        .delete-conversation-btn:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+            transform: scale(1.1);
+        }
+        .conversation-item:hover .delete-conversation-btn {
+            opacity: 1 !important;
+        }
+        .patient-name {
+            color: #2563eb;
+            font-weight: 500;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+        }
+        .patient-name::before {
+            content: "👤";
+            margin-right: 4px;
+        }
+        .notification {
+            animation: slideInRight 0.3s ease-out;
+        }
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .confidence-bar {
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .sidebar-toggle {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -320px;
+                top: 0;
+                height: 100vh;
+                z-index: 1000;
+                transition: left 0.3s ease;
+                background: white;
+                box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            }
+            .sidebar.open {
+                left: 0;
+            }
+            .chat-main {
+                width: 100%;
+            }
+            .sidebar-toggle {
+                display: block;
+            }
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+                display: none;
+            }
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo et navigation -->
+                <div class="flex items-center space-x-4">
+                    <button id="sidebarToggle" class="sidebar-toggle md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-comments-medical text-white"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Chat Médical</h1>
+                            <p class="text-sm text-gray-500">Assistant IA spécialisé en neurologie</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions utilisateur -->
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 text-sm text-gray-600">
+                        <i class="fas fa-user-md"></i>
+                        <span>Dr. {{ doctor.first_name }} {{ doctor.last_name }}</span>
+                    </div>
+                    <a href="{{ url_for('dashboard') }}" 
+                       class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Tableau de bord
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Overlay pour mobile -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- Layout principal -->
+    <div class="flex chat-container">
+        <!-- Sidebar - Liste des conversations -->
+        <aside id="chatSidebar" class="sidebar bg-white border-r border-gray-200 flex flex-col">
+            <div class="p-4 border-b border-gray-200">
+                <button id="newChatBtn" 
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center">
+                    <i class="fas fa-plus mr-2"></i>Nouvelle consultation
+                </button>
+            </div>
+
+            <!-- Liste des conversations -->
+            <div class="flex-1 overflow-y-auto">
+                <div class="p-4">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                        Consultations récentes
+                    </h3>
+                    <div id="conversationsList" class="space-y-2">
+                        <!-- Les conversations seront chargées ici -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statut de connexion -->
+            <div class="p-4 border-t border-gray-200">
+                <div class="flex items-center text-sm text-gray-600">
+                    <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    <span>Connecté à Gemini AI</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Zone de chat principale -->
+        <main class="chat-main flex flex-col bg-white">
+            <!-- En-tête de conversation -->
+            <div id="conversationHeader" class="px-6 py-4 border-b border-gray-200 bg-white">
+                <div class="flex items-center justify-between">
+                    <div id="currentConversationInfo" class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-robot text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900" id="conversationTitle">
+                                Sélectionnez une conversation
+                            </h2>
+                            <p class="text-sm text-gray-500" id="conversationSubtitle">
+                                Commencez une nouvelle consultation ou reprenez une conversation existante
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="assignPatientBtn" class="hidden px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                            <i class="fas fa-user-plus mr-1"></i>Assigner patient
+                        </button>
+                        <a href="{{ url_for('chat_help') }}" class="px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                            <i class="fas fa-question-circle mr-1"></i>Aide
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div id="messagesContainer" class="messages-container overflow-y-auto p-6 space-y-4">
+                <!-- Messages d'accueil -->
+                <div id="welcomeMessages" class="space-y-4">
+                    <div class="flex justify-center">
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 max-w-md text-center">
+                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-user-md text-blue-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Assistant Médical Professionnel</h3>
+                            <p class="text-gray-600 text-sm mb-4">
+                                Bonjour Docteur ! Je suis votre assistant spécialisé en neurologie et imagerie médicale. 
+                                Je peux vous aider avec l'analyse d'examens, le diagnostic différentiel, 
+                                et les recommandations cliniques pour vos patients.
+                            </p>
+                            <div class="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Support clinique professionnel</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Les messages de conversation apparaîtront ici -->
+            </div>
+
+            <!-- Zone de saisie -->
+            <div id="chatInputArea" class="p-6 border-t border-gray-200 bg-gray-50" style="display: none;">
+                <div class="max-w-4xl mx-auto">
+                    <!-- Indicateur de frappe -->
+                    <div id="typingIndicator" class="hidden mb-3">
+                        <div class="flex items-center text-sm text-gray-500">
+                            <div class="typing-indicator flex space-x-1 mr-2">
+                                <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+                            </div>
+                            <span>L'assistant médical rédige une réponse...</span>
+                        </div>
+                    </div>
+
+                    <!-- Formulaire de message -->
+                    <form id="messageForm" class="flex space-x-4">
+                        <div class="flex-1 relative">
+                            <textarea id="messageInput" 
+                                      placeholder="Décrivez le cas clinique ou posez votre question professionnelle..."
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                                      rows="1"
+                                      maxlength="2000"></textarea>
+                            <div class="absolute bottom-2 right-2 text-xs text-gray-400">
+                                <span id="charCount">0</span>/2000
+                            </div>
+                        </div>
+                        <button type="submit" 
+                                id="sendButton"
+                                class="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center justify-center min-w-[120px]">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            <span id="sendButtonText">Envoyer</span>
+                        </button>
+                    </form>
+
+                    <!-- Avertissement médical -->
+                    <p class="text-xs text-gray-500 mt-3 text-center">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        Cette IA est un outil d'aide à la décision. Elle ne remplace pas une consultation médicale professionnelle.
+                    </p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modales -->
+    <!-- Modale d'assignation de patient -->
+    <div id="assignPatientModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <h3 class="text-lg font-semibold mb-4">Assigner un patient</h3>
+            <select id="patientSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4">
+                <option value="">Sélectionner un patient...</option>
+                <!-- Les patients seront chargés ici -->
+            </select>
+            <div class="flex space-x-3">
+                <button id="assignPatientConfirm" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                    Assigner
+                </button>
+                <button id="assignPatientCancel" class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
+                    Annuler
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentConversationId = null;
+        let conversations = [];
+        let isLoading = false;
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+            setupEventListeners();
+            loadConversations();
+        });
+
+        function initializePage() {
+            // Configuration du textarea auto-resize
+            const messageInput = document.getElementById('messageInput');
+            messageInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = this.scrollHeight + 'px';
+                
+                // Mise à jour du compteur de caractères
+                const charCount = document.getElementById('charCount');
+                charCount.textContent = this.value.length;
+            });
+
+            // Gestion mobile sidebar
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('chatSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.add('open');
+                overlay.classList.add('show');
+            });
+
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('show');
+            });
+        }
+
+        function setupEventListeners() {
+            // Bouton nouvelle conversation
+            document.getElementById('newChatBtn').addEventListener('click', createNewConversation);
+
+            // Formulaire de message
+            document.getElementById('messageForm').addEventListener('submit', handleMessageSubmit);
+
+            // Touches clavier
+            document.getElementById('messageInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleMessageSubmit(e);
+                }
+            });
+
+            // Modale patient
+            document.getElementById('assignPatientBtn').addEventListener('click', openPatientModal);
+            document.getElementById('assignPatientCancel').addEventListener('click', closePatientModal);
+            document.getElementById('assignPatientConfirm').addEventListener('click', assignPatient);
+        }
+
+        async function loadConversations() {
+            try {
+                const response = await fetch('/api/chat/conversations');
+                const data = await response.json();
+
+                if (data.success) {
+                    conversations = data.conversations;
+                    renderConversations();
+                } else {
+                    console.error('Erreur chargement conversations:', data.error);
+                }
+            } catch (error) {
+                console.error('Erreur réseau:', error);
+            }
+        }
+
+        function renderConversations() {
+            const container = document.getElementById('conversationsList');
+            
+            if (conversations.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="fas fa-comments text-3xl mb-3"></i>
+                        <p>Aucune conversation</p>
+                        <p class="text-sm">Commencez une nouvelle consultation</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = conversations.map(conv => `
+                <div class="conversation-item cursor-pointer p-3 rounded-lg border border-transparent ${conv.id === currentConversationId ? 'active' : ''}"
+                     data-id="${conv.id}">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-medium text-gray-900 truncate">${escapeHtml(conv.title)}</h4>
+                            ${conv.patient_name ? `<p class="text-sm text-blue-600 truncate font-medium">👤 ${escapeHtml(conv.patient_name)}</p>` : ''}
+                            <p class="text-sm text-gray-500 truncate mt-1">${escapeHtml(conv.last_message || 'Pas de messages')}</p>
+                            <div class="flex items-center justify-between mt-2">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs text-gray-400">${formatDate(conv.updated_at)}</span>
+                                    ${conv.patient_id ? `<span class="medical-indicator" title="Patient assigné"></span>` : ''}
+                                </div>
+                                <button onclick="deleteConversation(event, ${conv.id})" 
+                                        class="delete-conversation-btn opacity-0 hover:opacity-100 text-red-500 hover:text-red-700 p-1 rounded transition-opacity"
+                                        title="Supprimer la conversation">
+                                    <i class="fas fa-trash-alt text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-400">${conv.message_count || 0}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Ajouter les event listeners
+            container.querySelectorAll('.conversation-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    // Ne pas sélectionner la conversation si on clique sur le bouton de suppression
+                    if (e.target.closest('.delete-conversation-btn')) {
+                        return;
+                    }
+                    const id = parseInt(item.dataset.id);
+                    selectConversation(id);
+                });
+
+                // Afficher le bouton de suppression au survol
+                item.addEventListener('mouseenter', () => {
+                    const deleteBtn = item.querySelector('.delete-conversation-btn');
+                    if (deleteBtn) deleteBtn.classList.remove('opacity-0');
+                });
+                
+                item.addEventListener('mouseleave', () => {
+                    const deleteBtn = item.querySelector('.delete-conversation-btn');
+                    if (deleteBtn) deleteBtn.classList.add('opacity-0');
+                });
+            });
+        }
+
+        async function createNewConversation() {
+            try {
+                const response = await fetch('/api/chat/conversations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: `Consultation ${new Date().toLocaleDateString('fr-FR')}`
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    await loadConversations();
+                    selectConversation(data.conversation_id);
+                } else {
+                    alert('Erreur lors de la création de la conversation');
+                }
+            } catch (error) {
+                console.error('Erreur création conversation:', error);
+                alert('Erreur réseau');
+            }
+        }
+
+        async function selectConversation(conversationId) {
+            if (currentConversationId === conversationId) return;
+
+            currentConversationId = conversationId;
+            
+            // Mettre à jour l'interface
+            updateConversationHeader();
+            renderConversations();
+            
+            // Charger les messages
+            await loadMessages();
+            
+            // Afficher la zone de saisie
+            document.getElementById('chatInputArea').style.display = 'block';
+            document.getElementById('welcomeMessages').style.display = 'none';
+            document.getElementById('assignPatientBtn').classList.remove('hidden');
+
+            // Focus sur le champ de saisie
+            document.getElementById('messageInput').focus();
+        }
+
+        function updateConversationHeader() {
+            const conversation = conversations.find(c => c.id === currentConversationId);
+            if (!conversation) return;
+
+            document.getElementById('conversationTitle').textContent = conversation.title;
+            
+            let subtitleText = 'Aucun patient assigné';
+            if (conversation.patient_id && conversation.patient_name) {
+                subtitleText = `👤 Patient: ${conversation.patient_name}`;
+            } else if (conversation.patient_id) {
+                subtitleText = `Patient ID: ${conversation.patient_id}`;
+            }
+            
+            document.getElementById('conversationSubtitle').textContent = subtitleText;
+        }
+
+        async function loadMessages() {
+            if (!currentConversationId) return;
+
+            try {
+                const response = await fetch(`/api/chat/conversations/${currentConversationId}/messages`);
+                const data = await response.json();
+
+                if (data.success) {
+                    renderMessages(data.messages);
+                } else {
+                    console.error('Erreur chargement messages:', data.error);
+                }
+            } catch (error) {
+                console.error('Erreur réseau:', error);
+            }
+        }
+
+        function renderMessages(messages) {
+            const container = document.getElementById('messagesContainer');
+            
+            // Garder les messages d'accueil masqués si on a des messages
+            if (messages.length > 0) {
+                document.getElementById('welcomeMessages').style.display = 'none';
+            }
+            
+            // Supprimer les anciens messages (garder seulement welcomeMessages)
+            const oldMessages = container.querySelectorAll('.message-bubble');
+            oldMessages.forEach(msg => msg.remove());
+
+            // Ajouter les nouveaux messages
+            messages.forEach(message => {
+                appendMessage(message, false); // false = ne pas scroller
+            });
+
+            // Scroller vers le bas
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendMessage(message, shouldScroll = true) {
+            const container = document.getElementById('messagesContainer');
+            const isUser = message.role === 'user';
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message-bubble flex ' + (isUser ? 'justify-end' : 'justify-start');
+            
+            messageDiv.innerHTML = `
+                <div class="max-w-3xl ${isUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'} rounded-2xl px-4 py-3">
+                    <div class="flex items-center mb-2">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas ${isUser ? 'fa-user-md' : 'fa-robot'} text-sm"></i>
+                            <span class="text-sm font-medium">${isUser ? 'Vous' : 'Assistant Médical'}</span>
+                            ${!isUser && message.is_medical_query ? '<span class="medical-indicator ml-2" title="Question médicale"></span>' : ''}
+                        </div>
+                        <span class="ml-auto text-xs opacity-75">${formatTime(message.timestamp)}</span>
+                    </div>
+                    <div class="prose prose-sm max-w-none ${isUser ? 'prose-invert' : ''}">
+                        ${formatMessageContent(message.content)}
+                    </div>
+                    ${!isUser && message.confidence_score ? `
+                        <div class="mt-2 pt-2 border-t border-opacity-20 ${isUser ? 'border-white' : 'border-gray-300'}">
+                            <div class="flex items-center justify-between text-xs opacity-75">
+                                <span>Confiance: ${Math.round(message.confidence_score * 100)}%</span>
+                                <div class="confidence-bar w-16 bg-gray-300 bg-opacity-30">
+                                    <div class="h-full bg-current" style="width: ${message.confidence_score * 100}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            container.appendChild(messageDiv);
+            
+            if (shouldScroll) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        async function handleMessageSubmit(e) {
+            e.preventDefault();
+            
+            if (isLoading || !currentConversationId) return;
+            
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message) return;
+            
+            // Désactiver l'interface
+            setLoading(true);
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            document.getElementById('charCount').textContent = '0';
+            
+            // Afficher le message utilisateur
+            appendMessage({
+                role: 'user',
+                content: message,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Afficher l'indicateur de frappe
+            document.getElementById('typingIndicator').classList.remove('hidden');
+            
+            try {
+                const response = await fetch('/api/chat/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        conversation_id: currentConversationId,
+                        message: message
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Masquer l'indicateur de frappe
+                document.getElementById('typingIndicator').classList.add('hidden');
+                
+                if (data.success || data.response) {
+                    // Afficher la réponse de l'assistant
+                    appendMessage({
+                        role: 'assistant',
+                        content: data.response,
+                        timestamp: new Date().toISOString(),
+                        is_medical_query: data.is_medical,
+                        confidence_score: data.confidence_score
+                    });
+                } else {
+                    throw new Error(data.error || 'Erreur inconnue');
+                }
+                
+            } catch (error) {
+                console.error('Erreur envoi message:', error);
+                document.getElementById('typingIndicator').classList.add('hidden');
+                
+                // Afficher un message d'erreur
+                appendMessage({
+                    role: 'assistant',
+                    content: 'Désolé, une erreur est survenue. Veuillez réessayer.',
+                    timestamp: new Date().toISOString(),
+                    is_medical_query: false,
+                    confidence_score: 0
+                });
+            }
+            
+            // Réactiver l'interface
+            setLoading(false);
+        }
+
+        function setLoading(loading) {
+            isLoading = loading;
+            const sendButton = document.getElementById('sendButton');
+            const sendButtonText = document.getElementById('sendButtonText');
+            const messageInput = document.getElementById('messageInput');
+            
+            if (loading) {
+                sendButton.disabled = true;
+                sendButtonText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Envoi...';
+                messageInput.disabled = true;
+            } else {
+                sendButton.disabled = false;
+                sendButtonText.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Envoyer';
+                messageInput.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        // Fonctions utilitaires
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 1) return "Aujourd'hui";
+            if (diffDays === 2) return "Hier";
+            if (diffDays <= 7) return `Il y a ${diffDays - 1} jours`;
+            
+            return date.toLocaleDateString('fr-FR');
+        }
+
+        function formatTime(dateString) {
+            return new Date(dateString).toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatMessageContent(content) {
+            // Conversion basique markdown vers HTML
+            return content
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/`(.*?)`/g, '<code class="bg-gray-200 px-1 rounded">$1</code>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // Gestion des patients
+        async function openPatientModal() {
+            try {
+                // Charger la liste des patients
+                const response = await fetch('/api/patients/list');
+                const data = await response.json();
+
+                if (data.success) {
+                    const select = document.getElementById('patientSelect');
+                    select.innerHTML = '<option value="">Sélectionner un patient...</option>';
+                    
+                    data.patients.forEach(patient => {
+                        const option = document.createElement('option');
+                        option.value = patient.patient_id;
+                        option.textContent = patient.display_name;
+                        select.appendChild(option);
+                    });
+                    
+                    document.getElementById('assignPatientModal').style.display = 'flex';
+                } else {
+                    alert('Erreur lors du chargement des patients');
+                }
+            } catch (error) {
+                console.error('Erreur chargement patients:', error);
+                alert('Erreur réseau');
+            }
+        }
+
+        function closePatientModal() {
+            document.getElementById('assignPatientModal').style.display = 'none';
+        }
+
+        async function assignPatient() {
+            if (!currentConversationId) return;
+            
+            const patientId = document.getElementById('patientSelect').value;
+            
+            try {
+                const response = await fetch(`/api/chat/conversations/${currentConversationId}/update`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        patient_id: patientId || null
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    // Recharger les conversations pour mettre à jour l'affichage
+                    await loadConversations();
+                    updateConversationHeader();
+                    closePatientModal();
+                } else {
+                    alert('Erreur lors de l\'assignation: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Erreur assignation patient:', error);
+                alert('Erreur réseau');
+            }
+        }
+
+        async function deleteConversation(event, conversationId) {
+            event.stopPropagation(); // Empêcher la sélection de la conversation
+            
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette conversation ? Cette action est irréversible.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/chat/conversations/${conversationId}/delete`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    // Si c'est la conversation actuelle, revenir à l'état d'accueil
+                    if (conversationId === currentConversationId) {
+                        currentConversationId = null;
+                        messages = [];
+                        renderMessages();
+                        document.getElementById('chatInputArea').style.display = 'none';
+                        document.getElementById('conversationHeader').style.display = 'none';
+                    }
+                    
+                    // Recharger la liste des conversations
+                    await loadConversations();
+                    
+                    // Afficher un message de confirmation
+                    showNotification('Conversation supprimée avec succès', 'success');
+                } else {
+                    showNotification('Erreur lors de la suppression: ' + data.error, 'error');
+                }
+            } catch (error) {
+                console.error('Erreur suppression conversation:', error);
+                showNotification('Erreur réseau lors de la suppression', 'error');
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            // Créer une notification temporaire
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' : 
+                'bg-blue-500 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Supprimer après 3 secondes
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

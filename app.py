@@ -259,6 +259,46 @@ def init_database():
         except sqlite3.OperationalError:
             pass
 
+    # Tables pour le chat médical avec Gemini
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS chat_conversations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            doctor_id INTEGER NOT NULL,
+            patient_id TEXT,
+            title TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_active BOOLEAN DEFAULT 1,
+            FOREIGN KEY (doctor_id) REFERENCES doctors(id)
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            conversation_id INTEGER NOT NULL,
+            role TEXT NOT NULL, -- 'user', 'assistant', 'system'
+            content TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_medical_query BOOLEAN DEFAULT 1,
+            confidence_score REAL,
+            gemini_model TEXT DEFAULT 'gemini-2.0-flash',
+            FOREIGN KEY (conversation_id) REFERENCES chat_conversations(id)
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS chat_attachments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            message_id INTEGER NOT NULL,
+            file_path TEXT NOT NULL,
+            file_name TEXT NOT NULL,
+            file_type TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (message_id) REFERENCES chat_messages(id)
+        )
+    ''')
+
     conn.commit()
     conn.close()
 
@@ -796,7 +836,8 @@ def get_current_doctor():
         cursor = conn.cursor()
 
         cursor.execute('''
-            SELECT id, email, first_name, last_name, specialty, hospital, license_number
+            SELECT id, email, first_name, last_name, specialty, hospital, license_number,
+                   phone, created_at, updated_at
             FROM doctors WHERE id = ? AND is_active = 1
         ''', (session['doctor_id'],))
 
@@ -812,12 +853,88 @@ def get_current_doctor():
                 'specialty': doctor_data[4],
                 'hospital': doctor_data[5],
                 'license_number': doctor_data[6],
+                'phone': doctor_data[7],
+                'created_at': datetime.strptime(doctor_data[8], '%Y-%m-%d %H:%M:%S') if doctor_data[8] else None,
+                'updated_at': datetime.strptime(doctor_data[9], '%Y-%m-%d %H:%M:%S') if doctor_data[9] else None,
                 'full_name': f"{doctor_data[2]} {doctor_data[3]}"
             }
     except Exception as e:
         print(f"Erreur lors de la récupération du médecin: {e}")
 
     return None
+
+def get_doctor_statistics(doctor_id):
+    """Calculer les statistiques d'un médecin"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        # Nombre total de patients
+        cursor.execute('SELECT COUNT(*) FROM patients WHERE doctor_id = ?', (doctor_id,))
+        total_patients = cursor.fetchone()[0]
+
+        # Nombre total d'analyses
+        cursor.execute('''
+            SELECT COALESCE(SUM(total_analyses), 0) 
+            FROM patients WHERE doctor_id = ?
+        ''', (doctor_id,))
+        total_analyses = cursor.fetchone()[0]
+
+        # Nombre total de conversations de chat
+        cursor.execute('''
+            SELECT COUNT(*) FROM chat_conversations 
+            WHERE doctor_id = ? AND is_active = 1
+        ''', (doctor_id,))
+        total_conversations = cursor.fetchone()[0]
+
+        # Nombre de jours depuis la création du compte
+        cursor.execute('''
+            SELECT julianday('now') - julianday(created_at) as account_age
+            FROM doctors WHERE id = ?
+        ''', (doctor_id,))
+        account_age_result = cursor.fetchone()
+        account_age = int(account_age_result[0]) if account_age_result[0] else 0
+
+        # Analyses récentes (derniers 30 jours)
+        cursor.execute('''
+            SELECT COUNT(*) FROM analyses a
+            JOIN patients p ON a.patient_id = p.patient_id
+            WHERE p.doctor_id = ? 
+            AND a.analysis_date >= date('now', '-30 days')
+        ''', (doctor_id,))
+        recent_analyses = cursor.fetchone()[0]
+
+        # Patient le plus récent
+        cursor.execute('''
+            SELECT patient_name, created_at FROM patients 
+            WHERE doctor_id = ? 
+            ORDER BY created_at DESC LIMIT 1
+        ''', (doctor_id,))
+        latest_patient = cursor.fetchone()
+
+        conn.close()
+
+        return {
+            'total_patients': total_patients,
+            'total_analyses': total_analyses,
+            'total_conversations': total_conversations,
+            'account_age': account_age,
+            'recent_analyses': recent_analyses,
+            'latest_patient_name': latest_patient[0] if latest_patient else None,
+            'latest_patient_date': latest_patient[1] if latest_patient else None
+        }
+
+    except Exception as e:
+        print(f"Erreur calcul statistiques médecin: {e}")
+        return {
+            'total_patients': 0,
+            'total_analyses': 0,
+            'total_conversations': 0,
+            'account_age': 0,
+            'recent_analyses': 0,
+            'latest_patient_name': None,
+            'latest_patient_date': None
+        }
 
 def create_doctor_session(doctor_id, ip_address, user_agent):
     """Créer une session pour un médecin"""
@@ -1197,7 +1314,75 @@ def dashboard():
     if not doctor:
         return redirect(url_for('login'))
 
-    return render_template('dashboard.html', doctor=doctor)
+    # Récupérer les statistiques du médecin
+    doctor_stats = get_doctor_statistics(doctor['id'])
+    
+    return render_template('dashboard.html', doctor=doctor, doctor_stats=doctor_stats)
+
+@app.route('/api/doctor/stats')
+@login_required
+def get_doctor_stats_api():
+    """API pour récupérer les statistiques du médecin"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        stats = get_doctor_statistics(doctor['id'])
+        return jsonify({'success': True, 'stats': stats})
+
+    except Exception as e:
+        print(f"Erreur récupération statistiques médecin: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/doctor/update-profile', methods=['POST'])
+@login_required
+def update_doctor_profile():
+    """API pour mettre à jour le profil du médecin"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        data = request.get_json()
+        doctor_id = doctor['id']
+        
+        # Champs autorisés à la modification
+        allowed_fields = ['specialty', 'hospital', 'license_number', 'phone']
+        update_fields = {}
+        
+        for field in allowed_fields:
+            if field in data:
+                update_fields[field] = data[field].strip() if data[field] else None
+
+        if not update_fields:
+            return jsonify({'success': False, 'error': 'Aucune donnée à mettre à jour'}), 400
+
+        # Construction de la requête SQL
+        set_clause = ', '.join([f"{field} = ?" for field in update_fields.keys()])
+        values = list(update_fields.values()) + [doctor_id]
+        
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute(f'''
+            UPDATE doctors 
+            SET {set_clause}, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', values)
+        
+        conn.commit()
+        
+        if cursor.rowcount > 0:
+            conn.close()
+            return jsonify({'success': True, 'message': 'Profil mis à jour avec succès'})
+        else:
+            conn.close()
+            return jsonify({'success': False, 'error': 'Aucune modification effectuée'}), 400
+
+    except Exception as e:
+        print(f"Erreur mise à jour profil médecin: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/nouvelle-analyse')
 @login_required
@@ -1525,6 +1710,277 @@ def get_gemini_analysis(results):
 
     return None
 
+# Fonctions pour le chat médical avec Gemini
+def create_chat_conversation(doctor_id, title="Nouvelle consultation", patient_id=None):
+    """Créer une nouvelle conversation de chat médical"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO chat_conversations (doctor_id, patient_id, title)
+            VALUES (?, ?, ?)
+        ''', (doctor_id, patient_id, title))
+        
+        conversation_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return conversation_id
+    except Exception as e:
+        print(f"Erreur création conversation: {e}")
+        return None
+
+def get_chat_conversations(doctor_id, limit=20):
+    """Récupérer les conversations de chat d'un médecin"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT cc.id, cc.title, cc.patient_id, cc.created_at, cc.updated_at,
+                   COUNT(cm.id) as message_count,
+                   (SELECT cm2.content FROM chat_messages cm2 
+                    WHERE cm2.conversation_id = cc.id 
+                    ORDER BY cm2.timestamp DESC LIMIT 1) as last_message,
+                   p.patient_name
+            FROM chat_conversations cc
+            LEFT JOIN chat_messages cm ON cc.id = cm.conversation_id
+            LEFT JOIN patients p ON cc.patient_id = p.patient_id AND cc.doctor_id = p.doctor_id
+            WHERE cc.doctor_id = ? AND cc.is_active = 1
+            GROUP BY cc.id
+            ORDER BY cc.updated_at DESC
+            LIMIT ?
+        ''', (doctor_id, limit))
+        
+        conversations = []
+        for row in cursor.fetchall():
+            conversations.append({
+                'id': row[0],
+                'title': row[1],
+                'patient_id': row[2],
+                'created_at': row[3],
+                'updated_at': row[4],
+                'message_count': row[5],
+                'last_message': row[6][:100] + "..." if row[6] and len(row[6]) > 100 else row[6],
+                'patient_name': row[7] if row[7] else None
+            })
+        
+        conn.close()
+        return conversations
+    except Exception as e:
+        print(f"Erreur récupération conversations: {e}")
+        return []
+
+def get_conversation_messages(conversation_id, doctor_id):
+    """Récupérer les messages d'une conversation"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Vérifier que la conversation appartient au médecin
+        cursor.execute('''
+            SELECT id FROM chat_conversations 
+            WHERE id = ? AND doctor_id = ?
+        ''', (conversation_id, doctor_id))
+        
+        if not cursor.fetchone():
+            conn.close()
+            return []
+        
+        # Récupérer les messages
+        cursor.execute('''
+            SELECT id, role, content, timestamp, is_medical_query, confidence_score
+            FROM chat_messages
+            WHERE conversation_id = ?
+            ORDER BY timestamp ASC
+        ''', (conversation_id,))
+        
+        messages = []
+        for row in cursor.fetchall():
+            messages.append({
+                'id': row[0],
+                'role': row[1],
+                'content': row[2],
+                'timestamp': row[3],
+                'is_medical_query': bool(row[4]),
+                'confidence_score': row[5]
+            })
+        
+        conn.close()
+        return messages
+    except Exception as e:
+        print(f"Erreur récupération messages: {e}")
+        return []
+
+def save_chat_message(conversation_id, role, content, is_medical_query=True, confidence_score=None):
+    """Sauvegarder un message de chat"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Sauvegarder le message
+        cursor.execute('''
+            INSERT INTO chat_messages 
+            (conversation_id, role, content, is_medical_query, confidence_score)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (conversation_id, role, content, is_medical_query, confidence_score))
+        
+        message_id = cursor.lastrowid
+        
+        # Mettre à jour la conversation
+        cursor.execute('''
+            UPDATE chat_conversations 
+            SET updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (conversation_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return message_id
+    except Exception as e:
+        print(f"Erreur sauvegarde message: {e}")
+        return None
+
+def call_gemini_with_context(user_message, conversation_history, patient_context=None):
+    """Appeler Gemini avec le contexte de la conversation et du patient"""
+    try:
+        # Construire le contexte de conversation
+        context_messages = []
+        for msg in conversation_history[-10:]:  # Prendre les 10 derniers messages
+            context_messages.append(f"{msg['role']}: {msg['content']}")
+        
+        conversation_context = "\n".join(context_messages) if context_messages else ""
+        
+        # Construire le contexte patient si disponible
+        patient_info = ""
+        if patient_context:
+            patient_info = f"""
+Informations patient disponibles:
+- Nom: {patient_context.get('name', 'Non spécifié')}
+- ID: {patient_context.get('id', 'Non spécifié')}
+- Âge: {patient_context.get('age', 'Non spécifié')}
+- Sexe: {patient_context.get('gender', 'Non spécifié')}
+- Antécédents médicaux: {patient_context.get('medical_history', 'Aucun spécifié')}
+- Allergies: {patient_context.get('allergies', 'Aucune spécifiée')}
+- Analyses récentes: {patient_context.get('recent_analyses', 'Aucune')}
+"""
+
+        # Prompt système enrichi pour le chat médical
+        system_prompt = f"""Tu es un assistant médical IA spécialisé dans la neurologie et l'imagerie médicale, destiné à aider les MÉDECINS dans leur pratique clinique.
+
+UTILISATEUR: Tu t'adresses à un médecin professionnel, pas au patient. Adapte ton langage et tes conseils en conséquence.
+
+DOMAINE D'EXPERTISE STRICT:
+- Neurologie et neurochirurgie
+- Imagerie médicale (IRM, scanner, radiologie)
+- Tumeurs cérébrales et pathologies neurologiques
+- Diagnostic différentiel en neuroimagerie
+- Interprétation d'examens d'imagerie cérébrale
+- Recommandations cliniques neurologiques
+
+RÈGLES IMPORTANTES:
+1. Tu t'adresses à un médecin, utilise le vocabulaire médical approprié
+2. Fournis des analyses techniques et des recommandations cliniques professionnelles
+3. Ne traite QUE les questions relatives au domaine médical neurologique
+4. Si une question sort de ce domaine, redirige poliment vers le domaine médical
+5. Propose des approches diagnostiques et thérapeutiques basées sur les données cliniques
+6. Utilise le contexte patient pour des recommandations personnalisées
+7. Reste professionnel, précis et orienté vers la pratique clinique
+
+CONTEXTE DE LA CONVERSATION:
+{conversation_context}
+
+{patient_info}
+
+En tant qu'assistant médical, aide ce médecin avec des analyses professionnelles, des recommandations cliniques et des insights diagnostiques basés sur les données disponibles."""
+
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        data = {
+            "contents": [
+                {
+                    "parts": [
+                        {
+                            "text": f"{system_prompt}\n\nQuestion actuelle: {user_message}"
+                        }
+                    ]
+                }
+            ],
+            "generationConfig": {
+                "temperature": 0.7,
+                "topK": 40,
+                "topP": 0.95,
+                "maxOutputTokens": 1024,
+            }
+        }
+
+        response = requests.post(
+            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+            headers=headers,
+            json=data,
+            timeout=30
+        )
+
+        if response.status_code == 200:
+            result = response.json()
+            if 'candidates' in result and len(result['candidates']) > 0:
+                response_text = result['candidates'][0]['content']['parts'][0]['text']
+                
+                # Calculer un score de confiance basé sur la réponse
+                confidence_score = calculate_response_confidence(response_text, user_message)
+                
+                return {
+                    'response': response_text,
+                    'confidence_score': confidence_score,
+                    'is_medical': is_medical_query(user_message)
+                }
+
+        print(f"Erreur API Gemini: {response.status_code} - {response.text}")
+        return None
+
+    except Exception as e:
+        print(f"Erreur lors de l'appel Gemini avec contexte: {e}")
+        return None
+
+def is_medical_query(message):
+    """Détermine si le message est lié au domaine médical"""
+    medical_keywords = [
+        'tumeur', 'cancer', 'irm', 'scanner', 'diagnostic', 'symptôme', 
+        'cerveau', 'neurologie', 'gliome', 'méningiome', 'pituitaire',
+        'analyse', 'examen', 'pathologie', 'traitement', 'médical',
+        'clinique', 'patient', 'imagerie', 'radiologie'
+    ]
+    
+    message_lower = message.lower()
+    return any(keyword in message_lower for keyword in medical_keywords)
+
+def calculate_response_confidence(response, query):
+    """Calculer un score de confiance pour la réponse"""
+    try:
+        # Critères simples pour évaluer la confiance
+        confidence = 0.5  # Base
+        
+        # Longueur appropriée
+        if 50 <= len(response) <= 1000:
+            confidence += 0.2
+            
+        # Contient des termes médicaux pertinents
+        medical_terms = ['diagnostic', 'symptôme', 'traitement', 'examen', 'analyse']
+        if any(term in response.lower() for term in medical_terms):
+            confidence += 0.2
+            
+        # Contient un disclaimer médical
+        if any(phrase in response.lower() for phrase in ['consultation', 'médecin', 'professionnel']):
+            confidence += 0.1
+            
+        return min(confidence, 1.0)
+    except:
+        return 0.7
+
 def get_gemini_advanced_analysis(results):
     """Analyse avancée structurée (résumé, explication, suggestions) via Gemini"""
     try:
@@ -1671,9 +2127,384 @@ def share_analysis():
         print(f"Erreur lors du partage: {e}")
         return jsonify({'error': 'Erreur lors du partage'}), 500
 
-@app.route('/chat', methods=['POST'])
+# Routes pour le chat médical
+@app.route('/chat')
+@login_required
+def chat_page():
+    """Page principale du chat médical"""
+    doctor = get_current_doctor()
+    if not doctor:
+        return redirect(url_for('login'))
+    return render_template('chat.html', doctor=doctor)
+
+@app.route('/chat/help')
+@login_required
+def chat_help():
+    """Page d'aide du chat médical"""
+    doctor = get_current_doctor()
+    if not doctor:
+        return redirect(url_for('login'))
+    return render_template('chat_help.html', doctor=doctor)
+
+@app.route('/api/chat/conversations')
+@login_required
+def get_conversations():
+    """API pour récupérer les conversations du médecin"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        conversations = get_chat_conversations(doctor_id)
+        return jsonify({'success': True, 'conversations': conversations})
+
+    except Exception as e:
+        print(f"Erreur récupération conversations: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/chat/conversations', methods=['POST'])
+@login_required
+def create_conversation():
+    """API pour créer une nouvelle conversation"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        data = request.get_json()
+        title = data.get('title', 'Nouvelle consultation')
+        patient_id = data.get('patient_id')
+
+        conversation_id = create_chat_conversation(doctor_id, title, patient_id)
+        
+        if conversation_id:
+            return jsonify({'success': True, 'conversation_id': conversation_id})
+        else:
+            return jsonify({'success': False, 'error': 'Erreur création conversation'}), 500
+
+    except Exception as e:
+        print(f"Erreur création conversation: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/chat/conversations/<int:conversation_id>/messages')
+@login_required
+def get_messages(conversation_id):
+    """API pour récupérer les messages d'une conversation"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        messages = get_conversation_messages(conversation_id, doctor_id)
+        return jsonify({'success': True, 'messages': messages})
+
+    except Exception as e:
+        print(f"Erreur récupération messages: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/chat/send', methods=['POST'])
+@login_required
+def send_chat_message():
+    """API pour envoyer un message et obtenir une réponse de Gemini"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        data = request.get_json()
+        conversation_id = data.get('conversation_id')
+        message = data.get('message', '').strip()
+
+        if not conversation_id or not message:
+            return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+
+        # Récupérer l'historique de la conversation
+        conversation_history = get_conversation_messages(conversation_id, doctor_id)
+        
+        # Récupérer le contexte patient si disponible
+        patient_context = get_patient_context_for_conversation(conversation_id)
+
+        # Sauvegarder le message utilisateur
+        user_message_id = save_chat_message(conversation_id, 'user', message, is_medical_query(message))
+
+        # Appeler Gemini avec le contexte
+        gemini_response = call_gemini_with_context(message, conversation_history, patient_context)
+
+        if gemini_response:
+            # Sauvegarder la réponse de l'assistant
+            assistant_message_id = save_chat_message(
+                conversation_id, 
+                'assistant', 
+                gemini_response['response'],
+                gemini_response['is_medical'],
+                gemini_response['confidence_score']
+            )
+
+            return jsonify({
+                'success': True,
+                'user_message_id': user_message_id,
+                'assistant_message_id': assistant_message_id,
+                'response': gemini_response['response'],
+                'confidence_score': gemini_response['confidence_score'],
+                'is_medical': gemini_response['is_medical']
+            })
+        else:
+            # Sauvegarder une réponse d'erreur
+            error_response = "Désolé, je ne peux pas répondre pour le moment. Veuillez réessayer."
+            assistant_message_id = save_chat_message(conversation_id, 'assistant', error_response, False, 0.0)
+            
+            return jsonify({
+                'success': False,
+                'user_message_id': user_message_id,
+                'assistant_message_id': assistant_message_id,
+                'response': error_response,
+                'error': 'Erreur API Gemini'
+            })
+
+    except Exception as e:
+        print(f"Erreur envoi message: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+def get_patient_context_for_conversation(conversation_id):
+    """Récupérer le contexte patient pour une conversation"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Récupérer l'ID patient de la conversation
+        cursor.execute('''
+            SELECT patient_id FROM chat_conversations 
+            WHERE id = ?
+        ''', (conversation_id,))
+        
+        result = cursor.fetchone()
+        if not result or not result[0]:
+            conn.close()
+            return None
+            
+        patient_id = result[0]
+        
+        # Récupérer les informations du patient
+        cursor.execute('''
+            SELECT patient_name, date_of_birth, gender, medical_history, 
+                   allergies, current_medications, total_analyses
+            FROM patients 
+            WHERE patient_id = ?
+        ''', (patient_id,))
+        
+        patient_data = cursor.fetchone()
+        if not patient_data:
+            conn.close()
+            return None
+            
+        # Calculer l'âge si date de naissance disponible
+        age = None
+        if patient_data[1]:
+            try:
+                birth_date = datetime.strptime(patient_data[1], '%Y-%m-%d')
+                age = datetime.now().year - birth_date.year
+            except:
+                age = None
+        
+        # Récupérer les analyses récentes
+        cursor.execute('''
+            SELECT timestamp, predicted_label, confidence, exam_date
+            FROM analyses 
+            WHERE patient_id = ?
+            ORDER BY timestamp DESC
+            LIMIT 3
+        ''', (patient_id,))
+        
+        recent_analyses = cursor.fetchall()
+        analyses_summary = []
+        for analysis in recent_analyses:
+            analyses_summary.append(f"- {analysis[3] or analysis[0]}: {analysis[1]} (confiance: {analysis[2]*100:.1f}%)")
+        
+        conn.close()
+        
+        return {
+            'name': patient_data[0],
+            'id': patient_id,
+            'age': age,
+            'gender': patient_data[2],
+            'medical_history': patient_data[3],
+            'allergies': patient_data[4],
+            'current_medications': patient_data[5],
+            'total_analyses': patient_data[6],
+            'recent_analyses': '\n'.join(analyses_summary) if analyses_summary else 'Aucune analyse récente'
+        }
+        
+    except Exception as e:
+        print(f"Erreur récupération contexte patient: {e}")
+        return None
+
+@app.route('/api/chat/conversations/<int:conversation_id>/update', methods=['PUT'])
+@login_required
+def update_conversation(conversation_id):
+    """API pour mettre à jour une conversation (titre, patient)"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        data = request.get_json()
+        title = data.get('title')
+        patient_id = data.get('patient_id')
+
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Vérifier que la conversation appartient au médecin
+        cursor.execute('''
+            SELECT id FROM chat_conversations 
+            WHERE id = ? AND doctor_id = ?
+        ''', (conversation_id, doctor_id))
+        
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({'success': False, 'error': 'Conversation introuvable'}), 404
+        
+        # Mettre à jour la conversation
+        update_fields = []
+        params = []
+        
+        if title:
+            update_fields.append('title = ?')
+            params.append(title)
+        
+        if patient_id is not None:  # Peut être None pour supprimer l'association
+            update_fields.append('patient_id = ?')
+            params.append(patient_id if patient_id else None)
+        
+        if update_fields:
+            update_fields.append('updated_at = CURRENT_TIMESTAMP')
+            params.append(conversation_id)
+            
+            cursor.execute(f'''
+                UPDATE chat_conversations 
+                SET {', '.join(update_fields)}
+                WHERE id = ?
+            ''', params)
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Conversation mise à jour'})
+
+    except Exception as e:
+        print(f"Erreur mise à jour conversation: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/patients/list')
+@login_required
+def get_patients_for_chat():
+    """API pour récupérer la liste simple des patients du médecin"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT patient_id, patient_name, date_of_birth, gender, total_analyses
+            FROM patients
+            WHERE doctor_id = ?
+            ORDER BY patient_name
+        ''', (doctor_id,))
+
+        patients = []
+        for row in cursor.fetchall():
+            # Calculer l'âge si date de naissance disponible
+            age = None
+            if row[2]:  # date_of_birth
+                try:
+                    birth_date = datetime.strptime(row[2], '%Y-%m-%d')
+                    age = datetime.now().year - birth_date.year
+                    if datetime.now().month < birth_date.month or (datetime.now().month == birth_date.month and datetime.now().day < birth_date.day):
+                        age -= 1
+                except:
+                    age = None
+            
+            patients.append({
+                'patient_id': row[0],
+                'patient_name': row[1] or f"Patient {row[0]}",
+                'age': age,
+                'gender': row[3],
+                'total_analyses': row[4] or 0,
+                'display_name': f"{row[1] or 'Patient ' + row[0]} ({age} ans)" if age else (row[1] or f"Patient {row[0]}")
+            })
+
+        conn.close()
+
+        return jsonify({
+            'success': True,
+            'patients': patients
+        })
+
+    except Exception as e:
+        print(f"Erreur récupération liste patients: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/chat/conversations/<int:conversation_id>/delete', methods=['DELETE'])
+@login_required
+def delete_conversation(conversation_id):
+    """API pour supprimer une conversation et tous ses messages"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Vérifier que la conversation appartient au médecin
+        cursor.execute('''
+            SELECT id FROM chat_conversations 
+            WHERE id = ? AND doctor_id = ?
+        ''', (conversation_id, doctor_id))
+        
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({'success': False, 'error': 'Conversation introuvable'}), 404
+        
+        # Supprimer d'abord les messages de la conversation
+        cursor.execute('''
+            DELETE FROM chat_messages 
+            WHERE conversation_id = ?
+        ''', (conversation_id,))
+        
+        # Supprimer les attachments s'il y en a
+        cursor.execute('''
+            DELETE FROM chat_attachments 
+            WHERE message_id IN (
+                SELECT id FROM chat_messages WHERE conversation_id = ?
+            )
+        ''', (conversation_id,))
+        
+        # Supprimer la conversation
+        cursor.execute('''
+            DELETE FROM chat_conversations 
+            WHERE id = ?
+        ''', (conversation_id,))
+        
+        deleted_messages = cursor.rowcount
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Conversation supprimée avec {deleted_messages} messages'
+        })
+
+    except Exception as e:
+        print(f"Erreur suppression conversation: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/old-chat', methods=['POST'])
 def chat_with_bot():
-    """Chatbot médical avec Gemini"""
+    """Ancienne API de chatbot (conservée pour compatibilité)"""
     try:
         data = request.get_json()
         message = data.get('message', '').strip()

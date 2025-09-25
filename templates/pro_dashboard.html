@@ -121,8 +121,127 @@
         max-height: 300px;
     }
 
+    /* Navigation responsive */
+    .dashboard-nav {
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .dashboard-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .dashboard-nav-item {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* Tables responsives */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: var(--radius-xl);
+    }
+
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    /* Action buttons responsive */
+    .page-actions-responsive {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    /* Mobile-first stats grid */
+    .stats-grid-mobile {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    /* Chart controls responsive */
+    .chart-controls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    /* Mobile cards adjustments */
+    .mobile-card {
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-soft);
+    }
+
+    /* Advanced grid responsive */
+    .advanced-grid-mobile {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
     /* Responsive */
+    @media (min-width: 480px) {
+        .stats-grid-mobile {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+    }
+
+    @media (min-width: 768px) {
+        .stats-grid-mobile {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        
+        .advanced-grid-mobile {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .chart-container {
+            height: 280px;
+            padding: 20px;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .stats-grid-mobile {
+            grid-template-columns: repeat(4, 1fr);
+        }
+        
+        .advanced-grid-mobile {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        .patient-analysis-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .chart-container {
+            height: 300px;
+            padding: 24px;
+        }
+    }
+
     @media (max-width: 768px) {
+        .stat-card-gradient:hover {
+            transform: none;
+            box-shadow: var(--shadow-medium);
+        }
+        
         .chart-container {
             height: 250px;
             padding: 16px;
@@ -136,6 +255,131 @@
         .expandable-card {
             min-height: 300px;
             max-height: 500px;
+        }
+        
+        .dashboard-nav {
+            margin: 0 -16px;
+            padding: 0 16px;
+        }
+        
+        .page-actions-responsive {
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .page-actions-responsive .btn-dashboard {
+            flex: 1;
+            min-width: 120px;
+            max-width: 150px;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stat-card-gradient {
+            padding: 20px !important;
+        }
+        
+        .stat-card-gradient .text-3xl {
+            font-size: 1.875rem;
+        }
+        
+        .dashboard-card {
+            padding: 16px !important;
+        }
+        
+        .dashboard-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .dashboard-card-header .flex-1 {
+            width: 100%;
+        }
+        
+        .chart-controls {
+            justify-content: stretch;
+        }
+        
+        .chart-controls .btn-dashboard {
+            flex: 1;
+            justify-content: center;
+            min-width: 0;
+        }
+        
+        .dashboard-card-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+        }
+        
+        .table-responsive {
+            margin: 0 -16px;
+            border-radius: 0;
+        }
+        
+        .dashboard-table th,
+        .dashboard-table td {
+            padding: 12px 8px;
+            font-size: 14px;
+        }
+        
+        .badge {
+            font-size: 10px;
+            padding: 2px 8px;
+        }
+        
+        .btn-dashboard.text-xs {
+            font-size: 10px;
+            padding: 6px 8px;
+        }
+    }
+
+    /* Skeleton loading responsive */
+    @media (max-width: 768px) {
+        .skeleton {
+            border-radius: var(--radius-md);
+        }
+    }
+
+    /* Touch-friendly improvements */
+    @media (max-width: 768px) {
+        .btn-dashboard {
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+        
+        .dashboard-nav-item {
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+        }
+        
+        .dashboard-card.clickable {
+            touch-action: manipulation;
+        }
+    }
+
+    /* Improved contrast for mobile */
+    @media (max-width: 768px) {
+        .dashboard-card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .dashboard-card-subtitle {
+            font-size: 13px;
+            margin-top: 2px;
+        }
+        
+        .text-xs {
+            font-size: 11px;
+        }
+        
+        .text-sm {
+            font-size: 13px;
         }
     }
 </style>
@@ -159,14 +403,14 @@
 {% endblock %}
 
 {% block page_actions %}
-<div class="flex space-x-3">
+<div class="page-actions-responsive">
     <button onclick="exportData()" class="btn-dashboard secondary">
         <i class="fas fa-download"></i>
-        Exporter
+        <span class="hidden sm:inline">Exporter</span>
     </button>
     <button onclick="refreshData()" class="btn-dashboard primary" id="refreshBtn">
         <i class="fas fa-sync-alt"></i>
-        Actualiser
+        <span class="hidden sm:inline">Actualiser</span>
     </button>
 </div>
 {% endblock %}

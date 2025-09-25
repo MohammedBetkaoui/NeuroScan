@@ -11,69 +11,118 @@
 {% block content %}
     
     <!-- Chat médical avec Gemini -->
-    <div class="dashboard-card clickable p-0 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-green-50 via-white to-teal-50 border-l-4 border-green-500" onclick="navigateTo('chat')">
+    <div class="dashboard-card clickable p-0 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-emerald-50 via-white to-teal-50 border-l-4 border-emerald-500 medical-ai-card" onclick="navigateTo('chat')">
         <div class="p-6">
             <div class="dashboard-card-header mb-4">
-                <div class="dashboard-card-icon bg-gradient-to-r from-green-600 to-teal-600 shadow-lg">
-                    <i class="fas fa-comments-medical text-white"></i>
+                <div class="dashboard-card-icon bg-gradient-to-br from-emerald-500 via-green-600 to-teal-600 shadow-xl medical-chat-icon">
+                    <div class="icon-wrapper">
+                        <i class="fas fa-robot text-white text-xl relative z-10"></i>
+                        <div class="icon-pulse absolute inset-0 bg-white/20 rounded-full animate-ping"></div>
+                        <div class="icon-secondary absolute top-0 right-0 w-4 h-4 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full flex items-center justify-center">
+                            <i class="fas fa-brain text-white text-xs"></i>
+                        </div>
+                    </div>
                 </div>
                 <div>
-                    <h3 class="dashboard-card-title text-xl font-bold bg-gradient-to-r from-green-700 to-teal-700 bg-clip-text text-transparent">Chat Médical IA</h3>
-                    <p class="dashboard-card-subtitle text-green-600 font-medium">Assistant Gemini spécialisé</p>
+                    <h3 class="dashboard-card-title text-xl font-bold bg-gradient-to-r from-emerald-700 to-teal-700 bg-clip-text text-transparent">
+                        Chat Médical IA
+                        <span class="inline-flex items-center ml-2 px-2 py-1 text-xs font-semibold text-emerald-800 bg-emerald-100 rounded-full">
+                            <i class="fas fa-sparkles mr-1"></i>
+                            Gemini Pro
+                        </span>
+                    </h3>
+                    <p class="dashboard-card-subtitle text-emerald-600 font-medium">Assistant neurologique intelligent</p>
                 </div>
             </div>
             <div class="dashboard-card-content space-y-3">
                 <p class="text-gray-700 text-sm leading-relaxed">
-                    Consultez notre IA médicale avancée pour des questions neurologiques, l'interprétation d'examens et des recommandations cliniques.
+                    Consultez notre IA médicale avancée pour des questions neurologiques, l'interprétation d'examens et des recommandations cliniques personnalisées.
                 </p>
                 <div class="flex items-center space-x-4 text-xs text-gray-600">
-                    <span class="flex items-center"><i class="fas fa-brain text-green-500 mr-1"></i> Neurologie</span>
-                    <span class="flex items-center"><i class="fas fa-history text-teal-500 mr-1"></i> Historique</span>
-                    <span class="flex items-center"><i class="fas fa-shield-alt text-purple-500 mr-1"></i> Sécurisé</span>
+                    <span class="flex items-center bg-emerald-50 px-2 py-1 rounded-full">
+                        <i class="fas fa-brain text-emerald-500 mr-1"></i> Neurologie
+                    </span>
+                    <span class="flex items-center bg-teal-50 px-2 py-1 rounded-full">
+                        <i class="fas fa-history text-teal-500 mr-1"></i> Historique
+                    </span>
+                    <span class="flex items-center bg-purple-50 px-2 py-1 rounded-full">
+                        <i class="fas fa-shield-halved text-purple-500 mr-1"></i> Sécurisé
+                    </span>
                 </div>
             </div>
         </div>
-        <div class="h-1 bg-gradient-to-r from-green-500 via-teal-500 to-cyan-500"></div>
+        <div class="h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 medical-chat-glow"></div>
     </div>
 <br>
-           </div>
-    </div>
-</div>
-
+<br>
 
 <!-- Actions rapides -->
 <div class="dashboard-grid cols-4 mb-8">
     <!-- Nouvelle analyse -->
-    <div class="dashboard-card clickable p-0 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-blue-50 via-white to-indigo-50 border-l-4 border-blue-500" onclick="navigateTo('new_analysis')">
+    <div class="dashboard-card clickable p-0 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-blue-50 via-white to-indigo-50 border-l-4 border-blue-500 brain-analysis-card" onclick="navigateTo('new_analysis')">
         <div class="p-6">
             <div class="dashboard-card-header mb-4">
-                <div class="dashboard-card-icon primary bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
-                    <i class="fas fa-brain text-white"></i>
+                <div class="dashboard-card-icon primary bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 shadow-xl brain-icon">
+                    <div class="icon-wrapper">
+                        <i class="fas fa-brain text-white text-xl relative z-10 brain-pulse"></i>
+                        <div class="icon-circle absolute inset-2 border-2 border-white/30 rounded-full animate-spin-slow"></div>
+                        <div class="icon-secondary absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
+                            <i class="fas fa-microscope text-white text-xs"></i>
+                        </div>
+                        <div class="neural-network absolute inset-0 opacity-20">
+                            <div class="neural-dot absolute top-2 left-3 w-1 h-1 bg-white rounded-full animate-pulse"></div>
+                            <div class="neural-dot absolute top-4 right-3 w-1 h-1 bg-white rounded-full animate-pulse" style="animation-delay: 0.5s;"></div>
+                            <div class="neural-dot absolute bottom-3 left-2 w-1 h-1 bg-white rounded-full animate-pulse" style="animation-delay: 1s;"></div>
+                        </div>
+                    </div>
                 </div>
                 <div>
-                    <h3 class="dashboard-card-title text-xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">Analyse IA Avancée</h3>
+                    <h3 class="dashboard-card-title text-xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
+                        Analyse IA Avancée
+                        <span class="inline-flex items-center ml-2 px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full">
+                            <i class="fas fa-zap mr-1"></i>
+                            99.7%
+                        </span>
+                    </h3>
                     <p class="dashboard-card-subtitle text-blue-600 font-medium">Diagnostic neurologique intelligent</p>
                 </div>
             </div>
             <div class="dashboard-card-content space-y-3">
                 <p class="text-gray-700 text-sm leading-relaxed">
-                    Intelligence artificielle de dernière génération pour l'analyse d'imagerie cérébrale avec précision de 99.7%.
+                    Intelligence artificielle de dernière génération pour l'analyse d'imagerie cérébrale avec précision exceptionnelle.
                 </p>
                 <div class="flex items-center space-x-4 text-xs text-gray-600">
-                    <span class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-1"></i> DICOM/NIfTI</span>
-                    <span class="flex items-center"><i class="fas fa-clock text-blue-500 mr-1"></i> < 30s</span>
-                    <span class="flex items-center"><i class="fas fa-shield-alt text-purple-500 mr-1"></i> Sécurisé</span>
+                    <span class="flex items-center bg-green-50 px-2 py-1 rounded-full">
+                        <i class="fas fa-file-medical text-green-500 mr-1"></i> DICOM/NIfTI
+                    </span>
+                    <span class="flex items-center bg-blue-50 px-2 py-1 rounded-full">
+                        <i class="fas fa-stopwatch text-blue-500 mr-1"></i> < 30s
+                    </span>
+                    <span class="flex items-center bg-purple-50 px-2 py-1 rounded-full">
+                        <i class="fas fa-lock text-purple-500 mr-1"></i> Sécurisé
+                    </span>
                 </div>
             </div>
         </div>
-        <div class="h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
+        <div class="h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 brain-analysis-glow"></div>
     </div>
 
     <!-- Tableau de bord pro -->
-    <div class="dashboard-card clickable p-6" onclick="navigateTo('pro_dashboard')">
+    <div class="dashboard-card clickable p-6 stats-card" onclick="navigateTo('pro_dashboard')">
         <div class="dashboard-card-header">
-            <div class="dashboard-card-icon success">
-                <i class="fas fa-chart-bar"></i>
+            <div class="dashboard-card-icon success bg-gradient-to-br from-green-500 via-emerald-600 to-teal-600 shadow-xl">
+                <div class="icon-wrapper">
+                    <i class="fas fa-chart-line text-white text-xl relative z-10"></i>
+                    <div class="chart-animation absolute inset-1">
+                        <div class="chart-bar absolute bottom-1 left-2 w-1 bg-white/40 animate-grow-bar-1" style="height: 40%;"></div>
+                        <div class="chart-bar absolute bottom-1 left-4 w-1 bg-white/40 animate-grow-bar-2" style="height: 60%;"></div>
+                        <div class="chart-bar absolute bottom-1 right-4 w-1 bg-white/40 animate-grow-bar-3" style="height: 80%;"></div>
+                        <div class="chart-bar absolute bottom-1 right-2 w-1 bg-white/40 animate-grow-bar-4" style="height: 50%;"></div>
+                    </div>
+                    <div class="icon-secondary absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-trending-up text-white text-xs"></i>
+                    </div>
+                </div>
             </div>
             <div>
                 <h3 class="dashboard-card-title">Statistiques</h3>
@@ -82,52 +131,81 @@
         </div>
         <div class="dashboard-card-content">
             <p class="text-gray-600 text-sm">
-                Consultez les statistiques détaillées de vos analyses et suivez les tendances.
+                Consultez les statistiques détaillées de vos analyses et suivez les tendances diagnostiques.
             </p>
         </div>
     </div>
 
     <!-- Suivi patients -->
-    <div class="dashboard-card clickable p-6" onclick="navigateTo('patients_list')">
+    <div class="dashboard-card clickable p-6 patients-card" onclick="navigateTo('patients_list')">
         <div class="dashboard-card-header">
-            <div class="dashboard-card-icon purple">
-                <i class="fas fa-users"></i>
+            <div class="dashboard-card-icon purple bg-gradient-to-br from-purple-500 via-violet-600 to-indigo-600 shadow-xl">
+                <div class="icon-wrapper">
+                    <i class="fas fa-user-injured text-white text-xl relative z-10"></i>
+                    <div class="patients-animation absolute inset-0">
+                        <div class="patient-dot absolute top-2 left-2 w-2 h-2 bg-white/30 rounded-full animate-bounce"></div>
+                        <div class="patient-dot absolute top-2 right-2 w-2 h-2 bg-white/30 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                        <div class="patient-dot absolute bottom-2 left-2 w-2 h-2 bg-white/30 rounded-full animate-bounce" style="animation-delay: 0.4s;"></div>
+                        <div class="patient-dot absolute bottom-2 right-2 w-2 h-2 bg-white/30 rounded-full animate-bounce" style="animation-delay: 0.6s;"></div>
+                    </div>
+                    <div class="icon-secondary absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-pink-400 to-rose-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-heartbeat text-white text-xs"></i>
+                    </div>
+                </div>
             </div>
             <div>
                 <h3 class="dashboard-card-title">Mes Patients</h3>
-                <p class="dashboard-card-subtitle">Suivi détaillé</p>
+                <p class="dashboard-card-subtitle">Suivi médical complet</p>
             </div>
         </div>
         <div class="dashboard-card-content">
             <p class="text-gray-600 text-sm">
-                Accédez à la liste complète de vos patients avec historique et évolution détaillée.
+                Accédez à la liste complète de vos patients avec historique médical et évolution détaillée.
             </p>
         </div>
     </div>
 
     <!-- Gestion patients -->
-    <div class="dashboard-card clickable p-6" onclick="navigateTo('manage_patients_page')">
+    <div class="dashboard-card clickable p-6 management-card" onclick="navigateTo('manage_patients_page')">
         <div class="dashboard-card-header">
-            <div class="dashboard-card-icon success">
-                <i class="fas fa-users-cog"></i>
+            <div class="dashboard-card-icon success bg-gradient-to-br from-teal-500 via-cyan-600 to-blue-600 shadow-xl">
+                <div class="icon-wrapper">
+                    <i class="fas fa-user-cog text-white text-xl relative z-10"></i>
+                    <div class="gear-animation absolute inset-2 border border-white/20 rounded-full">
+                        <div class="gear-inner absolute inset-1 border border-white/30 rounded-full animate-spin-reverse"></div>
+                    </div>
+                    <div class="icon-secondary absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-plus text-white text-xs"></i>
+                    </div>
+                </div>
             </div>
             <div>
                 <h3 class="dashboard-card-title">Gestion Patients</h3>
-                <p class="dashboard-card-subtitle">CRUD complet</p>
+                <p class="dashboard-card-subtitle">Administration complète</p>
             </div>
         </div>
         <div class="dashboard-card-content">
             <p class="text-gray-600 text-sm">
-                Ajouter, modifier, supprimer et gérer toutes les informations de vos patients.
+                Ajouter, modifier, supprimer et gérer toutes les informations médicales de vos patients.
             </p>
         </div>
     </div>
 
     <!-- Statistiques plateforme -->
-    <div class="dashboard-card clickable p-6" onclick="navigateTo('platform_stats')">
+    <div class="dashboard-card clickable p-6 platform-card" onclick="navigateTo('platform_stats')">
         <div class="dashboard-card-header">
-            <div class="dashboard-card-icon indigo">
-                <i class="fas fa-globe"></i>
+            <div class="dashboard-card-icon indigo bg-gradient-to-br from-indigo-500 via-blue-600 to-cyan-600 shadow-xl">
+                <div class="icon-wrapper">
+                    <i class="fas fa-globe-americas text-white text-xl relative z-10"></i>
+                    <div class="globe-animation absolute inset-0 opacity-30">
+                        <div class="orbit absolute inset-2 border border-white/20 rounded-full animate-spin"></div>
+                        <div class="orbit absolute inset-3 border border-white/15 rounded-full animate-spin-reverse" style="animation-duration: 3s;"></div>
+                        <div class="satellite absolute top-1 left-1/2 w-1 h-1 bg-white rounded-full animate-ping"></div>
+                    </div>
+                    <div class="icon-secondary absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-violet-400 to-purple-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-network-wired text-white text-xs"></i>
+                    </div>
+                </div>
             </div>
             <div>
                 <h3 class="dashboard-card-title">Stats Plateforme</h3>
@@ -136,17 +214,26 @@
         </div>
         <div class="dashboard-card-content">
             <p class="text-gray-600 text-sm">
-                Consultez les statistiques générales de tous les médecins utilisant NeuroScan.
+                Consultez les statistiques générales de tous les médecins utilisant la plateforme NeuroScan.
             </p>
         </div>
     </div>
 </div>
 
 <!-- Informations du compte -->
-<div class="dashboard-card p-6 mb-8">
+<div class="dashboard-card p-6 mb-8 account-info-card">
     <div class="dashboard-card-header">
-        <div class="dashboard-card-icon primary">
-            <i class="fas fa-user-circle"></i>
+        <div class="dashboard-card-icon primary bg-gradient-to-br from-slate-600 via-gray-700 to-zinc-700 shadow-xl">
+            <div class="icon-wrapper">
+                <i class="fas fa-user-md text-white text-xl relative z-10"></i>
+                <div class="medical-cross absolute inset-3 opacity-30">
+                    <div class="cross-vertical absolute left-1/2 top-0 bottom-0 w-0.5 bg-white transform -translate-x-1/2"></div>
+                    <div class="cross-horizontal absolute top-1/2 left-0 right-0 h-0.5 bg-white transform -translate-y-1/2"></div>
+                </div>
+                <div class="icon-secondary absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-emerald-400 to-green-500 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check text-white text-xs"></i>
+                </div>
+            </div>
         </div>
         <div>
             <h3 class="dashboard-card-title">Informations du compte</h3>
@@ -157,43 +244,61 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-4">
                 <div>
-                    <label class="form-label">Nom complet</label>
-                    <div class="p-3 bg-gray-50 rounded-lg">
+                    <label class="form-label flex items-center">
+                        <i class="fas fa-user text-blue-500 mr-2"></i>
+                        Nom complet
+                    </label>
+                    <div class="p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg border-l-4 border-blue-500">
                         <p class="text-gray-900 font-medium">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</p>
                     </div>
                 </div>
                 <div>
-                    <label class="form-label">Email</label>
-                    <div class="p-3 bg-gray-50 rounded-lg">
+                    <label class="form-label flex items-center">
+                        <i class="fas fa-envelope text-green-500 mr-2"></i>
+                        Email
+                    </label>
+                    <div class="p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg border-l-4 border-green-500">
                         <p class="text-gray-900">{{ doctor.email }}</p>
                     </div>
                 </div>
                 <div>
-                    <label class="form-label">Spécialité</label>
-                    <div class="p-3 bg-gray-50 rounded-lg">
+                    <label class="form-label flex items-center">
+                        <i class="fas fa-stethoscope text-purple-500 mr-2"></i>
+                        Spécialité
+                    </label>
+                    <div class="p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg border-l-4 border-purple-500">
                         <p class="text-gray-900">{{ doctor.specialty or 'Non spécifiée' }}</p>
                     </div>
                 </div>
             </div>
             <div class="space-y-4">
                 <div>
-                    <label class="form-label">Établissement</label>
-                    <div class="p-3 bg-gray-50 rounded-lg">
+                    <label class="form-label flex items-center">
+                        <i class="fas fa-hospital text-teal-500 mr-2"></i>
+                        Établissement
+                    </label>
+                    <div class="p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg border-l-4 border-teal-500">
                         <p class="text-gray-900">{{ doctor.hospital or 'Non spécifié' }}</p>
                     </div>
                 </div>
                 <div>
-                    <label class="form-label">Numéro RPPS/ADELI</label>
-                    <div class="p-3 bg-gray-50 rounded-lg">
+                    <label class="form-label flex items-center">
+                        <i class="fas fa-id-card text-orange-500 mr-2"></i>
+                        Numéro RPPS/ADELI
+                    </label>
+                    <div class="p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg border-l-4 border-orange-500">
                         <p class="text-gray-900">{{ doctor.license_number or 'Non renseigné' }}</p>
                     </div>
                 </div>
                 <div>
-                    <label class="form-label">Statut du compte</label>
-                    <div class="p-3 bg-gray-50 rounded-lg">
-                        <span class="badge success">
-                            <i class="fas fa-check-circle"></i>
-                            Compte Actif
+                    <label class="form-label flex items-center">
+                        <i class="fas fa-shield-check text-emerald-500 mr-2"></i>
+                        Statut du compte
+                    </label>
+                    <div class="p-3 bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg border-l-4 border-emerald-500">
+                        <span class="badge success flex items-center">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            <span class="animate-pulse">Compte Actif</span>
                         </span>
                     </div>
                 </div>
@@ -203,13 +308,28 @@
 </div>
 
 <!-- Aide et support -->
-<div class="dashboard-card p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+<div class="dashboard-card p-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-blue-200 help-support-card">
     <div class="dashboard-card-header">
-        <div class="dashboard-card-icon primary">
-            <i class="fas fa-question-circle"></i>
+        <div class="dashboard-card-icon primary bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 shadow-xl">
+            <div class="icon-wrapper">
+                <i class="fas fa-life-ring text-white text-xl relative z-10"></i>
+                <div class="help-animation absolute inset-2">
+                    <div class="help-ring absolute inset-0 border-2 border-white/20 rounded-full animate-ping"></div>
+                    <div class="help-ring absolute inset-1 border border-white/30 rounded-full animate-pulse"></div>
+                </div>
+                <div class="icon-secondary absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full flex items-center justify-center">
+                    <i class="fas fa-question text-white text-xs"></i>
+                </div>
+            </div>
         </div>
         <div class="flex-1">
-            <h3 class="dashboard-card-title text-blue-900">Besoin d'aide ?</h3>
+            <h3 class="dashboard-card-title text-blue-900 flex items-center">
+                Besoin d'aide ?
+                <span class="ml-2 inline-flex items-center px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full">
+                    <i class="fas fa-clock mr-1"></i>
+                    24/7
+                </span>
+            </h3>
             <p class="dashboard-card-subtitle text-blue-700">
                 Notre équipe est là pour vous accompagner dans l'utilisation de NeuroScan.
             </p>
@@ -217,17 +337,26 @@
     </div>
     <div class="dashboard-card-content">
         <div class="flex flex-wrap gap-3">
-            <button onclick="openUserGuideModal()" class="btn-dashboard primary">
-                <i class="fas fa-book"></i>
-                Guide d'utilisation
+            <button onclick="openUserGuideModal()" class="btn-dashboard primary enhanced-btn">
+                <i class="fas fa-graduation-cap"></i>
+                <span class="button-text">
+                    Guide d'utilisation
+                    <small class="block text-xs opacity-80">Apprenez les bases</small>
+                </span>
             </button>
-            <button onclick="openSupportModal()" class="btn-dashboard secondary">
-                <i class="fas fa-envelope"></i>
-                Contacter le support
+            <button onclick="openSupportModal()" class="btn-dashboard secondary enhanced-btn">
+                <i class="fas fa-headset"></i>
+                <span class="button-text">
+                    Contacter le support
+                    <small class="block text-xs opacity-80">Aide technique</small>
+                </span>
             </button>
-            <a href="tel:+213783962348" class="btn-dashboard success">
-                <i class="fas fa-phone"></i>
-                Appel direct
+            <a href="tel:+213783962348" class="btn-dashboard success enhanced-btn">
+                <i class="fas fa-phone-alt"></i>
+                <span class="button-text">
+                    Appel direct
+                    <small class="block text-xs opacity-80">+213 783 962 348</small>
+                </span>
             </a>
         </div>
     </div>

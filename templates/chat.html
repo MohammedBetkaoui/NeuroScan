@@ -651,19 +651,29 @@
                         Assistant IA Médical
                     </div>
                 </div>
-                <a href="{{ url_for('dashboard') }}" class="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    <i data-feather="settings" class="w-4 h-4"></i>
-                </a>
+                <div class="flex items-center gap-2">
+                    <a href="{{ url_for('chat_help') }}" class="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Aide et Support">
+                        <i data-feather="help-circle" class="w-4 h-4"></i>
+                    </a>
+                    <a href="{{ url_for('dashboard') }}" class="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Tableau de bord">
+                        <i data-feather="settings" class="w-4 h-4"></i>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Mobile header -->
-    <div class="md:hidden p-4 border-b border-gray-200 bg-white flex items-center fixed top-0 left-0 right-0 z-30">
-        <button id="openSidebar" class="text-gray-500 mr-4">
-            <i data-feather="menu" class="w-5 h-5"></i>
-        </button>
-        <h2 class="text-lg font-semibold text-primary-700">NeuroScan Chat</h2>
+    <div class="md:hidden p-4 border-b border-gray-200 bg-white flex items-center justify-between fixed top-0 left-0 right-0 z-30">
+        <div class="flex items-center">
+            <button id="openSidebar" class="text-gray-500 mr-4">
+                <i data-feather="menu" class="w-5 h-5"></i>
+            </button>
+            <h2 class="text-lg font-semibold text-primary-700">NeuroScan Chat</h2>
+        </div>
+        <a href="{{ url_for('chat_help') }}" class="text-gray-500 hover:text-primary-600 p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Aide et Support">
+            <i data-feather="help-circle" class="w-5 h-5"></i>
+        </a>
     </div>
 
     <!-- Overlay pour mobile -->
@@ -719,6 +729,14 @@
                             <p class="text-sm text-medical-600">Mise à jour des connaissances et recommandations</p>
                         </div>
                     </div>
+                    
+                    <!-- Lien d'aide -->
+                    <div class="mt-6 text-center">
+                        <a href="{{ url_for('chat_help') }}" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary-600 transition-colors">
+                            <i data-feather="help-circle" class="w-4 h-4"></i>
+                            <span>Besoin d'aide ? Consultez notre guide d'utilisation</span>
+                        </a>
+                    </div>
                 </div>
                 
                 <!-- En-tête de conversation (affiché quand une conversation est sélectionnée) -->
@@ -742,10 +760,10 @@
                                 <i data-feather="user-plus" class="w-4 h-4"></i>
                                 <span class="hidden sm:inline">Assigner patient</span>
                             </button>
-                            <button class="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                            <a href="{{ url_for('chat_help') }}" class="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2" title="Aide et Support">
                                 <i data-feather="help-circle" class="w-4 h-4"></i>
-                                <span class="hidden sm:inline ml-1">Aide</span>
-                            </button>
+                                <span class="hidden sm:inline">Aide</span>
+                            </a>
                         </div>
                     </div>
                 </div>

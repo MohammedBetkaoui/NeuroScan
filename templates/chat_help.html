@@ -4,108 +4,233 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guide du Chat Médical - NeuroScan</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        },
+                        'medical': {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section-divider {
+            background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+            height: 1px;
+            margin: 2rem 0;
+        }
+        
+        /* Responsive improvements */
+        @media (max-width: 768px) {
+            .mobile-stack {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .mobile-hidden {
+                display: none;
+            }
+            
+            .mobile-center {
+                text-align: center;
+            }
+            
+            .mobile-full {
+                width: 100%;
+            }
+        }
+        
+        /* Smooth scroll for anchor links */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 font-sans">
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
+    <!-- Header Mobile/Desktop Adaptatif -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
+            <div class="flex justify-between items-center h-14 sm:h-16">
+                <!-- Bouton retour - toujours visible -->
                 <div class="flex items-center">
-                    <a href="{{ url_for('chat_page') }}" class="flex items-center text-blue-600 hover:text-blue-800 transition-colors">
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        <span>Retour au Chat</span>
+                    <a href="{{ url_for('chat_page') }}" class="flex items-center text-primary-600 hover:text-primary-800 transition-colors group">
+                        <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i>
+                        <span class="font-medium">Retour</span>
                     </a>
                 </div>
-                <h1 class="text-xl font-bold text-gray-900">Guide du Chat Médical</h1>
-                <div class="flex items-center space-x-2 text-sm text-gray-600">
+                
+                <!-- Titre - responsive -->
+                <h1 class="text-lg sm:text-xl font-bold text-gray-900 text-center mobile-hidden">
+                    Guide du Chat Médical
+                </h1>
+                <h1 class="text-base font-bold text-gray-900 sm:hidden">
+                    Guide
+                </h1>
+                
+                <!-- Info utilisateur - masqué sur très petit écran -->
+                <div class="hidden sm:flex items-center space-x-2 text-sm text-gray-600">
                     <i class="fas fa-user-md"></i>
-                    <span>Dr. {{ doctor.first_name }} {{ doctor.last_name }}</span>
+                    <span class="hidden md:inline">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</span>
+                    <span class="md:hidden">Dr. {{ doctor.last_name }}</span>
                 </div>
+                
+                <!-- Menu burger pour mobile (future extension) -->
+                <div class="sm:hidden w-6"></div>
             </div>
         </div>
     </header>
 
     <!-- Contenu principal -->
-    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        
+        <!-- Navigation rapide mobile -->
+        <nav class="bg-white rounded-xl p-4 mb-6 shadow-sm border border-gray-200 sm:hidden">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">Navigation rapide</h3>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <a href="#fonctionnalites" class="p-2 text-center bg-primary-50 text-primary-700 rounded-lg">Fonctionnalités</a>
+                <a href="#utilisation" class="p-2 text-center bg-primary-50 text-primary-700 rounded-lg">Utilisation</a>
+                <a href="#exemples" class="p-2 text-center bg-primary-50 text-primary-700 rounded-lg">Exemples</a>
+                <a href="#support" class="p-2 text-center bg-primary-50 text-primary-700 rounded-lg">Support</a>
+            </div>
+        </nav>
+
         <!-- Introduction -->
-        <div class="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-6 mb-8">
-            <div class="flex items-center mb-4">
-                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                    <i class="fas fa-robot text-blue-600 text-xl"></i>
+        <div class="bg-gradient-to-r from-primary-50 to-medical-50 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 fade-in">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center mb-4">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-full flex items-center justify-center mb-3 sm:mb-0 sm:mr-4 mx-auto sm:mx-0">
+                    <i class="fas fa-robot text-primary-600 text-lg sm:text-xl"></i>
                 </div>
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Assistant Médical IA avec Gemini</h1>
-                    <p class="text-gray-600">Votre partenaire intelligent pour la neurologie et l'imagerie médicale</p>
+                <div class="text-center sm:text-left">
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Assistant Médical IA avec Gemini</h1>
+                    <p class="text-sm sm:text-base text-gray-600">Votre partenaire intelligent pour la neurologie et l'imagerie médicale</p>
                 </div>
             </div>
-            <p class="text-gray-700 leading-relaxed">
+            <p class="text-sm sm:text-base text-gray-700 leading-relaxed text-center sm:text-left">
                 Notre assistant médical IA, alimenté par Google Gemini, est spécialement conçu pour vous aider dans vos consultations neurologiques. 
                 Il maintient l'historique de vos conversations pour un contexte enrichi et des réponses personnalisées.
             </p>
         </div>
 
         <!-- Fonctionnalités principales -->
-        <section class="mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Fonctionnalités Principales</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+        <section class="mb-6 sm:mb-8" id="fonctionnalites">
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 text-center sm:text-left">Fonctionnalités Principales</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <div class="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200 card-hover">
                     <div class="flex items-center mb-3">
-                        <i class="fas fa-comments text-blue-600 mr-3"></i>
-                        <h3 class="font-semibold text-gray-900">Conversations Persistantes</h3>
+                        <i class="fas fa-comments text-primary-600 mr-3"></i>
+                        <h3 class="font-semibold text-gray-900 text-sm sm:text-base">Conversations Persistantes</h3>
                     </div>
-                    <p class="text-gray-600 text-sm">
+                    <p class="text-gray-600 text-xs sm:text-sm">
                         Toutes vos conversations sont sauvegardées et organisées. L'IA utilise l'historique pour des réponses contextualisées.
                     </p>
                 </div>
 
-                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div class="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200 card-hover">
                     <div class="flex items-center mb-3">
-                        <i class="fas fa-user-friends text-green-600 mr-3"></i>
-                        <h3 class="font-semibold text-gray-900">Assignation de Patients</h3>
+                        <i class="fas fa-user-friends text-medical-600 mr-3"></i>
+                        <h3 class="font-semibold text-gray-900 text-sm sm:text-base">Assignation de Patients</h3>
                     </div>
-                    <p class="text-gray-600 text-sm">
+                    <p class="text-gray-600 text-xs sm:text-sm">
                         Associez vos conversations à des patients spécifiques pour un suivi personnalisé et contextualisé.
                     </p>
                 </div>
 
-                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div class="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200 card-hover">
                     <div class="flex items-center mb-3">
                         <i class="fas fa-brain text-purple-600 mr-3"></i>
-                        <h3 class="font-semibold text-gray-900">Spécialisation Neurologique</h3>
+                        <h3 class="font-semibold text-gray-900 text-sm sm:text-base">Spécialisation Neurologique</h3>
                     </div>
-                    <p class="text-gray-600 text-sm">
+                    <p class="text-gray-600 text-xs sm:text-sm">
                         IA spécialisée en neurologie, imagerie cérébrale, tumeurs cérébrales et pathologies neurologiques.
                     </p>
                 </div>
 
-                <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div class="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200 card-hover">
                     <div class="flex items-center mb-3">
                         <i class="fas fa-shield-alt text-red-600 mr-3"></i>
-                        <h3 class="font-semibold text-gray-900">Sécurité & Confidentialité</h3>
+                        <h3 class="font-semibold text-gray-900 text-sm sm:text-base">Sécurité & Confidentialité</h3>
                     </div>
-                    <p class="text-gray-600 text-sm">
+                    <p class="text-gray-600 text-xs sm:text-sm">
                         Toutes les conversations sont chiffrées et stockées de manière sécurisée, respectant le secret médical.
                     </p>
                 </div>
             </div>
         </section>
 
+        <div class="section-divider"></div>
+
         <!-- Comment utiliser -->
-        <section class="mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Comment Utiliser le Chat Médical</h2>
+        <section class="mb-6 sm:mb-8" id="utilisation">
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 text-center sm:text-left">Comment Utiliser le Chat Médical</h2>
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div class="p-6">
-                    <div class="space-y-6">
+                <div class="p-4 sm:p-6">
+                    <div class="space-y-4 sm:space-y-6">
                         <!-- Étape 1 -->
                         <div class="flex">
                             <div class="flex-shrink-0">
-                                <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">1</div>
+                                <div class="w-6 h-6 sm:w-8 sm:h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-xs sm:text-sm">1</div>
                             </div>
-                            <div class="ml-4">
-                                <h3 class="font-semibold text-gray-900 mb-2">Créer une Nouvelle Consultation</h3>
-                                <p class="text-gray-600 text-sm">
+                            <div class="ml-3 sm:ml-4">
+                                <h3 class="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Créer une Nouvelle Consultation</h3>
+                                <p class="text-gray-600 text-xs sm:text-sm">
                                     Cliquez sur "Nouvelle consultation" pour démarrer une conversation. Vous pouvez modifier le titre pour un meilleur suivi.
                                 </p>
                             </div>
@@ -114,11 +239,11 @@
                         <!-- Étape 2 -->
                         <div class="flex">
                             <div class="flex-shrink-0">
-                                <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">2</div>
+                                <div class="w-6 h-6 sm:w-8 sm:h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-xs sm:text-sm">2</div>
                             </div>
-                            <div class="ml-4">
-                                <h3 class="font-semibold text-gray-900 mb-2">Assigner un Patient (Optionnel)</h3>
-                                <p class="text-gray-600 text-sm">
+                            <div class="ml-3 sm:ml-4">
+                                <h3 class="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Assigner un Patient (Optionnel)</h3>
+                                <p class="text-gray-600 text-xs sm:text-sm">
                                     Cliquez sur "Assigner patient" pour lier la conversation à un patient spécifique. L'IA aura accès aux antécédents et analyses.
                                 </p>
                             </div>
@@ -127,11 +252,11 @@
                         <!-- Étape 3 -->
                         <div class="flex">
                             <div class="flex-shrink-0">
-                                <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">3</div>
+                                <div class="w-6 h-6 sm:w-8 sm:h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-xs sm:text-sm">3</div>
                             </div>
-                            <div class="ml-4">
-                                <h3 class="font-semibold text-gray-900 mb-2">Poser Vos Questions</h3>
-                                <p class="text-gray-600 text-sm">
+                            <div class="ml-3 sm:ml-4">
+                                <h3 class="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Poser Vos Questions</h3>
+                                <p class="text-gray-600 text-xs sm:text-sm">
                                     Tapez votre question médicale dans le champ de saisie. L'IA analysera le contexte de la conversation pour répondre précisément.
                                 </p>
                             </div>
@@ -140,11 +265,11 @@
                         <!-- Étape 4 -->
                         <div class="flex">
                             <div class="flex-shrink-0">
-                                <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">4</div>
+                                <div class="w-6 h-6 sm:w-8 sm:h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-xs sm:text-sm">4</div>
                             </div>
-                            <div class="ml-4">
-                                <h3 class="font-semibold text-gray-900 mb-2">Analyser les Réponses</h3>
-                                <p class="text-gray-600 text-sm">
+                            <div class="ml-3 sm:ml-4">
+                                <h3 class="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Analyser les Réponses</h3>
+                                <p class="text-gray-600 text-xs sm:text-sm">
                                     Chaque réponse inclut un score de confiance et indique si la question était médicale. Utilisez ces informations pour évaluer la pertinence.
                                 </p>
                             </div>
@@ -154,98 +279,104 @@
             </div>
         </section>
 
+        <div class="section-divider"></div>
+
         <!-- Exemples de questions -->
-        <section class="mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Exemples de Questions</h2>
-            <div class="space-y-4">
-                <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                    <h3 class="font-medium text-gray-900 mb-2">
-                        <i class="fas fa-brain text-blue-600 mr-2"></i>
+        <section class="mb-6 sm:mb-8" id="exemples">
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 text-center sm:text-left">Exemples de Questions</h2>
+            <div class="space-y-3 sm:space-y-4">
+                <div class="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-gray-200 card-hover">
+                    <h3 class="font-medium text-gray-900 mb-2 text-sm sm:text-base">
+                        <i class="fas fa-brain text-primary-600 mr-2"></i>
                         Interprétation d'Imagerie
                     </h3>
-                    <ul class="space-y-2 text-sm text-gray-600">
+                    <ul class="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-600">
                         <li>"Comment interpréter cette masse hypodense en temporal droit ?"</li>
                         <li>"Quels sont les critères différentiels entre gliome et méningiome ?"</li>
-                        <li>"Quel est le protocole d'IRM optimal pour une suspicion de glioblastome ?"</li>
+                        <li class="hidden sm:block">"Quel est le protocole d'IRM optimal pour une suspicion de glioblastome ?"</li>
                     </ul>
                 </div>
 
-                <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                    <h3 class="font-medium text-gray-900 mb-2">
-                        <i class="fas fa-stethoscope text-green-600 mr-2"></i>
+                <div class="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-gray-200 card-hover">
+                    <h3 class="font-medium text-gray-900 mb-2 text-sm sm:text-base">
+                        <i class="fas fa-stethoscope text-medical-600 mr-2"></i>
                         Questions Cliniques
                     </h3>
-                    <ul class="space-y-2 text-sm text-gray-600">
+                    <ul class="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-600">
                         <li>"Quels examens prescrire pour des céphalées récentes ?"</li>
                         <li>"Comment surveiller l'évolution d'un méningiome ?"</li>
-                        <li>"Quels sont les signes d'alarme en neurologie ?"</li>
+                        <li class="hidden sm:block">"Quels sont les signes d'alarme en neurologie ?"</li>
                     </ul>
                 </div>
 
-                <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                    <h3 class="font-medium text-gray-900 mb-2">
+                <div class="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-gray-200 card-hover">
+                    <h3 class="font-medium text-gray-900 mb-2 text-sm sm:text-base">
                         <i class="fas fa-user-md text-purple-600 mr-2"></i>
                         Recommandations Thérapeutiques
                     </h3>
-                    <ul class="space-y-2 text-sm text-gray-600">
+                    <ul class="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-600">
                         <li>"Quelle est la prise en charge d'un gliome grade II ?"</li>
                         <li>"Quand référer vers la neurochirurgie ?"</li>
-                        <li>"Protocole de suivi post-opératoire d'une tumeur cérébrale"</li>
+                        <li class="hidden sm:block">"Protocole de suivi post-opératoire d'une tumeur cérébrale"</li>
                     </ul>
                 </div>
             </div>
         </section>
 
+        <div class="section-divider"></div>
+
         <!-- Limitations et avertissements -->
-        <section class="mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Limitations et Avertissements</h2>
-            <div class="bg-amber-50 border border-amber-200 rounded-lg p-6">
+        <section class="mb-6 sm:mb-8">
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 text-center sm:text-left">Limitations et Avertissements</h2>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 sm:p-6">
                 <div class="flex items-start">
-                    <i class="fas fa-exclamation-triangle text-amber-600 mr-3 mt-1"></i>
+                    <i class="fas fa-exclamation-triangle text-amber-600 mr-2 sm:mr-3 mt-1 flex-shrink-0"></i>
                     <div>
-                        <h3 class="font-semibold text-amber-800 mb-2">Important à Retenir</h3>
-                        <ul class="space-y-2 text-sm text-amber-700">
+                        <h3 class="font-semibold text-amber-800 mb-2 text-sm sm:text-base">Important à Retenir</h3>
+                        <ul class="space-y-1 sm:space-y-2 text-xs sm:text-sm text-amber-700">
                             <li>• L'IA ne remplace jamais votre jugement médical professionnel</li>
                             <li>• Toujours vérifier les informations avec des sources médicales fiables</li>
                             <li>• L'IA se limite strictement au domaine médical neurologique</li>
                             <li>• En cas d'urgence médicale, contactez immédiatement les services d'urgence</li>
-                            <li>• Les recommandations sont basées sur les connaissances générales, pas sur des cas spécifiques</li>
+                            <li class="hidden sm:block">• Les recommandations sont basées sur les connaissances générales, pas sur des cas spécifiques</li>
                         </ul>
                     </div>
                 </div>
             </div>
         </section>
 
+        <div class="section-divider"></div>
+
         <!-- Confidentialité -->
-        <section class="mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Confidentialité et Sécurité</h2>
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div class="space-y-4">
+        <section class="mb-6 sm:mb-8">
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 text-center sm:text-left">Confidentialité et Sécurité</h2>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+                <div class="space-y-3 sm:space-y-4">
                     <div class="flex items-start">
-                        <i class="fas fa-lock text-green-600 mr-3 mt-1"></i>
+                        <i class="fas fa-lock text-medical-600 mr-2 sm:mr-3 mt-1 flex-shrink-0"></i>
                         <div>
-                            <h3 class="font-semibold text-gray-900 mb-2">Chiffrement des Données</h3>
-                            <p class="text-gray-600 text-sm">
+                            <h3 class="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Chiffrement des Données</h3>
+                            <p class="text-gray-600 text-xs sm:text-sm">
                                 Toutes les conversations sont chiffrées en transit et au repos, respectant les normes de sécurité médicale.
                             </p>
                         </div>
                     </div>
 
                     <div class="flex items-start">
-                        <i class="fas fa-user-shield text-green-600 mr-3 mt-1"></i>
+                        <i class="fas fa-user-shield text-medical-600 mr-2 sm:mr-3 mt-1 flex-shrink-0"></i>
                         <div>
-                            <h3 class="font-semibold text-gray-900 mb-2">Accès Restreint</h3>
-                            <p class="text-gray-600 text-sm">
+                            <h3 class="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Accès Restreint</h3>
+                            <p class="text-gray-600 text-xs sm:text-sm">
                                 Seul le médecin connecté peut accéder à ses conversations. Aucun partage avec des tiers sans autorisation.
                             </p>
                         </div>
                     </div>
 
                     <div class="flex items-start">
-                        <i class="fas fa-history text-green-600 mr-3 mt-1"></i>
+                        <i class="fas fa-history text-medical-600 mr-2 sm:mr-3 mt-1 flex-shrink-0"></i>
                         <div>
-                            <h3 class="font-semibold text-gray-900 mb-2">Historique Sécurisé</h3>
-                            <p class="text-gray-600 text-sm">
+                            <h3 class="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Historique Sécurisé</h3>
+                            <p class="text-gray-600 text-xs sm:text-sm">
                                 L'historique des conversations est conservé de manière sécurisée pour améliorer le contexte des réponses futures.
                             </p>
                         </div>
@@ -255,22 +386,93 @@
         </section>
 
         <!-- Support -->
-        <section class="bg-gray-100 rounded-lg p-6">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Support et Contact</h2>
-            <p class="text-gray-600 mb-4">
+        <section class="bg-gradient-to-r from-gray-50 to-primary-50 rounded-lg p-4 sm:p-6" id="support">
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 text-center sm:text-left">Support et Contact</h2>
+            <p class="text-gray-600 mb-4 text-xs sm:text-sm text-center sm:text-left">
                 Pour toute question technique ou suggestion d'amélioration du chat médical, n'hésitez pas à nous contacter.
             </p>
-            <div class="flex flex-wrap gap-4">
-                <a href="mailto:support@neuroscan.medical" class="inline-flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <a href="mailto:support@neuroscan.medical" 
+                   class="inline-flex items-center justify-center bg-primary-600 text-white px-4 py-2 sm:py-3 rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
                     <i class="fas fa-envelope mr-2"></i>
                     Support Technique
                 </a>
-                <a href="{{ url_for('chat_page') }}" class="inline-flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                <a href="{{ url_for('chat_page') }}" 
+                   class="inline-flex items-center justify-center bg-medical-600 text-white px-4 py-2 sm:py-3 rounded-lg hover:bg-medical-700 transition-colors text-sm font-medium">
                     <i class="fas fa-comments mr-2"></i>
                     Commencer à Utiliser
                 </a>
             </div>
         </section>
+
+        <!-- Bouton de retour flottant mobile -->
+        <div class="fixed bottom-4 right-4 sm:hidden">
+            <a href="{{ url_for('chat_page') }}" 
+               class="w-12 h-12 bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary-700 transition-colors">
+                <i class="fas fa-comments"></i>
+            </a>
+        </div>
     </main>
+
+    <!-- JavaScript pour smooth scrolling et interactions -->
+    <script>
+        // Smooth scrolling pour les ancres (si pas nativement supporté)
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Animation fade-in au scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, observerOptions);
+
+        // Observer toutes les sections
+        document.querySelectorAll('section').forEach(section => {
+            observer.observe(section);
+        });
+
+        // Highlight du menu de navigation mobile
+        function updateActiveNavItem() {
+            const sections = ['fonctionnalites', 'utilisation', 'exemples', 'support'];
+            const navLinks = document.querySelectorAll('nav a');
+            
+            sections.forEach((sectionId, index) => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    const rect = section.getBoundingClientRect();
+                    if (rect.top <= 100 && rect.bottom >= 100) {
+                        navLinks.forEach(link => link.classList.remove('bg-primary-600', 'text-white'));
+                        if (navLinks[index]) {
+                            navLinks[index].classList.add('bg-primary-600', 'text-white');
+                            navLinks[index].classList.remove('bg-primary-50', 'text-primary-700');
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update active nav on scroll (mobile only)
+        if (window.innerWidth <= 768) {
+            window.addEventListener('scroll', updateActiveNavItem);
+        }
+    </script>
 </body>
 </html>

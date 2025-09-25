@@ -1772,8 +1772,11 @@ def get_chat_conversations(doctor_id, limit=20):
         print(f"Erreur récupération conversations: {e}")
         return []
 
-def get_conversation_messages(conversation_id, doctor_id):
-    """Récupérer les messages d'une conversation"""
+def get_conversation_messages(conversation_id, doctor_id, with_branches=False):
+    """Récupérer les messages d'une conversation (avec ou sans branches)"""
+    if with_branches:
+        return get_conversation_messages_with_branches(conversation_id, doctor_id)
+    
     try:
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
@@ -1788,11 +1791,12 @@ def get_conversation_messages(conversation_id, doctor_id):
             conn.close()
             return []
         
-        # Récupérer les messages
+        # Récupérer seulement les messages de niveau 0 (conversation principale)
         cursor.execute('''
             SELECT id, role, content, timestamp, is_medical_query, confidence_score
             FROM chat_messages
-            WHERE conversation_id = ?
+            WHERE conversation_id = ? AND (branch_level = 0 OR branch_level IS NULL)
+                AND (is_active = 1 OR is_active IS NULL)
             ORDER BY timestamp ASC
         ''', (conversation_id,))
         
@@ -1813,18 +1817,29 @@ def get_conversation_messages(conversation_id, doctor_id):
         print(f"Erreur récupération messages: {e}")
         return []
 
-def save_chat_message(conversation_id, role, content, is_medical_query=True, confidence_score=None):
-    """Sauvegarder un message de chat"""
+def save_chat_message(conversation_id, role, content, is_medical_query=True, confidence_score=None, parent_message_id=None, original_message_id=None, branch_level=0):
+    """Sauvegarder un message de chat avec support du branchement"""
     try:
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
         
+        # Calculer la position dans la branche
+        cursor.execute('''
+            SELECT COALESCE(MAX(branch_position), -1) + 1 
+            FROM chat_messages 
+            WHERE conversation_id = ? AND branch_level = ? 
+            AND (parent_message_id = ? OR (parent_message_id IS NULL AND ? IS NULL))
+        ''', (conversation_id, branch_level, parent_message_id, parent_message_id))
+        branch_position = cursor.fetchone()[0]
+        
         # Sauvegarder le message
         cursor.execute('''
             INSERT INTO chat_messages 
-            (conversation_id, role, content, is_medical_query, confidence_score)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (conversation_id, role, content, is_medical_query, confidence_score))
+            (conversation_id, role, content, is_medical_query, confidence_score, 
+             parent_message_id, original_message_id, branch_level, branch_position)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (conversation_id, role, content, is_medical_query, confidence_score,
+              parent_message_id, original_message_id, branch_level, branch_position))
         
         message_id = cursor.lastrowid
         
@@ -1842,6 +1857,196 @@ def save_chat_message(conversation_id, role, content, is_medical_query=True, con
     except Exception as e:
         print(f"Erreur sauvegarde message: {e}")
         return None
+
+def edit_message_and_create_branch(message_id, new_content, doctor_id):
+    """Éditer un message et créer une nouvelle branche de conversation"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Récupérer le message original et vérifier les permissions
+        cursor.execute('''
+            SELECT cm.id, cm.conversation_id, cm.role, cm.content, cm.parent_message_id, 
+                   cm.original_message_id, cm.branch_level, cm.branch_position, cc.doctor_id
+            FROM chat_messages cm
+            JOIN chat_conversations cc ON cm.conversation_id = cc.id
+            WHERE cm.id = ? AND cc.doctor_id = ?
+        ''', (message_id, doctor_id))
+        
+        result = cursor.fetchone()
+        if not result:
+            conn.close()
+            return None
+            
+        msg_id, conversation_id, role, old_content, parent_id, orig_id, branch_level, branch_pos, doc_id = result
+        
+        # Marquer le message original comme édité s'il n'a pas d'original_message_id
+        original_msg_id = orig_id if orig_id else msg_id
+        if not orig_id:
+            cursor.execute('''
+                UPDATE chat_messages 
+                SET is_edited = 1, edit_count = COALESCE(edit_count, 0) + 1, last_edited_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (msg_id,))
+        
+        # Créer le nouveau message dans une nouvelle branche
+        # Calculer la position dans la branche
+        cursor.execute('''
+            SELECT COALESCE(MAX(branch_position), -1) + 1 
+            FROM chat_messages 
+            WHERE conversation_id = ? AND branch_level = ? AND parent_message_id IS NULL
+        ''', (conversation_id, (branch_level or 0) + 1))
+        new_branch_position = cursor.fetchone()[0]
+        
+        # Créer le message édité
+        cursor.execute('''
+            INSERT INTO chat_messages 
+            (conversation_id, role, content, is_medical_query, confidence_score, 
+             parent_message_id, original_message_id, branch_level, branch_position)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (conversation_id, role, new_content, True, None,
+              parent_id, original_msg_id, (branch_level or 0) + 1, new_branch_position))
+        
+        new_message_id = cursor.lastrowid
+        
+        # Mettre à jour la conversation
+        cursor.execute('''
+            UPDATE chat_conversations 
+            SET updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (conversation_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return {
+            'success': True,
+            'original_message_id': msg_id,
+            'new_message_id': new_message_id,
+            'conversation_id': conversation_id,
+            'branch_level': (branch_level or 0) + 1
+        }
+        
+    except Exception as e:
+        print(f"Erreur édition message: {e}")
+        return None
+
+def get_conversation_messages_with_branches(conversation_id, doctor_id):
+    """Récupérer les messages d'une conversation avec les branches (version simplifiée)"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Vérifier que la conversation appartient au médecin
+        cursor.execute('''
+            SELECT id FROM chat_conversations 
+            WHERE id = ? AND doctor_id = ?
+        ''', (conversation_id, doctor_id))
+        
+        if not cursor.fetchone():
+            conn.close()
+            return []
+        
+        # Récupérer tous les messages actifs, organisés par niveau de branche et position
+        cursor.execute('''
+            SELECT id, role, content, timestamp, is_medical_query, confidence_score,
+                   parent_message_id, original_message_id, is_edited, edit_count,
+                   last_edited_at, COALESCE(branch_level, 0) as branch_level, 
+                   COALESCE(branch_position, 0) as branch_position
+            FROM chat_messages
+            WHERE conversation_id = ? AND (is_active IS NULL OR is_active = 1)
+            ORDER BY timestamp ASC
+        ''', (conversation_id,))
+        
+        raw_messages = cursor.fetchall()
+        conn.close()
+        
+        # Pour l'instant, retourner une version simplifiée : seulement les messages de niveau 0
+        messages = []
+        branches_map = {}
+        
+        for row in raw_messages:
+            message = {
+                'id': row[0],
+                'role': row[1], 
+                'content': row[2],
+                'timestamp': row[3],
+                'is_medical_query': bool(row[4]),
+                'confidence_score': row[5],
+                'parent_message_id': row[6],
+                'original_message_id': row[7],
+                'is_edited': bool(row[8]),
+                'edit_count': row[9] or 0,
+                'last_edited_at': row[10],
+                'branch_level': row[11],
+                'branch_position': row[12],
+                'branches': []
+            }
+            
+            # Si c'est un message de niveau 0, l'ajouter à la conversation principale
+            if message['branch_level'] == 0:
+                messages.append(message)
+            else:
+                # Garder les branches dans une map pour un affichage futur
+                original_id = message['original_message_id']
+                if original_id not in branches_map:
+                    branches_map[original_id] = []
+                branches_map[original_id].append(message)
+        
+        # Ajouter les informations de branches aux messages principaux
+        for message in messages:
+            if message['id'] in branches_map:
+                message['branches'] = branches_map[message['id']]
+            elif message['is_edited']:
+                # Si le message est marqué comme édité, chercher ses branches
+                message['branches'] = branches_map.get(message['id'], [])
+        
+        return messages
+        
+    except Exception as e:
+        print(f"Erreur récupération messages avec branches: {e}")
+        return []
+
+def get_message_branches(message_id, doctor_id):
+    """Récupérer toutes les branches d'un message spécifique"""
+    try:
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Récupérer le message et ses branches
+        cursor.execute('''
+            SELECT cm.id, cm.role, cm.content, cm.timestamp, cm.is_medical_query, 
+                   cm.confidence_score, cm.branch_level, cm.is_edited, cm.edit_count,
+                   cc.doctor_id
+            FROM chat_messages cm
+            JOIN chat_conversations cc ON cm.conversation_id = cc.id
+            WHERE (cm.id = ? OR cm.original_message_id = ?) 
+                AND cc.doctor_id = ?
+                AND (cm.is_active IS NULL OR cm.is_active = 1)
+            ORDER BY cm.branch_level ASC, cm.timestamp ASC
+        ''', (message_id, message_id, doctor_id))
+        
+        branches = []
+        for row in cursor.fetchall():
+            branches.append({
+                'id': row[0],
+                'role': row[1],
+                'content': row[2], 
+                'timestamp': row[3],
+                'is_medical_query': bool(row[4]),
+                'confidence_score': row[5],
+                'branch_level': row[6] or 0,
+                'is_edited': bool(row[7]),
+                'edit_count': row[8] or 0,
+                'is_original': row[0] == message_id
+            })
+        
+        conn.close()
+        return branches
+        
+    except Exception as e:
+        print(f"Erreur récupération branches: {e}")
+        return []
 
 def call_gemini_with_context(user_message, conversation_history, patient_context=None):
     """Appeler Gemini avec le contexte de la conversation et du patient"""
@@ -2500,6 +2705,170 @@ def delete_conversation(conversation_id):
 
     except Exception as e:
         print(f"Erreur suppression conversation: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ===== APIs pour l'édition et le branchement de messages =====
+
+@app.route('/api/chat/messages/<int:message_id>/edit', methods=['POST'])
+@login_required
+def edit_message(message_id):
+    """API pour éditer un message et créer une nouvelle branche"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        data = request.get_json()
+        new_content = data.get('content', '').strip()
+
+        if not new_content:
+            return jsonify({'success': False, 'error': 'Nouveau contenu requis'}), 400
+
+        # Éditer le message et créer la branche
+        result = edit_message_and_create_branch(message_id, new_content, doctor_id)
+        
+        if not result or not result.get('success'):
+            return jsonify({'success': False, 'error': 'Impossible d\'éditer ce message'}), 404
+
+        # Récupérer les informations du nouveau message
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT role, conversation_id FROM chat_messages WHERE id = ?
+        ''', (result['new_message_id'],))
+        
+        msg_info = cursor.fetchone()
+        conn.close()
+        
+        # Si c'est un message utilisateur, générer une nouvelle réponse de l'assistant
+        if msg_info and msg_info[0] == 'user':
+            try:
+                # Récupérer l'historique pour générer une réponse
+                conversation_history = get_conversation_messages(msg_info[1], doctor_id)
+                patient_context = get_patient_context_for_conversation(msg_info[1])
+                
+                # Appeler Gemini avec le nouveau contexte
+                gemini_response = call_gemini_with_context(new_content, conversation_history, patient_context)
+                
+                if gemini_response:
+                    # Sauvegarder la nouvelle réponse dans la même branche
+                    assistant_message_id = save_chat_message(
+                        msg_info[1], 
+                        'assistant', 
+                        gemini_response['response'],
+                        gemini_response['is_medical'],
+                        gemini_response['confidence_score'],
+                        None,  # parent_message_id
+                        None,  # original_message_id
+                        result['branch_level']  # même niveau de branche
+                    )
+                    
+                    result['assistant_message_id'] = assistant_message_id
+                    result['assistant_response'] = gemini_response['response']
+                
+            except Exception as e:
+                print(f"Erreur génération réponse après édition: {e}")
+                # Continuer même si la génération de réponse échoue
+
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Erreur édition message: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/chat/messages/<int:message_id>/branches')
+@login_required
+def get_message_branches_api(message_id):
+    """API pour récupérer toutes les branches d'un message"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        branches = get_message_branches(message_id, doctor_id)
+        return jsonify({'success': True, 'branches': branches})
+
+    except Exception as e:
+        print(f"Erreur récupération branches: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/chat/conversations/<int:conversation_id>/messages-with-branches')
+@login_required  
+def get_messages_with_branches_api(conversation_id):
+    """API pour récupérer les messages d'une conversation avec leurs branches"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        messages = get_conversation_messages_with_branches(conversation_id, doctor_id)
+        return jsonify({'success': True, 'messages': messages})
+
+    except Exception as e:
+        print(f"Erreur récupération messages avec branches: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/chat/messages/<int:message_id>/regenerate', methods=['POST'])
+@login_required
+def regenerate_response(message_id):
+    """API pour régénérer la réponse d'un assistant à partir d'un message utilisateur"""
+    try:
+        doctor_id = session.get('doctor_id')
+        if not doctor_id:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        
+        # Récupérer le message utilisateur et vérifier les permissions
+        cursor.execute('''
+            SELECT cm.conversation_id, cm.content, cm.role, cc.doctor_id
+            FROM chat_messages cm
+            JOIN chat_conversations cc ON cm.conversation_id = cc.id
+            WHERE cm.id = ? AND cc.doctor_id = ? AND cm.role = 'user'
+        ''', (message_id, doctor_id))
+        
+        message_info = cursor.fetchone()
+        if not message_info:
+            conn.close()
+            return jsonify({'success': False, 'error': 'Message introuvable ou non autorisé'}), 404
+        
+        conversation_id, content, role, doc_id = message_info
+        conn.close()
+        
+        # Récupérer l'historique et le contexte patient
+        conversation_history = get_conversation_messages_with_branches(conversation_id, doctor_id)
+        patient_context = get_patient_context_for_conversation(conversation_id)
+        
+        # Générer une nouvelle réponse avec Gemini
+        gemini_response = call_gemini_with_context(content, conversation_history, patient_context)
+        
+        if gemini_response:
+            # Sauvegarder la nouvelle réponse comme une branche
+            assistant_message_id = save_chat_message(
+                conversation_id,
+                'assistant',
+                gemini_response['response'],
+                gemini_response['is_medical'],
+                gemini_response['confidence_score'],
+                message_id,  # parent_message_id (message utilisateur)
+                None,  # original_message_id
+                1  # branch_level = 1 pour une réponse alternative
+            )
+            
+            return jsonify({
+                'success': True,
+                'message_id': assistant_message_id,
+                'response': gemini_response['response'],
+                'confidence_score': gemini_response['confidence_score'],
+                'is_medical': gemini_response['is_medical']
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Impossible de générer une réponse'}), 500
+
+    except Exception as e:
+        print(f"Erreur régénération réponse: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/old-chat', methods=['POST'])

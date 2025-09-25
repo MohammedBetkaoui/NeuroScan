@@ -1,0 +1,64 @@
+/* Force Light Theme Overrides
+   Ensures consistent light appearance across browsers even when system is in dark mode or Chrome applies darkening heuristics.
+   Scope kept minimal; can be toggled off if a manual dark mode is implemented later. */
+
+/* Explicitly declare light color scheme so user agents don't auto-invert form controls or scrollbars */
+:root, html.force-light, body.force-light, body {
+  color-scheme: light !important;
+  /* Reaffirm base surface variables for light mode in case earlier dark overrides ran */
+  --bg-primary: #f8fafc !important;
+  --bg-secondary: #f1f5f9 !important;
+  --surface-primary: rgba(255,255,255,0.95) !important;
+  --surface-secondary: rgba(255,255,255,0.8) !important;
+}
+
+/* Neutralize any dark mode @media that already executed by re-specifying critical components */
+.dashboard-header,
+header.dashboard-header,
+.navbar,
+.modern-navbar {
+  background: var(--surface-primary) !important;
+  color: #1f2937 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+  border-bottom: 1px solid rgba(229,231,235,0.5) !important;
+}
+
+/* Panels / cards */
+.dashboard-card,
+.patient-info-panel,
+.hero-stats-panel,
+.filter-panel,
+.neuroscan-card {
+  background: var(--surface-primary) !important;
+  color: #111827 !important;
+  border: 1px solid rgba(229,231,235,0.3) !important;
+}
+
+/* Text colors forced back to light-theme neutrals */
+.dashboard-card-title, h1, h2, h3, h4, h5, h6 {
+  color: #111827 !important;
+}
+
+p, span, li, td, th, label, .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900 {
+  color: #374151 !important;
+}
+
+/* Inputs */
+input, select, textarea {
+  background: #ffffff !important;
+  color: #1f2937 !important;
+  border-color: #d1d5db !important;
+}
+
+/* Utility to opt-out if needed on a subtree */
+.force-dark-exception * {
+  color-scheme: initial !important;
+}
+
+/* Optional: Avoid transition flashes when overriding dark media query */
+html.force-light * {
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* If a manual dark mode toggle is later introduced, ensure it can override these rules by adding .theme-dark on <html> and increasing specificity */
+html.theme-dark body, html.theme-dark .dashboard-header, html.theme-dark .dashboard-card { all: revert; }

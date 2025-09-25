@@ -5,254 +5,1356 @@
 {% block page_subtitle %}Détails complets et interprétation clinique{% endblock %}
 {% block page_description %}Vue dédiée pour l'analyse n° {{ analysis.id }}{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Styles spécifiques pour la page d'analyse - Design Pro & Responsive */
+.prob-color-0, .prob-color-bg-0 { background-color: #3b82f6 !important; }
+.prob-color-1, .prob-color-bg-1 { background-color: #7c3aed !important; }
+.prob-color-2, .prob-color-bg-2 { background-color: #10b981 !important; }
+.prob-color-3, .prob-color-bg-3 { background-color: #f59e0b !important; }
+.prob-color-4, .prob-color-bg-4 { background-color: #ef4444 !important; }
+
+.analysis-header {
+  background: linear-gradient(135deg, #838bb3 0%, #2010ad 50%, #2f21a8 100%);
+  background-size: 400% 400%;
+  animation: gradient-animation 15s ease infinite;
+  border-radius: 28px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3),
+              0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+@keyframes gradient-animation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.analysis-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.15) 0%, 
+    rgba(255, 255, 255, 0.05) 50%, 
+    rgba(255, 255, 255, 0.1) 100%);
+  backdrop-filter: blur(20px);
+  z-index: 1;
+}
+
+.analysis-header::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  animation: rotate-gradient 20s linear infinite;
+  z-index: 2;
+}
+
+@keyframes rotate-gradient {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.analysis-header > * {
+  position: relative;
+  z-index: 3;
+}
+
+/* Styles spécifiques pour le contenu de analysis-header */
+.analysis-header h1 {
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  transition: all 0.3s ease;
+}
+
+.analysis-header h1:hover {
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  transform: scale(1.02);
+}
+
+.analysis-header p {
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+  font-weight: 500;
+  opacity: 0.95;
+  transition: opacity 0.3s ease;
+}
+
+.analysis-header:hover p {
+  opacity: 1;
+}
+
+/* Effet de brillance sur l'analysis-header */
+.analysis-header {
+  position: relative;
+  overflow: hidden;
+}
+
+.analysis-header:hover {
+  transform: scale(1.005);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.analysis-header:hover::before {
+  backdrop-filter: blur(25px);
+}
+
+/* Animation de pulse subtle pour attirer l'attention */
+@keyframes subtle-pulse {
+  0%, 100% { 
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+  50% { 
+    box-shadow: 0 25px 50px rgba(102, 126, 234, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+  }
+}
+
+.analysis-header {
+  animation: subtle-pulse 4s ease-in-out infinite;
+}
+
+.analysis-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.analysis-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+}
+
+/* Styles avancés pour l'affichage de l'image d'analyse */
+.image-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.image-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    45deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.1) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 50%,
+    transparent 75%,
+    rgba(255, 255, 255, 0.1) 75%
+  );
+  background-size: 20px 20px;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.image-container img {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: contrast(1.05) brightness(1.02);
+  position: relative;
+  z-index: 2;
+}
+
+.image-container:hover img {
+  transform: scale(1.02);
+  filter: contrast(1.1) brightness(1.05) saturate(1.1);
+}
+
+/* Overlay avec informations sur l'image */
+.image-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.4) 50%,
+    transparent 100%
+  );
+  padding: 20px;
+  color: white;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 3;
+}
+
+.image-container:hover .image-overlay {
+  transform: translateY(0);
+}
+
+/* Boutons d'action pour l'image */
+.image-actions {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 4;
+}
+
+.image-container:hover .image-actions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.image-action-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #374151;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.image-action-btn:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Indicateur de zoom */
+.zoom-indicator {
+  position: absolute;
+  bottom: 15px;
+  left: 15px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.3s ease;
+  z-index: 4;
+}
+
+.image-container:hover .zoom-indicator {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Animation de chargement pour l'image */
+.image-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(59, 130, 246, 0.1);
+  border-radius: 50%;
+  border-top-color: #3b82f6;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.result-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.confidence-bar {
+  height: 12px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #e5e7eb, #e5e7eb);
+  overflow: hidden;
+  position: relative;
+}
+
+.confidence-fill {
+  height: 100%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #10b981, #059669);
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.confidence-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.prob-bar-container {
+  background: #f3f4f6;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 8px;
+  position: relative;
+}
+
+.prob-bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.image-container {
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(45deg, #f3f4f6, #e5e7eb);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+}
+
+.action-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+.action-btn.secondary {
+  background: rgba(255, 255, 255, 0.9);
+  color: #374151;
+  border: 1px solid rgba(209, 213, 219, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+.action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn.success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+}
+
+.action-btn.success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+}
+
+.info-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(209, 213, 219, 0.3);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.info-chip:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.section-title i {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeIn 0.6s forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .analysis-header {
+    border-radius: 24px;
+    margin: 0 -8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .analysis-header {
+    border-radius: 20px;
+    margin: 0 -12px;
+    background-size: 300% 300%;
+  }
+  
+  .analysis-header::after {
+    animation-duration: 30s;
+  }
+  
+  .analysis-card {
+    margin: 0 -8px;
+    border-radius: 16px;
+  }
+  
+  .action-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  .result-badge {
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+  
+  .section-title {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .analysis-header {
+    border-radius: 16px;
+    margin: 0 -16px;
+    box-shadow: 0 12px 24px rgba(102, 126, 234, 0.2),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
+  
+  .analysis-header::before {
+    backdrop-filter: blur(15px);
+  }
+  
+  .info-chip {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  
+  /* Styles responsives pour l'image */
+  .image-container img {
+    height: 320px !important;
+  }
+  
+  .image-actions {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
+  }
+  
+  .image-action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+  
+  .image-overlay {
+    padding: 15px;
+  }
+  
+  .zoom-indicator {
+    bottom: 10px;
+    left: 10px;
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}
+
+/* Styles pour très petits écrans */
+@media (max-width: 480px) {
+  .image-container img {
+    height: 280px !important;
+  }
+  
+  .image-actions {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .image-action-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .image-overlay {
+    padding: 12px;
+    font-size: 12px;
+  }
+  
+  /* Modal responsive */
+  #imageModal .relative {
+    max-width: 98vw;
+    max-height: 98vh;
+  }
+  
+  #imageModal button {
+    width: 40px;
+    height: 40px;
+  }
+  
+  #imageModal .absolute.bottom-4.left-4 {
+    left: 2px;
+    bottom: 2px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  #imageModal .absolute.bottom-4.right-4 {
+    right: 2px;
+    bottom: 2px;
+  }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<!-- En-tête rapport + actions -->
-<section class="rounded-2xl p-6 bg-white border border-neutral-200 shadow-sm mb-6">
-  <div class="flex items-center justify-between gap-4 flex-wrap">
-    <div class="flex items-center gap-4">
-      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow">
-        <i class="fas fa-file-medical"></i>
+<!-- Données JSON pour JavaScript -->
+<script type="application/json" id="analysis-json">
+{
+  "id": {{ analysis.id }},
+  "predicted_label": "{{ analysis.predicted_label }}",
+  "confidence": {{ analysis.confidence }},
+  "patient_name": "{{ analysis.patient_name }}",
+  "patient_id": "{{ analysis.patient_id or '' }}",
+  "exam_date": "{{ analysis.exam_date or '' }}",
+  "timestamp": "{{ analysis.timestamp }}",
+  "filename": "{{ analysis.filename }}",
+  "probabilities": {{ analysis.probabilities|tojson if analysis.probabilities else '{}' }}
+}
+</script>
+
+<!-- En-tête rapport amélioré -->
+<div class="analysis-header p-6 md:p-8 mb-6 text-white relative z-10">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div class="flex items-start md:items-center gap-4">
+      <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm text-white flex items-center justify-center shadow-lg flex-shrink-0">
+        <i class="fas fa-file-medical text-xl"></i>
       </div>
-      <div>
-        <h2 class="text-xl font-bold text-neutral-900">Rapport d'Analyse IA • #{{ analysis.id }}</h2>
-        <p class="text-neutral-500 text-sm">Généré automatiquement • {{ analysis.timestamp }}</p>
+      <div class="min-w-0">
+        <h1 class="text-2xl md:text-3xl font-bold mb-2">Rapport d'Analyse IA • #{{ analysis.id }}</h1>
+        <p class="text-white/80 text-sm md:text-base">Généré automatiquement • {{ analysis.timestamp }}</p>
       </div>
     </div>
-    <div class="flex items-center gap-2">
+    
+    <div class="flex flex-wrap items-center gap-3">
       {% if analysis.patient_id %}
-      <a href="/patient/{{ analysis.patient_id }}" class="btn-dashboard secondary"><i class="fas fa-user"></i> Patient</a>
+      <a href="/patient/{{ analysis.patient_id }}" class="action-btn secondary">
+        <i class="fas fa-user"></i>
+        <span class="hidden sm:inline">Patient</span>
+      </a>
       {% endif %}
-      <button id="detailShareBtn" class="btn-dashboard success"><i class="fas fa-share"></i> Partager</button>
-      <button id="detailPdfBtn" class="btn-dashboard primary"><i class="fas fa-file-download"></i> PDF</button>
+      <button id="detailShareBtn" class="action-btn success">
+        <i class="fas fa-share"></i>
+        <span class="hidden sm:inline">Partager</span>
+      </button>
+      <button id="detailPdfBtn" class="action-btn primary">
+        <i class="fas fa-file-download"></i>
+        <span class="hidden sm:inline">PDF</span>
+      </button>
     </div>
   </div>
-  <!-- Chips patient -->
-  <div class="mt-4 flex flex-wrap items-center gap-2 text-sm">
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-neutral-50 border border-neutral-200"><i class="fas fa-user text-neutral-600"></i>{{ analysis.patient_name }}</span>
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-neutral-50 border border-neutral-200"><i class="fas fa-hashtag text-neutral-600"></i>{{ analysis.patient_id or '—' }}</span>
-    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-neutral-50 border border-neutral-200"><i class="fas fa-calendar-day text-neutral-600"></i>{{ analysis.exam_date or '—' }}</span>
+  
+  <!-- Informations patient -->
+  <div class="mt-6 flex flex-wrap gap-3">
+    <div class="info-chip">
+      <i class="fas fa-user text-blue-500"></i>
+      <span>{{ analysis.patient_name }}</span>
+    </div>
+    <div class="info-chip">
+      <i class="fas fa-hashtag text-purple-500"></i>
+      <span>{{ analysis.patient_id or '—' }}</span>
+    </div>
+    <div class="info-chip">
+      <i class="fas fa-calendar-day text-green-500"></i>
+      <span>{{ analysis.exam_date or '—' }}</span>
+    </div>
   </div>
-</section>
+</div>
 
+<!-- Contenu principal -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-  <div class="lg:col-span-5 space-y-4">
-    <div class="dashboard-card p-0 overflow-hidden">
-      <img src="{{ analysis.image_url }}" alt="IRM" class="w-full h-[480px] object-contain bg-black/5"/>
+  <!-- Section Image et Métadonnées -->
+  <div class="lg:col-span-5 space-y-6">
+    <!-- Image IRM -->
+    <div class="analysis-card p-0 overflow-hidden fade-in">
+      <div class="image-container relative">
+        <!-- Actions sur l'image -->
+        <div class="image-actions">
+          <button class="image-action-btn" onclick="toggleFullscreen()" title="Plein écran">
+            <i class="fas fa-expand text-sm"></i>
+          </button>
+          <button class="image-action-btn" onclick="downloadImage()" title="Télécharger">
+            <i class="fas fa-download text-sm"></i>
+          </button>
+          <button class="image-action-btn" onclick="toggleImageInfo()" title="Informations">
+            <i class="fas fa-info text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Indicateur de zoom -->
+        <div class="zoom-indicator">
+          <i class="fas fa-search-plus mr-1"></i>
+          Cliquer pour agrandir
+        </div>
+
+        <!-- Image principale -->
+        <img id="analysisImage" 
+             src="{{ analysis.image_url }}" 
+             alt="Image IRM - Analyse {{ analysis.id }}" 
+             class="w-full h-[480px] lg:h-[520px] object-contain bg-gradient-to-br from-gray-50 to-gray-100 cursor-pointer"
+             onclick="openImageModal()"
+             onload="hideImageLoading()"
+             onerror="showImageError()"/>
+
+        <!-- Animation de chargement -->
+        <div id="imageLoading" class="image-loading">
+          <div class="loading-spinner"></div>
+        </div>
+
+        <!-- Overlay avec informations -->
+        <div class="image-overlay" id="imageOverlay">
+          <div class="text-sm font-medium mb-1">{{ analysis.patient_name or 'Patient' }}</div>
+          <div class="text-xs opacity-75">
+            Analyse #{{ analysis.id }} • {{ analysis.exam_date or 'Date inconnue' }}
+          </div>
+          <div class="text-xs opacity-75 mt-1">
+            Résolution: <span id="imageResolution">Chargement...</span>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="dashboard-card p-4">
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <div class="text-sm text-gray-500">Horodatage</div>
-          <div class="font-semibold">{{ analysis.timestamp }}</div>
+    
+    <!-- Métadonnées techniques -->
+    <div class="analysis-card p-6 fade-in">
+      <div class="section-title">
+        <i class="fas fa-info-circle bg-blue-100 text-blue-600"></i>
+        Informations techniques
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="space-y-1">
+          <div class="text-sm font-medium text-gray-500">Horodatage</div>
+          <div class="font-semibold text-gray-900">{{ analysis.timestamp }}</div>
         </div>
-        <div>
-          <div class="text-sm text-gray-500">Durée d'analyse</div>
-          <div class="font-semibold">{{ '%.2f'|format(analysis.processing_time or 0) }}s</div>
+        <div class="space-y-1">
+          <div class="text-sm font-medium text-gray-500">Durée d'analyse</div>
+          <div class="font-semibold text-gray-900 flex items-center gap-2">
+            <i class="fas fa-clock text-green-500 text-sm"></i>
+            {{ '%.2f'|format(analysis.processing_time or 0) }}s
+          </div>
         </div>
-        <div>
-          <div class="text-sm text-gray-500">Analyse précédente</div>
-          <div class="font-semibold">{{ analysis.previous_analysis_id or '—' }}</div>
+        <div class="space-y-1">
+          <div class="text-sm font-medium text-gray-500">Analyse précédente</div>
+          <div class="font-semibold text-gray-900">{{ analysis.previous_analysis_id or '—' }}</div>
         </div>
-        <div>
-          <div class="text-sm text-gray-500">Fichier</div>
-          <div class="font-semibold truncate" title="{{ analysis.filename }}">{{ analysis.filename }}</div>
+        <div class="space-y-1">
+          <div class="text-sm font-medium text-gray-500">Fichier source</div>
+          <div class="font-semibold text-gray-900 truncate" title="{{ analysis.filename }}">
+            <i class="fas fa-file-image text-purple-500 mr-2"></i>{{ analysis.filename }}
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="lg:col-span-7 space-y-4">
-    <div class="dashboard-card p-6">
-      <div class="flex items-center justify-between mb-3">
-        <div class="text-2xl font-bold text-gray-900">{{ analysis.predicted_label }}</div>
-        <span class="px-3 py-1 rounded-lg text-white text-sm font-semibold {{ 'bg-emerald-600' if analysis.predicted_label=='Normal' else ('bg-orange-600' if analysis.predicted_label=='Gliome' else ('bg-purple-600' if analysis.predicted_label=='Méningiome' else 'bg-blue-600')) }}">{{ analysis.predicted_label }}</span>
-      </div>
-      <div>
-        <div class="flex items-center justify-between text-sm text-gray-600 mb-1">
-          <span>Niveau de confiance</span>
-          <span class="font-semibold text-gray-900">{{ '%.1f'|format(analysis.confidence) }}%</span>
-        </div>
-        <div class="w-full h-3 rounded-full bg-gray-200 overflow-hidden" aria-hidden="true">
-          <div id="confBar" class="h-3 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600" data-width="{{ '%.1f'|format(analysis.confidence) }}"></div>
-        </div>
-      </div>
-      <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+  <!-- Section Résultats -->
+  <div class="lg:col-span-7 space-y-6">
+    <!-- Résultat principal -->
+    <div class="analysis-card p-6 fade-in">
+      <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
         <div>
-          <div class="text-gray-500">Patient</div>
-          <div class="font-semibold">{{ analysis.patient_name }}</div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">{{ analysis.predicted_label }}</h2>
+          <p class="text-gray-600">Diagnostic principal identifié par l'IA</p>
         </div>
-        <div>
-          <div class="text-gray-500">ID Patient</div>
-          <div class="font-semibold">{{ analysis.patient_id or '—' }}</div>
+        <div class="result-badge {{ 'bg-emerald-500 text-white' if analysis.predicted_label=='Normal' else ('bg-orange-500 text-white' if analysis.predicted_label=='Gliome' else ('bg-purple-500 text-white' if analysis.predicted_label=='Méningiome' else 'bg-blue-500 text-white')) }}">
+          <i class="fas fa-{{ 'check-circle' if analysis.predicted_label=='Normal' else 'exclamation-triangle' }}"></i>
+          {{ analysis.predicted_label }}
         </div>
-        <div>
-          <div class="text-gray-500">Date d'examen</div>
-          <div class="font-semibold">{{ analysis.exam_date or '—' }}</div>
-        </div>
-        <div></div>
       </div>
-    </div>
-
-    <div class="dashboard-card p-6">
-      <div class="flex items-center justify-between mb-3">
-        <div class="font-semibold text-gray-900">Répartition des scores</div>
+      
+      <!-- Barre de confiance améliorée -->
+      <div class="mb-6">
+        <div class="flex items-center justify-between text-sm text-gray-600 mb-3">
+          <span class="font-medium">Niveau de confiance du diagnostic</span>
+          <span class="font-bold text-2xl text-gray-900">{{ '%.1f'|format(analysis.confidence) }}%</span>
+        </div>
+        <div class="confidence-bar">
+          <div id="confFill" class="confidence-fill" data-width="{{ '%.1f'|format(analysis.confidence) }}"></div>
+        </div>
+        <div class="flex justify-between text-xs text-gray-500 mt-2">
+          <span>Faible</span>
+          <span>Élevé</span>
+        </div>
       </div>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          <div class="relative h-56">
-            <canvas id="probDonut" class="absolute inset-0 w-full h-full"></canvas>
+      
+      <!-- Informations patient condensées -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-12">
+          <i class="fas fa-user-circle text-blue-500 text-lg"></i>
+          <div>
+            <div class="text-gray-500">Patient</div>
+            <div class="font-semibold">{{ analysis.patient_name }}</div>
           </div>
         </div>
-        <div class="grid grid-cols-1 gap-3">
-  {% set colors = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626'] %}
-  {% for name, value in analysis.probabilities.items() %}
-        <div>
-          <div class="flex items-center justify-between text-sm">
-            <span class="text-gray-700">{{ name }}</span>
-            <span class="font-semibold text-gray-900">{{ '%.1f'|format(value) }}%</span>
-          </div>
-          <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div class="h-2 rounded-full prob-bar" data-width="{{ '%.1f'|format(value) }}" data-color="{{ colors[loop.index0 % colors|length] }}"></div>
+        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-12">
+          <i class="fas fa-id-card text-purple-500 text-lg"></i>
+          <div>
+            <div class="text-gray-500">ID Patient</div>
+            <div class="font-semibold">{{ analysis.patient_id or '—' }}</div>
           </div>
         </div>
-        {% endfor %}
+        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-12">
+          <i class="fas fa-calendar text-green-500 text-lg"></i>
+          <div>
+            <div class="text-gray-500">Date d'examen</div>
+            <div class="font-semibold">{{ analysis.exam_date or '—' }}</div>
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- Répartition des scores améliorée -->
+    <div class="analysis-card p-6 fade-in">
+      <div class="section-title mb-6">
+        <i class="fas fa-chart-pie bg-purple-100 text-purple-600"></i>
+        Analyse détaillée des probabilités
+      </div>
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        <!-- Graphique donut -->
+        <div class="flex items-center justify-center">
+          <div class="relative w-64 h-64">
+            <canvas id="probDonut" class="w-full h-full"></canvas>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="text-center">
+                <div class="text-2xl font-bold text-gray-900">{{ '%.1f'|format(analysis.confidence) }}%</div>
+                <div class="text-sm text-gray-500">Confiance</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Barres de probabilités -->
+        <div class="space-y-4">
+          {% set colors = ['bg-blue-500','bg-purple-500','bg-green-500','bg-yellow-500','bg-red-500'] %}
+          {% for name, value in analysis.probabilities.items() %}
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-4 h-4 rounded-full prob-color-{{ loop.index0 }}"></div>
+                <span class="font-medium text-gray-700">{{ name }}</span>
+              </div>
+              <span class="font-bold text-gray-900 text-lg">{{ '%.1f'|format(value) }}%</span>
+            </div>
+            <div class="prob-bar-container">
+              <div class="prob-bar-fill prob-color-bg-{{ loop.index0 }}" data-width="{{ '%.1f'|format(value) }}"></div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Résumé clinique -->
     {% if analysis.description %}
-    <div class="dashboard-card p-6">
-      <div class="font-semibold text-gray-900 mb-2">Résumé clinique</div>
-      <p class="text-gray-700">{{ analysis.description }}</p>
+    <div class="analysis-card p-6 fade-in">
+      <div class="section-title">
+        <i class="fas fa-stethoscope bg-green-100 text-green-600"></i>
+        Résumé clinique
+      </div>
+      <div class="prose max-w-none">
+        <p class="text-gray-700 leading-relaxed">{{ analysis.description }}</p>
+      </div>
     </div>
     {% endif %}
 
-    <div class="dashboard-card p-6">
-      <div class="font-semibold text-gray-900 mb-3">Recommandations</div>
+    <!-- Recommandations -->
+    <div class="analysis-card p-6 fade-in">
+      <div class="section-title">
+        <i class="fas fa-user-md bg-blue-100 text-blue-600"></i>
+        Recommandations médicales
+      </div>
       {% if analysis.recommendations and analysis.recommendations|length > 0 %}
-      <ul class="space-y-2 text-gray-700 text-sm">
+      <div class="space-y-3">
         {% for r in analysis.recommendations %}
-        <li class="flex items-start gap-2"><i class="fas fa-user-md text-emerald-600 mt-1"></i><span>{{ r }}</span></li>
+        <div class="flex items-start gap-4 p-4 bg-blue-50 rounded-16 border-l-4 border-blue-400">
+          <i class="fas fa-lightbulb text-blue-500 mt-1 flex-shrink-0"></i>
+          <span class="text-gray-700 leading-relaxed">{{ r }}</span>
+        </div>
         {% endfor %}
-      </ul>
+      </div>
       {% else %}
-      <div class="text-gray-500 text-sm">Aucune recommandation enregistrée.</div>
+      <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-16 text-gray-500">
+        <i class="fas fa-info-circle"></i>
+        <span>Aucune recommandation spécifique enregistrée pour cette analyse.</span>
+      </div>
       {% endif %}
     </div>
 
     <!-- Analyse IA Avancée (Gemini) -->
-    <div class="dashboard-card p-6">
-      <div class="font-semibold text-gray-900 mb-3 flex items-center"><i class="fas fa-microscope text-purple-600 mr-2"></i>Analyse IA Avancée</div>
-      <div id="advLoading" class="text-sm text-neutral-500">Analyse en cours…</div>
-      <div id="advContent" class="hidden space-y-3">
-        <div class="flex items-start gap-3">
-          <i class="fas fa-stethoscope text-emerald-600 mt-1"></i>
-          <div>
-            <div class="text-sm font-semibold text-neutral-800">Résumé clinique</div>
-            <div id="advSummary" class="text-sm text-neutral-700">—</div>
+    <div class="analysis-card p-6 fade-in">
+      <div class="section-title">
+        <i class="fas fa-microscope bg-purple-100 text-purple-600"></i>
+        Analyse IA Avancée
+        <span class="text-sm font-normal text-gray-500 ml-2">(Powered by Gemini)</span>
+      </div>
+      
+      <div id="advLoading" class="flex items-center justify-center p-8">
+        <div class="flex items-center gap-3 text-gray-500">
+          <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500"></div>
+          <span>Analyse en cours avec l'IA avancée...</span>
+        </div>
+      </div>
+      
+      <div id="advContent" class="hidden space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div class="flex items-start gap-4">
+              <div class="w-10 h-10 bg-emerald-100 rounded-12 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-stethoscope text-emerald-600"></i>
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-semibold text-gray-900 mb-2">Résumé clinique</h4>
+                <div id="advSummary" class="text-gray-700 leading-relaxed">—</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="space-y-4">
+            <div class="flex items-start gap-4">
+              <div class="w-10 h-10 bg-blue-100 rounded-12 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-brain text-blue-600"></i>
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-semibold text-gray-900 mb-2">Explication du diagnostic</h4>
+                <div id="advExplanation" class="text-gray-700 leading-relaxed">—</div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="flex items-start gap-3">
-          <i class="fas fa-brain text-blue-600 mt-1"></i>
-          <div>
-            <div class="text-sm font-semibold text-neutral-800">Explication du diagnostic</div>
-            <div id="advExplanation" class="text-sm text-neutral-700">—</div>
+        
+        <div class="border-t border-gray-200 pt-6">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 bg-amber-100 rounded-12 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-notes-medical text-amber-600"></i>
+            </div>
+            <div class="min-w-0 w-full">
+              <h4 class="font-semibold text-gray-900 mb-3">Suggestions de suivi</h4>
+              <ul id="advSuggestions" class="space-y-2"></ul>
+            </div>
           </div>
-        </div>
-        <div>
-          <div class="text-sm font-semibold text-neutral-800 mb-1 flex items-center"><i class="fas fa-notes-medical text-amber-600 mr-2"></i>Suggestions de suivi</div>
-          <ul id="advSuggestions" class="space-y-1 text-sm text-neutral-700"></ul>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Modal pour l'affichage plein écran de l'image -->
+<div id="imageModal" 
+     class="fixed inset-0 bg-black bg-opacity-90 z-50 items-center justify-center opacity-0 transition-opacity duration-300" 
+     style="display: none;" 
+     onclick="closeImageModal()">
+  <div class="relative max-w-[95vw] max-h-[95vh] flex items-center justify-center">
+    <!-- Bouton de fermeture -->
+    <button class="absolute top-4 right-4 z-10 w-12 h-12 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-70 transition-all duration-200 flex items-center justify-center"
+            onclick="closeImageModal()">
+      <i class="fas fa-times text-lg"></i>
+    </button>
+    
+    <!-- Image en plein écran -->
+    <img id="modalImage" 
+         class="max-w-full max-h-full object-contain transform scale-90 transition-transform duration-300 rounded-lg shadow-2xl"
+         onclick="event.stopPropagation()">
+    
+    <!-- Informations de l'image -->
+    <div class="absolute bottom-4 left-4 bg-black bg-opacity-70 text-white p-4 rounded-lg backdrop-blur-sm">
+      <div class="font-semibold">{{ analysis.patient_name or 'Patient' }}</div>
+      <div class="text-sm opacity-75 mt-1">Analyse #{{ analysis.id }} • {{ analysis.exam_date or 'Date inconnue' }}</div>
+    </div>
+    
+    <!-- Actions rapides -->
+    <div class="absolute bottom-4 right-4 flex gap-2">
+      <button class="w-10 h-10 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-70 transition-all duration-200 flex items-center justify-center"
+              onclick="downloadImage()" title="Télécharger">
+        <i class="fas fa-download"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  // Données d'analyse (Jinja -> JSON) pour un JS valide et sans erreurs de lint
-  window.__analysisData = JSON.parse(document.getElementById('analysis-json')?.textContent || '{}');
+// Données d'analyse pour JavaScript
+window.__analysisData = JSON.parse(document.getElementById('analysis-json')?.textContent || '{}');
 
-  (function(){
-    const conf = document.getElementById('confBar');
-    if (conf) {
-      const w = parseFloat(conf.dataset.width || '0');
-      conf.style.width = Math.max(0, Math.min(100, w)) + '%';
+// Animation d'entrée des cartes
+document.addEventListener('DOMContentLoaded', function() {
+  const cards = document.querySelectorAll('.fade-in');
+  cards.forEach((card, index) => {
+    card.style.animationDelay = `${index * 0.1}s`;
+  });
+});
+
+// Animation de la barre de confiance
+(function(){
+  const confFill = document.getElementById('confFill');
+  if (confFill) {
+    const width = parseFloat(confFill.dataset.width || '0');
+    setTimeout(() => {
+      confFill.style.width = Math.max(0, Math.min(100, width)) + '%';
+    }, 500);
+  }
+})();
+
+// Animation des barres de probabilités avec couleurs
+(function(){
+  const colors = ['#3b82f6','#7c3aed','#10b981','#f59e0b','#ef4444'];
+  const probBars = document.querySelectorAll('.prob-bar-fill');
+  
+  probBars.forEach((bar, index) => {
+    const width = parseFloat(bar.dataset.width || '0');
+    const color = colors[index % colors.length];
+    
+    // Appliquer la couleur
+    bar.style.backgroundColor = color;
+    
+    // Animation de largeur
+    setTimeout(() => {
+      bar.style.width = Math.max(0, Math.min(100, width)) + '%';
+    }, 700 + (index * 100));
+  });
+
+  // Appliquer les couleurs aux indicateurs circulaires
+  document.querySelectorAll('.w-4.h-4.rounded-full').forEach((circle, index) => {
+    if (index < colors.length) {
+      circle.style.backgroundColor = colors[index];
     }
-    document.querySelectorAll('.prob-bar').forEach(el => {
-      const w = parseFloat(el.dataset.width || '0');
-      const c = el.dataset.color || '#2563eb';
-      el.style.width = Math.max(0, Math.min(100, w)) + '%';
-      el.style.background = c;
-    });
-  })();
-  // Donut des probabilités
-  (function(){
-    try {
-      const el = document.getElementById('probDonut');
-      if (!el) return;
-      const data = (window.__analysisData && window.__analysisData.probabilities) || {};
-      const labels = Object.keys(data);
-      const values = Object.values(data).map(v=>Number(v)||0);
-      const colors = ['#2563eb','#7c3aed','#059669','#d97706','#dc2626'];
-      new Chart(el.getContext('2d'), {
-        type: 'doughnut',
-        data: { labels, datasets: [{ data: values, backgroundColor: colors.slice(0, labels.length), borderWidth: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-      });
-    } catch (e) {}
-  })();
+  });
+})();
 
-  // Actions: PDF et Partage
-  (function(){
-    const pdfBtn = document.getElementById('detailPdfBtn');
-    const shareBtn = document.getElementById('detailShareBtn');
-    if (pdfBtn) pdfBtn.addEventListener('click', async ()=>{
-      try {
-        const data = window.__analysisData || {};
-        const resp = await fetch('/generate-report', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ patientName: data.patient_name, analysisData: data }) });
-        const out = await resp.json();
-        alert(out.success ? 'Rapport généré' : (out.error || 'Erreur génération rapport'));
-      } catch (e) { alert('Erreur réseau'); }
-    });
-    if (shareBtn) shareBtn.addEventListener('click', async ()=>{
-      const email = prompt('Email du destinataire:'); if (!email) return;
-      try {
-        const data = window.__analysisData || {};
-        const resp = await fetch('/share-analysis', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ recipientEmail: email, analysisData: data }) });
-        const out = await resp.json();
-        alert(out.success ? 'Analyse partagée' : (out.error || 'Erreur partage'));
-      } catch (e) { alert('Erreur réseau'); }
-    });
-  })();
-
-  // Analyse avancée (Gemini)
-  (async function(){
-    try {
-      const a = window.__analysisData || {};
-      const payload = {
-        predicted_label: a.predicted_label,
-        confidence: Number(a.confidence) || 0,
-        probabilities: Object.fromEntries(Object.entries(a.probabilities || {}).map(([k,v])=>[k, Number(v)/100]))
-      };
-      const res = await fetch('/api/advanced-analysis', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-      const result = await res.json();
-      const loading = document.getElementById('advLoading');
-      const content = document.getElementById('advContent');
-      if (!result.success) { if (loading) loading.textContent = 'Indisponible pour le moment'; return; }
-      if (loading) loading.classList.add('hidden');
-      if (content) content.classList.remove('hidden');
-      if (result.data) {
-        if (result.data.summary) document.getElementById('advSummary').textContent = result.data.summary;
-        if (result.data.explanation) document.getElementById('advExplanation').textContent = result.data.explanation;
-        const ul = document.getElementById('advSuggestions');
-        ul.innerHTML = '';
-        (result.data.suggestions || []).forEach(s => { const li = document.createElement('li'); li.textContent = s; ul.appendChild(li); });
+// Graphique donut amélioré
+(function(){
+  try {
+    const canvas = document.getElementById('probDonut');
+    if (!canvas) return;
+    
+    const data = (window.__analysisData && window.__analysisData.probabilities) || {};
+    const labels = Object.keys(data);
+    const values = Object.values(data).map(v => Number(v) || 0);
+    const colors = ['#3b82f6','#7c3aed','#10b981','#f59e0b','#ef4444'];
+    
+    new Chart(canvas.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          backgroundColor: colors.slice(0, labels.length),
+          borderWidth: 0,
+          cutout: '60%'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: 'white',
+            bodyColor: 'white',
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            borderWidth: 1,
+            cornerRadius: 8,
+            callbacks: {
+              label: function(context) {
+                return context.label + ': ' + context.parsed.toFixed(1) + '%';
+              }
+            }
+          }
+        },
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 1000,
+          easing: 'easeOutCubic'
+        }
       }
-    } catch(e) {
-      const loading = document.getElementById('advLoading'); if (loading) loading.textContent = 'Indisponible';
+    });
+  } catch (e) {
+    console.error('Erreur lors de la création du graphique:', e);
+  }
+})();
+
+// Actions des boutons
+(function(){
+  const pdfBtn = document.getElementById('detailPdfBtn');
+  const shareBtn = document.getElementById('detailShareBtn');
+  
+  if (pdfBtn) {
+    pdfBtn.addEventListener('click', async function() {
+      this.disabled = true;
+      const originalContent = this.innerHTML;
+      this.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span class="hidden sm:inline ml-2">Génération...</span>';
+      
+      try {
+        const data = window.__analysisData || {};
+        const resp = await fetch('/generate-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            patientName: data.patient_name,
+            analysisData: data
+          })
+        });
+        
+        const result = await resp.json();
+        
+        if (result.success) {
+          // Créer une notification de succès
+          showNotification('Rapport PDF généré avec succès', 'success');
+        } else {
+          showNotification(result.error || 'Erreur lors de la génération du rapport', 'error');
+        }
+      } catch (e) {
+        showNotification('Erreur réseau lors de la génération', 'error');
+      } finally {
+        this.disabled = false;
+        this.innerHTML = originalContent;
+      }
+    });
+  }
+  
+  if (shareBtn) {
+    shareBtn.addEventListener('click', async function() {
+      const email = prompt('Email du destinataire:');
+      if (!email) return;
+      
+      this.disabled = true;
+      const originalContent = this.innerHTML;
+      this.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span class="hidden sm:inline ml-2">Partage...</span>';
+      
+      try {
+        const data = window.__analysisData || {};
+        const resp = await fetch('/share-analysis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipientEmail: email,
+            analysisData: data
+          })
+        });
+        
+        const result = await resp.json();
+        
+        if (result.success) {
+          showNotification('Analyse partagée avec succès', 'success');
+        } else {
+          showNotification(result.error || 'Erreur lors du partage', 'error');
+        }
+      } catch (e) {
+        showNotification('Erreur réseau lors du partage', 'error');
+      } finally {
+        this.disabled = false;
+        this.innerHTML = originalContent;
+      }
+    });
+  }
+})();
+
+// Analyse avancée (Gemini)
+(async function(){
+  try {
+    const analysisData = window.__analysisData || {};
+    const payload = {
+      predicted_label: analysisData.predicted_label,
+      confidence: Number(analysisData.confidence) || 0,
+      probabilities: Object.fromEntries(
+        Object.entries(analysisData.probabilities || {})
+          .map(([k, v]) => [k, Number(v) / 100])
+      )
+    };
+    
+    const response = await fetch('/api/advanced-analysis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    const result = await response.json();
+    const loading = document.getElementById('advLoading');
+    const content = document.getElementById('advContent');
+    
+    if (!result.success) {
+      if (loading) {
+        loading.innerHTML = `
+          <div class="flex items-center justify-center p-8">
+            <div class="flex items-center gap-3 text-gray-500">
+              <i class="fas fa-exclamation-triangle text-amber-500"></i>
+              <span>Service d'analyse avancée temporairement indisponible</span>
+            </div>
+          </div>
+        `;
+      }
+      return;
     }
-  })();
+    
+    if (loading) loading.classList.add('hidden');
+    if (content) content.classList.remove('hidden');
+    
+    if (result.data) {
+      if (result.data.summary) {
+        document.getElementById('advSummary').textContent = result.data.summary;
+      }
+      if (result.data.explanation) {
+        document.getElementById('advExplanation').textContent = result.data.explanation;
+      }
+      
+      const suggestionsList = document.getElementById('advSuggestions');
+      suggestionsList.innerHTML = '';
+      (result.data.suggestions || []).forEach(suggestion => {
+        const li = document.createElement('li');
+        li.className = 'flex items-start gap-3 p-3 bg-amber-50 rounded-12 border-l-4 border-amber-400';
+        li.innerHTML = `
+          <i class="fas fa-lightbulb text-amber-500 mt-1 flex-shrink-0"></i>
+          <span class="text-gray-700">${suggestion}</span>
+        `;
+        suggestionsList.appendChild(li);
+      });
+    }
+  } catch (e) {
+    console.error('Erreur lors de l\'analyse avancée:', e);
+    const loading = document.getElementById('advLoading');
+    if (loading) {
+      loading.innerHTML = `
+        <div class="flex items-center justify-center p-8">
+          <div class="flex items-center gap-3 text-red-500">
+            <i class="fas fa-times-circle"></i>
+            <span>Erreur lors du chargement de l'analyse avancée</span>
+          </div>
+        </div>
+      `;
+    }
+  }
+})();
+
+// Fonction pour afficher des notifications
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `fixed top-4 right-4 z-50 p-4 rounded-16 shadow-lg max-w-sm transition-all duration-300 transform translate-x-full`;
+  
+  if (type === 'success') {
+    notification.classList.add('bg-green-500', 'text-white');
+    notification.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${message}`;
+  } else if (type === 'error') {
+    notification.classList.add('bg-red-500', 'text-white');
+    notification.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>${message}`;
+  } else {
+    notification.classList.add('bg-blue-500', 'text-white');
+    notification.innerHTML = `<i class="fas fa-info-circle mr-2"></i>${message}`;
+  }
+  
+  document.body.appendChild(notification);
+  
+  // Animation d'entrée
+  setTimeout(() => {
+    notification.classList.remove('translate-x-full');
+  }, 100);
+  
+  // Animation de sortie et suppression
+  setTimeout(() => {
+    notification.classList.add('translate-x-full');
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 300);
+  }, 4000);
+}
+
+// Fonctions pour la gestion de l'image d'analyse
+function openImageModal() {
+  const modal = document.getElementById('imageModal');
+  const modalImg = document.getElementById('modalImage');
+  const img = document.getElementById('analysisImage');
+  
+  modal.style.display = 'flex';
+  modalImg.src = img.src;
+  modalImg.alt = img.alt;
+  
+  // Animation d'ouverture
+  requestAnimationFrame(() => {
+    modal.classList.add('opacity-100');
+    modalImg.classList.add('scale-100');
+  });
+}
+
+function closeImageModal() {
+  const modal = document.getElementById('imageModal');
+  const modalImg = document.getElementById('modalImage');
+  
+  modal.classList.remove('opacity-100');
+  modalImg.classList.remove('scale-100');
+  
+  setTimeout(() => {
+    modal.style.display = 'none';
+  }, 300);
+}
+
+function toggleFullscreen() {
+  openImageModal();
+}
+
+function downloadImage() {
+  const img = document.getElementById('analysisImage');
+  const link = document.createElement('a');
+  link.download = 'analyse_{{ analysis.id }}_' + Date.now() + '.jpg';
+  link.href = img.src;
+  link.click();
+}
+
+function toggleImageInfo() {
+  const overlay = document.getElementById('imageOverlay');
+  overlay.style.transform = overlay.style.transform === 'translateY(0px)' ? 'translateY(100%)' : 'translateY(0px)';
+}
+
+function hideImageLoading() {
+  const loading = document.getElementById('imageLoading');
+  const img = document.getElementById('analysisImage');
+  
+  if (loading) {
+    loading.style.opacity = '0';
+    setTimeout(() => loading.style.display = 'none', 300);
+  }
+  
+  // Obtenir la résolution de l'image
+  const resolution = document.getElementById('imageResolution');
+  if (resolution && img.naturalWidth && img.naturalHeight) {
+    resolution.textContent = img.naturalWidth + ' × ' + img.naturalHeight + ' px';
+  }
+}
+
+function showImageError() {
+  const container = document.querySelector('.image-container');
+  const loading = document.getElementById('imageLoading');
+  
+  if (loading) loading.style.display = 'none';
+  
+  container.innerHTML += 
+    '<div class="absolute inset-0 flex items-center justify-center bg-gray-100">' +
+      '<div class="text-center text-gray-500">' +
+        '<i class="fas fa-exclamation-triangle text-3xl mb-2"></i>' +
+        '<div>Impossible de charger l\'image</div>' +
+      '</div>' +
+    '</div>';
+}
+
+// Fermeture de la modal avec Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeImageModal();
+  }
+});
+
+// Ajout de classes utilitaires CSS manquantes
+const style = document.createElement('style');
+style.textContent = `
+  .rounded-12 { border-radius: 12px; }
+  .rounded-16 { border-radius: 16px; }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}

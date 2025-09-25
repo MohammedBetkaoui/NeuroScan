@@ -57,7 +57,335 @@
         background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
     }
 
-    /* Graphiques */
+    /* Icônes améliorées avec animations */
+    .enhanced-icon-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .enhanced-icon-container .primary-icon {
+        position: relative;
+        z-index: 2;
+        transition: all 0.3s ease;
+    }
+
+    .enhanced-icon-container .icon-background {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        opacity: 0.1;
+        transition: all 0.3s ease;
+    }
+
+    .enhanced-icon-container .icon-pulse {
+        position: absolute;
+        inset: -4px;
+        border-radius: inherit;
+        background: rgba(255, 255, 255, 0.2);
+        opacity: 0;
+        animation: iconPulse 2s infinite;
+    }
+
+    .enhanced-icon-container .secondary-icon {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 20px;
+        height: 20px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: currentColor;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        z-index: 3;
+    }
+
+    .stat-card-gradient:hover .enhanced-icon-container .primary-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .stat-card-gradient:hover .enhanced-icon-container .icon-background {
+        opacity: 0.2;
+        transform: scale(1.1);
+    }
+
+    .stat-card-gradient:hover .enhanced-icon-container .icon-pulse {
+        opacity: 1;
+        animation-duration: 1s;
+    }
+
+    /* Animations pour icônes spécialisées */
+    .brain-analysis-icon {
+        animation: brainThinking 3s ease-in-out infinite;
+    }
+
+    .tumor-detection-icon {
+        animation: tumorAlert 2s ease-in-out infinite;
+    }
+
+    .patients-monitoring-icon {
+        animation: heartbeat 2s ease-in-out infinite;
+    }
+
+    .precision-target-icon {
+        animation: targetFocus 2.5s ease-in-out infinite;
+    }
+
+    @keyframes iconPulse {
+        0%, 100% { 
+            opacity: 0;
+            transform: scale(1);
+        }
+        50% { 
+            opacity: 0.4;
+            transform: scale(1.1);
+        }
+    }
+
+    @keyframes brainThinking {
+        0%, 100% { transform: scale(1); }
+        25% { transform: scale(1.05) rotate(2deg); }
+        75% { transform: scale(1.05) rotate(-2deg); }
+    }
+
+    @keyframes tumorAlert {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    @keyframes heartbeat {
+        0%, 100% { transform: scale(1); }
+        14% { transform: scale(1.1); }
+        28% { transform: scale(1); }
+        42% { transform: scale(1.1); }
+        70% { transform: scale(1); }
+    }
+
+    @keyframes targetFocus {
+        0%, 100% { 
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+        }
+        50% { 
+            transform: scale(1.05);
+            box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+        }
+    }
+
+    /* Dashboard card icons améliorées */
+    .dashboard-card-icon-enhanced {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-lg);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .dashboard-card-icon-enhanced::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        border-radius: inherit;
+        z-index: 1;
+    }
+
+    .dashboard-card-icon-enhanced > i {
+        position: relative;
+        z-index: 2;
+        transition: all 0.3s ease;
+    }
+
+    .dashboard-card:hover .dashboard-card-icon-enhanced > i {
+        transform: scale(1.1);
+    }
+
+    /* Navigation améliorée avec icônes */
+    .dashboard-nav-item {
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        text-decoration: none;
+        border-radius: var(--radius-lg);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .dashboard-nav-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .dashboard-nav-item:hover::before {
+        left: 100%;
+    }
+
+    .dashboard-nav-item i {
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 2;
+    }
+
+    .dashboard-nav-item:hover i {
+        transform: scale(1.1);
+        color: #3b82f6;
+        text-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Boutons avec icônes améliorées */
+    .btn-dashboard {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .btn-dashboard i {
+        transition: all 0.3s ease;
+    }
+
+    .btn-dashboard:hover i {
+        transform: scale(1.1);
+    }
+
+    .btn-dashboard.primary:hover {
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .btn-dashboard.success:hover {
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .btn-dashboard.warning:hover {
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .btn-dashboard.danger:hover {
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        transform: translateY(-2px);
+    }
+
+    /* Amélioration des icônes de status */
+    .status-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        font-size: 12px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .status-icon.success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .status-icon.warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+
+    .status-icon.danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+
+    .status-icon:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Mobile enhancements pour les icônes */
+    @media (max-width: 768px) {
+        .enhanced-icon-container {
+            width: 2rem !important;
+            height: 2rem !important;
+        }
+
+        .enhanced-icon-container .secondary-icon {
+            width: 14px;
+            height: 14px;
+            font-size: 8px;
+        }
+
+        .dashboard-card-icon-enhanced {
+            width: 2rem !important;
+            height: 2rem !important;
+        }
+
+        .dashboard-card-icon-enhanced > i {
+            font-size: 1rem !important;
+        }
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+        .enhanced-icon-container:active .primary-icon,
+        .dashboard-card:active .dashboard-card-icon-enhanced > i {
+            transform: scale(1.1);
+        }
+
+        .btn-dashboard:active {
+            transform: scale(0.95);
+        }
+    }
+
+    .dashboard-card-icon-enhanced.primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .dashboard-card-icon-enhanced.success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .dashboard-card-icon-enhanced.warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .dashboard-card-icon-enhanced.danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+
+    .dashboard-card-icon-enhanced.purple {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+
+    .dashboard-card-icon-enhanced.indigo {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .dashboard-card-icon-enhanced.info {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+    }
     .chart-container {
         position: relative;
         height: 300px;
@@ -360,6 +688,14 @@
         .dashboard-card.clickable {
             touch-action: manipulation;
         }
+        
+        .touch-target {
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     }
 
     /* Improved contrast for mobile */
@@ -381,6 +717,116 @@
         .text-sm {
             font-size: 13px;
         }
+        
+        /* Ensure readable text in badges on mobile */
+        .badge {
+            min-width: fit-content;
+            white-space: nowrap;
+        }
+        
+        /* Better spacing for mobile */
+        .space-y-3 > * + * {
+            margin-top: 0.75rem;
+        }
+        
+        .space-x-3 > * + * {
+            margin-left: 0.75rem;
+        }
+        
+        /* Improve button visibility on touch */
+        .btn-dashboard:active {
+            transform: scale(0.95);
+        }
+        
+        /* Better scrollbar for mobile */
+        .scrollable-content {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        
+        /* Truncate long text appropriately */
+        .truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .max-w-32 {
+            max-width: 8rem;
+        }
+        
+        /* Improve table row heights for touch */
+        .dashboard-table td {
+            padding: 16px 8px;
+            vertical-align: middle;
+        }
+        
+        .dashboard-table th {
+            padding: 12px 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    }
+
+    /* Accessibility improvements */
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    /* Focus states for better keyboard navigation */
+    .btn-dashboard:focus,
+    .dashboard-nav-item:focus {
+        outline: 2px solid #3b82f6;
+        outline-offset: 2px;
+    }
+
+    /* Loading states */
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .loading .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+
+    /* Chart containers responsive behavior */
+    @media (max-width: 480px) {
+        .chart-container {
+            height: 200px;
+            padding: 12px;
+        }
+        
+        .chart-container canvas {
+            max-height: 180px;
+        }
+    }
+
+    /* Notification improvements for mobile */
+    @media (max-width: 768px) {
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            right: 16px;
+            transform: translateY(-100px);
+            z-index: 1000;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+        }
     }
 </style>
 {% endblock %}
@@ -391,13 +837,13 @@
         <i class="fas fa-home mr-2"></i>Accueil
     </a>
     <a href="{{ url_for('pro_dashboard') }}" class="dashboard-nav-item active">
-        <i class="fas fa-chart-bar mr-2"></i>Statistiques
+        <i class="fas fa-chart-line mr-2"></i>Statistiques
     </a>
     <a href="{{ url_for('patients_list') }}" class="dashboard-nav-item">
-        <i class="fas fa-users mr-2"></i>Patients
+        <i class="fas fa-user-injured mr-2"></i>Patients
     </a>
     <a href="{{ url_for('platform_stats') }}" class="dashboard-nav-item">
-        <i class="fas fa-globe mr-2"></i>Plateforme
+        <i class="fas fa-network-wired mr-2"></i>Plateforme
     </a>
 </div>
 {% endblock %}
@@ -417,101 +863,121 @@
 
 {% block content %}
 <!-- Statistiques rapides -->
-<div class="stats-grid mb-8">
-    <div class="stat-card-gradient blue p-6 text-white">
+<div class="stats-grid-mobile mb-8">
+    <div class="stat-card-gradient blue p-6 text-white mobile-card">
         <div class="flex items-center justify-between">
-            <div>
-                <p class="text-blue-100 text-sm font-medium">Analyses Totales</p>
-                <p class="text-3xl font-bold" id="totalAnalyses">-</p>
+            <div class="flex-1 min-w-0">
+                <p class="text-blue-100 text-sm font-medium truncate">Analyses Totales</p>
+                <p class="text-2xl sm:text-3xl font-bold" id="totalAnalyses">-</p>
             </div>
-            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-brain text-2xl"></i>
+            <div class="enhanced-icon-container w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-lg flex-shrink-0 ml-3">
+                <div class="icon-background bg-white"></div>
+                <div class="icon-pulse"></div>
+                <i class="fas fa-brain primary-icon text-lg sm:text-2xl brain-analysis-icon"></i>
+                <div class="secondary-icon">
+                    <i class="fas fa-search text-blue-600"></i>
+                </div>
             </div>
         </div>
-        <div class="mt-4 flex items-center">
+        <div class="mt-3 sm:mt-4 flex items-center flex-wrap gap-2">
             <span class="text-green-200 text-sm">
                 <i class="fas fa-arrow-up mr-1"></i>
                 <span id="totalAnalysesChange">+0%</span>
             </span>
-            <span class="text-blue-100 text-sm ml-2">vs mois dernier</span>
+            <span class="text-blue-100 text-xs sm:text-sm">vs mois dernier</span>
         </div>
     </div>
 
-    <div class="stat-card-gradient green p-6 text-white">
+    <div class="stat-card-gradient green p-6 text-white mobile-card">
         <div class="flex items-center justify-between">
-            <div>
-                <p class="text-green-100 text-sm font-medium">Tumeurs Détectées</p>
-                <p class="text-3xl font-bold" id="tumorsDetected">-</p>
+            <div class="flex-1 min-w-0">
+                <p class="text-green-100 text-sm font-medium truncate">Tumeurs Détectées</p>
+                <p class="text-2xl sm:text-3xl font-bold" id="tumorsDetected">-</p>
             </div>
-            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-exclamation-triangle text-2xl"></i>
+            <div class="enhanced-icon-container w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-lg flex-shrink-0 ml-3">
+                <div class="icon-background bg-white"></div>
+                <div class="icon-pulse"></div>
+                <i class="fas fa-exclamation-triangle primary-icon text-lg sm:text-2xl tumor-detection-icon"></i>
+                <div class="secondary-icon">
+                    <i class="fas fa-crosshairs text-red-600"></i>
+                </div>
             </div>
         </div>
-        <div class="mt-4 flex items-center">
+        <div class="mt-3 sm:mt-4 flex items-center flex-wrap gap-2">
             <span class="text-red-200 text-sm">
                 <i class="fas fa-arrow-up mr-1"></i>
                 <span id="tumorsDetectedChange">+0%</span>
             </span>
-            <span class="text-green-100 text-sm ml-2">vs mois dernier</span>
+            <span class="text-green-100 text-xs sm:text-sm">vs mois dernier</span>
         </div>
     </div>
 
-    <div class="stat-card-gradient purple p-6 text-white">
+    <div class="stat-card-gradient purple p-6 text-white mobile-card">
         <div class="flex items-center justify-between">
-            <div>
-                <p class="text-purple-100 text-sm font-medium">Patients Suivis</p>
-                <p class="text-3xl font-bold" id="patientsCount">-</p>
+            <div class="flex-1 min-w-0">
+                <p class="text-purple-100 text-sm font-medium truncate">Patients Suivis</p>
+                <p class="text-2xl sm:text-3xl font-bold" id="patientsCount">-</p>
             </div>
-            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-users text-2xl"></i>
+            <div class="enhanced-icon-container w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-lg flex-shrink-0 ml-3">
+                <div class="icon-background bg-white"></div>
+                <div class="icon-pulse"></div>
+                <i class="fas fa-user-injured primary-icon text-lg sm:text-2xl patients-monitoring-icon"></i>
+                <div class="secondary-icon">
+                    <i class="fas fa-heartbeat text-purple-600"></i>
+                </div>
             </div>
         </div>
-        <div class="mt-4 flex items-center">
+        <div class="mt-3 sm:mt-4 flex items-center flex-wrap gap-2">
             <span class="text-yellow-200 text-sm">
                 <i class="fas fa-arrow-up mr-1"></i>
                 <span id="patientsChange">+0%</span>
             </span>
-            <span class="text-purple-100 text-sm ml-2">vs mois dernier</span>
+            <span class="text-purple-100 text-xs sm:text-sm">vs mois dernier</span>
         </div>
     </div>
 
-    <div class="stat-card-gradient orange p-6 text-white">
+    <div class="stat-card-gradient orange p-6 text-white mobile-card">
         <div class="flex items-center justify-between">
-            <div>
-                <p class="text-orange-100 text-sm font-medium">Précision Moyenne</p>
-                <p class="text-3xl font-bold" id="avgConfidence">-</p>
+            <div class="flex-1 min-w-0">
+                <p class="text-orange-100 text-sm font-medium truncate">Précision Moyenne</p>
+                <p class="text-2xl sm:text-3xl font-bold" id="avgConfidence">-</p>
             </div>
-            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                <i class="fas fa-target text-2xl"></i>
+            <div class="enhanced-icon-container w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-lg flex-shrink-0 ml-3">
+                <div class="icon-background bg-white"></div>
+                <div class="icon-pulse"></div>
+                <i class="fas fa-bullseye primary-icon text-lg sm:text-2xl precision-target-icon"></i>
+                <div class="secondary-icon">
+                    <i class="fas fa-chart-line text-orange-600"></i>
+                </div>
             </div>
         </div>
-        <div class="mt-4 flex items-center">
+        <div class="mt-3 sm:mt-4 flex items-center flex-wrap gap-2">
             <span class="text-yellow-200 text-sm">
                 <i class="fas fa-arrow-up mr-1"></i>
                 <span id="avgConfidenceChange">+0%</span>
             </span>
-            <span class="text-orange-100 text-sm ml-2">vs mois dernier</span>
+            <span class="text-orange-100 text-xs sm:text-sm">vs mois dernier</span>
         </div>
     </div>
 </div>
 
 <!-- Graphiques principaux -->
-<div class="dashboard-grid cols-2 mb-8">
+<div class="dashboard-grid cols-1 lg:cols-2 mb-8">
     <!-- Graphique des analyses par période -->
-    <div class="dashboard-card p-6">
-        <div class="dashboard-card-header mb-6">
-            <div class="dashboard-card-icon primary">
+    <div class="dashboard-card p-4 sm:p-6 mobile-card">
+        <div class="dashboard-card-header mb-4 sm:mb-6">
+            <div class="dashboard-card-icon-enhanced primary">
                 <i class="fas fa-chart-line"></i>
             </div>
-            <div class="flex-1">
+            <div class="flex-1 min-w-0">
                 <h3 class="dashboard-card-title">Évolution des Analyses</h3>
-                <p class="dashboard-card-subtitle">Analyses effectuées par période</p>
+                <p class="dashboard-card-subtitle">Analyses par période</p>
             </div>
-            <div class="flex space-x-2">
-                <button onclick="changeTimeRange('7d')" class="btn-dashboard secondary text-xs" id="btn-7d">7j</button>
-                <button onclick="changeTimeRange('30d')" class="btn-dashboard primary text-xs" id="btn-30d">30j</button>
-                <button onclick="changeTimeRange('90d')" class="btn-dashboard secondary text-xs" id="btn-90d">90j</button>
-            </div>
+        </div>
+        <div class="chart-controls mb-4">
+            <button onclick="changeTimeRange('7d')" class="btn-dashboard secondary text-xs" id="btn-7d">7j</button>
+            <button onclick="changeTimeRange('30d')" class="btn-dashboard primary text-xs" id="btn-30d">30j</button>
+            <button onclick="changeTimeRange('90d')" class="btn-dashboard secondary text-xs" id="btn-90d">90j</button>
         </div>
         <div class="chart-container">
             <canvas id="analysisChart"></canvas>
@@ -519,14 +985,14 @@
     </div>
 
     <!-- Graphique de répartition des diagnostics -->
-    <div class="dashboard-card p-6">
-        <div class="dashboard-card-header mb-6">
-            <div class="dashboard-card-icon success">
-                <i class="fas fa-pie-chart"></i>
+    <div class="dashboard-card p-4 sm:p-6 mobile-card">
+        <div class="dashboard-card-header mb-4 sm:mb-6">
+            <div class="dashboard-card-icon-enhanced success">
+                <i class="fas fa-chart-pie"></i>
             </div>
-            <div>
+            <div class="min-w-0">
                 <h3 class="dashboard-card-title">Répartition des Diagnostics</h3>
-                <p class="dashboard-card-subtitle">Distribution par type de tumeur</p>
+                <p class="dashboard-card-subtitle">Distribution par type</p>
             </div>
         </div>
         <div class="chart-container">
@@ -538,31 +1004,31 @@
 <!-- Tableaux de données -->
 <div class="dashboard-grid cols-1 mb-8">
     <!-- Analyses récentes -->
-    <div class="dashboard-card p-0 overflow-hidden">
-        <div class="p-6 border-b border-gray-200">
+    <div class="dashboard-card p-0 overflow-hidden mobile-card">
+        <div class="p-4 sm:p-6 border-b border-gray-200">
             <div class="dashboard-card-header">
-                <div class="dashboard-card-icon indigo">
+                <div class="dashboard-card-icon-enhanced indigo">
                     <i class="fas fa-history"></i>
                 </div>
-                <div class="flex-1">
+                <div class="flex-1 min-w-0">
                     <h3 class="dashboard-card-title">Analyses Récentes</h3>
-                    <p class="dashboard-card-subtitle">Dernières analyses effectuées</p>
+                    <p class="dashboard-card-subtitle">Dernières analyses</p>
                 </div>
-                <a href="{{ url_for('pro_dashboard_advanced') }}" class="btn-dashboard secondary">
+                <a href="{{ url_for('pro_dashboard_advanced') }}" class="btn-dashboard secondary text-xs sm:text-sm">
                     <i class="fas fa-external-link-alt"></i>
-                    Voir tout
+                    <span class="hidden sm:inline">Voir tout</span>
                 </a>
             </div>
         </div>
-        <div class="overflow-x-auto">
+        <div class="table-responsive">
             <table class="dashboard-table">
                 <thead>
                     <tr>
                         <th>Date</th>
                         <th>Patient</th>
-                        <th>Diagnostic</th>
+                        <th class="hidden sm:table-cell">Diagnostic</th>
                         <th>Confiance</th>
-                        <th>Statut</th>
+                        <th class="hidden md:table-cell">Statut</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -581,51 +1047,51 @@
 </div>
 
 <!-- Nouvelles analyses avancées -->
-<div class="dashboard-grid cols-3 mb-8">
+<div class="advanced-grid-mobile mb-8">
     <!-- Performance par heure -->
-    <div class="dashboard-card p-6">
+    <div class="dashboard-card p-4 sm:p-6 mobile-card">
         <div class="dashboard-card-header mb-4">
             <div class="dashboard-card-icon purple">
                 <i class="fas fa-clock"></i>
             </div>
-            <div>
+            <div class="min-w-0">
                 <h3 class="dashboard-card-title">Performance Horaire</h3>
-                <p class="dashboard-card-subtitle">Activité par heure de la journée</p>
+                <p class="dashboard-card-subtitle">Activité par heure</p>
             </div>
         </div>
-        <div class="chart-container h-48">
+        <div class="chart-container h-40 sm:h-48">
             <canvas id="hourlyPerformanceChart"></canvas>
         </div>
     </div>
 
     <!-- Évolution de la confiance -->
-    <div class="dashboard-card p-6">
+    <div class="dashboard-card p-4 sm:p-6 mobile-card">
         <div class="dashboard-card-header mb-4">
             <div class="dashboard-card-icon success">
                 <i class="fas fa-trending-up"></i>
             </div>
-            <div>
+            <div class="min-w-0">
                 <h3 class="dashboard-card-title">Évolution Confiance</h3>
-                <p class="dashboard-card-subtitle">Tendance de précision sur 30 jours</p>
+                <p class="dashboard-card-subtitle">Tendance 30 jours</p>
             </div>
         </div>
-        <div class="chart-container h-48">
+        <div class="chart-container h-40 sm:h-48">
             <canvas id="confidenceEvolutionChart"></canvas>
         </div>
     </div>
 
     <!-- Taux de détection -->
-    <div class="dashboard-card p-6">
+    <div class="dashboard-card p-4 sm:p-6 mobile-card">
         <div class="dashboard-card-header mb-4">
-            <div class="dashboard-card-icon danger">
-                <i class="fas fa-search"></i>
+            <div class="dashboard-card-icon-enhanced danger">
+                <i class="fas fa-search-plus"></i>
             </div>
-            <div>
+            <div class="min-w-0">
                 <h3 class="dashboard-card-title">Taux de Détection</h3>
-                <p class="dashboard-card-subtitle">Évolution mensuelle des détections</p>
+                <p class="dashboard-card-subtitle">Évolution mensuelle</p>
             </div>
         </div>
-        <div class="chart-container h-48">
+        <div class="chart-container h-40 sm:h-48">
             <canvas id="detectionRateChart"></canvas>
         </div>
     </div>
@@ -634,18 +1100,18 @@
 <!-- Analyse des patients -->
 <div class="patient-analysis-grid mb-8">
     <!-- Patients à risque -->
-    <div class="dashboard-card expandable-card p-6">
-        <div class="dashboard-card-header mb-6">
-            <div class="dashboard-card-icon warning">
+    <div class="dashboard-card expandable-card p-4 sm:p-6 mobile-card">
+        <div class="dashboard-card-header mb-4 sm:mb-6">
+            <div class="dashboard-card-icon-enhanced warning">
                 <i class="fas fa-user-shield"></i>
             </div>
-            <div class="flex-1">
+            <div class="flex-1 min-w-0">
                 <h3 class="dashboard-card-title">Patients à Risque</h3>
-                <p class="dashboard-card-subtitle">Nécessitent une attention particulière</p>
+                <p class="dashboard-card-subtitle">Attention particulière</p>
             </div>
-            <button onclick="viewAllPatients()" class="btn-dashboard secondary">
+            <button onclick="viewAllPatients()" class="btn-dashboard secondary text-xs sm:text-sm">
                 <i class="fas fa-users"></i>
-                Voir tout
+                <span class="hidden sm:inline">Voir tout</span>
             </button>
         </div>
         <div class="dashboard-card-content">
@@ -668,27 +1134,27 @@
     </div>
 
     <!-- Insights patients -->
-    <div class="dashboard-card expandable-card p-6">
-        <div class="dashboard-card-header mb-6">
-            <div class="dashboard-card-icon info">
-                <i class="fas fa-chart-pie"></i>
+    <div class="dashboard-card expandable-card p-4 sm:p-6 mobile-card">
+        <div class="dashboard-card-header mb-4 sm:mb-6">
+            <div class="dashboard-card-icon-enhanced info">
+                <i class="fas fa-users-cog"></i>
             </div>
-            <div>
+            <div class="min-w-0">
                 <h3 class="dashboard-card-title">Répartition Patients</h3>
-                <p class="dashboard-card-subtitle">Distribution par âge et genre</p>
+                <p class="dashboard-card-subtitle">Age et genre</p>
             </div>
         </div>
         <div class="dashboard-card-content">
-            <div class="grid grid-cols-2 gap-4 h-full">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
                 <div class="flex flex-col">
                     <h4 class="text-sm font-medium text-gray-700 mb-4">Par âge</h4>
-                    <div class="chart-responsive flex-1">
+                    <div class="chart-responsive flex-1" style="min-height: 150px;">
                         <canvas id="ageDistributionChart" class="w-full h-full"></canvas>
                     </div>
                 </div>
                 <div class="flex flex-col">
                     <h4 class="text-sm font-medium text-gray-700 mb-4">Par genre</h4>
-                    <div class="chart-responsive flex-1">
+                    <div class="chart-responsive flex-1" style="min-height: 150px;">
                         <canvas id="genderDistributionChart" class="w-full h-full"></canvas>
                     </div>
                 </div>
@@ -699,26 +1165,26 @@
 
 <!-- Statistiques détaillées par diagnostic -->
 <div class="dashboard-grid cols-1 mb-8">
-    <div class="dashboard-card p-6">
-        <div class="dashboard-card-header mb-6">
-            <div class="dashboard-card-icon primary">
+    <div class="dashboard-card p-4 sm:p-6 mobile-card">
+        <div class="dashboard-card-header mb-4 sm:mb-6">
+            <div class="dashboard-card-icon-enhanced primary">
                 <i class="fas fa-microscope"></i>
             </div>
-            <div class="flex-1">
+            <div class="flex-1 min-w-0">
                 <h3 class="dashboard-card-title">Analyse Détaillée par Diagnostic</h3>
-                <p class="dashboard-card-subtitle">Performance et statistiques par type de tumeur</p>
+                <p class="dashboard-card-subtitle">Performance par type</p>
             </div>
         </div>
-        <div class="overflow-x-auto">
+        <div class="table-responsive">
             <table class="dashboard-table">
                 <thead>
                     <tr>
-                        <th>Type de Diagnostic</th>
-                        <th>Nombre Total</th>
-                        <th>Confiance Moyenne</th>
-                        <th>Confiance Min/Max</th>
-                        <th>Temps Moyen</th>
-                        <th>Tendance</th>
+                        <th>Type</th>
+                        <th>Total</th>
+                        <th class="hidden sm:table-cell">Confiance Moy.</th>
+                        <th class="hidden md:table-cell">Min/Max</th>
+                        <th class="hidden lg:table-cell">Temps Moy.</th>
+                        <th class="hidden sm:table-cell">Tendance</th>
                     </tr>
                 </thead>
                 <tbody id="diagnosticStatsTable">
@@ -736,18 +1202,18 @@
 
 <!-- Alertes et notifications -->
 <div class="dashboard-grid cols-1">
-    <div class="dashboard-card p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+    <div class="dashboard-card p-4 sm:p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 mobile-card">
         <div class="dashboard-card-header">
-            <div class="dashboard-card-icon warning">
+            <div class="dashboard-card-icon-enhanced warning">
                 <i class="fas fa-exclamation-triangle"></i>
             </div>
-            <div class="flex-1">
+            <div class="flex-1 min-w-0">
                 <h3 class="dashboard-card-title text-amber-900">Alertes Médicales Actives</h3>
-                <p class="dashboard-card-subtitle text-amber-700">Patients nécessitant votre attention</p>
+                <p class="dashboard-card-subtitle text-amber-700">Attention requise</p>
             </div>
-            <a href="{{ url_for('medical_alerts_page') }}" class="btn-dashboard warning">
+            <a href="{{ url_for('medical_alerts_page') }}" class="btn-dashboard warning text-xs sm:text-sm">
                 <i class="fas fa-eye"></i>
-                Consulter
+                <span class="hidden sm:inline">Consulter</span>
             </a>
         </div>
         <div class="dashboard-card-content">
@@ -775,6 +1241,31 @@
     let ageDistributionChart;
     let genderDistributionChart;
     let currentTimeRange = '30d';
+    let isMobile = window.innerWidth <= 768;
+
+    // Détection mobile et redimensionnement
+    window.addEventListener('resize', function() {
+        const wasMobile = isMobile;
+        isMobile = window.innerWidth <= 768;
+        
+        // Si on change de mobile à desktop ou vice versa, réinitialiser les graphiques
+        if (wasMobile !== isMobile) {
+            setTimeout(() => {
+                resizeCharts();
+            }, 300);
+        }
+    });
+
+    // Fonction pour redimensionner les graphiques
+    function resizeCharts() {
+        if (analysisChart) analysisChart.resize();
+        if (diagnosticChart) diagnosticChart.resize();
+        if (hourlyPerformanceChart) hourlyPerformanceChart.resize();
+        if (confidenceEvolutionChart) confidenceEvolutionChart.resize();
+        if (detectionRateChart) detectionRateChart.resize();
+        if (ageDistributionChart) ageDistributionChart.resize();
+        if (genderDistributionChart) genderDistributionChart.resize();
+    }
 
     // Initialisation
     document.addEventListener('DOMContentLoaded', function() {
@@ -811,7 +1302,8 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false
+                        display: !isMobile,
+                        position: isMobile ? 'bottom' : 'top'
                     }
                 },
                 scales: {
@@ -819,11 +1311,22 @@
                         beginAtZero: true,
                         grid: {
                             color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            font: {
+                                size: isMobile ? 10 : 12
+                            }
                         }
                     },
                     x: {
                         grid: {
                             color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            font: {
+                                size: isMobile ? 10 : 12
+                            },
+                            maxRotation: isMobile ? 45 : 0
                         }
                     }
                 }
@@ -853,12 +1356,18 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'bottom',
+                        position: isMobile ? 'bottom' : 'bottom',
                         labels: {
-                            padding: 20,
-                            usePointStyle: true
+                            padding: isMobile ? 10 : 20,
+                            usePointStyle: true,
+                            font: {
+                                size: isMobile ? 10 : 12
+                            }
                         }
                     }
+                },
+                layout: {
+                    padding: isMobile ? 10 : 0
                 }
             }
         });
@@ -1104,22 +1613,23 @@
                 const tableBody = document.getElementById('recentAnalysesTable');
                 tableBody.innerHTML = data.data.map(analysis => `
                     <tr class="hover:bg-gray-50 transition-colors duration-200">
-                        <td class="font-medium">${formatDate(analysis.timestamp)}</td>
-                        <td>${analysis.patient_name}</td>
-                        <td>
+                        <td class="font-medium">${formatDateMobile(analysis.timestamp)}</td>
+                        <td class="truncate max-w-32">${analysis.patient_name}</td>
+                        <td class="hidden sm:table-cell">
                             <span class="badge ${getBadgeClass(analysis.predicted_label)}">
                                 ${analysis.predicted_label}
                             </span>
                         </td>
-                        <td class="font-mono">${(analysis.confidence * 100).toFixed(1)}%</td>
-                        <td>
+                        <td class="font-mono text-sm">${(analysis.confidence * 100).toFixed(1)}%</td>
+                        <td class="hidden md:table-cell">
                             <span class="badge ${analysis.confidence > 0.9 ? 'success' : analysis.confidence > 0.7 ? 'warning' : 'danger'}">
                                 ${analysis.confidence > 0.9 ? 'Fiable' : analysis.confidence > 0.7 ? 'Modéré' : 'Incertain'}
                             </span>
                         </td>
                         <td>
-                            <button onclick="viewAnalysis(${analysis.id})" class="btn-dashboard secondary text-xs">
+                            <button onclick="viewAnalysis(${analysis.id})" class="btn-dashboard secondary text-xs touch-target">
                                 <i class="fas fa-eye"></i>
+                                <span class="sr-only">Voir l'analyse</span>
                             </button>
                         </td>
                     </tr>
@@ -1150,15 +1660,16 @@
                 const alertsContainer = document.getElementById('activeAlerts');
                 alertsContainer.innerHTML = data.data.slice(0, 3).map(alert => `
                     <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-amber-200">
-                        <div class="flex items-center space-x-3">
-                            <i class="fas fa-${getSeverityIcon(alert.severity)} text-${getSeverityColor(alert.severity)}"></i>
-                            <div>
-                                <p class="font-medium text-gray-900 text-sm">${alert.title}</p>
-                                <p class="text-gray-600 text-xs">${alert.patient_name} - ${formatDate(alert.created_at)}</p>
+                        <div class="flex items-center space-x-3 flex-1 min-w-0">
+                            <i class="fas fa-${getSeverityIcon(alert.severity)} text-${getSeverityColor(alert.severity)} flex-shrink-0"></i>
+                            <div class="min-w-0 flex-1">
+                                <p class="font-medium text-gray-900 text-sm truncate">${alert.title}</p>
+                                <p class="text-gray-600 text-xs truncate">${alert.patient_name} - ${formatDateMobile(alert.created_at)}</p>
                             </div>
                         </div>
-                        <button onclick="viewAlert(${alert.id})" class="btn-dashboard secondary text-xs">
+                        <button onclick="viewAlert(${alert.id})" class="btn-dashboard secondary text-xs touch-target flex-shrink-0 ml-2">
                             <i class="fas fa-arrow-right"></i>
+                            <span class="sr-only">Voir l'alerte</span>
                         </button>
                     </div>
                 `).join('');
@@ -1213,6 +1724,27 @@
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
+        });
+    }
+
+    // Version mobile du formatage de date (plus compacte)
+    function formatDateMobile(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        // Si c'est récent (moins de 7 jours), afficher en format relatif
+        if (diffDays <= 7) {
+            if (diffDays === 0) return 'Aujourd\'hui';
+            if (diffDays === 1) return 'Hier';
+            return `Il y a ${diffDays}j`;
+        }
+        
+        // Sinon format court
+        return date.toLocaleDateString('fr-FR', { 
+            day: '2-digit', 
+            month: '2-digit'
         });
     }
 
@@ -1368,18 +1900,18 @@
         tableBody.innerHTML = Object.entries(diagnosticStats).map(([type, stats]) => `
             <tr class="hover:bg-gray-50 transition-colors duration-200">
                 <td class="font-medium">
-                    <span class="badge ${getBadgeClass(type)}">${type}</span>
+                    <span class="badge ${getBadgeClass(type)} text-xs">${type}</span>
                 </td>
                 <td class="font-mono">${stats.total_count}</td>
-                <td class="font-mono">${stats.avg_confidence.toFixed(1)}%</td>
-                <td class="font-mono text-sm">
+                <td class="font-mono hidden sm:table-cell">${stats.avg_confidence.toFixed(1)}%</td>
+                <td class="font-mono text-sm hidden md:table-cell">
                     ${stats.min_confidence.toFixed(1)}% - ${stats.max_confidence.toFixed(1)}%
                 </td>
-                <td class="font-mono">${stats.avg_processing_time.toFixed(2)}s</td>
-                <td>
+                <td class="font-mono text-sm hidden lg:table-cell">${stats.avg_processing_time.toFixed(2)}s</td>
+                <td class="hidden sm:table-cell">
                     <div class="flex items-center">
                         ${getTrendIcon(stats.avg_confidence)}
-                        <span class="ml-2 text-sm ${getTrendColor(stats.avg_confidence)}">
+                        <span class="ml-1 text-xs ${getTrendColor(stats.avg_confidence)}">
                             ${getTrendText(stats.avg_confidence)}
                         </span>
                     </div>
@@ -1405,21 +1937,22 @@
 
         container.innerHTML = riskPatients.map(patient => `
             <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center ${getRiskLevelColor(patient.risk_level)}">
-                        <i class="fas fa-user text-white"></i>
+                <div class="flex items-center space-x-3 flex-1 min-w-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${getRiskLevelColor(patient.risk_level)} flex-shrink-0">
+                        <i class="fas fa-user text-white text-sm"></i>
                     </div>
-                    <div>
-                        <p class="font-medium text-gray-900">${patient.patient_name}</p>
-                        <p class="text-sm text-gray-600">
-                            ${patient.tumor_detections} détections - ${patient.avg_confidence}% confiance moyenne
+                    <div class="min-w-0 flex-1">
+                        <p class="font-medium text-gray-900 text-sm truncate">${patient.patient_name}</p>
+                        <p class="text-xs text-gray-600 truncate">
+                            ${patient.tumor_detections} détections - ${patient.avg_confidence}% confiance
                         </p>
                     </div>
                 </div>
-                <div class="text-right">
-                    <span class="badge ${getRiskLevelBadge(patient.risk_level)}">${patient.risk_level}</span>
-                    <button onclick="viewPatient('${patient.patient_id}')" class="btn-dashboard secondary text-xs mt-1">
+                <div class="text-right flex-shrink-0 ml-2">
+                    <span class="badge ${getRiskLevelBadge(patient.risk_level)} text-xs block mb-1">${patient.risk_level}</span>
+                    <button onclick="viewPatient('${patient.patient_id}')" class="btn-dashboard secondary text-xs touch-target">
                         <i class="fas fa-eye"></i>
+                        <span class="sr-only">Voir le patient</span>
                     </button>
                 </div>
             </div>

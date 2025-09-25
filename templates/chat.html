@@ -814,10 +814,10 @@
                     // Si c'est la conversation actuelle, revenir à l'état d'accueil
                     if (conversationId === currentConversationId) {
                         currentConversationId = null;
-                        messages = [];
-                        renderMessages();
                         document.getElementById('chatInputArea').style.display = 'none';
-                        document.getElementById('conversationHeader').style.display = 'none';
+                        document.getElementById('welcomeMessages').style.display = 'block';
+                        document.getElementById('assignPatientBtn').classList.add('hidden');
+                        renderMessages([]);
                     }
                     
                     // Recharger la liste des conversations

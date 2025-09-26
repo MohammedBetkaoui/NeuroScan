@@ -63,15 +63,323 @@
             font-family: 'Inter', sans-serif;
         }
         
+        /* ===== BULLES DE MESSAGES MODERNES ===== */
+        
         .chat-message {
             opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: translateY(20px);
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 24px;
         }
         
         .chat-message.visible {
             opacity: 1;
             transform: translateY(0);
+        }
+        
+        .message-bubble {
+            animation: messageSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        /* Styles des bulles utilisateur */
+        .message-bubble.user {
+            align-items: flex-end;
+        }
+        
+        .message-bubble.user .message-content {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+            margin-left: auto;
+            border-radius: 20px 20px 4px 20px;
+            box-shadow: 0 4px 16px rgba(14, 165, 233, 0.25);
+            position: relative;
+            max-width: 75%;
+        }
+        
+        .message-bubble.user .message-content::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            right: -8px;
+            width: 0;
+            height: 0;
+            border: 8px solid transparent;
+            border-top: 8px solid #0284c7;
+            border-right: none;
+        }
+        
+        /* Styles des bulles assistant */
+        .message-bubble.assistant {
+            align-items: flex-start;
+        }
+        
+        .message-bubble.assistant .message-content {
+            background: white;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+            margin-right: auto;
+            border-radius: 20px 20px 20px 4px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            position: relative;
+            max-width: 85%;
+        }
+        
+        .message-bubble.assistant .message-content::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: -8px;
+            width: 0;
+            height: 0;
+            border: 8px solid transparent;
+            border-top: 8px solid white;
+            border-left: none;
+        }
+        
+        .message-bubble.assistant .message-content::before {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: -9px;
+            width: 0;
+            height: 0;
+            border: 9px solid transparent;
+            border-top: 9px solid #e2e8f0;
+            border-left: none;
+        }
+        
+        /* Contenu des messages */
+        .message-content {
+            padding: 16px 20px;
+            font-size: 15px;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+        
+        /* Header des messages */
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            opacity: 0.8;
+        }
+        
+        .message-header .avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .message-bubble.user .message-header .avatar {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .message-bubble.assistant .message-header .avatar {
+            background: #f1f5f9;
+            color: #0ea5e9;
+        }
+        
+        .message-header .sender-name {
+            font-weight: 600;
+            font-size: 13px;
+        }
+        
+        .message-header .timestamp {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-left: auto;
+        }
+        
+        .message-bubble.user .message-header .timestamp {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .message-bubble.assistant .message-header .timestamp {
+            color: #64748b;
+        }
+        
+        /* Actions des messages */
+        .message-actions {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            display: flex;
+            gap: 4px;
+            z-index: 10;
+        }
+        
+        .message-bubble:hover .message-actions {
+            opacity: 1;
+        }
+        
+        .message-bubble.user .message-actions {
+            left: -60px;
+        }
+        
+        .message-bubble.assistant .message-actions {
+            right: -60px;
+        }
+        
+        .message-actions button {
+            width: 32px;
+            height: 32px;
+            border-radius: 16px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .message-actions button:hover {
+            background: white;
+            color: #0ea5e9;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Indicateurs spéciaux */
+        .message-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 8px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .medical-indicator {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        .confidence-indicator {
+            background: rgba(14, 165, 233, 0.1);
+            color: #0ea5e9;
+            border: 1px solid rgba(14, 165, 233, 0.2);
+        }
+        
+        /* Barre de confiance moderne */
+        .confidence-bar {
+            height: 3px;
+            border-radius: 2px;
+            background: rgba(14, 165, 233, 0.1);
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #0ea5e9);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+        
+        /* États des messages */
+        .message-edited {
+            position: relative;
+        }
+        
+        .message-edited::before {
+            content: '✏️';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 12px;
+            opacity: 0.6;
+        }
+        
+        /* Groupement des messages */
+        .message-group {
+            margin-bottom: 32px;
+        }
+        
+        .message-group .message-bubble:not(:last-child) {
+            margin-bottom: 8px;
+        }
+        
+        .message-group .message-bubble:not(:last-child) .message-content {
+            border-radius: 20px 20px 8px 20px;
+        }
+        
+        .message-group .message-bubble:last-child .message-content {
+            border-radius: 20px 20px 4px 20px;
+        }
+        
+        /* Responsive pour les messages */
+        @media (max-width: 768px) {
+            .message-bubble .message-content {
+                max-width: 90%;
+                padding: 14px 16px;
+                font-size: 14px;
+            }
+            
+            .message-actions {
+                position: relative;
+                opacity: 1;
+                top: auto;
+                transform: none;
+                justify-content: center;
+                margin-top: 8px;
+            }
+            
+            .message-bubble.user .message-actions,
+            .message-bubble.assistant .message-actions {
+                left: auto;
+                right: auto;
+            }
+            
+            .message-actions button {
+                width: 28px;
+                height: 28px;
+                border-radius: 14px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .message-bubble .message-content {
+                max-width: 95%;
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+            
+            .message-header {
+                margin-bottom: 6px;
+            }
+            
+            .message-header .avatar {
+                width: 20px;
+                height: 20px;
+                border-radius: 10px;
+            }
         }
         
         .markdown-content h1, .markdown-content h2, .markdown-content h3 {
@@ -191,6 +499,7 @@
         }
         .chat-main {
             width: calc(100% - 320px);
+            margin-left: 320px;
         }
         .message-bubble {
             animation: fadeInUp 0.3s ease-out;
@@ -298,7 +607,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
-        /* Responsive Mobile */
+        /* Responsive Mobile - Nouvelle version simplifiée */
         @media (max-width: 768px) {
             .sidebar-hidden {
                 transform: translateX(-100%);
@@ -307,22 +616,6 @@
             .sidebar-visible {
                 transform: translateX(0);
                 box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-            }
-            
-            .chat-container-mobile {
-                padding-bottom: 1rem;
-            }
-            
-            .input-area-mobile {
-                padding: 1rem;
-                background: white;
-                border-top: 1px solid #e5e7eb;
-            }
-            
-            .message-bubble-mobile {
-                max-width: 90% !important;
-                margin-left: 0.5rem;
-                margin-right: 0.5rem;
             }
         
             .chat-container {
@@ -344,6 +637,7 @@
             }
             .chat-main {
                 width: 100%;
+                margin-left: 0;
             }
             .sidebar-toggle {
                 display: block;
@@ -362,21 +656,6 @@
                 display: block;
             }
             
-            /* Header mobile */
-            .header-title {
-                display: none;
-            }
-            .header-subtitle {
-                display: none;
-            }
-            
-            /* Messages container mobile - avec espace pour zone de saisie fixe */
-            .messages-container {
-                height: calc(100% - 0px);
-                padding: 1rem;
-                padding-bottom: 140px; /* Espace pour la zone de saisie fixe */
-            }
-            
             /* Message bubbles mobile */
             .message-bubble {
                 margin-bottom: 1rem;
@@ -386,7 +665,7 @@
                 margin: 0 0.5rem;
             }
             
-            /* Actions mobiles - toujours visibles sur mobile */
+            /* Actions mobiles */
             .message-actions {
                 opacity: 1 !important;
                 position: relative;
@@ -402,42 +681,6 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-            }
-            
-            /* Zone de saisie fixe style ChatGPT mobile */
-            #chatInputArea {
-                padding: 12px;
-                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
-            }
-            
-            #chatInputArea .max-w-4xl {
-                max-width: 100%;
-            }
-            
-            #messageInput {
-                font-size: 16px; /* Empêche le zoom iOS */
-                padding: 12px 44px 12px 16px;
-            }
-            
-            #sendButton {
-                bottom: 8px;
-                right: 8px;
-                width: 32px;
-                height: 32px;
-            }
-            
-            #sendButton:not(:disabled) {
-                background-color: #3b82f6;
-            }
-            
-            #attachBtn {
-                margin-bottom: 4px;
-                padding: 8px;
-            }
-            
-            /* Masquer l'avertissement long sur mobile */
-            .hidden.md\\:flex {
-                display: none !important;
             }
             
             /* Conversations liste mobile */
@@ -457,13 +700,6 @@
             
             #currentConversationInfo p {
                 font-size: 0.75rem;
-            }
-            
-            /* Welcome message mobile */
-            #welcomeMessages .bg-blue-50 {
-                margin: 0 1rem;
-                padding: 1.5rem;
-                margin-bottom: 140px; /* Espace pour zone de saisie */
             }
             
             /* Modal mobile */
@@ -588,20 +824,989 @@
             }
         }
         
-        /* Desktop - zone de saisie fixe */
+        /* ===== ZONE DE SAISIE MODERNE - STYLE MESSAGERIE ===== */
+        
+        /* Zone de saisie principale - glassmorphism */
+        #inputSection {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        /* Container principal de saisie */
+        .chat-input-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        /* Zone de saisie active */
+        .input-wrapper {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .input-wrapper:focus-within {
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        /* Textarea moderne */
+        #messageInput {
+            font-family: inherit;
+            line-height: 1.6;
+            resize: none;
+            border: none;
+            background: transparent;
+            padding: 16px 60px 16px 20px;
+            font-size: 15px;
+            min-height: 24px;
+            max-height: 120px;
+            transition: all 0.2s ease;
+        }
+        
+        #messageInput:focus {
+            outline: none;
+        }
+        
+        #messageInput::placeholder {
+            color: #94a3b8;
+            font-style: italic;
+        }
+        
+        /* Bouton d'envoi moderne */
+        .send-button {
+            position: absolute;
+            right: 6px;
+            bottom: 6px;
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(14, 165, 233, 0.3);
+        }
+        
+        .send-button:not(:disabled):hover {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+        }
+        
+        .send-button:not(:disabled):active {
+            transform: scale(0.95);
+        }
+        
+        .send-button:disabled {
+            background: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+            transform: scale(1);
+            box-shadow: none;
+        }
+        
+        /* Indicateurs de statut */
+        .status-indicators {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 4px;
+            margin-top: 8px;
+            justify-content: space-between;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+        
+        .char-counter {
+            font-size: 11px;
+            color: #94a3b8;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        
+        .char-counter.warning {
+            color: #f59e0b;
+        }
+        
+        .char-counter.error {
+            color: #ef4444;
+        }
+        
+        /* Indicateur de frappe amélioré */
+        .typing-indicator-modern {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(14, 165, 233, 0.05);
+            border-radius: 16px;
+            margin-bottom: 16px;
+            animation: fadeInUp 0.3s ease-out;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+        
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #0ea5e9;
+            border-radius: 50%;
+            animation: typingBounce 1.4s ease-in-out infinite;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-8px); opacity: 1; }
+        }
+        
+        /* Boutons d'actions rapides */
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 12px;
+        }
+        
+        .quick-action-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 18px;
+            background: #f8fafc;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .quick-action-btn:hover {
+            background: #e2e8f0;
+            color: #475569;
+            transform: scale(1.05);
+        }
+        
+        /* Responsive optimisé */
         @media (min-width: 769px) {
-            #chatInputArea {
-                position: fixed;
-                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            #inputSection {
+                left: 320px;
+                right: 0;
+                padding: 20px;
             }
             
-            .messages-container {
-                padding-bottom: 120px; /* Espace pour zone de saisie sur desktop */
+            #chatContainer {
+                padding-bottom: 140px;
             }
             
-            #welcomeMessages .bg-blue-50 {
-                margin-bottom: 120px;
+            .chat-input-container {
+                padding: 0 20px;
             }
+        }
+        
+        @media (max-width: 768px) {
+            #inputSection {
+                padding: 16px;
+                transform: translateY(100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            
+            #inputSection.show {
+                transform: translateY(0);
+            }
+            
+            #chatContainer {
+                padding-bottom: 80px;
+                transition: padding-bottom 0.3s ease;
+            }
+            
+            #chatContainer.input-active {
+                padding-bottom: 180px;
+            }
+            
+            .input-wrapper {
+                border-radius: 20px;
+            }
+            
+            #messageInput {
+                padding: 14px 50px 14px 16px;
+                font-size: 16px; /* Évite le zoom sur iOS */
+            }
+            
+            .send-button {
+                width: 36px;
+                height: 36px;
+                right: 4px;
+                bottom: 4px;
+            }
+            
+            .quick-actions {
+                display: none; /* Masqué sur mobile pour la simplicité */
+            }
+            
+            /* Auto-hide sur mobile quand on fait défiler */
+            .mobile-scroll-hide {
+                transform: translateY(100%);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #inputSection {
+                padding: 12px;
+            }
+            
+            .chat-input-container {
+                padding: 0;
+            }
+            
+            .input-wrapper {
+                border-radius: 16px;
+            }
+            
+            .status-indicators {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+                margin-top: 6px;
+            }
+        }
+
+        /* ===== MODE SOMBRE PROFESSIONNEL ===== */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-tertiary: #94a3b8;
+            --border-primary: #e2e8f0;
+            --border-secondary: #cbd5e1;
+            --accent-medical: #10b981;
+            --accent-primary: #0ea5e9;
+            --shadow-light: rgba(0, 0, 0, 0.05);
+            --shadow-medium: rgba(0, 0, 0, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.25);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-tertiary: #94a3b8;
+            --border-primary: #334155;
+            --border-secondary: #475569;
+            --accent-medical: #10b981;
+            --accent-primary: #0ea5e9;
+            --shadow-light: rgba(0, 0, 0, 0.2);
+            --shadow-medium: rgba(0, 0, 0, 0.3);
+            --shadow-dark: rgba(0, 0, 0, 0.6);
+        }
+
+        /* Application des variables CSS */
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        /* Sidebar mode sombre */
+        [data-theme="dark"] #sidebar {
+            background-color: var(--bg-secondary);
+            border-color: var(--border-primary);
+        }
+
+        [data-theme="dark"] .sidebar .bg-primary-50 {
+            background-color: var(--bg-tertiary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .text-primary-800 {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .bg-primary-600 {
+            background-color: var(--accent-primary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .hover\:bg-primary-700:hover {
+            background-color: #0284c7 !important;
+        }
+
+        [data-theme="dark"] .sidebar .bg-gray-50 {
+            background-color: var(--bg-tertiary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .bg-white {
+            background-color: var(--bg-primary) !important;
+            border-color: var(--border-primary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .text-gray-800 {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .text-gray-500 {
+            color: var(--text-secondary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .hover\:text-gray-700:hover {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .hover\:bg-gray-100:hover {
+            background-color: var(--bg-tertiary) !important;
+        }
+
+        /* Conversations mode sombre */
+        [data-theme="dark"] .conversation-item {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .conversation-item:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        [data-theme="dark"] .conversation-item.active {
+            background-color: rgba(14, 165, 233, 0.15);
+            border-left-color: var(--accent-primary);
+        }
+
+        [data-theme="dark"] .conversation-item .text-gray-900 {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .conversation-item .text-gray-500 {
+            color: var(--text-secondary) !important;
+        }
+
+        [data-theme="dark"] .conversation-item .text-gray-400 {
+            color: var(--text-tertiary) !important;
+        }
+
+        /* Messages mode sombre */
+        [data-theme="dark"] #chatContainer {
+            background-color: var(--bg-primary);
+        }
+
+        [data-theme="dark"] .message-bubble .bg-gray-100 {
+            background-color: var(--bg-secondary) !important;
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .message-bubble .bg-primary-500 {
+            background-color: var(--accent-primary) !important;
+        }
+
+        /* Zone d'accueil mode sombre */
+        [data-theme="dark"] .bg-primary-50 {
+            background-color: var(--bg-secondary) !important;
+        }
+
+        [data-theme="dark"] .border-primary-100 {
+            border-color: var(--border-primary) !important;
+        }
+
+        [data-theme="dark"] .text-primary-800 {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .text-primary-600 {
+            color: var(--text-secondary) !important;
+        }
+
+        [data-theme="dark"] .bg-primary-100 {
+            background-color: var(--bg-tertiary) !important;
+        }
+
+        [data-theme="dark"] .text-primary-600 {
+            color: var(--accent-primary) !important;
+        }
+
+        [data-theme="dark"] .bg-medical-50 {
+            background-color: rgba(16, 185, 129, 0.1) !important;
+        }
+
+        [data-theme="dark"] .border-medical-100 {
+            border-color: rgba(16, 185, 129, 0.3) !important;
+        }
+
+        [data-theme="dark"] .text-medical-800 {
+            color: var(--accent-medical) !important;
+        }
+
+        [data-theme="dark"] .text-medical-600 {
+            color: rgba(16, 185, 129, 0.8) !important;
+        }
+
+        [data-theme="dark"] .bg-medical-100 {
+            background-color: rgba(16, 185, 129, 0.2) !important;
+        }
+
+        /* Zone de saisie moderne en mode sombre */
+        [data-theme="dark"] #inputSection {
+            background-color: rgba(15, 23, 42, 0.95);
+            border-color: var(--border-primary);
+            backdrop-filter: blur(20px);
+        }
+        
+        [data-theme="dark"] .input-wrapper {
+            background-color: var(--bg-secondary);
+            border-color: var(--border-primary);
+        }
+        
+        [data-theme="dark"] .input-wrapper:focus-within {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
+        }
+        
+        [data-theme="dark"] #messageInput,
+        [data-theme="dark"] #welcomeMessageInput {
+            color: var(--text-primary);
+        }
+        
+        [data-theme="dark"] #messageInput::placeholder,
+        [data-theme="dark"] #welcomeMessageInput::placeholder {
+            color: var(--text-tertiary);
+        }
+        
+        [data-theme="dark"] .send-button:not(:disabled) {
+            background: linear-gradient(135deg, var(--accent-primary), #0284c7);
+            box-shadow: 0 4px 16px rgba(14, 165, 233, 0.4);
+        }
+        
+        [data-theme="dark"] .send-button:disabled {
+            background: var(--bg-tertiary);
+            color: var(--text-tertiary);
+        }
+        
+        [data-theme="dark"] .status-indicator {
+            color: var(--text-secondary);
+        }
+        
+        [data-theme="dark"] .quick-action-btn {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+        
+        [data-theme="dark"] .quick-action-btn:hover {
+            background: var(--border-primary);
+            color: var(--text-primary);
+        }
+        
+        [data-theme="dark"] .typing-indicator-modern {
+            background: rgba(14, 165, 233, 0.1);
+            border: 1px solid rgba(14, 165, 233, 0.2);
+        }
+        
+        [data-theme="dark"] .typing-dot {
+            background: var(--accent-primary);
+        }
+        
+        /* Messages modernes en mode sombre */
+        [data-theme="dark"] .message-bubble.user .message-content {
+            background: linear-gradient(135deg, var(--accent-primary), #0284c7);
+            box-shadow: 0 4px 16px rgba(14, 165, 233, 0.3);
+        }
+        
+        [data-theme="dark"] .message-bubble.assistant .message-content {
+            background: var(--bg-secondary);
+            border-color: var(--border-primary);
+            color: var(--text-primary);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        [data-theme="dark"] .message-bubble.assistant .message-content::after {
+            border-top-color: var(--bg-secondary);
+        }
+        
+        [data-theme="dark"] .message-bubble.assistant .message-content::before {
+            border-top-color: var(--border-primary);
+        }
+        
+        [data-theme="dark"] .message-header .avatar {
+            color: var(--text-primary);
+        }
+        
+        [data-theme="dark"] .message-bubble.assistant .message-header .avatar {
+            background: var(--bg-tertiary);
+            color: var(--accent-primary);
+        }
+        
+        [data-theme="dark"] .message-actions button {
+            background: rgba(30, 41, 59, 0.9);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-primary);
+        }
+        
+        [data-theme="dark"] .message-actions button:hover {
+            background: var(--bg-secondary);
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        /* Header mobile mode sombre */
+        [data-theme="dark"] .md\:hidden.border-gray-200 {
+            background-color: var(--bg-secondary);
+            border-color: var(--border-primary);
+        }
+
+        /* Modales mode sombre */
+        [data-theme="dark"] .modal .bg-white {
+            background-color: var(--bg-secondary) !important;
+        }
+
+        [data-theme="dark"] .modal .text-gray-900 {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .modal .text-gray-500 {
+            color: var(--text-secondary) !important;
+        }
+
+        [data-theme="dark"] .modal .text-gray-700 {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .modal .text-gray-600 {
+            color: var(--text-secondary) !important;
+        }
+
+        [data-theme="dark"] .modal .bg-gray-50 {
+            background-color: var(--bg-tertiary) !important;
+        }
+
+        [data-theme="dark"] .modal .border-gray-200 {
+            border-color: var(--border-primary) !important;
+        }
+
+        [data-theme="dark"] .modal .border-gray-300 {
+            border-color: var(--border-secondary) !important;
+        }
+
+        [data-theme="dark"] .modal .bg-gray-100 {
+            background-color: var(--bg-tertiary) !important;
+        }
+
+        [data-theme="dark"] .modal .hover\:bg-gray-200:hover {
+            background-color: var(--bg-primary) !important;
+        }
+
+        [data-theme="dark"] .modal select,
+        [data-theme="dark"] .modal input {
+            background-color: var(--bg-primary) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-primary) !important;
+        }
+
+        [data-theme="dark"] .modal select:focus,
+        [data-theme="dark"] .modal input:focus {
+            border-color: var(--accent-primary) !important;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1) !important;
+        }
+
+        /* Styles spécifiques pour les modales existantes */
+        [data-theme="dark"] #assignPatientModal,
+        [data-theme="dark"] #deleteConversationModal {
+            backdrop-filter: blur(10px);
+        }
+
+        [data-theme="dark"] #assignPatientModal .bg-white,
+        [data-theme="dark"] #deleteConversationModal .bg-white {
+            background-color: var(--bg-secondary) !important;
+            border-color: var(--border-primary) !important;
+        }
+
+        /* Couleurs d'accent pour les boutons de la modale */
+        [data-theme="dark"] .modal .bg-primary-600 {
+            background-color: var(--accent-primary) !important;
+        }
+
+        [data-theme="dark"] .modal .hover\:bg-primary-700:hover {
+            background-color: #0284c7 !important;
+        }
+
+        [data-theme="dark"] .modal .bg-red-600 {
+            background-color: #dc2626 !important;
+        }
+
+        [data-theme="dark"] .modal .hover\:bg-red-700:hover {
+            background-color: #b91c1c !important;
+        }
+
+        /* Couleurs pour les zones d'information dans les modales */
+        [data-theme="dark"] .modal .bg-primary-50 {
+            background-color: rgba(14, 165, 233, 0.1) !important;
+        }
+
+        [data-theme="dark"] .modal .border-primary-200 {
+            border-color: rgba(14, 165, 233, 0.3) !important;
+        }
+
+        [data-theme="dark"] .modal .text-primary-800 {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .modal .text-primary-600 {
+            color: var(--accent-primary) !important;
+        }
+
+        [data-theme="dark"] .modal .bg-red-50 {
+            background-color: rgba(220, 38, 38, 0.1) !important;
+        }
+
+        [data-theme="dark"] .modal .border-red-200 {
+            border-color: rgba(220, 38, 38, 0.3) !important;
+        }
+
+        [data-theme="dark"] .modal .text-red-800 {
+            color: #fca5a5 !important;
+        }
+
+        [data-theme="dark"] .modal .text-red-700 {
+            color: #f87171 !important;
+        }
+
+        [data-theme="dark"] .modal .bg-red-100 {
+            background-color: rgba(220, 38, 38, 0.2) !important;
+        }
+
+        [data-theme="dark"] .modal .text-red-600 {
+            color: #f87171 !important;
+        }
+
+        /* Toggle du mode sombre - Design moderne */
+        .theme-toggle {
+            position: relative;
+            width: 56px;
+            height: 28px;
+            background: linear-gradient(135deg, #64748b, #475569);
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .theme-toggle::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #ffffff, #f8fafc);
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .theme-toggle .theme-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        .theme-toggle .sun-icon {
+            left: 6px;
+            color: #fbbf24;
+            opacity: 1;
+        }
+
+        .theme-toggle .moon-icon {
+            right: 6px;
+            color: #cbd5e1;
+            opacity: 0.4;
+        }
+
+        [data-theme="dark"] .theme-toggle {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        }
+
+        [data-theme="dark"] .theme-toggle::before {
+            transform: translateX(28px);
+            background: linear-gradient(135deg, #1e293b, #334155);
+        }
+
+        [data-theme="dark"] .theme-toggle .sun-icon {
+            opacity: 0.4;
+            color: #fbbf24;
+        }
+
+        [data-theme="dark"] .theme-toggle .moon-icon {
+            opacity: 1;
+            color: #e2e8f0;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        .theme-toggle:active {
+            transform: scale(0.95);
+        }
+
+        /* Textes généraux en mode sombre */
+        [data-theme="dark"] .text-gray-800 {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .text-gray-600 {
+            color: var(--text-secondary) !important;
+        }
+
+        [data-theme="dark"] .text-gray-500 {
+            color: var(--text-secondary) !important;
+        }
+
+        [data-theme="dark"] .text-gray-400 {
+            color: var(--text-tertiary) !important;
+        }
+
+        /* Typing indicator en mode sombre */
+        [data-theme="dark"] .typing-indicator {
+            background-color: var(--bg-secondary);
+        }
+
+        [data-theme="dark"] .typing-dot {
+            background-color: var(--text-tertiary);
+        }
+
+        /* Headers et en-têtes */
+        [data-theme="dark"] #conversationHeader {
+            background-color: rgba(14, 165, 233, 0.1) !important;
+        }
+
+        [data-theme="dark"] #conversationHeader .text-primary-800 {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] #conversationHeader .text-primary-600 {
+            color: var(--text-secondary) !important;
+        }
+
+        /* Amélioration des contrastes pour l'accessibilité */
+        [data-theme="dark"] .bg-blue-50 {
+            background-color: rgba(14, 165, 233, 0.1) !important;
+        }
+
+        [data-theme="dark"] .border-blue-200 {
+            border-color: rgba(14, 165, 233, 0.3) !important;
+        }
+
+        [data-theme="dark"] .text-blue-600 {
+            color: var(--accent-primary) !important;
+        }
+
+        /* Animation de transition douce pour le changement de thème */
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* Markdown et code en mode sombre */
+        [data-theme="dark"] .markdown-content code {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .markdown-content pre {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-primary);
+        }
+
+        /* Notifications en mode sombre */
+        [data-theme="dark"] .notification {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Scrollbar personnalisée pour le mode sombre */
+        [data-theme="dark"] ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        [data-theme="dark"] ::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        [data-theme="dark"] ::-webkit-scrollbar-thumb {
+            background: var(--text-tertiary);
+            border-radius: 3px;
+        }
+
+        [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Amélioration de la lisibilité des icônes en mode sombre */
+        [data-theme="dark"] i[data-feather] {
+            filter: brightness(1.1);
+        }
+
+        /* Hover effects améliorés en mode sombre */
+        [data-theme="dark"] button:hover,
+        [data-theme="dark"] .clickable:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Focus states améliorés */
+        [data-theme="dark"] button:focus,
+        [data-theme="dark"] input:focus,
+        [data-theme="dark"] textarea:focus,
+        [data-theme="dark"] select:focus {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 2px;
+        }
+
+        /* ===== SECTION PROFIL MÉDECIN PROFESSIONNELLE ===== */
+        
+        /* Styles pour la nouvelle section profil en mode sombre */
+        [data-theme="dark"] .sidebar .relative.overflow-hidden {
+            border-color: var(--border-primary);
+        }
+
+        [data-theme="dark"] .sidebar .bg-gradient-to-br.from-primary-50 {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.05), var(--bg-secondary), rgba(16, 185, 129, 0.05)) !important;
+        }
+
+        [data-theme="dark"] .sidebar .bg-gradient-to-t.from-gray-100\/30 {
+            background: linear-gradient(to top, rgba(51, 65, 85, 0.3), transparent) !important;
+        }
+
+        [data-theme="dark"] .sidebar .bg-white\/90 {
+            background: rgba(30, 41, 59, 0.95) !important;
+            border-color: var(--border-primary) !important;
+            backdrop-filter: blur(10px);
+        }
+
+        [data-theme="dark"] .sidebar .bg-gradient-to-br.from-primary-500 {
+            background: linear-gradient(135deg, var(--accent-primary), #0284c7) !important;
+        }
+
+        [data-theme="dark"] .sidebar .bg-medical-500 {
+            background-color: var(--accent-medical) !important;
+        }
+
+        [data-theme="dark"] .sidebar .text-gray-900 {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .bg-medical-100 {
+            background-color: rgba(16, 185, 129, 0.15) !important;
+        }
+
+        [data-theme="dark"] .sidebar .text-medical-700 {
+            color: var(--accent-medical) !important;
+        }
+
+        [data-theme="dark"] .sidebar .text-gray-600 {
+            color: var(--text-secondary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .text-primary-500 {
+            color: var(--accent-primary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .text-medical-500 {
+            color: var(--accent-medical) !important;
+        }
+
+        [data-theme="dark"] .sidebar .bg-gray-50\/70 {
+            background: rgba(51, 65, 85, 0.4) !important;
+        }
+
+        [data-theme="dark"] .sidebar .text-primary-600 {
+            color: var(--accent-primary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .text-medical-600 {
+            color: var(--accent-medical) !important;
+        }
+
+        [data-theme="dark"] .sidebar .text-gray-700 {
+            color: var(--text-primary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .bg-gray-200 {
+            background-color: var(--border-primary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .bg-medical-50 {
+            background-color: rgba(16, 185, 129, 0.1) !important;
+        }
+
+        [data-theme="dark"] .sidebar .hover\:bg-primary-50:hover {
+            background-color: rgba(14, 165, 233, 0.1) !important;
+        }
+
+        [data-theme="dark"] .sidebar .hover\:text-primary-600:hover {
+            color: var(--accent-primary) !important;
+        }
+
+        [data-theme="dark"] .sidebar .hover\:bg-medical-50:hover {
+            background-color: rgba(16, 185, 129, 0.1) !important;
+        }
+
+        [data-theme="dark"] .sidebar .hover\:text-medical-600:hover {
+            color: var(--accent-medical) !important;
+        }
+
+        /* Animation spéciale pour le profil médecin */
+        .sidebar .bg-white\/90:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Indicateurs animés */
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        .sidebar .animate-pulse {
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        /* Effet glassmorphism pour le mode sombre */
+        [data-theme="dark"] .sidebar .backdrop-blur-sm {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
     </style>
 </head>
@@ -639,25 +1844,105 @@
             </div>
         </div>
         
-        <div class="p-4 border-t border-gray-200 bg-gray-50">
-            <div class="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-200">
-                <div class="w-10 h-10 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center">
-                    <i data-feather="user" class="w-5 h-5"></i>
-                </div>
-                <div class="flex-1">
-                    <div class="font-medium text-gray-800">Dr. {{ doctor.last_name if doctor else 'Médecin' }}</div>
-                    <div class="text-xs text-gray-500 flex items-center gap-1">
-                        <i data-feather="shield-check" class="w-3 h-3"></i>
-                        Assistant IA Médical
+        <div class="relative overflow-hidden border-t border-gray-200/50">
+            <!-- Fond dégradé sophistiqué -->
+            <div class="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-medical-50 opacity-80"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-gray-100/30 to-transparent"></div>
+            
+            <!-- Conteneur principal -->
+            <div class="relative p-5">
+                <!-- Carte profil médecin -->
+                <div class="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:transform hover:scale-[1.02]">
+                    <!-- En-tête profil -->
+                    <div class="flex items-start gap-4 mb-4">
+                        <!-- Avatar professionnel -->
+                        <div class="relative">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center shadow-lg">
+                                <i data-feather="user-check" class="w-7 h-7"></i>
+                            </div>
+                            <!-- Indicateur de statut en ligne -->
+                            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-medical-500 border-2 border-white rounded-full flex items-center justify-center">
+                                <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Informations médecin -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-semibold text-gray-900 text-lg">Dr. {{ doctor.last_name if doctor else 'Mohammed' }}</h3>
+                                <div class="px-2 py-0.5 bg-medical-100 text-medical-700 text-xs rounded-full font-medium">
+                                    PRO
+                                </div>
+                            </div>
+                            
+                            <!-- Spécialité et certification -->
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2 text-sm text-gray-600">
+                                    <i data-feather="brain" class="w-4 h-4 text-primary-500"></i>
+                                    <span class="font-medium">Neurologie • IA Médicale</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-xs text-gray-500">
+                                    <i data-feather="shield-check" class="w-3 h-3 text-medical-500"></i>
+                                    <span>Assistant IA Certifié</span>
+                                    <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
+                                    <span>En ligne</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Statistiques rapides -->
+                    <div class="flex items-center justify-between mb-4 p-3 bg-gray-50/70 rounded-xl">
+                        <div class="text-center flex-1">
+                            <div class="text-lg font-bold text-primary-600" id="dailyConsultations">12</div>
+                            <div class="text-xs text-gray-500">Consultations</div>
+                        </div>
+                        <div class="w-px h-8 bg-gray-200"></div>
+                        <div class="text-center flex-1">
+                            <div class="text-lg font-bold text-medical-600">98%</div>
+                            <div class="text-xs text-gray-500">Précision IA</div>
+                        </div>
+                        <div class="w-px h-8 bg-gray-200"></div>
+                        <div class="text-center flex-1">
+                            <div class="text-lg font-bold text-gray-700">24/7</div>
+                            <div class="text-xs text-gray-500">Disponible</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions et contrôles -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <!-- Toggle thème moderne -->
+                            <button id="themeToggle" class="theme-toggle" title="Basculer le mode sombre">
+                                <i class="theme-icon sun-icon fas fa-sun"></i>
+                                <i class="theme-icon moon-icon fas fa-moon"></i>
+                            </button>
+                            
+                            <!-- Indicateur de statut -->
+                            <div class="flex items-center gap-1.5 px-2.5 py-1.5 bg-medical-50 text-medical-700 rounded-lg">
+                                <div class="w-2 h-2 bg-medical-500 rounded-full animate-pulse"></div>
+                                <span class="text-xs font-medium">Actif</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-1">
+                            <a href="{{ url_for('chat_help') }}" 
+                               class="p-2.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 group" 
+                               title="Aide et Support">
+                                <i data-feather="help-circle" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+                            </a>
+                            <a href="{{ url_for('dashboard') }}" 
+                               class="p-2.5 text-gray-500 hover:text-medical-600 hover:bg-medical-50 rounded-lg transition-all duration-200 group" 
+                               title="Tableau de bord">
+                                <i data-feather="settings" class="w-4 h-4 group-hover:rotate-90 transition-transform duration-300"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <a href="{{ url_for('chat_help') }}" class="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Aide et Support">
-                        <i data-feather="help-circle" class="w-4 h-4"></i>
-                    </a>
-                    <a href="{{ url_for('dashboard') }}" class="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Tableau de bord">
-                        <i data-feather="settings" class="w-4 h-4"></i>
-                    </a>
+                
+                <!-- Citation inspirante -->
+                <div class="mt-3 text-center">
+                    <p class="text-xs text-gray-500 italic">"L'intelligence artificielle au service de la médecine"</p>
                 </div>
             </div>
         </div>
@@ -671,9 +1956,15 @@
             </button>
             <h2 class="text-lg font-semibold text-primary-700">NeuroScan Chat</h2>
         </div>
-        <a href="{{ url_for('chat_help') }}" class="text-gray-500 hover:text-primary-600 p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Aide et Support">
-            <i data-feather="help-circle" class="w-5 h-5"></i>
-        </a>
+        <div class="flex items-center gap-2">
+            <button id="themeToggleMobile" class="theme-toggle" title="Basculer le mode sombre">
+                <i class="theme-icon sun-icon fas fa-sun"></i>
+                <i class="theme-icon moon-icon fas fa-moon"></i>
+            </button>
+            <a href="{{ url_for('chat_help') }}" class="text-gray-500 hover:text-primary-600 p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Aide et Support">
+                <i data-feather="help-circle" class="w-5 h-5"></i>
+            </a>
+        </div>
     </div>
 
     <!-- Overlay pour mobile -->
@@ -775,99 +2066,72 @@
             </div>
         </div>
 
-        <!-- Input area -->
-        <div class="border-t border-gray-200 bg-white p-4">
-            <div class="max-w-3xl mx-auto">
-                <!-- Zone de saisie style ChatGPT -->
-                <div id="chatInputArea" class="relative" style="display: none;">
-                    <form id="messageForm" class="flex items-end space-x-3">
-                        <!-- Bouton d'actions supplémentaires -->
-                        <button type="button" 
-                                id="attachBtn"
-                                class="mb-2 p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
-                                title="Actions supplémentaires">
-                            <i data-feather="plus" class="w-5 h-5"></i>
-                        </button>
-                        
-                        <!-- Container de saisie principal -->
-                        <div class="flex-1 relative">
-                            <div class="flex items-center border border-gray-300 rounded-lg bg-white overflow-hidden has-[:focus]:ring-2 has-[:focus]:ring-primary-500 has-[:focus]:border-primary-500 transition-all">
-                                <textarea 
-                                    id="messageInput" 
-                                    rows="1" 
-                                    placeholder="Décrivez les symptômes, examens ou posez votre question médicale..." 
-                                    class="flex-1 py-3 px-4 resize-none border-0 focus:ring-0 outline-none max-h-32"
-                                    maxlength="4000"
-                                ></textarea>
-                                <button 
-                                    type="submit" 
-                                    id="sendButton"
-                                    disabled
-                                    class="send-button m-2 w-8 h-8 flex items-center justify-center bg-gray-300 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                                >
-                                    <i data-feather="send" class="w-4 h-4" id="sendIcon"></i>
-                                </button>
-                            </div>
-                            
-                            <!-- Compteur de caractères -->
-                            <div class="absolute -bottom-6 right-0 text-xs text-gray-400">
-                                <span id="charCount">0</span><span class="text-gray-300">/4000</span>
-                            </div>
-                        </div>
-                    </form>
-                    
-                    <!-- Indicateur de frappe style ChatGPT -->
-                    <div id="typingIndicator" class="hidden mt-3">
-                        <div class="flex items-center space-x-2 text-sm text-gray-600">
-                            <div class="typing-indicator bg-gray-100 rounded-full px-4 py-2">
-                                <div class="typing-dot"></div>
-                                <div class="typing-dot"></div>
-                                <div class="typing-dot"></div>
-                            </div>
-                            <span>NeuroScan AI analyse votre question...</span>
-                        </div>
+        <!-- Zone de saisie moderne style messagerie -->
+        <div id="inputSection" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20">
+            <div class="chat-input-container p-4">
+                <!-- Indicateur de frappe amélioré -->
+                <div id="typingIndicatorModern" class="typing-indicator-modern hidden">
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
                     </div>
-                    
-                    <!-- Statut et avertissement -->
-                    <div class="flex items-center justify-between mt-3 text-xs text-gray-500">
-                        <div class="flex items-center space-x-3">
-                            <div class="flex items-center space-x-1">
-                                <div class="w-2 h-2 bg-medical-500 rounded-full animate-pulse"></div>
-                                <span>IA Médicale Active</span>
-                            </div>
-                            <div class="flex items-center space-x-1">
-                                <i data-feather="shield-check" class="w-3 h-3 text-medical-500"></i>
-                                <span>Sécurisé RGPD</span>
-                            </div>
-                        </div>
-                        
-                        <div class="hidden md:flex items-center space-x-1 text-amber-600">
-                            <i data-feather="alert-triangle" class="w-3 h-3"></i>
-                            <span>Outil d'aide à la décision clinique - Ne remplace pas l'expertise médicale</span>
-                        </div>
-                    </div>
+                    <span class="text-sm text-blue-600 font-medium">NeuroScan analyse votre message...</span>
                 </div>
                 
-                <!-- Message d'accueil avec input simple -->
-                <div id="welcomeInput">
-                    <form id="welcomeForm" class="relative">
-                        <div class="flex items-center border border-gray-300 rounded-lg bg-white overflow-hidden has-[:focus]:ring-2 has-[:focus]:ring-primary-500 has-[:focus]:border-primary-500 transition-all">
-                            <textarea 
-                                id="welcomeMessageInput" 
-                                rows="1" 
-                                placeholder="Commencez votre consultation médicale..." 
-                                class="flex-1 py-3 px-4 resize-none border-0 focus:ring-0 outline-none"
+                <!-- Zone de chat active -->
+                <div id="chatInputArea" class="hidden">
+                    <form id="messageForm">
+                        <div class="input-wrapper relative">
+                            <textarea
+                                id="messageInput"
+                                placeholder="Décrivez vos symptômes ou posez votre question médicale..."
+                                class="w-full resize-none outline-none"
+                                maxlength="2000"
+                                rows="1"
                             ></textarea>
-                            <button 
-                                type="submit" 
-                                class="m-2 w-8 h-8 flex items-center justify-center bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+                            
+                            <button
+                                type="submit"
+                                id="sendButton"
+                                class="send-button"
+                                disabled
+                                title="Envoyer le message"
                             >
-                                <i data-feather="send" class="w-4 h-4"></i>
+                                <i data-feather="send" class="w-4 h-4" id="sendIcon"></i>
                             </button>
                         </div>
-                        <div class="text-xs text-gray-500 mt-2 text-center">
-                            NeuroScan peut vous aider avec l'analyse médicale. Vérifiez toujours les informations importantes.
+
+                        
+
+                        <!-- Actions rapides (masquées sur mobile) -->
+                        <div class="quick-actions">
+                            
                         </div>
+                    </form>
+                </div>
+                
+                <!-- Zone d'accueil -->
+                <div id="welcomeInput">
+                    <form id="welcomeForm">
+                        <div class="input-wrapper relative">
+                            <input
+                                type="text"
+                                id="welcomeMessageInput"
+                                placeholder="🩺 Commencez votre consultation médicale..."
+                                class="w-full border-none outline-none bg-transparent px-5 py-4 text-gray-900 placeholder-blue-600/70"
+                                maxlength="500"
+                            />
+                            <button
+                                type="submit"
+                                class="send-button"
+                                title="Démarrer la consultation"
+                            >
+                                <i data-feather="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        
+                       
                     </form>
                 </div>
             </div>
@@ -876,7 +2140,7 @@
 
     <!-- Modales -->
     <!-- Modale d'assignation de patient -->
-    <div id="assignPatientModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" style="display: none;">
+    <div id="assignPatientModal" class="modal fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" style="display: none;">
         <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-100">
             <!-- En-tête de la modal -->
             <div class="flex items-center justify-between mb-6">
@@ -944,7 +2208,7 @@
     </div>
 
     <!-- Modale de confirmation de suppression -->
-    <div id="deleteConversationModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" style="display: none;">
+    <div id="deleteConversationModal" class="modal fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" style="display: none;">
         <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-100">
             <!-- En-tête de la modal -->
             <div class="flex items-center justify-between mb-6">
@@ -1026,6 +2290,12 @@
             // Initialize feather icons
             feather.replace();
             
+            // Initialiser le mode sombre
+            initializeTheme();
+            
+            // Initialiser le système responsive mobile
+            initializeMobileResponsive();
+            
             // Sidebar toggle for mobile
             const sidebar = document.getElementById('sidebar');
             const openSidebar = document.getElementById('openSidebar');
@@ -1052,6 +2322,115 @@
                     overlay.classList.remove('show');
                 });
             }
+            
+        // ===== GESTION RESPONSIVE MOBILE AVANCÉE =====
+        function initializeMobileResponsive() {
+            const inputSection = document.getElementById('inputSection');
+            const chatContainer = document.getElementById('chatContainer');
+            const messageInput = document.getElementById('messageInput');
+            const welcomeInput = document.getElementById('welcomeMessageInput');
+            
+            let isInputFocused = false;
+            let lastScrollTop = 0;
+            let scrollTimeout;
+            
+            // Gestion du focus sur les champs de saisie mobile
+            [messageInput, welcomeInput].forEach(input => {
+                if (!input) return;
+                
+                input.addEventListener('focus', () => {
+                    if (window.innerWidth <= 768) {
+                        isInputFocused = true;
+                        inputSection.classList.add('show');
+                        chatContainer.classList.add('input-active');
+                        
+                        // Scroll vers le bas pour voir le message en cours
+                        setTimeout(() => {
+                            const messagesContainer = document.getElementById('messagesContainer');
+                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        }, 300);
+                    }
+                });
+                
+                input.addEventListener('blur', () => {
+                    setTimeout(() => {
+                        if (window.innerWidth <= 768 && !document.activeElement.closest('#inputSection')) {
+                            isInputFocused = false;
+                            // Auto-masquage après 3 secondes si pas d'activité
+                            setTimeout(() => {
+                                if (!isInputFocused && window.innerWidth <= 768) {
+                                    inputSection.classList.remove('show');
+                                    chatContainer.classList.remove('input-active');
+                                }
+                            }, 3000);
+                        }
+                    }, 100);
+                });
+            });
+            
+            // Gestion du scroll intelligent sur mobile
+            const messagesContainer = document.getElementById('messagesContainer');
+            if (messagesContainer) {
+                messagesContainer.addEventListener('scroll', () => {
+                    if (window.innerWidth > 768) return;
+                    
+                    const scrollTop = messagesContainer.scrollTop;
+                    const isScrollingDown = scrollTop > lastScrollTop;
+                    
+                    // Clearner le timeout précédent
+                    clearTimeout(scrollTimeout);
+                    
+                    // Si on scroll vers le bas et qu'on n'est pas en train de taper
+                    if (isScrollingDown && !isInputFocused) {
+                        inputSection.classList.add('mobile-scroll-hide');
+                        inputSection.classList.remove('show');
+                        chatContainer.classList.remove('input-active');
+                    }
+                    // Si on scroll vers le haut, montrer temporairement
+                    else if (!isScrollingDown) {
+                        inputSection.classList.remove('mobile-scroll-hide');
+                        inputSection.classList.add('show');
+                        chatContainer.classList.add('input-active');
+                        
+                        // Auto-masquage après 2 secondes si pas d'interaction
+                        scrollTimeout = setTimeout(() => {
+                            if (!isInputFocused && window.innerWidth <= 768) {
+                                inputSection.classList.add('mobile-scroll-hide');
+                                inputSection.classList.remove('show');
+                                chatContainer.classList.remove('input-active');
+                            }
+                        }, 2000);
+                    }
+                    
+                    lastScrollTop = scrollTop;
+                });
+            }
+            
+            // Gestion du redimensionnement
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 768) {
+                    // Mode desktop : toujours montrer l'input
+                    inputSection.classList.remove('mobile-scroll-hide', 'show');
+                    chatContainer.classList.remove('input-active');
+                    isInputFocused = false;
+                } else {
+                    // Mode mobile : appliquer la logique mobile
+                    if (!isInputFocused) {
+                        inputSection.classList.add('mobile-scroll-hide');
+                        inputSection.classList.remove('show');
+                        chatContainer.classList.remove('input-active');
+                    }
+                }
+            });
+            
+            // Initialisation de l'état selon la taille d'écran
+            if (window.innerWidth <= 768) {
+                inputSection.classList.add('mobile-scroll-hide');
+            } else {
+                inputSection.classList.add('show');
+                chatContainer.classList.add('input-active');
+            }
+        }
 
         // Initialisation
         function initializePage() {
@@ -1060,46 +2439,37 @@
             const welcomeMessageInput = document.getElementById('welcomeMessageInput');
             const sendButton = document.getElementById('sendButton');
             
-            // Auto-resize textarea pour les deux inputs
+            // Auto-resize textarea pour messageInput
             function setupTextarea(textarea, sendBtn = null) {
                 if (!textarea) return;
                 
                 textarea.addEventListener('input', function() {
+                    // Auto-resize
                     this.style.height = 'auto';
-                    this.style.height = Math.min(this.scrollHeight, 128) + 'px';
+                    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
                     
                     if (sendBtn) {
                         // Mise à jour du compteur de caractères
                         const charCount = document.getElementById('charCount');
                         const currentLength = this.value.length;
-                        const maxLength = 4000;
+                        const maxLength = 2000; // Réduit à 2000 caractères
                         
                         if (charCount) {
-                            charCount.textContent = currentLength;
+                            charCount.textContent = `${currentLength}/2000`;
                             
                             // Couleur progressive du compteur
                             if (currentLength > maxLength * 0.9) {
-                                charCount.className = 'text-red-500 font-medium';
+                                charCount.className = 'text-xs text-red-500 font-medium';
                             } else if (currentLength > maxLength * 0.7) {
-                                charCount.className = 'text-orange-500';
+                                charCount.className = 'text-xs text-orange-500';
                             } else {
-                                charCount.className = 'text-gray-400';
+                                charCount.className = 'text-xs text-gray-400';
                             }
                         }
                         
                         // État du bouton d'envoi
                         const hasText = this.value.trim().length > 0;
-                        const sendIcon = document.getElementById('sendIcon');
-                        
-                        if (hasText && currentLength < maxLength && !window.isLoading) {
-                            sendBtn.disabled = false;
-                            sendBtn.classList.remove('bg-gray-300');
-                            sendBtn.classList.add('bg-primary-600', 'hover:bg-primary-700');
-                        } else {
-                            sendBtn.disabled = true;
-                            sendBtn.classList.add('bg-gray-300');
-                            sendBtn.classList.remove('bg-primary-600', 'hover:bg-primary-700');
-                        }
+                        sendBtn.disabled = !(hasText && currentLength <= maxLength && !window.isLoading);
                     }
                 });
                 
@@ -1115,8 +2485,21 @@
                 });
             }
             
+            // Configuration des champs de saisie
             setupTextarea(messageInput, sendButton);
-            setupTextarea(welcomeMessageInput);
+            
+            // Configuration simple pour welcomeMessageInput
+            if (welcomeMessageInput) {
+                welcomeMessageInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        const form = this.closest('form');
+                        if (form) {
+                            form.dispatchEvent(new Event('submit', { cancelable: true }));
+                        }
+                    }
+                });
+            }
         }
 
         function setupEventListeners() {
@@ -1380,10 +2763,10 @@
             // Charger les messages
             await window.loadMessages();
             
-            // Basculer l'interface
+            // Basculer vers l'interface de chat
             document.getElementById('welcomeMessages').style.display = 'none';
             document.getElementById('welcomeInput').style.display = 'none';
-            document.getElementById('chatInputArea').style.display = 'block';
+            document.getElementById('chatInputArea').classList.remove('hidden');
             document.getElementById('conversationHeader').classList.remove('hidden');
             
             // Afficher le bouton d'assignation de patient
@@ -1452,53 +2835,60 @@
             const isUser = message.role === 'user';
             
             const messageDiv = document.createElement('div');
-            messageDiv.className = `chat-message message-bubble flex ${isUser ? 'justify-end' : 'justify-start'}`;
+            messageDiv.className = `chat-message message-bubble ${isUser ? 'user' : 'assistant'}`;
             messageDiv.setAttribute('data-message-id', message.id || 'temp-' + Date.now());
             
-            messageDiv.innerHTML = `
-                <div class="max-w-[85%] md:max-w-2xl ${isUser ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-900'} rounded-2xl px-4 py-3 group shadow-sm">
-                    <div class="flex items-center mb-2 relative">
-                        <div class="flex items-center space-x-2">
-                            <i data-feather="${isUser ? 'user-check' : 'activity'}" class="w-4 h-4"></i>
-                            <span class="text-sm font-medium">${isUser ? 'Vous' : 'NeuroScan AI'}</span>
-                            ${!isUser && message.is_medical_query ? '<span class="medical-indicator ml-2" title="Question médicale"></span>' : ''}
-                            ${message.is_edited ? `<span class="text-xs opacity-75 ml-2" title="Message édité ${message.edit_count || 1} fois">✏️</span>` : ''}
-                        </div>
-                        <span class="ml-auto text-xs opacity-75">${window.formatTime(message.timestamp)}</span>
-                        
-                        ${isUser && message.id ? `
-                            <div class="message-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute right-0 top-6">
-                                <button onclick="editMessage(${message.id})" 
-                                        class="text-xs px-2 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded text-current transition-colors mr-1"
-                                        title="Éditer ce message">
-                                    <i data-feather="edit-2" class="w-3 h-3"></i>
-                                </button>
-                                <button onclick="regenerateResponse(${message.id})" 
-                                        class="text-xs px-2 py-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded text-current transition-colors"
-                                        title="Régénérer la réponse">
-                                    <i data-feather="refresh-cw" class="w-3 h-3"></i>
-                                </button>
-                            </div>
-                        ` : ''}
+            // Créer l'avatar
+            const avatarContent = isUser ? 
+                '<i data-feather="user" class="w-3 h-3"></i>' : 
+                '<i data-feather="brain" class="w-3 h-3"></i>';
+            
+            // Créer les actions selon le type de message
+            const messageActions = isUser && message.id ? `
+                <div class="message-actions">
+                    <button onclick="editMessage(${message.id})" title="Éditer ce message">
+                        <i data-feather="edit-2" class="w-3 h-3"></i>
+                    </button>
+                    <button onclick="regenerateResponse(${message.id})" title="Régénérer la réponse">
+                        <i data-feather="refresh-cw" class="w-3 h-3"></i>
+                    </button>
+                </div>
+            ` : '';
+            
+            // Créer les indicateurs spéciaux
+            const indicators = [];
+            if (!isUser && message.is_medical_query) {
+                indicators.push('<div class="message-indicator medical-indicator"><i data-feather="heart-pulse" class="w-3 h-3"></i><span>Analyse médicale</span></div>');
+            }
+            if (!isUser && message.confidence_score) {
+                const confidencePercent = Math.round(message.confidence_score * 100);
+                indicators.push(`
+                    <div class="message-indicator confidence-indicator">
+                        <i data-feather="bar-chart-2" class="w-3 h-3"></i>
+                        <span>Confiance: ${confidencePercent}%</span>
                     </div>
-                    <div class="prose prose-sm max-w-none ${isUser ? 'prose-invert' : ''}" id="message-content-${message.id || 'temp'}">
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: ${confidencePercent}%"></div>
+                    </div>
+                `);
+            }
+            if (message.is_edited) {
+                indicators.push('<div class="message-indicator"><i data-feather="edit-3" class="w-3 h-3"></i><span>Édité</span></div>');
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="message-content ${message.is_edited ? 'message-edited' : ''}">
+                    <div class="message-header">
+                        <div class="avatar">${avatarContent}</div>
+                        <span class="sender-name">${isUser ? 'Vous' : 'NeuroScan IA'}</span>
+                        <span class="timestamp">${window.formatTime(message.timestamp)}</span>
+                    </div>
+                    <div class="prose prose-sm max-w-none" id="message-content-${message.id || 'temp'}">
                         ${window.formatMessageContent(message.content)}
                     </div>
-                    
-                    ${!isUser && message.confidence_score ? `
-                        <div class="mt-2 pt-2 border-t border-opacity-20 ${isUser ? 'border-white' : 'border-gray-300'}">
-                            <div class="flex items-center justify-between text-xs opacity-75">
-                                <span class="flex items-center gap-1">
-                                    <i data-feather="bar-chart-2" class="w-3 h-3"></i>
-                                    Confiance: ${Math.round(message.confidence_score * 100)}%
-                                </span>
-                                <div class="confidence-bar w-16 bg-gray-300 bg-opacity-30">
-                                    <div class="h-full bg-current" style="width: ${message.confidence_score * 100}%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    ` : ''}
+                    ${indicators.length > 0 ? `<div class="mt-2">${indicators.join('')}</div>` : ''}
                 </div>
+                ${messageActions}
             `;
             
             container.appendChild(messageDiv);
@@ -1509,7 +2899,7 @@
             // Animer l'apparition
             setTimeout(() => {
                 messageDiv.classList.add('visible');
-            }, 10);
+            }, 50);
             
             if (shouldScroll) {
                 container.scrollTop = container.scrollHeight;
@@ -1530,8 +2920,8 @@
             window.setLoading(true);
             messageInput.value = '';
             messageInput.style.height = 'auto'; // Réinitialiser la hauteur
-            document.getElementById('charCount').textContent = '0';
-            document.getElementById('charCount').className = 'text-gray-400';
+            const charCount = document.getElementById('charCount');
+            if (charCount) charCount.textContent = '0/2000';
             
             // Afficher le message utilisateur
             window.appendMessage({
@@ -1540,8 +2930,9 @@
                 timestamp: new Date().toISOString()
             });
             
-            // Afficher l'indicateur de frappe
-            document.getElementById('typingIndicator').classList.remove('hidden');
+            // Afficher l'indicateur de frappe moderne
+            const typingIndicator = document.getElementById('typingIndicatorModern');
+            if (typingIndicator) typingIndicator.classList.remove('hidden');
             
             try {
                 const response = await fetch('/api/chat/send', {
@@ -1557,8 +2948,9 @@
                 
                 const data = await response.json();
                 
-                // Masquer l'indicateur de frappe
-                document.getElementById('typingIndicator').classList.add('hidden');
+                // Masquer l'indicateur de frappe moderne
+                const typingIndicator = document.getElementById('typingIndicatorModern');
+                if (typingIndicator) typingIndicator.classList.add('hidden');
                 
                 if (data.success || data.response) {
                     // Afficher la réponse de l'assistant
@@ -1575,7 +2967,8 @@
                 
             } catch (error) {
                 console.error('Erreur envoi message:', error);
-                document.getElementById('typingIndicator').classList.add('hidden');
+                const typingIndicator = document.getElementById('typingIndicatorModern');
+                if (typingIndicator) typingIndicator.classList.add('hidden');
                 
                 // Afficher un message d'erreur
                 window.appendMessage({
@@ -1604,32 +2997,26 @@
                     sendIcon.classList.add('animate-spin');
                     feather.replace();
                 }
-                messageInput.disabled = true;
-                messageInput.classList.add('opacity-50');
-                sendButton.classList.add('bg-gray-300');
-                sendButton.classList.remove('bg-primary-600', 'hover:bg-primary-700');
+                if (messageInput) {
+                    messageInput.disabled = true;
+                    messageInput.classList.add('opacity-50');
+                }
             } else {
                 if (sendIcon) {
                     sendIcon.setAttribute('data-feather', 'send');
                     sendIcon.classList.remove('animate-spin');
                     feather.replace();
                 }
-                messageInput.disabled = false;
-                messageInput.classList.remove('opacity-50');
-                
-                // Réactiver le bouton selon le contenu
-                const hasText = messageInput.value.trim().length > 0;
-                if (hasText && messageInput.value.length < 4000) {
-                    sendButton.disabled = false;
-                    sendButton.classList.remove('bg-gray-300');
-                    sendButton.classList.add('bg-primary-600', 'hover:bg-primary-700');
-                } else {
-                    sendButton.disabled = true;
-                    sendButton.classList.add('bg-gray-300');
-                    sendButton.classList.remove('bg-primary-600', 'hover:bg-primary-700');
+                if (messageInput) {
+                    messageInput.disabled = false;
+                    messageInput.classList.remove('opacity-50');
+                    
+                    // Réactiver le bouton selon le contenu
+                    const hasText = messageInput.value.trim().length > 0;
+                    sendButton.disabled = !(hasText && messageInput.value.length <= 2000);
+                    
+                    messageInput.focus();
                 }
-                
-                messageInput.focus();
             }
         }
 
@@ -1699,7 +3086,144 @@
         setupEventListeners();
         window.loadConversations();
         
+        // Initialiser les animations du profil médecin
+        initializeDoctorProfile();
+        
         });
+
+        // ===== GESTION DU MODE SOMBRE =====
+        
+        function initializeTheme() {
+            // Récupérer la préférence sauvegardée ou détecter la préférence système
+            const savedTheme = localStorage.getItem('neuroscan-theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            // Définir le thème initial
+            const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+            setTheme(initialTheme, true); // true = mode silencieux (pas de notification)
+            
+            // Event listeners pour les toggles
+            const themeToggle = document.getElementById('themeToggle');
+            const themeToggleMobile = document.getElementById('themeToggleMobile');
+            
+            if (themeToggle) {
+                themeToggle.addEventListener('click', toggleTheme);
+            }
+            
+            if (themeToggleMobile) {
+                themeToggleMobile.addEventListener('click', toggleTheme);
+            }
+            
+            // Écouter les changements de préférence système
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                if (!localStorage.getItem('neuroscan-theme')) {
+                    setTheme(e.matches ? 'dark' : 'light', true);
+                }
+            });
+        }
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        }
+        
+        function setTheme(theme, silent = false) {
+            // Appliquer le thème
+            document.documentElement.setAttribute('data-theme', theme);
+            
+            // Sauvegarder la préférence
+            localStorage.setItem('neuroscan-theme', theme);
+            
+            // Mettre à jour le body class pour la compatibilité
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            
+            // Mettre à jour l'indicateur de statut
+            const themeStatus = document.getElementById('themeStatus');
+            if (themeStatus) {
+                themeStatus.textContent = theme === 'dark' ? 'Mode sombre' : 'Mode clair';
+            }
+            
+            // Animation de transition douce
+            document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
+            
+            // Notification subtile du changement (seulement si pas en mode silencieux)
+            if (!silent && document.readyState === 'complete') {
+                const themeText = theme === 'dark' ? 'Mode sombre activé 🌙' : 'Mode clair activé ☀️';
+                showNotification(themeText, 'info');
+            }
+        }
+        
+        // Fonction pour obtenir le thème actuel
+        function getCurrentTheme() {
+            return document.documentElement.getAttribute('data-theme') || 'light';
+        }
+
+        // ===== ANIMATION DU PROFIL MÉDECIN =====
+        
+        function initializeDoctorProfile() {
+            // Animation des statistiques au chargement
+            animateProfileStats();
+            
+            // Mettre à jour les statistiques périodiquement
+            setInterval(updateProfileStats, 30000); // Toutes les 30 secondes
+            
+            // Effet hover sur la carte profil
+            const profileCard = document.querySelector('.sidebar .bg-white\\/90');
+            if (profileCard) {
+                profileCard.addEventListener('mouseenter', () => {
+                    profileCard.style.transform = 'translateY(-2px) scale(1.02)';
+                    profileCard.style.boxShadow = '0 20px 40px rgba(0,0,0,0.15)';
+                });
+                
+                profileCard.addEventListener('mouseleave', () => {
+                    profileCard.style.transform = 'translateY(0) scale(1)';
+                    profileCard.style.boxShadow = '';
+                });
+            }
+        }
+        
+        function animateProfileStats() {
+            // Animation du compteur de consultations
+            const consultationsElement = document.getElementById('dailyConsultations');
+            if (consultationsElement) {
+                let count = 0;
+                const target = 12;
+                const increment = target / 30;
+                
+                const countInterval = setInterval(() => {
+                    count += increment;
+                    if (count >= target) {
+                        count = target;
+                        clearInterval(countInterval);
+                    }
+                    consultationsElement.textContent = Math.floor(count);
+                }, 50);
+            }
+        }
+        
+        function updateProfileStats() {
+            // Simuler une mise à jour des statistiques
+            const consultationsElement = document.getElementById('dailyConsultations');
+            if (consultationsElement) {
+                const currentCount = parseInt(consultationsElement.textContent);
+                const newCount = currentCount + Math.floor(Math.random() * 3); // +0 à +2
+                
+                // Animation de changement
+                consultationsElement.style.transform = 'scale(1.2)';
+                consultationsElement.style.color = '#10b981';
+                
+                setTimeout(() => {
+                    consultationsElement.textContent = newCount;
+                    consultationsElement.style.transform = 'scale(1)';
+                    consultationsElement.style.color = '';
+                }, 150);
+            }
+        }
 
         // ===== FONCTIONS GLOBALES =====
 

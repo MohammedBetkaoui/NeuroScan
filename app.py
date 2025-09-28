@@ -29,8 +29,8 @@ app.config['SECRET_KEY'] = 'neuroscan_secret_key_2024_medical_auth'  # Clé secr
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Configuration de l'API Gemini
-GEMINI_API_KEY = "AIzaSyBC3sAJjh9_32jTgKXJxcdOTM7HzyNJPng"
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_API_KEY = "AIzaSyD9H1Odcbk1Zo8KuvzBvqhvkAx0wJhqBS8"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
 # Configuration de la base de données
 DATABASE_PATH = 'neuroscan_analytics.db'
@@ -282,7 +282,7 @@ def init_database():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             is_medical_query BOOLEAN DEFAULT 1,
             confidence_score REAL,
-            gemini_model TEXT DEFAULT 'gemini-2.0-flash',
+            gemini_model TEXT DEFAULT 'gemini-1.5-flash',
             FOREIGN KEY (conversation_id) REFERENCES chat_conversations(id)
         )
     ''')
@@ -900,7 +900,7 @@ def get_doctor_statistics(doctor_id):
             SELECT COUNT(*) FROM analyses a
             JOIN patients p ON a.patient_id = p.patient_id
             WHERE p.doctor_id = ? 
-            AND a.analysis_date >= date('now', '-30 days')
+            AND a.timestamp >= datetime('now', '-30 days')
         ''', (doctor_id,))
         recent_analyses = cursor.fetchone()[0]
 

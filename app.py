@@ -29,7 +29,7 @@ app.config['SECRET_KEY'] = 'neuroscan_secret_key_2024_medical_auth'  # Clé secr
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Configuration de l'API Gemini
-GEMINI_API_KEY = "AIzaSyD9H1Odcbk1Zo8KuvzBvqhvkAx0wJhqBS8"
+GEMINI_API_KEY = "AIzaSyDNhBXUjMKVo9fJQBQXtLPwbXJafw6lHPU"
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
 # Configuration de la base de données
@@ -6937,6 +6937,30 @@ def pro_dashboard_export_data():
     except Exception as e:
         print(f"Erreur export data: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/health')
+def api_health_check():
+    """Point de terminaison de vérification de santé du serveur"""
+    try:
+        # Vérifier la connexion à la base de données
+        conn = sqlite3.connect(DATABASE_PATH)
+        cursor = conn.cursor()
+        cursor.execute('SELECT 1')
+        conn.close()
+        
+        return jsonify({
+            'status': 'healthy',
+            'timestamp': datetime.now().isoformat(),
+            'database': 'connected',
+            'model_loaded': model is not None
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'timestamp': datetime.now().isoformat(),
+            'error': str(e)
+        }), 500
 
 if __name__ == '__main__':
     print(f"Démarrage de l'application sur le device: {device}")

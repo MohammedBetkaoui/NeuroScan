@@ -1803,10 +1803,218 @@
             animation: statusPulse 2s ease-in-out infinite;
         }
 
-        /* Effet glassmorphism pour le mode sombre */
-        [data-theme="dark"] .sidebar .backdrop-blur-sm {
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+        /* Templates de messages médicaux */
+        .message-templates {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 16px;
+            margin-bottom: 8px;
+            z-index: 10;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .templates-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .templates-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        
+        .template-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            text-align: left;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .template-btn:hover {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .template-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .template-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .template-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #111827;
+            margin-bottom: 2px;
+        }
+        
+        .template-desc {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        /* Amélioration de l'affichage des titres de conversation */
+        .conversation-item h4 {
+            word-wrap: break-word;
+            hyphens: auto;
+            line-height: 1.3;
+            max-height: 2.6em; /* 2 lignes max */
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-clamp: 2;
+        }
+        
+        .conversation-item h4:hover {
+            color: #2563eb;
+            transition: color 0.2s ease;
+        }
+        
+        /* Tooltip personnalisé pour les titres longs */
+        .conversation-item h4[title] {
+            cursor: help;
+            position: relative;
+        }
+        
+        .conversation-item h4[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            left: 0;
+            top: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: normal;
+            white-space: nowrap;
+            z-index: 1000;
+            max-width: 250px;
+            word-wrap: break-word;
+            white-space: normal;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: fadeInTooltip 0.2s ease-out;
+        }
+        
+        @keyframes fadeInTooltip {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Styles pour les nouveaux indicateurs médicaux */
+        .conversation-item .medical-indicator {
+            width: 6px;
+            height: 6px;
+            background: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 4px;
+            flex-shrink: 0;
+        }
+        
+        /* Amélioration des badges de spécialité */
+        .conversation-item .badge-specialty {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+        
+        /* Indicateur d'urgence avec animation */
+        .conversation-item .urgent-badge {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            animation: urgentPulse 2s ease-in-out infinite;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+        }
+        
+        @keyframes urgentPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        
+        /* Amélioration des icônes spécialisées */
+        .conversation-item .specialty-icon {
+            transition: transform 0.2s ease;
+        }
+        
+        .conversation-item:hover .specialty-icon {
+            transform: scale(1.1);
+        }
+        
+        /* Indicateurs de symptômes */
+        .symptom-tag {
+            font-size: 10px;
+            padding: 1px 4px;
+            border-radius: 6px;
+            background: rgba(249, 115, 22, 0.1);
+            color: #ea580c;
+            border: 1px solid rgba(249, 115, 22, 0.2);
+            font-weight: 500;
+        }
+        
+        /* Indicateur de conversation active */
+        .conversation-item.active {
+            position: relative;
+        }
+        
+        .conversation-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #0ea5e9, #0284c7);
+            border-radius: 0 2px 2px 0;
+        }
+        
+        /* Amélioration du double-clic pour renommer */
+        .conversation-item h4 {
+            transition: all 0.2s ease;
+        }
+        
+        .conversation-item h4:hover {
+            background: rgba(37, 99, 235, 0.05);
+            border-radius: 4px;
+            padding: 2px 4px;
+            margin: -2px -4px;
+        }
+        
+        /* Indicateur de statut de conversation */
+        .status-active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #2563eb;
+            font-size: 10px;
+            padding: 1px 4px;
+            border-radius: 6px;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -1819,7 +2027,13 @@
                     <div class="w-8 h-8 bg-primary-600 text-white rounded-lg flex items-center justify-center">
                         <i class="fas fa-stethoscope text-sm"></i>
                     </div>
-                    <h1 class="text-xl font-semibold text-primary-800">NeuroScan Chat</h1>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl font-semibold text-primary-800">NeuroScan Chat</h1>
+                        <div id="connectionStatus" class="flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span>En ligne</span>
+                        </div>
+                    </div>
                 </div>
                 <button id="closeSidebar" class="md:hidden text-gray-500 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100">
                     <i data-feather="x"></i>
@@ -1832,6 +2046,22 @@
                 <i class="fas fa-comment-medical text-sm"></i>
                 <span class="font-medium">Nouvelle consultation</span>
             </button>
+        </div>
+        
+        <!-- Barre de recherche -->
+        <div class="px-4 pb-3">
+            <div class="relative">
+                <input
+                    type="text"
+                    id="conversationSearch"
+                    placeholder="Rechercher une consultation..."
+                    class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors text-sm"
+                />
+                <i data-feather="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>
+                <button id="clearSearch" class="hidden w-4 h-4 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2 hover:text-gray-600">
+                    <i data-feather="x" class="w-4 h-4"></i>
+                </button>
+            </div>
         </div>
         
         <div class="flex-1 overflow-y-auto p-3">
@@ -1943,6 +2173,28 @@
                 <!-- Citation inspirante -->
                 <div class="mt-3 text-center">
                     <p class="text-xs text-gray-500 italic">"L'intelligence artificielle au service de la médecine"</p>
+                </div>
+                
+                <!-- Raccourcis clavier -->
+                <div class="mt-4 p-3 bg-gray-50/70 rounded-lg">
+                    <h4 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <i data-feather="keyboard" class="w-3 h-3"></i>
+                        Raccourcis
+                    </h4>
+                    <div class="space-y-1 text-xs text-gray-600">
+                        <div class="flex justify-between">
+                            <span>Rechercher</span>
+                            <kbd class="px-1.5 py-0.5 bg-white rounded text-xs font-mono">Ctrl+K</kbd>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Nouvelle conv.</span>
+                            <kbd class="px-1.5 py-0.5 bg-white rounded text-xs font-mono">Ctrl+/</kbd>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Envoyer</span>
+                            <kbd class="px-1.5 py-0.5 bg-white rounded text-xs font-mono">Ctrl+Enter</kbd>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2079,8 +2331,21 @@
                     <span class="text-sm text-blue-600 font-medium">NeuroScan analyse votre message...</span>
                 </div>
                 
-                <!-- Zone de chat active -->
+        <!-- Zone de chat active -->
                 <div id="chatInputArea" class="hidden">
+                    <!-- Indicateur de frappe amélioré -->
+                    <div id="typingIndicatorModern" class="typing-indicator-modern hidden">
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
+                                <div class="w-2 h-2 bg-primary-500 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                                <div class="w-2 h-2 bg-primary-500 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+                            </div>
+                            <span class="text-sm text-primary-700 font-medium">NeuroScan analyse votre message...</span>
+                        </div>
+                        <div class="text-xs text-primary-600 mt-1">Cela peut prendre quelques secondes</div>
+                    </div>
+                    
                     <form id="messageForm">
                         <div class="input-wrapper relative">
                             <textarea
@@ -2104,9 +2369,98 @@
 
                         
 
-                        <!-- Actions rapides (masquées sur mobile) -->
+                        <!-- Actions rapides -->
                         <div class="quick-actions">
-                            
+                            <button id="templateBtn" class="quick-action-btn" title="Templates de messages">
+                                <i data-feather="file-text" class="w-4 h-4"></i>
+                            </button>
+                            <button id="emojiBtn" class="quick-action-btn" title="Émojis médicaux">
+                                <i data-feather="smile" class="w-4 h-4"></i>
+                            </button>
+                            <button id="attachmentBtn" class="quick-action-btn" title="Pièces jointes">
+                                <i data-feather="paperclip" class="w-4 h-4"></i>
+                            </button>
+                            <button id="voiceBtn" class="quick-action-btn" title="Dictée vocale">
+                                <i data-feather="mic" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Templates de messages médicaux -->
+                        <div id="messageTemplates" class="message-templates hidden">
+                            <div class="templates-header">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                    <i data-feather="file-text" class="w-4 h-4"></i>
+                                    Templates médicaux
+                                </h4>
+                                <button id="closeTemplates" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
+                                    <i data-feather="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            <div class="templates-grid">
+                                <button class="template-btn" data-template="Bonjour Docteur, je consulte pour des maux de tête fréquents depuis 3 semaines. Pouvez-vous m'aider à comprendre les causes possibles ?">
+                                    <div class="template-icon">🩺</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Céphalées</div>
+                                        <div class="template-desc">Consultation pour maux de tête</div>
+                                    </div>
+                                </button>
+                                
+                                <button class="template-btn" data-template="J'ai des douleurs thoraciques depuis hier soir. Elles sont localisées au milieu du thorax et irradient dans le bras gauche. Dois-je m'inquiéter ?">
+                                    <div class="template-icon">❤️</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Douleurs thoraciques</div>
+                                        <div class="template-desc">Évaluation cardiovasculaire</div>
+                                    </div>
+                                </button>
+                                
+                                <button class="template-btn" data-template="Pouvez-vous analyser cette IRM cérébrale et me donner votre interprétation médicale ? Je joins l'image à ce message.">
+                                    <div class="template-icon">🧠</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Analyse d'imagerie</div>
+                                        <div class="template-desc">Interprétation IRM/scanner</div>
+                                    </div>
+                                </button>
+                                
+                                <button class="template-btn" data-template="Mon patient présente des symptômes neurologiques : confusion mentale, difficultés d'élocution et faiblesse du côté droit. Diagnostic différentiel ?">
+                                    <div class="template-icon">🩻</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Diagnostic différentiel</div>
+                                        <div class="template-desc">Neurologie d'urgence</div>
+                                    </div>
+                                </button>
+                                
+                                <button class="template-btn" data-template="Quelles sont les dernières recommandations pour le traitement de l'hypertension artérielle selon les guidelines 2024 ?">
+                                    <div class="template-icon">📋</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Mise à jour thérapeutique</div>
+                                        <div class="template-desc">Recommandations actuelles</div>
+                                    </div>
+                                </button>
+                                
+                                <button class="template-btn" data-template="Pouvez-vous rédiger un compte-rendu médical pour cette consultation ? Patient: [nom], Diagnostic: [diagnostic], Traitement: [traitement]">
+                                    <div class="template-icon">📝</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Rédaction médicale</div>
+                                        <div class="template-desc">Comptes-rendus et courriers</div>
+                                    </div>
+                                </button>
+                                
+                                <button class="template-btn" data-template="Formation continue : pouvez-vous me faire un résumé des avancées récentes en matière de thrombolyse dans l'AVC ischémique ?">
+                                    <div class="template-icon">🎓</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Formation médicale</div>
+                                        <div class="template-desc">Mise à jour des connaissances</div>
+                                    </div>
+                                </button>
+                                
+                                <button class="template-btn" data-template="Cas clinique complexe : patient de 65 ans avec antécédents cardiovasculaires, présente une dyspnée d'effort croissante. Investigations recommandées ?">
+                                    <div class="template-icon">🔍</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Cas complexe</div>
+                                        <div class="template-desc">Discussion multidisciplinaire</div>
+                                    </div>
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -2509,6 +2863,123 @@
                 newChatBtn.addEventListener('click', createNewConversation);
             }
 
+            // Barre de recherche des conversations
+            const searchInput = document.getElementById('conversationSearch');
+            const clearSearch = document.getElementById('clearSearch');
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const query = this.value.toLowerCase().trim();
+                    filterConversations(query);
+                    
+                    // Afficher/masquer le bouton clear
+                    if (clearSearch) {
+                        clearSearch.classList.toggle('hidden', !query);
+                    }
+                });
+            }
+            
+            if (clearSearch) {
+                clearSearch.addEventListener('click', function() {
+                    if (searchInput) {
+                        searchInput.value = '';
+                        searchInput.dispatchEvent(new Event('input'));
+                        searchInput.focus();
+                    }
+                });
+            }
+
+            // Boutons d'actions rapides
+            const templateBtn = document.getElementById('templateBtn');
+            const emojiBtn = document.getElementById('emojiBtn');
+            const attachmentBtn = document.getElementById('attachmentBtn');
+            const voiceBtn = document.getElementById('voiceBtn');
+            const closeTemplates = document.getElementById('closeTemplates');
+            
+            if (templateBtn) {
+                templateBtn.addEventListener('click', toggleTemplates);
+            }
+            
+            if (closeTemplates) {
+                closeTemplates.addEventListener('click', hideTemplates);
+            }
+            
+            // Templates de messages
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('template-btn')) {
+                    const template = e.target.dataset.template;
+                    const messageInput = document.getElementById('messageInput');
+                    if (messageInput && template) {
+                        messageInput.value = template;
+                        messageInput.dispatchEvent(new Event('input'));
+                        messageInput.focus();
+                        hideTemplates();
+                    }
+                }
+            });
+            
+            // Raccourcis clavier globaux
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + K : Focus sur la recherche
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    if (searchInput) {
+                        searchInput.focus();
+                        searchInput.select();
+                    }
+                }
+                
+                // Ctrl/Cmd + / : Nouvelle conversation
+                if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+                    e.preventDefault();
+                    createNewConversation();
+                }
+                
+                // Ctrl/Cmd + Enter : Envoyer le message (dans le champ de saisie)
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    const activeElement = document.activeElement;
+                    if (activeElement && (activeElement.id === 'messageInput' || activeElement.id === 'welcomeMessageInput')) {
+                        e.preventDefault();
+                        const form = activeElement.closest('form');
+                        if (form) {
+                            form.dispatchEvent(new Event('submit', { cancelable: true }));
+                        }
+                    }
+                }
+                
+                // Échap : Fermer les modales, templates et focus
+                if (e.key === 'Escape') {
+                    hideTemplates();
+                    // Le reste est géré plus haut pour les modales
+                }
+            });
+
+            // Amélioration de l'auto-scroll intelligent
+            const messagesContainer = document.getElementById('messagesContainer');
+            if (messagesContainer) {
+                let userScrolledUp = false;
+                let lastScrollTop = 0;
+                
+                messagesContainer.addEventListener('scroll', function() {
+                    const scrollTop = this.scrollTop;
+                    const scrollHeight = this.scrollHeight;
+                    const clientHeight = this.clientHeight;
+                    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px de tolérance
+                    
+                    // Détecter si l'utilisateur scroll vers le haut
+                    if (scrollTop < lastScrollTop && scrollTop > 100) {
+                        userScrolledUp = true;
+                    } else if (isAtBottom) {
+                        userScrolledUp = false;
+                    }
+                    
+                    lastScrollTop = scrollTop;
+                    
+                    // Afficher/masquer le bouton "scroll to bottom" si nécessaire
+                    toggleScrollToBottomButton(!isAtBottom && userScrolledUp);
+                });
+            }
+
             // Formulaires de messages
             const messageForm = document.getElementById('messageForm');
             const welcomeForm = document.getElementById('welcomeForm');
@@ -2601,6 +3072,518 @@
             });
         }
 
+        // Fonction pour restaurer la conversation sauvegardée
+        window.restoreSavedConversation = function() {
+            const savedConversationId = localStorage.getItem('neuroscan-current-conversation');
+            if (savedConversationId && window.conversations.length > 0) {
+                const conversationExists = window.conversations.find(conv => conv.id.toString() === savedConversationId);
+                if (conversationExists) {
+                    // Restaurer la conversation sauvegardée
+                    window.selectConversation(parseInt(savedConversationId));
+                } else {
+                    // La conversation n'existe plus, nettoyer le localStorage
+                    localStorage.removeItem('neuroscan-current-conversation');
+                }
+            }
+        }
+
+        // Analyse intelligente des titres de conversation
+        window.analyzeConversationTitle = function(conversation) {
+            const title = (conversation.title || '').toLowerCase();
+            const lastMessage = (conversation.last_message || '').toLowerCase();
+
+            // Mots-clés d'urgence médicale
+            const urgentKeywords = [
+                'urgence', 'urgent', 'douleur', 'chute', 'accident', 'hémorragie',
+                'infarctus', 'avc', 'coma', 'crise', 'convulsion', 'étouffement',
+                'brûlure', 'traumatisme', 'fracture', 'saignement'
+            ];
+
+            // Spécialités médicales
+            const specialties = {
+                cardiology: ['coeur', 'cardiaque', 'infarctus', 'angine', 'hypertension', 'arythmie'],
+                neurology: ['cerveau', 'neurologique', 'céphalée', 'migraine', 'avc', 'épilepsie', 'parkinson'],
+                pneumology: ['poumon', 'respiratoire', 'asthme', 'bronchite', 'pneumonie', 'dyspnée'],
+                gastroenterology: ['digestif', 'estomac', 'foie', 'intestin', 'nausée', 'vomissement'],
+                endocrinology: ['diabète', 'thyroïde', 'hormone', 'métabolique'],
+                rheumatology: ['articulaire', 'rhumatisme', 'arthrose', 'arthrite'],
+                dermatology: ['peau', 'dermatologique', 'eczéma', 'psoriasis'],
+                psychiatry: ['psychologique', 'dépression', 'anxiété', 'stress', 'sommeil'],
+                pediatry: ['enfant', 'pédiatrique', 'bébé', 'nourrisson'],
+                gynecology: ['gynécologique', 'menstruation', 'grossesse', 'ménopause']
+            };
+
+            // Symptômes courants
+            const symptoms = [
+                'douleur', 'fièvre', 'fatigue', 'nausée', 'vomissement', 'diarrhée',
+                'constipation', 'toux', 'rhume', 'mal de tête', 'migraine', 'vertige',
+                'insomnie', 'anxiété', 'dépression', 'douleur thoracique', 'dyspnée'
+            ];
+
+            // Détection d'urgence
+            const isUrgent = urgentKeywords.some(keyword =>
+                title.includes(keyword) || lastMessage.includes(keyword)
+            );
+
+            // Détection de spécialité
+            let detectedSpecialty = null;
+            for (const [specialty, keywords] of Object.entries(specialties)) {
+                if (keywords.some(keyword => title.includes(keyword) || lastMessage.includes(keyword))) {
+                    detectedSpecialty = specialty;
+                    break;
+                }
+            }
+
+            // Détection de symptômes
+            const detectedSymptoms = symptoms.filter(symptom =>
+                title.includes(symptom) || lastMessage.includes(symptom)
+            );
+
+            return {
+                isUrgent,
+                specialty: detectedSpecialty ? window.formatSpecialtyName(detectedSpecialty) : null,
+                symptoms: detectedSymptoms.slice(0, 3) // Maximum 3 symptômes
+            };
+        }
+
+        // Formatage des noms de spécialités
+        window.formatSpecialtyName = function(specialty) {
+            const names = {
+                cardiology: 'Cardio',
+                neurology: 'Neuro',
+                pneumology: 'Pneumo',
+                gastroenterology: 'Digestif',
+                endocrinology: 'Endocrino',
+                rheumatology: 'Rhumato',
+                dermatology: 'Dermato',
+                psychiatry: 'Psych',
+                pediatry: 'Pédiatrie',
+                gynecology: 'Gynéco'
+            };
+            return names[specialty] || specialty;
+        }
+
+        // Génération d'icônes spécialisées selon le type de consultation
+        window.getConversationIcon = function(conversation, analysis) {
+            const title = (conversation.title || '').toLowerCase();
+            const lastMessage = (conversation.last_message || '').toLowerCase();
+
+            // Icônes selon la spécialité détectée
+            if (analysis.specialty) {
+                const specialtyIcons = {
+                    'Cardio': '<i data-feather="heart" class="w-4 h-4 text-red-500"></i>',
+                    'Neuro': '<i data-feather="brain" class="w-4 h-4 text-purple-500"></i>',
+                    'Pneumo': '<i data-feather="wind" class="w-4 h-4 text-blue-500"></i>',
+                    'Digestif': '<i data-feather="activity" class="w-4 h-4 text-green-500"></i>',
+                    'Endocrino': '<i data-feather="zap" class="w-4 h-4 text-yellow-500"></i>',
+                    'Rhumatologie': '<i data-feather="bone" class="w-4 h-4 text-orange-500"></i>',
+                    'Dermato': '<i data-feather="layers" class="w-4 h-4 text-pink-500"></i>',
+                    'Psych': '<i data-feather="mind" class="w-4 h-4 text-indigo-500"></i>',
+                    'Pédiatrie': '<i data-feather="baby" class="w-4 h-4 text-cyan-500"></i>',
+                    'Gynéco': '<i data-feather="flower" class="w-4 h-4 text-rose-500"></i>'
+                };
+                return specialtyIcons[analysis.specialty] || '<i data-feather="stethoscope" class="w-4 h-4 text-medical-500"></i>';
+            }
+
+            // Icône d'urgence pour les cas urgents
+            if (analysis.isUrgent) {
+                return '<i data-feather="alert-triangle" class="w-4 h-4 text-red-500 animate-pulse"></i>';
+            }
+
+            // Icônes selon le contenu du message
+            if (lastMessage.includes('imagerie') || lastMessage.includes('scanner') || lastMessage.includes('irm')) {
+                return '<i data-feather="image" class="w-4 h-4 text-blue-500"></i>';
+            }
+
+            if (lastMessage.includes('diagnostic') || lastMessage.includes('analyse')) {
+                return '<i data-feather="search" class="w-4 h-4 text-green-500"></i>';
+            }
+
+            if (lastMessage.includes('traitement') || lastMessage.includes('prescription')) {
+                return '<i data-feather="pill" class="w-4 h-4 text-purple-500"></i>';
+            }
+
+            // Icône par défaut pour les consultations médicales
+            return '<i data-feather="stethoscope" class="w-4 h-4 text-primary-600"></i>';
+        }
+
+        // Indicateur médical intelligent
+        window.getMedicalIndicator = function(message) {
+            if (!message || message === 'Nouvelle consultation') {
+                return '<i data-feather="plus-circle" class="w-3 h-3 text-gray-400 mr-1"></i>';
+            }
+
+            const lowerMessage = message.toLowerCase();
+
+            // Indicateurs selon le type de contenu médical
+            if (lowerMessage.includes('diagnostic') || lowerMessage.includes('analyse')) {
+                return '<i data-feather="search" class="w-3 h-3 text-blue-500 mr-1"></i>';
+            }
+
+            if (lowerMessage.includes('traitement') || lowerMessage.includes('prescription')) {
+                return '<i data-feather="pill" class="w-3 h-3 text-green-500 mr-1"></i>';
+            }
+
+            if (lowerMessage.includes('urgence') || lowerMessage.includes('urgent')) {
+                return '<i data-feather="alert-circle" class="w-3 h-3 text-red-500 mr-1"></i>';
+            }
+
+            if (lowerMessage.includes('question') || lowerMessage.includes('?')) {
+                return '<i data-feather="help-circle" class="w-3 h-3 text-orange-500 mr-1"></i>';
+            }
+
+            // Indicateur par défaut
+            return '<i data-feather="message-circle" class="w-3 h-3 text-gray-500 mr-1"></i>';
+        }
+
+        // Résumé intelligent des messages
+        window.summarizeMessage = function(message) {
+            if (!message || message === 'Nouvelle consultation') {
+                return 'Nouvelle consultation';
+            }
+
+            // Si le message est court, le retourner tel quel
+            if (message.length <= 60) {
+                return message;
+            }
+
+            // Chercher des mots-clés médicaux importants
+            const medicalKeywords = [
+                'diagnostic', 'traitement', 'symptôme', 'douleur', 'fièvre', 'analyse',
+                'prescription', 'consultation', 'examen', 'résultat', 'urgence'
+            ];
+
+            const lowerMessage = message.toLowerCase();
+            const foundKeywords = medicalKeywords.filter(keyword =>
+                lowerMessage.includes(keyword)
+            );
+
+            // Si on trouve des mots-clés, créer un résumé intelligent
+            if (foundKeywords.length > 0) {
+                const firstKeyword = foundKeywords[0];
+                const keywordIndex = lowerMessage.indexOf(firstKeyword);
+                const contextStart = Math.max(0, keywordIndex - 20);
+                const contextEnd = Math.min(message.length, keywordIndex + firstKeyword.length + 30);
+
+                let summary = message.substring(contextStart, contextEnd);
+                if (contextStart > 0) summary = '...' + summary;
+                if (contextEnd < message.length) summary = summary + '...';
+
+                return summary;
+            }
+
+            // Résumé par défaut : début du message
+            return message.substring(0, 57) + '...';
+        }
+
+        // Fonction de renommage des conversations
+        window.renameConversation = async function(conversationId, currentTitle) {
+            const newTitle = prompt('Renommer la consultation:', currentTitle);
+            if (!newTitle || newTitle.trim() === currentTitle) return;
+
+            try {
+                const response = await fetch(`/api/chat/conversations/${conversationId}/rename`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: newTitle.trim()
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    await window.loadConversations();
+                    window.showNotification('Consultation renommée avec succès', 'success');
+                } else {
+                    window.showNotification('Erreur lors du renommage', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur renommage:', error);
+                window.showNotification('Erreur réseau', 'error');
+            }
+        }
+
+        // Analyse d'un message pour générer un titre intelligent
+        window.analyzeMessageForTitle = function(message) {
+            if (!message || typeof message !== 'string' || message.length < 10) {
+                return { suggestedTitle: null };
+            }
+
+            const lowerMessage = message.toLowerCase();
+
+            // Patterns de titres médicaux courants
+            const titlePatterns = [
+                {
+                    keywords: ['mal de tête', 'céphalée', 'migraine', 'maux de tête'],
+                    title: 'Céphalées et migraines'
+                },
+                {
+                    keywords: ['douleur thoracique', 'douleur poitrine', 'infarctus', 'angine'],
+                    title: 'Douleurs thoraciques'
+                },
+                {
+                    keywords: ['douleur abdominale', 'douleur ventre', 'nausée', 'vomissement'],
+                    title: 'Douleurs abdominales'
+                },
+                {
+                    keywords: ['fièvre', 'température', 'infection'],
+                    title: 'Fièvre et infection'
+                },
+                {
+                    keywords: ['toux', 'respiratoire', 'poumon', 'asthme', 'bronchite'],
+                    title: 'Problèmes respiratoires'
+                },
+                {
+                    keywords: ['articulaire', 'rhumatisme', 'arthrose', 'douleur articulaire'],
+                    title: 'Douleurs articulaires'
+                },
+                {
+                    keywords: ['peau', 'dermatologique', 'eczéma', 'allergie'],
+                    title: 'Problèmes dermatologiques'
+                },
+                {
+                    keywords: ['diabète', 'glycémie', 'insuline'],
+                    title: 'Suivi diabète'
+                },
+                {
+                    keywords: ['hypertension', 'tension artérielle'],
+                    title: 'Hypertension artérielle'
+                },
+                {
+                    keywords: ['dépression', 'anxiété', 'stress', 'sommeil'],
+                    title: 'Santé mentale'
+                },
+                {
+                    keywords: ['enfant', 'pédiatrique', 'bébé', 'nourrisson'],
+                    title: 'Consultation pédiatrique'
+                },
+                {
+                    keywords: ['gynécologique', 'menstruation', 'grossesse'],
+                    title: 'Consultation gynécologique'
+                },
+                {
+                    keywords: ['imagerie', 'scanner', 'irm', 'radio'],
+                    title: 'Analyse d\'imagerie'
+                },
+                {
+                    keywords: ['diagnostic', 'analyse', 'résultat'],
+                    title: 'Analyse diagnostique'
+                },
+                {
+                    keywords: ['traitement', 'prescription', 'médicament'],
+                    title: 'Prescription et traitement'
+                }
+            ];
+
+            // Chercher le pattern le plus pertinent
+            for (const pattern of titlePatterns) {
+                if (pattern.keywords.some(keyword => lowerMessage.includes(keyword))) {
+                    return { suggestedTitle: pattern.title };
+                }
+            }
+
+            // Si aucun pattern spécifique, créer un titre basé sur les premiers mots significatifs
+            const words = message.split(' ').filter(word => word.length > 3);
+            if (words.length >= 2) {
+                const titleWords = words.slice(0, 4).join(' ');
+                const suggestedTitle = titleWords.charAt(0).toUpperCase() + titleWords.slice(1).toLowerCase();
+                return { suggestedTitle: suggestedTitle.length > 50 ? suggestedTitle.substring(0, 47) + '...' : suggestedTitle };
+            }
+
+            // Titre par défaut
+            return { suggestedTitle: null };
+        }
+
+        // ===== FIN DES NOUVELLES FONCTIONS =====
+        
+        // Fonction de recherche dans les conversations
+        function filterConversations(query) {
+            const conversationItems = document.querySelectorAll('.conversation-item');
+            let hasResults = false;
+            
+            conversationItems.forEach(item => {
+                const title = item.querySelector('h4')?.textContent.toLowerCase() || '';
+                const subtitle = item.querySelector('p')?.textContent.toLowerCase() || '';
+                const patientName = item.querySelector('.patient-name')?.textContent.toLowerCase() || '';
+                
+                const matches = title.includes(query) || 
+                               subtitle.includes(query) || 
+                               patientName.includes(query);
+                
+                item.style.display = matches ? 'block' : 'none';
+                if (matches) hasResults = true;
+            });
+            
+            // Afficher un message si aucune conversation ne correspond
+            const container = document.getElementById('conversationsList');
+            const existingNoResults = container.querySelector('.no-results');
+            
+            if (!hasResults && query) {
+                if (!existingNoResults) {
+                    const noResultsDiv = document.createElement('div');
+                    noResultsDiv.className = 'no-results text-center text-gray-500 py-8';
+                    noResultsDiv.innerHTML = `
+                        <i data-feather="search" class="w-8 h-8 mx-auto mb-3 text-gray-400"></i>
+                        <p class="font-medium">Aucune conversation trouvée</p>
+                        <p class="text-sm">Essayez avec des termes différents</p>
+                    `;
+                    container.appendChild(noResultsDiv);
+                    feather.replace();
+                }
+            } else if (existingNoResults) {
+                existingNoResults.remove();
+            }
+        }
+        
+        // Gestion des templates de messages
+        function toggleTemplates() {
+            const templates = document.getElementById('messageTemplates');
+            if (templates) {
+                const isVisible = !templates.classList.contains('hidden');
+                if (isVisible) {
+                    hideTemplates();
+                } else {
+                    showTemplates();
+                }
+            }
+        }
+        
+        function showTemplates() {
+            const templates = document.getElementById('messageTemplates');
+            if (templates) {
+                templates.classList.remove('hidden');
+                templates.style.animation = 'slideDown 0.2s ease-out';
+            }
+        }
+        
+        function hideTemplates() {
+            const templates = document.getElementById('messageTemplates');
+            if (templates) {
+                templates.classList.add('hidden');
+            }
+        }
+        
+        // Bouton "scroll to bottom" intelligent
+        function toggleScrollToBottomButton(show) {
+            let scrollBtn = document.getElementById('scrollToBottomBtn');
+            
+            if (show) {
+                if (!scrollBtn) {
+                    scrollBtn = document.createElement('button');
+                    scrollBtn.id = 'scrollToBottomBtn';
+                    scrollBtn.className = 'fixed bottom-20 right-4 bg-primary-600 hover:bg-primary-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 z-40 opacity-0 transform translate-y-4';
+                    scrollBtn.innerHTML = '<i data-feather="chevron-down" class="w-5 h-5"></i>';
+                    scrollBtn.title = 'Aller au bas de la conversation';
+                    scrollBtn.addEventListener('click', scrollToBottom);
+                    document.body.appendChild(scrollBtn);
+                    feather.replace();
+                    
+                    // Animation d'apparition
+                    setTimeout(() => {
+                        scrollBtn.classList.remove('opacity-0', 'translate-y-4');
+                    }, 10);
+                }
+            } else if (scrollBtn) {
+                scrollBtn.classList.add('opacity-0', 'translate-y-4');
+                setTimeout(() => {
+                    if (scrollBtn.parentNode) {
+                        scrollBtn.parentNode.removeChild(scrollBtn);
+                    }
+                }, 300);
+            }
+        }
+        
+        function scrollToBottom() {
+            const container = document.getElementById('messagesContainer');
+            if (container) {
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
+        }
+        
+        // Amélioration de l'auto-scroll avec détection intelligente
+        function smartScrollToBottom(force = false) {
+            const container = document.getElementById('messagesContainer');
+            if (!container) return;
+            
+            const scrollTop = container.scrollTop;
+            const scrollHeight = container.scrollHeight;
+            const clientHeight = container.clientHeight;
+            const isAtBottom = scrollTop + clientHeight >= scrollHeight - 100;
+            
+            // Scroll automatique seulement si l'utilisateur n'a pas scrollé vers le haut
+            // ou si c'est forcé (nouveau message)
+            if (isAtBottom || force) {
+                setTimeout(() => {
+                    container.scrollTo({
+                        top: container.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }, 100);
+            }
+        }
+        
+        // Notifications améliorées avec actions
+        function showEnhancedNotification(message, type = 'info', actions = null) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-4 rounded-lg shadow-lg z-50 max-w-sm notification-enhanced ${
+                type === 'success' ? 'bg-medical-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' : 
+                type === 'warning' ? 'bg-orange-500 text-white' :
+                'bg-primary-500 text-white'
+            }`;
+            
+            const icon = type === 'success' ? 'check-circle' : 
+                        type === 'error' ? 'alert-circle' : 
+                        type === 'warning' ? 'alert-triangle' :
+                        'info';
+            
+            let actionsHTML = '';
+            if (actions && actions.length > 0) {
+                actionsHTML = '<div class="flex gap-2 mt-3">' + 
+                    actions.map(action => 
+                        `<button class="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-sm transition-colors" onclick="${action.callback}">${action.label}</button>`
+                    ).join('') + '</div>';
+            }
+            
+            notification.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <i data-feather="${icon}" class="w-5 h-5 flex-shrink-0 mt-0.5"></i>
+                    <div class="flex-1">
+                        <span class="text-sm font-medium block">${message}</span>
+                        ${actionsHTML}
+                    </div>
+                    <button class="text-white/70 hover:text-white transition-colors" onclick="this.parentElement.parentElement.remove()">
+                        <i data-feather="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            feather.replace();
+            
+            // Animation d'entrée
+            setTimeout(() => notification.classList.add('fade-in'), 10);
+            
+            // Supprimer automatiquement après 5 secondes (sauf si warning/error)
+            const autoRemoveDelay = type === 'error' || type === 'warning' ? 8000 : 5000;
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    notification.style.transform = 'translateX(100%)';
+                    notification.style.opacity = '0';
+                    setTimeout(() => {
+                        if (document.body.contains(notification)) {
+                            document.body.removeChild(notification);
+                        }
+                    }, 300);
+                }
+            }, autoRemoveDelay);
+        }
+
         async function handleWelcomeSubmit(e) {
             e.preventDefault();
             
@@ -2609,44 +3592,11 @@
             
             if (!message) return;
             
-            // Créer une nouvelle conversation d'abord
-            try {
-                const response = await fetch('/api/chat/conversations', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        title: message.length > 50 ? message.substring(0, 50) + '...' : message
-                    })
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    await window.loadConversations();
-                    window.selectConversation(data.conversation_id);
-                    
-                    // Transférer le message vers l'input principal
-                    const messageInput = document.getElementById('messageInput');
-                    if (messageInput) {
-                        messageInput.value = message;
-                        messageInput.dispatchEvent(new Event('input'));
-                        
-                        // Soumettre automatiquement
-                        setTimeout(() => {
-                            const messageForm = document.getElementById('messageForm');
-                            if (messageForm) {
-                                messageForm.dispatchEvent(new Event('submit', { cancelable: true }));
-                            }
-                        }, 100);
-                    }
-                } else {
-                    window.showNotification('Erreur lors de la création de la conversation', 'error');
-                }
-            } catch (error) {
-                console.error('Erreur création conversation:', error);
-                window.showNotification('Erreur réseau', 'error');
-            }
+            // Créer une nouvelle conversation avec titre intelligent
+            await window.createNewConversation(message);
+            
+            // Vider le champ et masquer l'input d'accueil
+            welcomeInput.value = '';
         }
 
         // Fonctions principales
@@ -2658,6 +3608,9 @@
                 if (data.success) {
                     window.conversations = data.conversations;
                     window.renderConversations();
+                    
+                    // Restaurer la conversation sauvegardée après le chargement
+                    window.restoreSavedConversation();
                 } else {
                     console.error('Erreur chargement conversations:', data.error);
                 }
@@ -2668,7 +3621,7 @@
 
         window.renderConversations = function() {
             const container = document.getElementById('conversationsList');
-            
+
             if (window.conversations.length === 0) {
                 container.innerHTML = `
                     <div class="text-center text-gray-500 py-8">
@@ -2681,31 +3634,73 @@
                 return;
             }
 
-            container.innerHTML = window.conversations.map(conv => `
-                <div class="conversation-item group cursor-pointer p-3 rounded-xl border border-transparent hover:border-gray-200 transition-all ${conv.id === window.currentConversationId ? 'active bg-primary-100 border-primary-200' : 'hover:bg-gray-50'}"
+            container.innerHTML = window.conversations.map(conv => {
+                // Analyse intelligente du titre et génération d'informations médicales
+                const titleAnalysis = window.analyzeConversationTitle(conv);
+                const isUrgent = titleAnalysis.isUrgent;
+                const specialty = titleAnalysis.specialty;
+                const symptoms = titleAnalysis.symptoms;
+
+                return `
+                <div class="conversation-item group cursor-pointer p-3 rounded-xl border border-transparent hover:border-gray-200 transition-all duration-200 ${conv.id === window.currentConversationId ? 'active bg-primary-100 border-primary-200 shadow-sm' : 'hover:bg-gray-50'}"
                      data-id="${conv.id}">
                     <div class="flex justify-between items-start">
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 mb-1">
-                                <i data-feather="message-square" class="w-4 h-4 text-primary-600"></i>
-                                <h4 class="font-medium text-gray-900 truncate">${escapeHtml(conv.title)}</h4>
+                            <!-- En-tête avec icône spécialisée et indicateurs -->
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="flex-shrink-0">
+                                    ${window.getConversationIcon(conv, titleAnalysis)}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <h4 class="font-semibold text-gray-900 leading-tight break-words line-clamp-2 flex-1"
+                                            title="${escapeHtml(conv.title)}"
+                                            ondblclick="renameConversation(${conv.id}, '${escapeHtml(conv.title)}')">
+                                            ${escapeHtml(conv.title)}
+                                        </h4>
+                                        ${isUrgent ? '<span class="px-1.5 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded-full animate-pulse">URGENT</span>' : ''}
+                                        ${specialty ? `<span class="px-1.5 py-0.5 bg-medical-100 text-medical-700 text-xs font-medium rounded-full">${specialty}</span>` : ''}
+                                    </div>
+                                </div>
                             </div>
+
+                            <!-- Informations patient et symptômes -->
                             ${conv.patient_name ? `
-                                <p class="text-sm text-medical-600 truncate font-medium flex items-center gap-1 mb-1">
-                                    <i data-feather="user" class="w-3 h-3"></i>
-                                    ${escapeHtml(conv.patient_name)}
-                                </p>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <p class="text-sm text-medical-700 font-medium flex items-center gap-1 truncate">
+                                        <i data-feather="user" class="w-3 h-3 flex-shrink-0"></i>
+                                        ${escapeHtml(conv.patient_name)}
+                                    </p>
+                                    ${symptoms.length > 0 ? `
+                                        <div class="flex gap-1">
+                                            ${symptoms.slice(0, 2).map(symptom =>
+                                                `<span class="px-1.5 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full">${symptom}</span>`
+                                            ).join('')}
+                                            ${symptoms.length > 2 ? `<span class="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">+${symptoms.length - 2}</span>` : ''}
+                                        </div>
+                                    ` : ''}
+                                </div>
                             ` : ''}
-                            <p class="text-sm text-gray-500 truncate">${escapeHtml(conv.last_message || 'Nouvelle consultation')}</p>
-                            <div class="flex items-center justify-between mt-2">
-                                <div class="flex items-center space-x-2 text-xs text-gray-400">
+
+                            <!-- Aperçu du dernier message avec indicateur médical -->
+                            <p class="text-sm text-gray-600 truncate mb-2 flex items-center gap-1">
+                                ${window.getMedicalIndicator(conv.last_message || 'Nouvelle consultation')}
+                                <span class="truncate">${escapeHtml(window.summarizeMessage(conv.last_message || 'Nouvelle consultation'))}</span>
+                            </p>
+
+                            <!-- Métadonnées améliorées -->
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2 text-xs text-gray-500">
                                     <i data-feather="clock" class="w-3 h-3"></i>
                                     <span>${formatDate(conv.updated_at)}</span>
-                                    ${conv.patient_id ? `<span class="medical-indicator" title="Patient assigné"></span>` : ''}
+                                    ${conv.patient_id ? '<span class="w-1.5 h-1.5 bg-medical-500 rounded-full" title="Patient assigné"></span>' : ''}
+                                    ${conv.message_count > 5 ? '<span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">Active</span>' : ''}
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-xs text-gray-400">${conv.message_count || 0} msg</span>
-                                    <button onclick="deleteConversation(event, ${conv.id})" 
+                                    <span class="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                        ${conv.message_count || 0}
+                                    </span>
+                                    <button onclick="deleteConversation(event, ${conv.id})"
                                             class="delete-conversation-btn opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 p-1.5 rounded-lg transition-all hover:bg-red-50 hover:shadow-sm"
                                             title="Supprimer la conversation">
                                         <i data-feather="trash-2" class="w-3.5 h-3.5"></i>
@@ -2715,7 +3710,7 @@
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
 
             // Remplacer les icônes feather
             feather.replace();
@@ -2735,7 +3730,7 @@
                     const deleteBtn = item.querySelector('.delete-conversation-btn');
                     if (deleteBtn) deleteBtn.classList.remove('opacity-0');
                 });
-                
+
                 item.addEventListener('mouseleave', () => {
                     const deleteBtn = item.querySelector('.delete-conversation-btn');
                     if (deleteBtn) deleteBtn.classList.add('opacity-0');
@@ -2747,6 +3742,9 @@
             if (window.currentConversationId === conversationId) return;
 
             window.currentConversationId = conversationId;
+            
+            // Sauvegarder la conversation actuelle dans le localStorage
+            localStorage.setItem('neuroscan-current-conversation', conversationId.toString());
             
             // Fermer la sidebar mobile après sélection
             if (window.innerWidth <= 768) {
@@ -2823,11 +3821,11 @@
 
             // Ajouter les nouveaux messages
             messages.forEach(message => {
-                window.appendMessage(message, false); // false = ne pas scroller
+                window.appendMessage(message, false); // false = ne pas scroller pendant le chargement
             });
 
-            // Scroller vers le bas
-            container.scrollTop = container.scrollHeight;
+            // Scroll intelligent vers le bas après le chargement
+            smartScrollToBottom(true);
         }
 
         window.appendMessage = function(message, shouldScroll = true) {
@@ -2901,8 +3899,9 @@
                 messageDiv.classList.add('visible');
             }, 50);
             
+            // Utiliser le scroll intelligent
             if (shouldScroll) {
-                container.scrollTop = container.scrollHeight;
+                smartScrollToBottom(true); // true = forcer le scroll pour les nouveaux messages
             }
         }
 
@@ -2970,10 +3969,35 @@
                 const typingIndicator = document.getElementById('typingIndicatorModern');
                 if (typingIndicator) typingIndicator.classList.add('hidden');
                 
-                // Afficher un message d'erreur
+                // Afficher un message d'erreur amélioré avec suggestions
+                const errorMessage = error.message || 'Erreur inconnue';
+                let userFriendlyMessage = 'Désolé, une erreur est survenue.';
+                let suggestions = [];
+                
+                if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+                    userFriendlyMessage = 'Problème de connexion réseau.';
+                    suggestions = [
+                        { label: 'Réessayer', callback: 'retryLastMessage()' },
+                        { label: 'Vérifier connexion', callback: 'checkConnection()' }
+                    ];
+                } else if (errorMessage.includes('timeout')) {
+                    userFriendlyMessage = 'La requête a pris trop de temps.';
+                    suggestions = [
+                        { label: 'Réessayer', callback: 'retryLastMessage()' }
+                    ];
+                } else if (errorMessage.includes('rate limit')) {
+                    userFriendlyMessage = 'Trop de requêtes. Veuillez patienter.';
+                    suggestions = [
+                        { label: 'Attendre 30s', callback: 'scheduleRetry(30000)' }
+                    ];
+                }
+                
+                showEnhancedNotification(userFriendlyMessage, 'error', suggestions);
+                
+                // Afficher le message d'erreur dans le chat
                 window.appendMessage({
                     role: 'assistant',
-                    content: 'Désolé, une erreur est survenue. Veuillez réessayer.',
+                    content: `${userFriendlyMessage} ${suggestions.length > 0 ? 'Essayez les actions suggérées ci-dessus.' : 'Veuillez réessayer dans quelques instants.'}`,
                     timestamp: new Date().toISOString(),
                     is_medical_query: false,
                     confidence_score: 0
@@ -3020,15 +4044,26 @@
             }
         }
 
-        window.createNewConversation = async function() {
+        window.createNewConversation = async function(initialMessage = null) {
             try {
+                // Générer un titre intelligent basé sur le message initial
+                let title = `Consultation ${new Date().toLocaleDateString('fr-FR')}`;
+
+                if (initialMessage) {
+                    // Analyser le message pour créer un titre descriptif
+                    const analysis = window.analyzeMessageForTitle(initialMessage);
+                    if (analysis.suggestedTitle) {
+                        title = analysis.suggestedTitle;
+                    }
+                }
+
                 const response = await fetch('/api/chat/conversations', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        title: `Consultation ${new Date().toLocaleDateString('fr-FR')}`
+                        title: title
                     })
                 });
 
@@ -3036,6 +4071,32 @@
                 if (data.success) {
                     await window.loadConversations();
                     window.selectConversation(data.conversation_id);
+
+                    // Si on a un message initial, l'envoyer automatiquement
+                    if (initialMessage) {
+                        setTimeout(async () => {
+                            try {
+                                const sendResponse = await fetch('/api/chat/send', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        conversation_id: data.conversation_id,
+                                        message: initialMessage
+                                    })
+                                });
+
+                                const sendData = await sendResponse.json();
+                                if (sendData.success) {
+                                    await window.loadMessages();
+                                }
+                            } catch (error) {
+                                console.error('Erreur envoi message initial:', error);
+                            }
+                        }, 500);
+                    }
+
                     window.showNotification('Nouvelle consultation créée', 'success');
                 } else {
                     window.showNotification('Erreur lors de la création de la consultation', 'error');
@@ -3225,10 +4286,91 @@
             }
         }
 
-        // ===== FONCTIONS GLOBALES =====
-
-        // Fonctions utilitaires
-        window.escapeHtml = function(text) {
+        // ===== FONCTIONS UTILITAIRES POUR LES ERREURS =====
+        
+        // Réessayer le dernier message
+        window.retryLastMessage = function() {
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput && messageInput.value.trim()) {
+                const form = messageInput.closest('form');
+                if (form) {
+                    form.dispatchEvent(new Event('submit', { cancelable: true }));
+                }
+            } else {
+                showEnhancedNotification('Aucun message à réessayer', 'warning');
+            }
+        }
+        
+        // Vérifier la connexion
+        window.checkConnection = function() {
+            fetch('/api/health', { method: 'HEAD' })
+                .then(() => {
+                    showEnhancedNotification('Connexion rétablie', 'success');
+                })
+                .catch(() => {
+                    showEnhancedNotification('Problème de connexion persistant', 'error');
+                });
+        }
+        
+        // Programmer une nouvelle tentative
+        window.scheduleRetry = function(delay) {
+            showEnhancedNotification(`Nouvelle tentative dans ${delay/1000}s...`, 'info');
+            setTimeout(() => {
+                window.retryLastMessage();
+            }, delay);
+        }
+        
+        // Améliorer la gestion des erreurs réseau globales
+        window.addEventListener('online', function() {
+            updateConnectionStatus(true);
+            showEnhancedNotification('Connexion internet rétablie', 'success');
+        });
+        
+        window.addEventListener('offline', function() {
+            updateConnectionStatus(false);
+            showEnhancedNotification('Connexion internet perdue', 'warning');
+        });
+        
+        // Fonction pour mettre à jour l'indicateur de statut de connexion
+        function updateConnectionStatus(isOnline = navigator.onLine) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (!statusElement) return;
+            
+            const statusDot = statusElement.querySelector('.w-2');
+            const statusText = statusElement.querySelector('span');
+            
+            if (isOnline) {
+                statusElement.className = 'flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium';
+                if (statusDot) statusDot.className = 'w-2 h-2 bg-green-500 rounded-full animate-pulse';
+                if (statusText) statusText.textContent = 'En ligne';
+            } else {
+                statusElement.className = 'flex items-center gap-1.5 px-2.5 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium';
+                if (statusDot) statusDot.className = 'w-2 h-2 bg-red-500 rounded-full';
+                if (statusText) statusText.textContent = 'Hors ligne';
+            }
+        }
+        
+        // Vérifier périodiquement la connexion au serveur
+        function checkServerConnection() {
+            fetch('/api/health', { method: 'HEAD', timeout: 5000 })
+                .then(response => {
+                    if (response.ok) {
+                        updateConnectionStatus(true);
+                    } else {
+                        updateConnectionStatus(false);
+                    }
+                })
+                .catch(() => {
+                    updateConnectionStatus(false);
+                });
+        }
+        
+        // Initialiser la vérification de connexion
+        setInterval(checkServerConnection, 30000); // Toutes les 30 secondes
+        checkServerConnection(); // Vérification initiale
+        
+        // Fonction utilitaire pour échapper le HTML
+        function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
@@ -3454,12 +4596,43 @@
                 const data = await response.json();
                 if (data.success) {
                     // Si c'est la conversation actuelle, revenir à l'état d'accueil
-                    if (conversationId === window.currentConversationId) {
+                    if (conversationId == window.currentConversationId) {
+                        // Nettoyer le localStorage
+                        localStorage.removeItem('neuroscan-current-conversation');
+                        
+                        // Fermer la sidebar mobile si elle est ouverte
+                        const sidebar = document.getElementById('sidebar');
+                        const overlay = document.getElementById('sidebarOverlay');
+                        if (sidebar) sidebar.classList.add('sidebar-hidden');
+                        if (overlay) overlay.classList.remove('show');
+                        
+                        // Remettre l'interface à l'état d'accueil
                         window.currentConversationId = null;
                         document.getElementById('chatInputArea').style.display = 'none';
                         document.getElementById('welcomeMessages').style.display = 'block';
+                        document.getElementById('welcomeInput').style.display = 'block';
+                        document.getElementById('conversationHeader').classList.add('hidden');
                         document.getElementById('assignPatientBtn').classList.add('hidden');
+                        
+                        // Vider les messages et réinitialiser le conteneur
                         window.renderMessages([]);
+                        
+                        // Remettre à zéro le titre de la conversation dans le header
+                        const conversationTitle = document.getElementById('conversationTitle');
+                        const conversationSubtitle = document.getElementById('conversationSubtitle');
+                        if (conversationTitle) conversationTitle.textContent = 'Sélectionnez une conversation';
+                        if (conversationSubtitle) conversationSubtitle.textContent = 'Commencez une nouvelle consultation';
+                        
+                        // Fermer la modale de suppression
+                        window.closeDeleteConversationModal();
+                        
+                        // Recharger la liste des conversations
+                        await window.loadConversations();
+                        
+                        // Notification de succès
+                        window.showNotification('💫 Conversation supprimée - Retour à l\'accueil', 'success');
+                        
+                        return; // Sortir de la fonction après avoir géré le cas spécial
                     }
                     
                     // Fermer la modale

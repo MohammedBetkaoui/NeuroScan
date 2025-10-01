@@ -1,0 +1,27 @@
+
+            /* Accents et composants spécifiques à la page */
+            .alert-card { position: relative; }
+            .alert-card::before { content: ''; position: absolute; inset: 0 0 0 0; pointer-events: none; border-radius: var(--radius-xl); }
+            .alert-high::before { border-left: 4px solid rgba(239,68,68,.8); }
+            .alert-medium::before { border-left: 4px solid rgba(245,158,11,.8); }
+            .alert-low::before { border-left: 4px solid rgba(59,130,246,.8); }
+            .alert-unread { background: linear-gradient(180deg, rgba(59,130,246,.05), rgba(59,130,246,.02)); }
+
+            .severity-badge { font-size: .75rem; font-weight: 700; padding: .35rem .7rem; border-radius: 9999px; color: #fff; }
+            .badge-danger { background: #ef4444; }
+            .badge-warning { background: #f59e0b; }
+            .badge-info { background: #3b82f6; }
+
+            .meta-chip { display: inline-flex; align-items: center; gap: .5rem; padding: .35rem .7rem; border-radius: 9999px; background: #f3f4f6; color: #374151; font-size: .8rem; font-weight: 600; border: 1px solid #e5e7eb; }
+            .status-chip { display: inline-flex; align-items: center; gap: .4rem; padding: .3rem .6rem; border-radius: 9999px; font-size: .75rem; font-weight: 700; border: 1px solid transparent; }
+            .status-unread { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+            .status-read { background: #f3f4f6; color: #374151; border-color: #e5e7eb; }
+
+            .lamp-dot { width: 10px; height: 10px; border-radius: 9999px; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset; margin-right: .5rem; }
+            .lamp-danger { background: #ef4444; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset, 0 0 8px rgba(239,68,68,.7); }
+            .lamp-warning { background: #f59e0b; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset, 0 0 8px rgba(245,158,11,.6); }
+            .lamp-info { background: #3b82f6; box-shadow: 0 0 0 2px rgba(255,255,255,.9) inset, 0 0 8px rgba(59,130,246,.5); }
+
+            /* Conteneur filtres */
+            .alerts-filters { background: var(--surface-primary); border: 1px solid rgba(229,231,235,.6); border-radius: var(--radius-xl); padding: 16px; }
+  

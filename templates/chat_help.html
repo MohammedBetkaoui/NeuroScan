@@ -29,80 +29,7 @@
         }
     </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        * {
-            font-family: 'Inter', sans-serif;
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.6s ease-out;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-        
-        .card-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-        
-        .section-divider {
-            background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
-            height: 1px;
-            margin: 2rem 0;
-        }
-        
-        /* Responsive improvements */
-        @media (max-width: 768px) {
-            .mobile-stack {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .mobile-hidden {
-                display: none;
-            }
-            
-            .mobile-center {
-                text-align: center;
-            }
-            
-            .mobile-full {
-                width: 100%;
-            }
-        }
-        
-        /* Smooth scroll for anchor links */
-        html {
-            scroll-behavior: smooth;
-        }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat_help.css') }}">
 </head>
 <body class="bg-gray-50 font-sans">
     <!-- Header Mobile/Desktop Adaptatif -->
@@ -415,64 +342,6 @@
     </main>
 
     <!-- JavaScript pour smooth scrolling et interactions -->
-    <script>
-        // Smooth scrolling pour les ancres (si pas nativement supporté)
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // Animation fade-in au scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('fade-in');
-                }
-            });
-        }, observerOptions);
-
-        // Observer toutes les sections
-        document.querySelectorAll('section').forEach(section => {
-            observer.observe(section);
-        });
-
-        // Highlight du menu de navigation mobile
-        function updateActiveNavItem() {
-            const sections = ['fonctionnalites', 'utilisation', 'exemples', 'support'];
-            const navLinks = document.querySelectorAll('nav a');
-            
-            sections.forEach((sectionId, index) => {
-                const section = document.getElementById(sectionId);
-                if (section) {
-                    const rect = section.getBoundingClientRect();
-                    if (rect.top <= 100 && rect.bottom >= 100) {
-                        navLinks.forEach(link => link.classList.remove('bg-primary-600', 'text-white'));
-                        if (navLinks[index]) {
-                            navLinks[index].classList.add('bg-primary-600', 'text-white');
-                            navLinks[index].classList.remove('bg-primary-50', 'text-primary-700');
-                        }
-                    }
-                }
-            });
-        }
-
-        // Update active nav on scroll (mobile only)
-        if (window.innerWidth <= 768) {
-            window.addEventListener('scroll', updateActiveNavItem);
-        }
-    </script>
+      <script src="{{ url_for('static', filename='js/chat_help.js') }}"></script>
 </body>
 </html>

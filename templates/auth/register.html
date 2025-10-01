@@ -10,41 +10,1136 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
         }
+
+        /* Fond animé subtil */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+            animation: backgroundFloat 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-10px) rotate(1deg); }
+            66% { transform: translateY(10px) rotate(-1deg); }
+        }
+
         .register-card {
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow:
+                0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                0 10px 10px -5px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
         }
+
+        .register-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #10b981, #8b5cf6);
+            border-radius: 12px 12px 0 0;
+        }
+
+        .logo-container {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+        }
+
         .input-field {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid #e5e7eb;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .input-field:focus {
+            transform: translateY(-1px);
+            border-color: #3b82f6;
+            box-shadow:
+                0 0 0 3px rgba(59, 130, 246, 0.1),
+                0 4px 12px rgba(59, 130, 246, 0.15);
+            background: #ffffff;
+        }
+
+        .input-field:hover {
+            border-color: #d1d5db;
+        }
+
+        .step {
+            display: none;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .progress-bar {
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+        }
+
+        .step-indicator {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            color: #6b7280;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .step-indicator.active {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-color: #3b82f6;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .step-indicator.completed {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-color: #10b981;
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .step-title {
+            background: linear-gradient(135deg, #1f2937, #374151);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border: none;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-secondary {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            color: #374151;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-secondary:hover {
+            background: #ffffff;
+            border-color: #d1d5db;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+        }
+
+        .link-primary {
+            color: #3b82f6;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .link-primary::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            transition: width 0.3s ease;
+        }
+
+        .link-primary:hover::after {
+            width: 100%;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-group i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            transition: color 0.3s ease;
+            z-index: 1;
+        }
+
+        .input-field:focus + i,
+        .input-field:focus ~ i {
+            color: #3b82f6;
+        }
+
+        .input-field {
+            padding-left: 40px;
+        }
+
+        /* Animation d'entrée améliorée */
+        .register-card {
+            animation: slideInScale 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Responsive improvements */
+        @media (max-width: 640px) {
+            .register-card {
+                margin: 1rem;
+                padding: 1.5rem;
+                border-radius: 1.5rem;
+            }
+
+            .step-indicator {
+                width: 2rem;
+                height: 2rem;
+                font-size: 0.875rem;
+            }
+
+            /* Indicateurs de progression optimisés pour mobile */
+            .progress-section {
+                margin-bottom: 2rem;
+            }
+
+            .step-indicators-mobile {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+            }
+
+            .step-indicator-mobile {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.5rem;
+                flex: 1;
+            }
+
+            .step-number {
+                width: 2.5rem;
+                height: 2.5rem;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.875rem;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+
+            .step-label {
+                font-size: 0.75rem;
+                text-align: center;
+                font-weight: 500;
+            }
+
+            .step-connector-mobile {
+                flex: 1;
+                height: 2px;
+                background: #e5e7eb;
+                margin: 0 0.5rem;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .step-connector-fill {
+                height: 100%;
+                background: linear-gradient(90deg, #3b82f6, #10b981);
+                transition: width 0.5s ease;
+                width: 0%;
+            }
+
+            /* Optimisation des champs de formulaire */
+            .form-field-mobile {
+                margin-bottom: 1.5rem;
+            }
+
+            .input-mobile {
+                padding: 1rem;
+                font-size: 1rem;
+                border-radius: 0.75rem;
+            }
+
+            .input-mobile:focus {
+                transform: translateY(-1px);
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+
+            /* Boutons de navigation optimisés */
+            .nav-buttons-mobile {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+
+            .nav-button-mobile {
+                width: 100%;
+                padding: 1rem;
+                border-radius: 0.75rem;
+                font-size: 1rem;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+
+            /* Indicateur de sécurité mobile */
+            .security-indicator-mobile {
+                padding: 1rem;
+                border-radius: 0.75rem;
+                margin-bottom: 1rem;
+            }
+
+            .security-grid-mobile {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .security-item-mobile {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.5rem;
+                background: rgba(255, 255, 255, 0.5);
+                border-radius: 0.5rem;
+                font-size: 0.875rem;
+            }
+
+            /* Messages d'erreur mobiles */
+            .error-mobile {
+                margin: 1rem;
+                max-width: calc(100vw - 2rem);
+            }
+
+            /* Tooltips mobiles */
+            .help-tooltip-mobile {
+                position: relative;
+            }
+
+            .help-content-mobile {
+                position: fixed;
+                bottom: 1rem;
+                left: 1rem;
+                right: 1rem;
+                background: #1f2937;
+                color: white;
+                padding: 1rem;
+                border-radius: 0.75rem;
+                font-size: 0.875rem;
+                z-index: 1000;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+                transform: translateY(100%);
+                opacity: 0;
+                transition: all 0.3s ease;
+            }
+
+            .help-content-mobile.show {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            /* Overlay pour tooltips */
+            .tooltip-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+
+            .tooltip-overlay.show {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            /* Animations mobiles */
+            @keyframes slideUpMobile {
+                from {
+                    transform: translateY(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes slideDownMobile {
+                from {
+                    transform: translateY(-100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            /* Indicateur de progression mobile */
+            .progress-mobile {
+                position: sticky;
+                top: 0;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                padding: 1rem;
+                margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+                z-index: 10;
+            }
+
+            /* Optimisation du titre */
+            .title-mobile {
+                font-size: 1.5rem;
+                line-height: 1.3;
+                margin-bottom: 0.5rem;
+            }
+
+            .subtitle-mobile {
+                font-size: 0.875rem;
+                margin-bottom: 1rem;
+            }
+
+            /* Indicateurs de statut mobiles */
+            .status-indicators-mobile {
+                display: flex;
+                justify-content: center;
+                gap: 0.25rem;
+                margin-top: 1rem;
+            }
+
+            .status-dot-mobile {
+                width: 1.5rem;
+                height: 0.25rem;
+                border-radius: 0.125rem;
+                background: var(--accent-blue);
+                opacity: 0.6;
+                transition: all 0.3s ease;
+            }
+        }
+
+        /* Tablettes intermédiaires */
+        @media (min-width: 641px) and (max-width: 1023px) {
+            .register-card {
+                margin: 2rem;
+                padding: 2rem;
+                max-width: 600px;
+            }
+
+            .step-indicator {
+                width: 2.5rem;
+                height: 2.5rem;
+                font-size: 1rem;
+            }
+        }
+
+        /* Grandes tablettes et petits écrans */
+        @media (min-width: 1024px) and (max-width: 1279px) {
+            .register-card {
+                max-width: 700px;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3b82f6, #10b981);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #1d4ed8, #059669);
+        }
+
+        /* Animations pour les indicateurs d'étapes */
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+                transform: translate3d(0, 0, 0) scale(1.1);
+            }
+            40%, 43% {
+                transform: translate3d(0, -10px, 0) scale(1.1);
+            }
+            70% {
+                transform: translate3d(0, -5px, 0) scale(1.1);
+            }
+            90% {
+                transform: translate3d(0, -2px, 0) scale(1.1);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                width: 0%;
+                opacity: 0;
+            }
+            to {
+                width: 100%;
+                opacity: 1;
+            }
+        }
+
+        @keyframes glowPulse {
+            0%, 100% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+        }
+
+        /* Améliorations pour l'affichage des erreurs */
+        .error-message {
+            animation: slideInFromTop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-left: 4px solid;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .error-message::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .success-message {
+            animation: slideInFromTop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-left: 4px solid #10b981;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .success-message::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        .info-message {
+            animation: slideInFromTop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-left: 4px solid #3b82f6;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes slideInFromTop {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Indicateurs d'erreur sur les champs */
+        .field-error {
+            position: relative;
+        }
+
+        .field-error input,
+        .field-error select {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Notification d'erreur améliorée */
+        .error-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            max-width: 400px;
+            z-index: 9999;
+            animation: slideInFromRight 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .error-notification.success {
+            background: rgba(16, 185, 129, 0.95);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .error-notification.error {
+            background: rgba(239, 68, 68, 0.95);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .error-notification.warning {
+            background: rgba(245, 158, 11, 0.95);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .error-notification.info {
+            background: rgba(59, 130, 246, 0.95);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        @keyframes slideInFromRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+
+        .error-notification.fade-out {
+            animation: slideOutToRight 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes slideOutToRight {
+            from {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%) scale(0.9);
+            }
+        }
+
+        @keyframes countdown {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+
+        /* Indicateurs de validation en temps réel */
+        .field-valid input {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+        }
+
+        /* Tooltips d'aide contextuelle */
+        .help-tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 8px;
+            cursor: help;
+        }
+
+        .help-tooltip .help-icon {
+            color: #6b7280;
+            font-size: 14px;
+            transition: color 0.2s ease;
+        }
+
+        .help-tooltip:hover .help-icon {
+            color: #3b82f6;
+        }
+
+        .help-tooltip .help-content {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .help-tooltip .help-content::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #1f2937;
+        }
+
+        .help-tooltip:hover .help-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(-5px);
+        }
+
+        /* Tooltips mobiles */
+        @media (max-width: 640px) {
+            .help-tooltip .help-content {
+                display: none; /* Masquer les tooltips desktop sur mobile */
+            }
+
+            .help-tooltip-mobile {
+                position: relative;
+            }
+
+            .help-content-mobile {
+                position: fixed;
+                bottom: 1rem;
+                left: 1rem;
+                right: 1rem;
+                background: #1f2937;
+                color: white;
+                padding: 1rem;
+                border-radius: 0.75rem;
+                font-size: 0.875rem;
+                z-index: 1000;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+                transform: translateY(100%);
+                opacity: 0;
+                transition: all 0.3s ease;
+            }
+
+            .help-content-mobile.show {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            /* Overlay pour tooltips */
+            .tooltip-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+
+            .tooltip-overlay.show {
+                opacity: 1;
+                visibility: visible;
+            }
+        }
+
+        /* Indicateurs de progression améliorés */
+        .progress-hint {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        /* Améliorations d'accessibilité pour les tooltips */
+        .help-tooltip:focus-within .help-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(-5px);
+        }
+
+        .help-tooltip .help-icon:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+
+        /* Animation de succès finale */
+        .form-success {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-success::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.3), transparent);
+            animation: successSweep 2s ease-in-out;
+        }
+
+        @keyframes successSweep {
+            0% { left: -100%; }
+            50% { left: 100%; }
+            100% { left: -100%; }
+        }
+
+        /* Icônes pour voir/masquer les mots de passe */
+        .password-toggle {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+            font-size: 14px;
+            padding: 6px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            z-index: 2;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-toggle:hover {
+            color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .password-toggle:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+
+        .password-toggle i {
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .password-toggle:hover {
+            color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .password-toggle:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+
+        @keyframes successBadgeBounce {
+            0% {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2) rotate(-90deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        /* Section Informations légales - responsive */
+        .info-card {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
-        .input-field:focus {
+
+        .info-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Indicateurs de sécurité responsive */
+        .security-indicators {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .security-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+        }
+
+        .security-indicator:hover {
+            background: rgba(59, 130, 246, 0.05);
+            border-color: rgba(59, 130, 246, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .security-indicator i {
+            transition: all 0.3s ease;
+        }
+
+        .security-indicator:hover i {
+            transform: scale(1.1);
+        }
+
+        /* Responsive pour mobile */
+        @media (max-width: 640px) {
+            .info-card {
+                margin: 1rem 0;
+                padding: 1.25rem;
+                border-radius: 1rem;
+            }
+
+            .info-card .flex.items-start {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .info-card .flex-shrink-0 {
+                margin: 0 auto;
+            }
+
+            .info-card h4 {
+                font-size: 1rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .info-card p {
+                font-size: 0.875rem;
+                line-height: 1.5;
+                text-align: left;
+            }
+
+            .security-indicators {
+                justify-content: center;
+                gap: 0.5rem;
+            }
+
+            .security-indicator {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.7rem;
+                border-radius: 0.75rem;
+                min-width: 80px;
+                justify-content: center;
+            }
+
+            .security-indicator span {
+                font-size: 0.7rem;
+            }
+
+            .security-indicator i {
+                font-size: 0.8rem;
+            }
+
+            /* Améliorer la lisibilité sur mobile */
+            .info-card {
+                background: linear-gradient(135deg, #ffffff, #f8fafc);
+                border: 2px solid rgba(59, 130, 246, 0.1);
+            }
+
+            .info-card:hover {
+                transform: none; /* Désactiver le transform sur mobile pour éviter les problèmes de scroll */
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+        }
+
+        /* Tablettes */
+        @media (min-width: 641px) and (max-width: 1023px) {
+            .info-card {
+                padding: 1.5rem;
+            }
+
+            .security-indicators {
+                gap: 0.5rem;
+            }
+
+            .security-indicator {
+                padding: 0.5rem 0.875rem;
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
-    <div class="register-card rounded-2xl p-8 w-full max-w-2xl">
+    <div class="register-card rounded-2xl p-8 w-full max-w-2xl mx-auto">
         <!-- Logo et titre -->
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
-                <i class="fas fa-brain text-white text-2xl"></i>
+            <div class="logo-container inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-6 mx-auto">
+                <i class="fas fa-brain text-white text-3xl"></i>
             </div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">NeuroScan</h1>
-            <p class="text-gray-600">Inscription Médecin</p>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-gray-900 bg-clip-text text-transparent mb-3 title-mobile">
+                NeuroScan Pro
+            </h1>
+            <p class="text-gray-600 text-lg font-medium subtitle-mobile">Plateforme d'Intelligence Artificielle Médicale</p>
+            <div class="hidden md:flex items-center justify-center space-x-2 mt-4">
+                <div class="h-1 w-8 bg-blue-500 rounded-full"></div>
+                <div class="h-1 w-4 bg-green-500 rounded-full"></div>
+                <div class="h-1 w-6 bg-purple-500 rounded-full"></div>
+            </div>
+            <!-- Indicateurs mobiles -->
+            <div class="md:hidden status-indicators-mobile">
+                <div class="status-dot-mobile"></div>
+                <div class="status-dot-mobile"></div>
+                <div class="status-dot-mobile"></div>
+            </div>
+        </div>
+
+        <!-- Indicateur de progression -->
+        <div class="progress-section mb-10">
+            <!-- Version desktop -->
+            <div class="hidden md:block">
+                <div class="flex justify-center items-center mb-6">
+                    <div class="flex items-center space-x-6">
+                        <div class="step-indicator w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold transition-all duration-500 transform hover:scale-110" data-step="1">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="connector h-1 w-16 bg-gray-200 rounded-full overflow-hidden relative">
+                            <div class="connector-fill h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-700 ease-out absolute left-0 top-0"></div>
+                            <div class="connector-glow absolute inset-0 bg-gradient-to-r from-blue-400/50 to-green-400/50 opacity-0 transition-opacity duration-500"></div>
+                        </div>
+                        <div class="step-indicator w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold transition-all duration-500 transform hover:scale-110" data-step="2">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="connector h-1 w-16 bg-gray-200 rounded-full overflow-hidden relative">
+                            <div class="connector-fill h-full bg-gradient-to-r from-green-500 to-purple-500 transition-all duration-700 ease-out absolute left-0 top-0"></div>
+                            <div class="connector-glow absolute inset-0 bg-gradient-to-r from-green-400/50 to-purple-400/50 opacity-0 transition-opacity duration-500"></div>
+                        </div>
+                        <div class="step-indicator w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold transition-all duration-500 transform hover:scale-110" data-step="3">
+                            <i class="fas fa-stethoscope"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden shadow-inner">
+                        <div class="progress-bar h-full rounded-full transition-all duration-700 ease-out shadow-lg"></div>
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-60 animate-pulse rounded-full"></div>
+                    <div class="progress-hint">Étape 1 sur 3 - Informations personnelles</div>
+                </div>
+            </div>
+
+            
         </div>
 
         <!-- Messages flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-50 text-red-700 border border-red-200{% elif category == 'success' %}bg-green-50 text-green-700 border border-green-200{% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
-                        <div class="flex items-center">
-                            <i class="fas {% if category == 'error' %}fa-exclamation-circle{% elif category == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
-                            {{ message }}
+                    <div class="mb-4 p-4 rounded-xl shadow-lg relative overflow-hidden {% if category == 'error' %}error-message bg-red-50 text-red-800 border-red-500{% elif category == 'success' %}success-message bg-green-50 text-green-800 border-green-500{% else %}info-message bg-blue-50 text-blue-800 border-blue-500{% endif %}">
+                        <div class="flex items-start space-x-3 relative z-10">
+                            <div class="flex-shrink-0 mt-0.5">
+                                <i class="fas {% if category == 'error' %}fa-exclamation-circle text-red-500{% elif category == 'success' %}fa-check-circle text-green-500{% else %}fa-info-circle text-blue-500{% endif %} text-lg"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-sm leading-relaxed">{{ message }}</p>
+                            </div>
+                            <button onclick="this.parentElement.parentElement.remove()" class="flex-shrink-0 ml-4 hover:bg-black/10 rounded-full p-1 transition-colors duration-200">
+                                <i class="fas fa-times text-sm"></i>
+                            </button>
+                        </div>
+                        <div class="absolute top-0 right-0 w-20 h-20 opacity-10">
+                            <i class="fas {% if category == 'error' %}fa-exclamation-triangle{% elif category == 'success' %}fa-check{% else %}fa-info{% endif %} text-4xl absolute top-2 right-2"></i>
                         </div>
                     </div>
                 {% endfor %}
@@ -52,169 +1147,1085 @@
         {% endwith %}
 
         <!-- Formulaire d'inscription -->
-        <form method="POST" class="space-y-6">
-            <!-- Informations personnelles -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-user mr-2"></i>Prénom *
-                    </label>
-                    <input type="text" id="first_name" name="first_name" required
-                           class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           placeholder="Jean">
+        <form id="registerForm" method="POST" class="space-y-6">
+            <!-- Étape 1: Informations personnelles -->
+            <div id="step1" class="step active">
+                <h3 class="step-title text-2xl mb-6 text-center">Informations personnelles</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-group">
+                        <label for="first_name" class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-user mr-2 text-blue-500"></i>Prénom *
+                        </label>
+                        <input type="text" id="first_name" name="first_name" required
+                               class="input-field w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-blue-500 transition-all duration-300 text-gray-900 font-medium"
+                               placeholder="Jean">
+                        <i class="fas fa-user absolute left-4 top-12 text-gray-400"></i>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="last_name" class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-user-tag mr-2 text-blue-500"></i>Nom *
+                        </label>
+                        <input type="text" id="last_name" name="last_name" required
+                               class="input-field w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-blue-500 transition-all duration-300 text-gray-900 font-medium"
+                               placeholder="Dupont">
+                        <i class="fas fa-user-tag absolute left-4 top-12 text-gray-400"></i>
+                    </div>
                 </div>
 
-                <div>
-                    <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-user mr-2"></i>Nom *
+                <div class="form-group mt-6">
+                    <label for="email" class="block text-sm font-semibold text-gray-700 mb-3">
+                        <i class="fas fa-envelope mr-2 text-blue-500"></i>Email professionnel *
+                        <span class="help-tooltip help-tooltip-mobile" role="tooltip" aria-describedby="email-help">
+                            <i class="fas fa-question-circle help-icon" tabindex="0" aria-label="Aide pour le champ email"></i>
+                            <div class="help-content help-content-mobile" id="email-help">Adresse email institutionnelle requise pour la validation professionnelle</div>
+                        </span>
                     </label>
-                    <input type="text" id="last_name" name="last_name" required
-                           class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           placeholder="Dupont">
-                </div>
-            </div>
-
-            <!-- Email -->
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                    <i class="fas fa-envelope mr-2"></i>Email professionnel *
-                </label>
-                <input type="email" id="email" name="email" required
-                       class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                       placeholder="dr.dupont@hopital.fr">
-            </div>
-
-            <!-- Mots de passe -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-lock mr-2"></i>Mot de passe *
-                    </label>
-                    <input type="password" id="password" name="password" required minlength="6"
-                           class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           placeholder="••••••••">
-                </div>
-
-                <div>
-                    <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-lock mr-2"></i>Confirmer le mot de passe *
-                    </label>
-                    <input type="password" id="confirm_password" name="confirm_password" required minlength="6"
-                           class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           placeholder="••••••••">
+                    <input type="email" id="email" name="email" required
+                           class="input-field w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-blue-500 transition-all duration-300 text-gray-900 font-medium"
+                           placeholder="dr.dupont@hopital.fr">
+                    <i class="fas fa-envelope absolute left-4 top-12 text-gray-400"></i>
                 </div>
             </div>
 
-            <!-- Informations professionnelles -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="speciality" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-stethoscope mr-2"></i>Spécialité
-                    </label>
-                    <select id="specialty" name="specialty"
-                            class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">Sélectionner une spécialité</option>
-                        <option value="Neurologie">Neurologie</option>
-                        <option value="Neurochirurgie">Neurochirurgie</option>
-                        <option value="Radiologie">Radiologie</option>
-                        <option value="Médecine générale">Médecine générale</option>
-                        <option value="Oncologie">Oncologie</option>
-                        <option value="Autre">Autre</option>
-                    </select>
+            <!-- Étape 2: Sécurité du compte -->
+            <div id="step2" class="step">
+                <h3 class="step-title text-2xl mb-6 text-center">Sécurité du compte</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-group">
+                        <label for="password" class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-lock mr-2 text-green-500"></i>Mot de passe *
+                            <span class="help-tooltip help-tooltip-mobile" role="tooltip" aria-describedby="password-help">
+                                <i class="fas fa-question-circle help-icon" tabindex="0" aria-label="Aide pour le mot de passe"></i>
+                                <div class="help-content help-content-mobile" id="password-help">Au moins 8 caractères avec majuscules, minuscules, chiffres et symboles</div>
+                            </span>
+                        </label>
+                        <input type="password" id="password" name="password" required minlength="6"
+                               class="input-field w-full pl-12 pr-14 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-green-500 transition-all duration-300 text-gray-900 font-medium"
+                               placeholder="••••••••">
+                        <i class="fas fa-lock absolute left-4 top-12 text-gray-400"></i>
+                        <button type="button" class="password-toggle" id="password-toggle" aria-label="Afficher/masquer le mot de passe">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <p class="text-xs text-gray-500 mt-2 ml-1">Au moins 6 caractères</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password" class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-shield-alt mr-2 text-green-500"></i>Confirmer le mot de passe *
+                        </label>
+                        <input type="password" id="confirm_password" name="confirm_password" required minlength="6"
+                               class="input-field w-full pl-12 pr-14 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-green-500 transition-all duration-300 text-gray-900 font-medium"
+                               placeholder="••••••••">
+                        <i class="fas fa-shield-alt absolute left-4 top-12 text-gray-400"></i>
+                        <button type="button" class="password-toggle" id="confirm-password-toggle" aria-label="Afficher/masquer la confirmation du mot de passe">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <div id="password-match" class="text-xs mt-2 ml-1 hidden text-red-600 font-medium">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>Les mots de passe ne correspondent pas
+                        </div>
+                    </div>
                 </div>
 
-                <div>
-                    <label for="hospital" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-hospital mr-2"></i>Établissement
-                    </label>
-                    <input type="text" id="hospital" name="hospital"
-                           class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           placeholder="CHU de Paris">
+                <!-- Indicateur de force du mot de passe -->
+                <div class="security-indicator-mobile mt-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-xl border border-blue-100">
+                    <div class="flex items-center space-x-2 mb-3">
+                        <i class="fas fa-shield-check text-blue-500"></i>
+                        <span class="text-sm font-semibold text-gray-700">Sécurité du mot de passe</span>
+                        <div class="ml-auto">
+                            <span id="password-strength" class="text-xs font-medium px-2 py-1 rounded-full bg-gray-200 text-gray-600">Faible</span>
+                        </div>
+                    </div>
+                    <div class="security-grid-mobile">
+                        <div class="security-item-mobile password-criterion" id="length-criterion">
+                            <i class="fas fa-times-circle text-red-400 transition-all duration-300"></i>
+                            <span class="text-gray-600">Au moins 8 caractères</span>
+                        </div>
+                        <div class="security-item-mobile password-criterion" id="case-criterion">
+                            <i class="fas fa-times-circle text-red-400 transition-all duration-300"></i>
+                            <span class="text-gray-600">Majuscules et minuscules</span>
+                        </div>
+                        <div class="security-item-mobile password-criterion" id="number-criterion">
+                            <i class="fas fa-times-circle text-red-400 transition-all duration-300"></i>
+                            <span class="text-gray-600">Au moins un chiffre</span>
+                        </div>
+                        <div class="security-item-mobile password-criterion" id="symbol-criterion">
+                            <i class="fas fa-times-circle text-red-400 transition-all duration-300"></i>
+                            <span class="text-gray-600">Au moins un symbole spécial</span>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                            <div id="strength-bar" class="h-full bg-red-400 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="license_number" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-id-card mr-2"></i>Numéro RPPS/ADELI
-                    </label>
-                    <input type="text" id="license_number" name="license_number"
-                           class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           placeholder="12345678901">
+            <!-- Étape 3: Informations professionnelles -->
+                        <!-- Étape 3: Informations professionnelles -->
+            <div id="step3" class="step">
+                <h3 class="step-title text-2xl mb-6 text-center">Informations professionnelles</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="form-group">
+                        <label for="specialty" class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-stethoscope mr-2 text-purple-500"></i>Spécialité
+                            <span class="help-tooltip help-tooltip-mobile" role="tooltip" aria-describedby="specialty-help">
+                                <i class="fas fa-question-circle help-icon" tabindex="0" aria-label="Aide pour la spécialité"></i>
+                                <div class="help-content help-content-mobile" id="specialty-help">Votre domaine médical principal pour personnaliser l'expérience</div>
+                            </span>
+                        </label>
+                        <select id="specialty" name="specialty"
+                                class="input-field w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-purple-500 transition-all duration-300 text-gray-900 font-medium bg-white">
+                            <option value="">Sélectionner une spécialité</option>
+                            <option value="Neurologie">🧠 Neurologie</option>
+                            <option value="Neurochirurgie">⚕️ Neurochirurgie</option>
+                            <option value="Radiologie">📊 Radiologie</option>
+                            <option value="Médecine générale">👨‍⚕️ Médecine générale</option>
+                            <option value="Oncologie">🎗️ Oncologie</option>
+                            <option value="Autre">🔍 Autre</option>
+                        </select>
+                        <i class="fas fa-stethoscope absolute left-4 top-12 text-gray-400"></i>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hospital" class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-hospital mr-2 text-purple-500"></i>Établissement
+                        </label>
+                        <input type="text" id="hospital" name="hospital"
+                               class="input-field w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-purple-500 transition-all duration-300 text-gray-900 font-medium"
+                               placeholder="CHU de Paris">
+                        <i class="fas fa-hospital absolute left-4 top-12 text-gray-400"></i>
+                    </div>
                 </div>
 
-                <div>
-                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-phone mr-2"></i>Téléphone
-                    </label>
-                    <input type="tel" id="phone" name="phone"
-                           class="input-field w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           placeholder="01 23 45 67 89">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="form-group">
+                        <label for="license_number" class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-id-card mr-2 text-purple-500"></i>Numéro RPPS/ADELI
+                            <span class="help-tooltip help-tooltip-mobile" role="tooltip" aria-describedby="license-help">
+                                <i class="fas fa-question-circle help-icon" tabindex="0" aria-label="Aide pour le numéro professionnel"></i>
+                                <div class="help-content help-content-mobile" id="license-help">Identifiant professionnel français (requis pour la validation)</div>
+                            </span>
+                        </label>
+                        <input type="text" id="license_number" name="license_number"
+                               class="input-field w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-purple-500 transition-all duration-300 text-gray-900 font-medium"
+                               placeholder="12345678901">
+                        <i class="fas fa-id-card absolute left-4 top-12 text-gray-400"></i>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone" class="block text-sm font-semibold text-gray-700 mb-3">
+                            <i class="fas fa-phone mr-2 text-purple-500"></i>Téléphone
+                        </label>
+                        <input type="tel" id="phone" name="phone"
+                               class="input-field w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-0 focus:border-purple-500 transition-all duration-300 text-gray-900 font-medium"
+                               placeholder="01 23 45 67 89">
+                        <i class="fas fa-phone absolute left-4 top-12 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <!-- Informations de validation -->
+                <div class="mt-8 p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border border-purple-100">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle text-green-500 text-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold text-gray-900 mb-2">Validation professionnelle</h4>
+                            <p class="text-xs text-gray-600 leading-relaxed">
+                                Vos informations professionnelles seront vérifiées pour garantir la sécurité et la conformité de notre plateforme médicale.
+                                Seuls les professionnels de santé autorisés peuvent accéder aux fonctionnalités d'analyse IA.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <button type="submit" 
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                <i class="fas fa-user-plus mr-2"></i>Créer mon compte
-            </button>
+            <!-- Boutons de navigation -->
+                        <!-- Boutons de navigation -->
+            <div class="nav-buttons-mobile md:flex md:justify-between md:pt-8 md:border-t md:border-gray-100">
+                <button type="button" id="prevBtn"
+                        class="nav-button-mobile md:flex-1 md:mr-4 btn-secondary px-8 py-4 rounded-xl font-semibold text-sm transition-all duration-300 hidden">
+                    <i class="fas fa-arrow-left mr-2"></i>Précédent
+                </button>
+
+                <button type="button" id="nextBtn"
+                        class="nav-button-mobile md:flex-1 btn-primary px-8 py-4 rounded-xl font-semibold text-white text-sm">
+                    Suivant<i class="fas fa-arrow-right ml-2"></i>
+                </button>
+
+                <button type="submit" id="submitBtn"
+                        class="nav-button-mobile md:flex-1 btn-success px-8 py-4 rounded-xl font-semibold text-white text-sm hidden">
+                    <i class="fas fa-user-plus mr-2"></i>Créer mon compte
+                </button>
+            </div>
         </form>
 
         <!-- Liens -->
-        <div class="mt-6 text-center space-y-2">
-            <p class="text-sm text-gray-600">
-                Déjà un compte ?
-                <a href="{{ url_for('login') }}" class="text-blue-600 hover:text-blue-700 font-medium">
+        <div class="mt-8 text-center space-y-4">
+            <div class="flex items-center justify-center space-x-1">
+                <span class="text-gray-600">Déjà un compte ?</span>
+                <a href="{{ url_for('login') }}" class="link-primary font-semibold">
                     Se connecter
                 </a>
-            </p>
-            <a href="{{ url_for('index') }}" class="text-sm text-gray-500 hover:text-gray-700">
-                <i class="fas fa-arrow-left mr-1"></i>Retour à l'accueil
-            </a>
+            </div>
+            <div class="flex items-center justify-center space-x-1">
+                <a href="{{ url_for('index') }}" class="link-primary text-sm">
+                    <i class="fas fa-arrow-left mr-1"></i>Retour à l'accueil
+                </a>
+            </div>
         </div>
 
         <!-- Informations légales -->
-        <div class="mt-8 p-4 bg-gray-50 rounded-lg">
-            <div class="flex items-start">
-                <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
-                <div>
-                    <h4 class="text-sm font-medium text-gray-900">Confidentialité</h4>
-                    <p class="text-xs text-gray-600 mt-1">
-                        En créant un compte, vous acceptez nos conditions d'utilisation et notre politique de confidentialité. 
-                        Toutes les données sont traitées selon les normes RGPD.
+        <div class="mt-8 info-card p-6 rounded-2xl">
+            <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0 mt-1">
+                    <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-shield-alt text-white text-sm"></i>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-sm font-bold text-gray-900 mb-2">Sécurité & Confidentialité</h4>
+                    <p class="text-xs text-gray-600 leading-relaxed">
+                        En créant un compte, vous acceptez nos conditions d'utilisation et notre politique de confidentialité.
+                        Toutes les données sont chiffrées et traitées selon les normes RGPD et les standards de sécurité médicale (HDS).
+                        Vos informations professionnelles sont vérifiées pour garantir l'accès sécurisé à nos outils d'IA médicale.
                     </p>
+                    <div class="security-indicators">
+                        <div class="security-indicator">
+                            <i class="fas fa-lock text-green-500"></i>
+                            <span class="text-gray-700">Chiffrement SSL</span>
+                        </div>
+                        <div class="security-indicator">
+                            <i class="fas fa-user-shield text-blue-500"></i>
+                            <span class="text-gray-700">RGPD Compliant</span>
+                        </div>
+                        <div class="security-indicator">
+                            <i class="fas fa-certificate text-purple-500"></i>
+                            <span class="text-gray-700">Certification HDS</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Animation d'entrée
+        let currentStep = 1;
+        const totalSteps = 3;
+
+        function updateStepIndicators() {
+            const indicators = document.querySelectorAll('.step-indicator');
+            const connectors = document.querySelectorAll('.connector-fill');
+            const glows = document.querySelectorAll('.connector-glow');
+
+            indicators.forEach((indicator, index) => {
+                const stepNum = index + 1;
+                indicator.classList.remove('active', 'completed', 'bg-gradient-to-br', 'from-green-500', 'to-green-600', 'from-blue-500', 'to-blue-600', 'bg-gray-200', 'text-white', 'text-gray-400', 'shadow-lg', 'shadow-xl', 'scale-110', 'scale-125', 'ring-4', 'ring-blue-300/50');
+
+                if (stepNum < currentStep) {
+                    // Étape complétée - Animation de succès
+                    indicator.className += ' bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg scale-110';
+                    indicator.style.animation = 'bounce 0.6s ease-out';
+                    setTimeout(() => {
+                        indicator.style.animation = '';
+                    }, 600);
+                } else if (stepNum === currentStep) {
+                    // Étape actuelle - Animation de focus
+                    indicator.className += ' bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-xl scale-125 ring-4 ring-blue-300/50';
+                    indicator.style.animation = 'pulse 2s infinite';
+                } else {
+                    // Étape future
+                    indicator.className += ' bg-gray-200 text-gray-400';
+                    indicator.style.animation = '';
+                }
+            });
+
+            // Animation des connecteurs avec effet de vague
+            connectors.forEach((connector, index) => {
+                if (index < currentStep - 1) {
+                    connector.style.width = '100%';
+                    connector.style.animation = 'slideIn 0.8s ease-out forwards';
+                    setTimeout(() => {
+                        connector.style.animation = 'glowPulse 2s infinite';
+                    }, 800);
+                } else {
+                    connector.style.width = '0%';
+                    connector.style.animation = '';
+                }
+            });
+
+            // Effet de lueur sur les connecteurs actifs
+            glows.forEach((glow, index) => {
+                if (index < currentStep - 1) {
+                    glow.style.opacity = '1';
+                    glow.style.animation = 'glowPulse 2s infinite';
+                } else {
+                    glow.style.opacity = '0';
+                    glow.style.animation = '';
+                }
+            });
+        }
+
+        function updateProgressBar() {
+            const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
+            const progressBar = document.querySelector('.progress-bar');
+
+            // Animation fluide de la barre de progression
+            progressBar.style.width = `${progress}%`;
+
+            // Mettre à jour le tooltip de progression
+            const progressHint = document.querySelector('.progress-hint');
+            const stepNames = ['', 'Informations personnelles', 'Sécurité du compte', 'Informations professionnelles'];
+            progressHint.textContent = `Étape ${currentStep} sur ${totalSteps} - ${stepNames[currentStep]}`;
+
+            // Ajouter un effet de lueur temporaire lors de la progression
+            if (progress > 0) {
+                progressBar.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.5)';
+                setTimeout(() => {
+                    progressBar.style.boxShadow = '';
+                }, 1000);
+            }
+        }
+
+        function showStep(stepNum) {
+            // Effacer toutes les erreurs de validation avant de changer d'étape
+            clearAllFieldErrors();
+
+            // Masquer toutes les étapes avec animation
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+                step.style.opacity = '0';
+                setTimeout(() => {
+                    step.style.display = 'none';
+                }, 150);
+            });
+
+            // Afficher l'étape actuelle avec animation
+            setTimeout(() => {
+                const currentStepElement = document.getElementById(`step${stepNum}`);
+                currentStepElement.style.display = 'block';
+                currentStepElement.classList.add('active');
+
+                setTimeout(() => {
+                    currentStepElement.style.opacity = '1';
+                }, 50);
+            }, 200);
+
+            // Mettre à jour les boutons
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Réinitialiser le bouton Suivant à son état par défaut
+            nextBtn.innerHTML = 'Suivant<i class="fas fa-arrow-right ml-2"></i>';
+            nextBtn.classList.remove('btn-success', 'btn-secondary');
+            nextBtn.classList.add('btn-primary');
+            nextBtn.disabled = false;
+
+            prevBtn.style.display = stepNum > 1 ? 'block' : 'none';
+            nextBtn.style.display = stepNum < totalSteps ? 'block' : 'none';
+            submitBtn.style.display = stepNum === totalSteps ? 'block' : 'none';
+
+            updateStepIndicators();
+            updateProgressBar();
+
+            // Si on affiche l'étape 2, vérifier la force du mot de passe actuel
+            if (stepNum === 2) {
+                const password = document.getElementById('password').value;
+                if (password) {
+                    checkPasswordStrength(password);
+                }
+                updateNextButtonState(); // Mettre à jour l'état du bouton
+            }
+        }
+
+        function validateStep(stepNum) {
+            let isValid = true;
+            clearAllFieldErrors();
+
+            if (stepNum === 1) {
+                const firstName = document.getElementById('first_name').value.trim();
+                const lastName = document.getElementById('last_name').value.trim();
+                const email = document.getElementById('email').value.trim();
+
+                if (!firstName) {
+                    markFieldAsError('first_name', 'Le prénom est obligatoire');
+                    isValid = false;
+                } else {
+                    markFieldAsValid('first_name');
+                }
+
+                if (!lastName) {
+                    markFieldAsError('last_name', 'Le nom est obligatoire');
+                    isValid = false;
+                } else {
+                    markFieldAsValid('last_name');
+                }
+
+                if (!email) {
+                    markFieldAsError('email', 'L\'email est obligatoire');
+                    isValid = false;
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    markFieldAsError('email', 'Veuillez entrer une adresse email valide');
+                    isValid = false;
+                } else {
+                    markFieldAsValid('email');
+                }
+
+                if (!isValid) {
+                    showError('Veuillez corriger les erreurs dans le formulaire avant de continuer.', 'error', 6000);
+                }
+            } else if (stepNum === 2) {
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirm_password').value;
+                const criteria = checkPasswordStrength(password);
+
+                let passwordValid = true;
+                let errorMessages = [];
+
+                // Vérifier que le mot de passe respecte TOUS les critères de sécurité
+                if (!password) {
+                    markFieldAsError('password', 'Le mot de passe est obligatoire');
+                    errorMessages.push('Mot de passe manquant');
+                    passwordValid = false;
+                } else if (!criteria.length) {
+                    markFieldAsError('password', 'Au moins 8 caractères requis');
+                    errorMessages.push('Longueur insuffisante (8 caractères minimum)');
+                    passwordValid = false;
+                } else if (!criteria.uppercase || !criteria.lowercase) {
+                    markFieldAsError('password', 'Doit contenir majuscules et minuscules');
+                    errorMessages.push('Majuscules et minuscules requises');
+                    passwordValid = false;
+                } else if (!criteria.number) {
+                    markFieldAsError('password', 'Au moins un chiffre requis');
+                    errorMessages.push('Au moins un chiffre requis');
+                    passwordValid = false;
+                } else if (!criteria.symbol) {
+                    markFieldAsError('password', 'Au moins un symbole spécial requis');
+                    errorMessages.push('Au moins un symbole spécial requis (!@#$%^&*...)');
+                    passwordValid = false;
+                } else {
+                    markFieldAsValid('password');
+                }
+
+                // Vérifier la confirmation du mot de passe
+                if (!confirmPassword) {
+                    markFieldAsError('confirm_password', 'La confirmation du mot de passe est obligatoire');
+                    errorMessages.push('Confirmation du mot de passe manquante');
+                    passwordValid = false;
+                } else if (password !== confirmPassword) {
+                    markFieldAsError('confirm_password', 'Les mots de passe ne correspondent pas');
+                    errorMessages.push('Les mots de passe ne correspondent pas');
+                    passwordValid = false;
+                } else if (passwordValid) {
+                    markFieldAsValid('confirm_password');
+                }
+
+                if (!passwordValid) {
+                    // Afficher un message d'erreur détaillé
+                    let errorMessage = 'Votre mot de passe ne respecte pas les critères de sécurité :\n';
+                    errorMessages.forEach(msg => {
+                        errorMessage += '• ' + msg + '\n';
+                    });
+                    errorMessage += '\nVeuillez corriger ces problèmes avant de continuer.';
+
+                    showError(errorMessage, 'error', 8000);
+                    isValid = false;
+                }
+            } else if (stepNum === 3) {
+                // Validation de l'étape professionnelle
+                const specialty = document.getElementById('specialty').value;
+                const hospital = document.getElementById('hospital').value.trim();
+                const licenseNumber = document.getElementById('license_number').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+
+                if (!specialty) {
+                    markFieldAsError('specialty', 'Veuillez sélectionner une spécialité');
+                    isValid = false;
+                } else {
+                    markFieldAsValid('specialty');
+                }
+
+                if (!hospital) {
+                    markFieldAsError('hospital', 'L\'établissement est obligatoire');
+                    isValid = false;
+                } else {
+                    markFieldAsValid('hospital');
+                }
+
+                if (!licenseNumber) {
+                    markFieldAsError('license_number', 'Le numéro RPPS/ADELI est obligatoire');
+                    isValid = false;
+                } else if (!/^\d{11}$/.test(licenseNumber)) {
+                    markFieldAsError('license_number', 'Le numéro doit contenir 11 chiffres');
+                    isValid = false;
+                } else {
+                    markFieldAsValid('license_number');
+                }
+
+                if (!phone) {
+                    markFieldAsError('phone', 'Le numéro de téléphone est obligatoire');
+                    isValid = false;
+                } else if (!/^(\+33|0)[1-9](\d{2}){4}$/.test(phone.replace(/\s/g, ''))) {
+                    markFieldAsError('phone', 'Format de téléphone invalide');
+                    isValid = false;
+                } else {
+                    markFieldAsValid('phone');
+                }
+
+                if (!isValid) {
+                    showError('Veuillez corriger les erreurs dans les informations professionnelles.', 'error', 6000);
+                } else {
+                    // Animation de succès finale
+                    showFinalSuccessAnimation();
+                }
+            }
+
+            return isValid;
+        }
+
+        function checkPasswordStrength(password) {
+            const criteria = {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /\d/.test(password),
+                symbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+            };
+
+            // Mettre à jour les indicateurs visuels
+            updatePasswordCriteria(criteria);
+
+            // Calculer le score de force
+            const score = Object.values(criteria).filter(Boolean).length;
+
+            // Mettre à jour la barre de force et le texte
+            updatePasswordStrengthIndicator(score);
+
+            return criteria;
+        }
+
+        function updatePasswordCriteria(criteria) {
+            // Longueur
+            const lengthIcon = document.querySelector('#length-criterion i');
+            const lengthText = document.querySelector('#length-criterion span');
+            if (criteria.length) {
+                lengthIcon.className = 'fas fa-check-circle text-green-500 transition-all duration-300 transform scale-110';
+                lengthText.className = 'text-green-700 font-medium transition-all duration-300';
+            } else {
+                lengthIcon.className = 'fas fa-times-circle text-red-400 transition-all duration-300';
+                lengthText.className = 'text-gray-600 transition-all duration-300';
+            }
+
+            // Majuscules et minuscules
+            const caseIcon = document.querySelector('#case-criterion i');
+            const caseText = document.querySelector('#case-criterion span');
+            if (criteria.uppercase && criteria.lowercase) {
+                caseIcon.className = 'fas fa-check-circle text-green-500 transition-all duration-300 transform scale-110';
+                caseText.className = 'text-green-700 font-medium transition-all duration-300';
+            } else {
+                caseIcon.className = 'fas fa-times-circle text-red-400 transition-all duration-300';
+                caseText.className = 'text-gray-600 transition-all duration-300';
+            }
+
+            // Chiffres
+            const numberIcon = document.querySelector('#number-criterion i');
+            const numberText = document.querySelector('#number-criterion span');
+            if (criteria.number) {
+                numberIcon.className = 'fas fa-check-circle text-green-500 transition-all duration-300 transform scale-110';
+                numberText.className = 'text-green-700 font-medium transition-all duration-300';
+            } else {
+                numberIcon.className = 'fas fa-times-circle text-red-400 transition-all duration-300';
+                numberText.className = 'text-gray-600 transition-all duration-300';
+            }
+
+            // Symboles
+            const symbolIcon = document.querySelector('#symbol-criterion i');
+            const symbolText = document.querySelector('#symbol-criterion span');
+            if (criteria.symbol) {
+                symbolIcon.className = 'fas fa-check-circle text-green-500 transition-all duration-300 transform scale-110';
+                symbolText.className = 'text-green-700 font-medium transition-all duration-300';
+            } else {
+                symbolIcon.className = 'fas fa-times-circle text-red-400 transition-all duration-300';
+                symbolText.className = 'text-gray-600 transition-all duration-300';
+            }
+        }
+
+        function updatePasswordStrengthIndicator(score) {
+            const strengthBar = document.getElementById('strength-bar');
+            const strengthText = document.getElementById('password-strength');
+
+            let width, color, text, bgColor, textColor;
+
+            switch (score) {
+                case 0:
+                case 1:
+                    width = '20%';
+                    color = '#ef4444'; // red
+                    bgColor = 'bg-red-100';
+                    textColor = 'text-red-700';
+                    text = 'Très faible';
+                    break;
+                case 2:
+                    width = '40%';
+                    color = '#f97316'; // orange
+                    bgColor = 'bg-orange-100';
+                    textColor = 'text-orange-700';
+                    text = 'Faible';
+                    break;
+                case 3:
+                    width = '60%';
+                    color = '#eab308'; // yellow
+                    bgColor = 'bg-yellow-100';
+                    textColor = 'text-yellow-700';
+                    text = 'Moyen';
+                    break;
+                case 4:
+                    width = '80%';
+                    color = '#22c55e'; // green
+                    bgColor = 'bg-green-100';
+                    textColor = 'text-green-700';
+                    text = 'Fort';
+                    break;
+                case 5:
+                    width = '100%';
+                    color = '#16a34a'; // dark green
+                    bgColor = 'bg-green-100';
+                    textColor = 'text-green-700';
+                    text = 'Très fort';
+                    break;
+                default:
+                    width = '0%';
+                    color = '#ef4444';
+                    bgColor = 'bg-gray-200';
+                    textColor = 'text-gray-600';
+                    text = 'Faible';
+            }
+
+            strengthBar.style.width = width;
+            strengthBar.style.backgroundColor = color;
+            strengthText.textContent = text;
+            strengthText.className = `text-xs font-medium px-2 py-1 rounded-full ${bgColor} ${textColor} transition-all duration-300`;
+        }
+
+        function showError(message, type = 'error', duration = 5000) {
+            // Créer une notification d'erreur améliorée
+            const notification = document.createElement('div');
+            notification.className = `error-notification ${type} rounded-xl p-4 shadow-xl text-white max-w-sm`;
+            notification.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <i class="fas ${getIconForType(type)} text-xl"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium text-sm leading-relaxed">${message}</p>
+                    </div>
+                    <button onclick="dismissNotification(this)" class="flex-shrink-0 ml-3 hover:bg-white/20 rounded-full p-1 transition-colors duration-200">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                </div>
+                <div class="mt-3 bg-white/20 rounded-full h-1">
+                    <div class="bg-white/60 h-1 rounded-full transition-all duration-100 ease-linear" style="width: 100%; animation: countdown ${duration}ms linear forwards;"></div>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Animation d'entrée
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0) scale(1)';
+            }, 10);
+
+            // Auto-dismiss avec animation
+            setTimeout(() => {
+                dismissNotification(notification.querySelector('button'));
+            }, duration);
+        }
+
+        function getIconForType(type) {
+            switch (type) {
+                case 'success': return 'fa-check-circle';
+                case 'warning': return 'fa-exclamation-triangle';
+                case 'info': return 'fa-info-circle';
+                case 'error':
+                default: return 'fa-exclamation-circle';
+            }
+        }
+
+        function dismissNotification(button) {
+            const notification = button.closest('.error-notification');
+            notification.classList.add('fade-out');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
+        }
+
+        // Fonction pour marquer un champ comme ayant une erreur
+        function markFieldAsError(fieldId, errorMessage) {
+            const field = document.getElementById(fieldId);
+            if (!field) return;
+
+            const formGroup = field.closest('.form-group');
+            if (!formGroup) return;
+
+            // Supprimer les erreurs précédentes
+            formGroup.classList.remove('field-valid');
+            formGroup.classList.add('field-error');
+
+            // Animation de shake
+            field.style.animation = 'shake 0.5s ease-in-out';
+            setTimeout(() => {
+                field.style.animation = '';
+            }, 500);
+        }
+
+        // Fonction pour marquer un champ comme valide
+        function markFieldAsValid(fieldId) {
+            const field = document.getElementById(fieldId);
+            if (!field) return;
+
+            const formGroup = field.closest('.form-group');
+            if (!formGroup) return;
+
+            // Supprimer les erreurs
+            formGroup.classList.remove('field-error');
+            formGroup.classList.add('field-valid');
+
+            // Supprimer l'icône d'erreur existante
+            const existingErrorIcon = formGroup.querySelector('.error-icon');
+            if (existingErrorIcon) {
+                existingErrorIcon.remove();
+            }
+
+            // Supprimer le tooltip d'erreur
+            const tooltip = formGroup.querySelector('.error-tooltip');
+            if (tooltip) {
+                tooltip.remove();
+            }
+        }
+
+        // Fonction pour effacer toutes les erreurs de validation
+        function clearAllFieldErrors() {
+            document.querySelectorAll('.field-error').forEach(field => {
+                field.classList.remove('field-error');
+            });
+
+            document.querySelectorAll('.field-valid').forEach(field => {
+                field.classList.remove('field-valid');
+            });
+        }
+
+        // Animation de succès finale
+        function showFinalSuccessAnimation() {
+            const form = document.getElementById('registerForm');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Ajouter la classe de succès au formulaire
+            form.classList.add('form-success');
+
+            // Créer et ajouter le badge de succès
+            const successBadge = document.createElement('div');
+            successBadge.className = 'success-badge';
+            successBadge.innerHTML = '<i class="fas fa-check text-lg"></i>';
+            form.appendChild(successBadge);
+
+            // Animation du bouton de soumission
+            submitBtn.style.animation = 'pulse 1s infinite';
+            submitBtn.innerHTML = '<i class="fas fa-rocket mr-2"></i>Prêt à créer mon compte !';
+
+            // Message de félicitations
+            setTimeout(() => {
+                showError('🎉 Toutes les informations sont validées ! Vous pouvez maintenant créer votre compte NeuroScan Pro.', 'success', 5000);
+            }, 1000);
+
+            // Supprimer l'animation après un délai
+            setTimeout(() => {
+                form.classList.remove('form-success');
+                if (successBadge.parentNode) {
+                    successBadge.parentNode.removeChild(successBadge);
+                }
+                submitBtn.style.animation = '';
+            }, 5000);
+        }
+
+        // Fonction pour mettre à jour l'état du bouton Suivant selon la validation des mots de passe
+        function updateNextButtonState() {
+            if (currentStep !== 2) return; // Ne s'applique qu'à l'étape 2
+
+            const nextBtn = document.getElementById('nextBtn');
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const criteria = checkPasswordStrength(password);
+
+            // Vérifier si tous les critères sont respectés
+            const passwordIsStrong = criteria.length && criteria.uppercase && criteria.lowercase && criteria.number && criteria.symbol;
+            const passwordsMatch = password === confirmPassword && password.length > 0 && confirmPassword.length > 0;
+
+            if (passwordIsStrong && passwordsMatch) {
+                // Activer le bouton avec style de succès
+                nextBtn.classList.remove('btn-secondary');
+                nextBtn.classList.add('btn-success');
+                nextBtn.innerHTML = '<i class="fas fa-shield-check mr-2"></i>Sécurité validée - Continuer';
+                nextBtn.disabled = false;
+            } else {
+                // Désactiver le bouton avec style d'avertissement
+                nextBtn.classList.remove('btn-success');
+                nextBtn.classList.add('btn-secondary');
+                nextBtn.innerHTML = '<i class="fas fa-lock mr-2"></i>Complétez la sécurité';
+                nextBtn.disabled = true;
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            // Animation d'entrée améliorée
             const card = document.querySelector('.register-card');
             card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            
+            card.style.transform = 'scale(0.95) translateY(20px)';
+
             setTimeout(() => {
-                card.style.transition = 'all 0.6s ease';
+                card.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
                 card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, 100);
-        });
+                card.style.transform = 'scale(1) translateY(0)';
+            }, 200);
 
-        // Validation des mots de passe
-        document.getElementById('confirm_password').addEventListener('input', function() {
-            const password = document.getElementById('password').value;
-            const confirmPassword = this.value;
-            
-            if (password !== confirmPassword) {
-                this.setCustomValidity('Les mots de passe ne correspondent pas');
-            } else {
-                this.setCustomValidity('');
+            // Gestionnaire pour le bouton Suivant
+            document.getElementById('nextBtn').addEventListener('click', function() {
+                if (validateStep(currentStep)) {
+                    // Vérification supplémentaire pour l'étape 2 : s'assurer que le mot de passe est vraiment sécurisé
+                    if (currentStep === 2) {
+                        const password = document.getElementById('password').value;
+                        const confirmPassword = document.getElementById('confirm_password').value;
+                        const criteria = checkPasswordStrength(password);
+
+                        // Vérifier TOUS les critères de sécurité
+                        const passwordIsStrong = criteria.length && criteria.uppercase && criteria.lowercase && criteria.number && criteria.symbol;
+                        const passwordsMatch = password === confirmPassword && password.length > 0 && confirmPassword.length > 0;
+
+                        if (!passwordIsStrong || !passwordsMatch) {
+                            showError('❌ Sécurité insuffisante ! Votre mot de passe doit respecter tous les critères avant de continuer :\n• 8 caractères minimum\n• Majuscules et minuscules\n• Au moins un chiffre\n• Au moins un symbole spécial\n• Les mots de passe doivent correspondre', 'error', 10000);
+                            return; // Ne pas continuer
+                        }
+                    }
+
+                    // Afficher un message de succès pour l'étape validée
+                    const stepNames = ['', 'Informations personnelles', 'Sécurité du compte', 'Informations professionnelles'];
+                    showError(`✅ Étape "${stepNames[currentStep]}" validée avec succès !`, 'success', 3000);
+                    currentStep++;
+                    showStep(currentStep);
+                }
+            });
+
+            // Gestionnaire pour le bouton Précédent
+            document.getElementById('prevBtn').addEventListener('click', function() {
+                currentStep--;
+                showStep(currentStep);
+            });
+
+            // Validation en temps réel des champs individuels
+            document.getElementById('first_name').addEventListener('blur', function() {
+                const value = this.value.trim();
+                if (value.length > 0) {
+                    markFieldAsValid('first_name');
+                } else {
+                    markFieldAsError('first_name', 'Le prénom est obligatoire');
+                }
+            });
+
+            document.getElementById('last_name').addEventListener('blur', function() {
+                const value = this.value.trim();
+                if (value.length > 0) {
+                    markFieldAsValid('last_name');
+                } else {
+                    markFieldAsError('last_name', 'Le nom est obligatoire');
+                }
+            });
+
+            document.getElementById('email').addEventListener('blur', function() {
+                const value = this.value.trim();
+                if (value.length === 0) {
+                    markFieldAsError('email', 'L\'email est obligatoire');
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                    markFieldAsError('email', 'Format d\'email invalide');
+                } else {
+                    markFieldAsValid('email');
+                }
+            });
+
+            // Validation en temps réel de la force du mot de passe
+            document.getElementById('password').addEventListener('input', function() {
+                const password = this.value;
+                checkPasswordStrength(password);
+                updateNextButtonState();
+
+                // Validation stricte : tous les critères doivent être respectés
+                if (password.length > 0) {
+                    const criteria = checkPasswordStrength(password);
+                    const allValid = criteria.length && criteria.uppercase && criteria.lowercase && criteria.number && criteria.symbol;
+                    if (allValid) {
+                        markFieldAsValid('password');
+                    } else {
+                        // Marquer comme erreur si les critères ne sont pas respectés
+                        const missingCriteria = [];
+                        if (!criteria.length) missingCriteria.push('8 caractères minimum');
+                        if (!criteria.uppercase || !criteria.lowercase) missingCriteria.push('majuscules et minuscules');
+                        if (!criteria.number) missingCriteria.push('au moins un chiffre');
+                        if (!criteria.symbol) missingCriteria.push('au moins un symbole');
+
+                        const errorMsg = 'Critères manquants : ' + missingCriteria.join(', ');
+                        markFieldAsError('password', errorMsg);
+                    }
+                } else {
+                    // Champ vide - enlever les indicateurs
+                    this.closest('.form-group').classList.remove('field-valid', 'field-error');
+                    const validIcon = this.closest('.form-group').querySelector('.valid-icon');
+                    const errorIcon = this.closest('.form-group').querySelector('.error-icon');
+                    const tooltip = this.closest('.form-group').querySelector('.error-tooltip');
+                    if (validIcon) validIcon.remove();
+                    if (errorIcon) errorIcon.remove();
+                    if (tooltip) tooltip.remove();
+                }
+            });
+
+            // Validation en temps réel des mots de passe
+            document.getElementById('confirm_password').addEventListener('input', function() {
+                const password = document.getElementById('password').value;
+                const confirmPassword = this.value;
+                const matchDiv = document.getElementById('password-match');
+
+                // Vérifier d'abord si le mot de passe principal respecte les critères
+                const criteria = checkPasswordStrength(password);
+                const passwordIsStrong = criteria.length && criteria.uppercase && criteria.lowercase && criteria.number && criteria.symbol;
+
+                if (confirmPassword.length === 0) {
+                    matchDiv.classList.add('hidden');
+                    this.closest('.form-group').classList.remove('field-valid', 'field-error');
+                    const validIcon = this.closest('.form-group').querySelector('.valid-icon');
+                    const errorIcon = this.closest('.form-group').querySelector('.error-icon');
+                    const tooltip = this.closest('.form-group').querySelector('.error-tooltip');
+                    if (validIcon) validIcon.remove();
+                    if (errorIcon) errorIcon.remove();
+                    if (tooltip) tooltip.remove();
+                } else if (!passwordIsStrong) {
+                    // Si le mot de passe principal n'est pas assez fort, ne pas valider la confirmation
+                    markFieldAsError('confirm_password', 'Le mot de passe principal doit d\'abord respecter tous les critères de sécurité');
+                    matchDiv.classList.remove('hidden');
+                    matchDiv.classList.add('text-orange-600');
+                    matchDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i>Améliorez d\'abord le mot de passe principal';
+                } else if (password !== confirmPassword) {
+                    markFieldAsError('confirm_password', 'Les mots de passe ne correspondent pas');
+                    matchDiv.classList.remove('hidden');
+                    matchDiv.classList.add('text-red-600');
+                    matchDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i>Les mots de passe ne correspondent pas';
+                } else {
+                    markFieldAsValid('confirm_password');
+                    matchDiv.classList.remove('hidden', 'text-red-600', 'text-orange-600');
+                    matchDiv.classList.add('text-green-600');
+                    matchDiv.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Les mots de passe correspondent';
+                }
+                updateNextButtonState();
+            });
+
+            // Fonction pour mettre à jour l'état du bouton Suivant selon la validation des mots de passe
+            function updateNextButtonState() {
+                if (currentStep !== 2) return; // Ne s'applique qu'à l'étape 2
+
+                const nextBtn = document.getElementById('nextBtn');
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirm_password').value;
+                const criteria = checkPasswordStrength(password);
+
+                // Vérifier si tous les critères sont respectés
+                const passwordIsStrong = criteria.length && criteria.uppercase && criteria.lowercase && criteria.number && criteria.symbol;
+                const passwordsMatch = password === confirmPassword && password.length > 0 && confirmPassword.length > 0;
+
+                if (passwordIsStrong && passwordsMatch) {
+                    // Activer le bouton avec style de succès
+                    nextBtn.classList.remove('btn-secondary');
+                    nextBtn.classList.add('btn-success');
+                    nextBtn.innerHTML = '<i class="fas fa-shield-check mr-2"></i>Sécurité validée - Continuer';
+                    nextBtn.disabled = false;
+                } else {
+                    // Désactiver le bouton avec style d'avertissement
+                    nextBtn.classList.remove('btn-success');
+                    nextBtn.classList.add('btn-secondary');
+                    nextBtn.innerHTML = '<i class="fas fa-lock mr-2"></i>Complétez la sécurité';
+                    nextBtn.disabled = true;
+                }
             }
-        });
 
-        // Focus automatique sur le premier champ
-        document.getElementById('first_name').focus();
+            // Gestion des icônes pour voir/masquer les mots de passe
+            function togglePasswordVisibility(inputId, buttonId) {
+                const input = document.getElementById(inputId);
+                const button = document.getElementById(buttonId);
+                const icon = button.querySelector('i');
+
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.className = 'fas fa-eye-slash';
+                    button.setAttribute('aria-label', 'Masquer le mot de passe');
+                } else {
+                    input.type = 'password';
+                    icon.className = 'fas fa-eye';
+                    button.setAttribute('aria-label', 'Afficher le mot de passe');
+                }
+            }
+
+            // Gestionnaire pour le bouton d'œil du mot de passe principal
+            document.getElementById('password-toggle').addEventListener('click', function() {
+                togglePasswordVisibility('password', 'password-toggle');
+            });
+
+            // Gestionnaire pour le bouton d'œil de la confirmation
+            document.getElementById('confirm-password-toggle').addEventListener('click', function() {
+                togglePasswordVisibility('confirm_password', 'confirm-password-toggle');
+            });
+
+            // Focus automatique sur le premier champ
+            setTimeout(() => {
+                document.getElementById('first_name').focus();
+            }, 800);
+
+            // Gestion de l'accessibilité des tooltips
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    // Fermer tous les tooltips ouverts
+                    document.querySelectorAll('.help-tooltip .help-content').forEach(tooltip => {
+                        tooltip.style.opacity = '0';
+                        tooltip.style.visibility = 'hidden';
+                        tooltip.style.transform = 'translateX(-50%)';
+                    });
+                }
+            });
+
+            // Améliorer l'accessibilité des tooltips
+            document.querySelectorAll('.help-tooltip .help-icon').forEach(icon => {
+                icon.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const tooltip = this.nextElementSibling;
+                        const isVisible = tooltip.style.opacity === '1';
+
+                        // Fermer tous les autres tooltips
+                        document.querySelectorAll('.help-tooltip .help-content').forEach(t => {
+                            t.style.opacity = '0';
+                            t.style.visibility = 'hidden';
+                            t.style.transform = 'translateX(-50%)';
+                        });
+
+                        // Ouvrir ou fermer le tooltip actuel
+                        if (!isVisible) {
+                            tooltip.style.opacity = '1';
+                            tooltip.style.visibility = 'visible';
+                            tooltip.style.transform = 'translateX(-50%) translateY(-5px)';
+                        }
+                    }
+                });
+            });
+        });
     </script>
 </body>
 </html>

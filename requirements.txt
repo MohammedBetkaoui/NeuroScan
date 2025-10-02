@@ -20,5 +20,8 @@ SQLAlchemy>=2.0.0
 # Production server
 gunicorn>=21.0.0
 
+# PDF Generation
+reportlab>=4.0.0
+
 # Utilities
 python-dotenv>=1.0.0

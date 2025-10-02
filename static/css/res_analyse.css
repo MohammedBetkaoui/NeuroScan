@@ -1,19 +1,63 @@
-/* Styles spécifiques pour la page d'analyse - Design Pro & Responsive */
+/* ===================================================================
+   STYLES PROFESSIONNELS & MODERNES - PAGE RÉSULTAT D'ANALYSE
+   Design System: NeuroScan Analytics Pro
+   =================================================================== */
+
+/* Variables CSS pour une maintenance facilitée */
+:root {
+  --color-primary: #3b82f6;
+  --color-secondary: #7c3aed;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #06b6d4;
+  
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.2);
+  
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Couleurs des probabilités */
 .prob-color-0, .prob-color-bg-0 { background-color: #3b82f6 !important; }
 .prob-color-1, .prob-color-bg-1 { background-color: #7c3aed !important; }
 .prob-color-2, .prob-color-bg-2 { background-color: #10b981 !important; }
 .prob-color-3, .prob-color-bg-3 { background-color: #f59e0b !important; }
 .prob-color-4, .prob-color-bg-4 { background-color: #ef4444 !important; }
 
+/* ===================================================================
+   EN-TÊTE DE LA PAGE ANALYSE - Design Gradient Animé Premium
+   =================================================================== */
 .analysis-header {
-  background: linear-gradient(135deg, #838bb3 0%, #2010ad 50%, #2f21a8 100%);
+  background: linear-gradient(135deg, 
+    #f7f8fa 0%, 
+    #051361 25%, 
+    #8798f8 50%, 
+    #eeeeee 75%, 
+    #ffffff 100%);
   background-size: 400% 400%;
   animation: gradient-animation 15s ease infinite;
   border-radius: 28px;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3),
-              0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.35),
+              0 8px 24px rgba(118, 75, 162, 0.25),
+              0 0 0 1px rgba(255, 255, 255, 0.15);
+  transition: all var(--transition-slow);
 }
 
 @keyframes gradient-animation {
@@ -67,7 +111,8 @@
 
 /* Styles spécifiques pour le contenu de analysis-header */
 .analysis-header h1 {
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  
+  text-shadow: 0 2px 10px rgba(245, 239, 239, 0.952);
   font-weight: 800;
   letter-spacing: -0.025em;
   line-height: 1.1;
@@ -75,12 +120,12 @@
 }
 
 .analysis-header h1:hover {
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 4px 20px rgba(9, 4, 250, 0.849);
   transform: scale(1.02);
 }
 
 .analysis-header p {
-  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 5px rgb(255, 255, 255);
   font-weight: 500;
   opacity: 0.95;
   transition: opacity 0.3s ease;
@@ -121,18 +166,51 @@
   animation: subtle-pulse 4s ease-in-out infinite;
 }
 
+/* ===================================================================
+   CARTES D'ANALYSE - Design Glassmorphism Premium
+   =================================================================== */
 .analysis-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.98) 0%, 
+    rgba(255, 255, 255, 0.95) 100%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08),
+              0 4px 12px rgba(0, 0, 0, 0.04),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.analysis-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(102, 126, 234, 0.3) 25%, 
+    rgba(118, 75, 162, 0.5) 50%, 
+    rgba(102, 126, 234, 0.3) 75%, 
+    transparent 100%);
+  opacity: 0;
+  transition: opacity var(--transition-base);
 }
 
 .analysis-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12),
+              0 8px 24px rgba(0, 0, 0, 0.08),
+              0 0 0 1px rgba(102, 126, 234, 0.1);
+  border-color: rgba(102, 126, 234, 0.2);
+}
+
+.analysis-card:hover::before {
+  opacity: 1;
 }
 
 /* Styles avancés pour l'affichage de l'image d'analyse */
@@ -285,39 +363,100 @@
   to { transform: rotate(360deg); }
 }
 
+/* ===================================================================
+   BADGES DE RÉSULTAT - Design Premium avec Glow Effect
+   =================================================================== */
 .result-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-radius: 16px;
-  font-weight: 600;
-  font-size: 14px;
+  gap: 10px;
+  padding: 14px 24px;
+  border-radius: 18px;
+  font-weight: 700;
+  font-size: 13px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15),
+              0 2px 8px rgba(0, 0, 0, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.result-badge::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 70%
+  );
+  transform: rotate(45deg);
+  animation: badge-shine 3s ease-in-out infinite;
+}
+
+@keyframes badge-shine {
+  0%, 100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+  50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
 }
 
 .result-badge:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2),
+              0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
+.result-badge i {
+  font-size: 16px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* ===================================================================
+   BARRE DE CONFIANCE - Design Premium avec Animations
+   =================================================================== */
 .confidence-bar {
-  height: 12px;
-  border-radius: 8px;
-  background: linear-gradient(90deg, #e5e7eb, #e5e7eb);
+  height: 14px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, 
+    #e5e7eb 0%, 
+    #f3f4f6 50%, 
+    #e5e7eb 100%);
   overflow: hidden;
   position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06),
+              0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .confidence-fill {
   height: 100%;
-  border-radius: 8px;
-  background: linear-gradient(90deg, #10b981, #059669);
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 10px;
+  background: linear-gradient(90deg, 
+    #10b981 0%, 
+    #059669 50%, 
+    #10b981 100%);
+  background-size: 200% 100%;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
 }
 
 .confidence-fill::after {
@@ -327,8 +466,11 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  animation: shimmer 2s infinite;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.5) 50%, 
+    transparent 100%);
+  animation: shimmer 2.5s infinite;
 }
 
 @keyframes shimmer {
@@ -336,19 +478,43 @@
   100% { left: 100%; }
 }
 
+/* ===================================================================
+   BARRES DE PROBABILITÉ - Design Moderne avec Effets
+   =================================================================== */
 .prob-bar-container {
-  background: #f3f4f6;
-  border-radius: 8px;
+  background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 100%);
+  border-radius: 10px;
   overflow: hidden;
-  height: 8px;
+  height: 10px;
   position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
 .prob-bar-fill {
   height: 100%;
-  border-radius: 8px;
-  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 10px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.prob-bar-fill::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    transparent 100%);
+  animation: shimmer-slow 3s infinite;
+}
+
+@keyframes shimmer-slow {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 .image-container {
@@ -358,98 +524,188 @@
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* ===================================================================
+   BOUTONS D'ACTION - Design Premium avec Micro-interactions
+   =================================================================== */
 .action-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-weight: 500;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 10px;
+  padding: 13px 22px;
+  border-radius: 14px;
+  font-weight: 600;
+  transition: all var(--transition-base);
   border: none;
   cursor: pointer;
   text-decoration: none;
   font-size: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.action-btn:active::before {
+  width: 300px;
+  height: 300px;
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+  background-size: 200% 100%;
   color: white;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35),
+              0 2px 8px rgba(59, 130, 246, 0.25),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .action-btn.primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.45),
+              0 4px 12px rgba(59, 130, 246, 0.35);
+  background-position: 100% 0;
 }
 
 .action-btn.secondary {
-  background: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(255, 255, 255, 0.9) 100%);
   color: #374151;
-  border: 1px solid rgba(209, 213, 219, 0.5);
-  backdrop-filter: blur(10px);
+  border: 1px solid rgba(209, 213, 219, 0.6);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .action-btn.secondary:hover {
   background: rgba(255, 255, 255, 1);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12),
+              0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: rgba(102, 126, 234, 0.3);
 }
 
 .action-btn.success {
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+  background-size: 200% 100%;
   color: white;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35),
+              0 2px 8px rgba(16, 185, 129, 0.25),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .action-btn.success:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.45),
+              0 4px 12px rgba(16, 185, 129, 0.35);
+  background-position: 100% 0;
 }
 
+.action-btn i {
+  transition: transform var(--transition-fast);
+}
+
+.action-btn:hover i {
+  transform: scale(1.1);
+}
+
+/* ===================================================================
+   CHIPS D'INFORMATION - Design Élégant
+   =================================================================== */
 .info-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(209, 213, 219, 0.3);
-  border-radius: 12px;
+  gap: 10px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(255, 255, 255, 0.9) 100%);
+  border: 1px solid rgba(209, 213, 219, 0.4);
+  border-radius: 14px;
   font-size: 14px;
-  font-weight: 500;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
+  font-weight: 600;
+  backdrop-filter: blur(12px);
+  transition: all var(--transition-base);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .info-chip:hover {
   background: rgba(255, 255, 255, 1);
-  transform: translateY(-1px);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12),
+              0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: rgba(102, 126, 234, 0.3);
 }
 
+.info-chip i {
+  font-size: 16px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+/* ===================================================================
+   TITRES DE SECTION - Design Pro avec Icônes
+   =================================================================== */
 .section-title {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-  font-size: 18px;
-  font-weight: 600;
+  gap: 14px;
+  margin-bottom: 24px;
+  font-size: 19px;
+  font-weight: 700;
   color: #1f2937;
+  position: relative;
+  padding-bottom: 12px;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    rgba(102, 126, 234, 0.8) 0%, 
+    rgba(102, 126, 234, 0.3) 100%);
+  border-radius: 2px;
 }
 
 .section-title i {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 10px;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: transform var(--transition-fast);
 }
 
+.section-title:hover i {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* ===================================================================
+   ANIMATIONS D'ENTRÉE - Animations Fluides et Élégantes
+   =================================================================== */
 .fade-in {
   opacity: 0;
-  transform: translateY(20px);
-  animation: fadeIn 0.6s forwards;
+  transform: translateY(30px);
+  animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes fadeIn {
@@ -459,19 +715,114 @@
   }
 }
 
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .analysis-header {
-    border-radius: 24px;
-    margin: 0 -8px;
+/* Animation avec effet de scale pour plus de dynamisme */
+.scale-in {
+  opacity: 0;
+  transform: scale(0.95);
+  animation: scaleIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes scaleIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
+/* Animation avec slide depuis la gauche */
+.slide-in-left {
+  opacity: 0;
+  transform: translateX(-30px);
+  animation: slideInLeft 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideInLeft {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Animation avec slide depuis la droite */
+.slide-in-right {
+  opacity: 0;
+  transform: translateX(30px);
+  animation: slideInRight 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideInRight {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ===================================================================
+@media (max-width: 1024px) {
+  :root {
+    --radius-xl: 18px;
+    --radius-2xl: 22px;
+  }
+  
+  .analysis-header {
+    border-radius: 22px;
+    margin: 0 -8px;
+    padding: 1.5rem !important;
+  }
+  
+  .analysis-card {
+    border-radius: 20px;
+  }
+  
+  .section-title {
+    font-size: 17px;
+  }
+}
+
+#imageModal .relative button {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all var(--transition-base);
+}
+
+#imageModal .relative button:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1) rotate(90deg);
+}
+
+#imageModal #modalImage {
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5),
+              0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#imageModal .absolute.bottom-4.left-4 {
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  transition: all var(--transition-base);
+}
+
+#imageModal .absolute.bottom-4.right-4 button {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all var(--transition-base);
+}
+
+#imageModal .absolute.bottom-4.right-4 button:hover {
 @media (max-width: 768px) {
+  :root {
+    --radius-xl: 16px;
+    --radius-2xl: 20px;
+  }
+  
   .analysis-header {
     border-radius: 20px;
     margin: 0 -12px;
     background-size: 300% 300%;
+    padding: 1.25rem !important;
+  }
+  
+  .analysis-header h1 {
+    font-size: 1.5rem !important;
   }
   
   .analysis-header::after {
@@ -484,35 +835,67 @@
   }
   
   .action-btn {
-    padding: 10px 16px;
+    padding: 11px 18px;
     font-size: 13px;
   }
   
   .result-badge {
-    padding: 10px 16px;
+    padding: 11px 18px;
     font-size: 12px;
   }
   
   .section-title {
     font-size: 16px;
   }
-}
-
+  
+  .section-title i {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
 @media (max-width: 640px) {
+  :root {
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 16px;
+  }
+  
   .analysis-header {
     border-radius: 16px;
     margin: 0 -16px;
-    box-shadow: 0 12px 24px rgba(102, 126, 234, 0.2),
-                0 0 0 1px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 12px 36px rgba(102, 126, 234, 0.25),
+                0 4px 12px rgba(118, 75, 162, 0.2),
+                0 0 0 1px rgba(255, 255, 255, 0.15);
+    padding: 1rem !important;
+  }
+  
+  .analysis-header h1 {
+    font-size: 1.35rem !important;
   }
   
   .analysis-header::before {
     backdrop-filter: blur(15px);
   }
   
+  .analysis-card {
+    border-radius: 14px;
+  }
+  
   .info-chip {
-    padding: 6px 12px;
+    padding: 8px 14px;
     font-size: 13px;
+  }
+  
+  .action-btn {
+    padding: 10px 16px;
+    font-size: 12px;
+    border-radius: 12px;
+  }
+  
+  .result-badge {
+    padding: 10px 16px;
+    font-size: 11px;
+    border-radius: 14px;
   }
   
   /* Styles responsives pour l'image */
@@ -539,13 +922,26 @@
   .zoom-indicator {
     bottom: 10px;
     left: 10px;
-    padding: 4px 8px;
-    font-size: 11px;
-  }
-}
-
+    padding: 5px 10px;
 /* Styles pour très petits écrans */
 @media (max-width: 480px) {
+  .analysis-header {
+    border-radius: 14px;
+    padding: 0.875rem !important;
+  }
+  
+  .analysis-header h1 {
+    font-size: 1.25rem !important;
+  }
+  
+  .analysis-card {
+    border-radius: 12px;
+  }
+  
+  .image-container {
+    border-radius: 12px;
+  }
+  
   .image-container img {
     height: 280px !important;
   }
@@ -558,11 +954,18 @@
   .image-action-btn {
     width: 32px;
     height: 32px;
+    border-radius: 8px;
   }
   
   .image-overlay {
     padding: 12px;
     font-size: 12px;
+  }
+  
+  .zoom-indicator {
+    padding: 4px 8px;
+    font-size: 10px;
+    border-radius: 14px;
   }
   
   /* Modal responsive */
@@ -577,14 +980,340 @@
   }
   
   #imageModal .absolute.bottom-4.left-4 {
-    left: 2px;
-    bottom: 2px;
-    padding: 8px 12px;
+    left: 8px;
+    bottom: 8px;
+    padding: 10px 14px;
     font-size: 12px;
+    border-radius: 10px;
   }
   
   #imageModal .absolute.bottom-4.right-4 {
-    right: 2px;
-    bottom: 2px;
+    right: 8px;
+    bottom: 8px;
+  }
+  
+  .confidence-bar {
+    height: 11px;
+  }
+  
+  .prob-bar-container {
+    height: 8px;
+  }
+  
+  .result-badge {
+    padding: 9px 14px;
+    font-size: 10px;
+    gap: 8px;
+  }
+  
+  .action-btn {
+    padding: 9px 14px;
+    gap: 8px;
+  }
+  
+  .info-chip {
+    padding: 7px 12px;
+    font-size: 12px;
+    gap: 8px;
   }
 }
+
+/* ===================================================================
+   UTILITIES & HELPERS - Classes Utilitaires Personnalisées
+   =================================================================== */
+.rounded-12 { border-radius: 12px; }
+.rounded-14 { border-radius: 14px; }
+.rounded-16 { border-radius: 16px; }
+.rounded-18 { border-radius: 18px; }
+.rounded-20 { border-radius: 20px; }
+
+/* Effet de profondeur pour les cartes importantes */
+.card-elevated {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12),
+              0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Effet de glow pour les éléments interactifs */
+.glow-primary {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+.glow-success {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+}
+
+/* Transitions fluides globales */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Scroll smooth pour toute la page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Amélioration de la lisibilité */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Performance - Accélération matérielle */
+.analysis-card,
+.action-btn,
+.result-badge,
+.info-chip {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Focus visible pour l'accessibilité */
+.action-btn:focus-visible,
+.image-action-btn:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
+
+/* ===================================================================
+   STYLES AMÉLIORÉS POUR LAYOUT 2 COLONNES
+   =================================================================== */
+
+/* Cartes d'information patient avec bordure colorée */
+.analysis-card .border-l-4 {
+  transition: all var(--transition-base);
+}
+
+.analysis-card .border-l-4:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Statistiques rapides avec animation */
+.analysis-card .grid-cols-3 > div {
+  transition: all var(--transition-base);
+}
+
+.analysis-card .grid-cols-3 > div:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Icônes circulaires avec effet de pulse */
+.w-16.h-16.rounded-full,
+.w-20.h-20.rounded-full {
+  animation: pulse-icon 3s ease-in-out infinite;
+  transition: all var(--transition-base);
+}
+
+@keyframes pulse-icon {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+}
+
+.w-16.h-16.rounded-full:hover,
+.w-20.h-20.rounded-full:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Section pleine largeur en bas */
+.mt-6.grid.grid-cols-1.md\:grid-cols-3 .analysis-card {
+  transition: all var(--transition-base);
+}
+
+.mt-6.grid.grid-cols-1.md\:grid-cols-3 .analysis-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Amélioration des dégradés */
+.bg-gradient-to-r,
+.bg-gradient-to-br {
+  position: relative;
+  overflow: hidden;
+}
+
+.bg-gradient-to-r::before,
+.bg-gradient-to-br::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.bg-gradient-to-r:hover::before,
+.bg-gradient-to-br:hover::before {
+  opacity: 1;
+  animation: shimmer-rotate 2s linear infinite;
+}
+
+@keyframes shimmer-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive 2 colonnes */
+@media (max-width: 1024px) {
+  .grid.grid-cols-1.lg\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .analysis-card .grid.grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1025px) {
+  /* Animation stagger pour les 2 colonnes */
+  .grid.grid-cols-1.lg\:grid-cols-2 > div:first-child .analysis-card {
+    animation-delay: 0s;
+  }
+  
+  .grid.grid-cols-1.lg\:grid-cols-2 > div:last-child .analysis-card {
+    animation-delay: 0.1s;
+  }
+}
+
+/* Amélioration de l'espacement vertical */
+.space-y-6 > * + * {
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .space-y-6 > * + * {
+    margin-top: 1rem;
+  }
+}
+
+/* ===================================================================
+   SECTION AUTRES ANALYSES - Liste Interactive
+   =================================================================== */
+.other-analyses-list a {
+  text-decoration: none;
+  display: block;
+}
+
+.other-analyses-list .analysis-item {
+  transition: all var(--transition-base);
+  cursor: pointer;
+}
+
+.other-analyses-list .analysis-item:hover {
+  transform: translateX(4px);
+}
+
+.other-analyses-list .analysis-item.current {
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.1) 0%, 
+    rgba(59, 130, 246, 0.05) 100%);
+  border-left: 4px solid #3b82f6;
+}
+
+/* Badge pour l'analyse actuelle */
+.current-badge {
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
+  }
+}
+
+/* Scrollbar personnalisée pour la liste */
+.other-analyses-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.other-analyses-list::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+
+.other-analyses-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #667eea, #764ba2);
+  border-radius: 10px;
+}
+
+.other-analyses-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #5a67d8, #6b46c1);
+}
+
+/* Animation d'apparition pour chaque élément de la liste */
+.other-analyses-list a {
+  animation: slideInFromLeft 0.5s ease-out backwards;
+}
+
+.other-analyses-list a:nth-child(1) { animation-delay: 0.05s; }
+.other-analyses-list a:nth-child(2) { animation-delay: 0.1s; }
+.other-analyses-list a:nth-child(3) { animation-delay: 0.15s; }
+.other-analyses-list a:nth-child(4) { animation-delay: 0.2s; }
+.other-analyses-list a:nth-child(5) { animation-delay: 0.25s; }
+.other-analyses-list a:nth-child(n+6) { animation-delay: 0.3s; }
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Effet de highlight sur les labels */
+.label-badge {
+  position: relative;
+  overflow: hidden;
+}
+
+.label-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.label-badge:hover::before {
+  left: 100%;
+}
+
+/* Statistiques résumées */
+.stats-summary {
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.1) 0%, 
+    rgba(124, 58, 237, 0.1) 100%);
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-base);
+}
+
+.stats-summary:hover {
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.15) 0%, 
+    rgba(124, 58, 237, 0.15) 100%);
+  transform: scale(1.02);
+}
+
+/* ===================================================================
+   FIN DES STYLES
+   =================================================================== */
+
+  }

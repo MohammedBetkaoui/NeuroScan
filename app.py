@@ -20,6 +20,19 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from torchvision import transforms
 from functools import wraps
 
+# PDF Generation
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch, cm
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage, PageBreak
+from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT
+from reportlab.graphics.shapes import Drawing
+from reportlab.graphics.charts.piecharts import Pie
+from reportlab.graphics.charts.barcharts import VerticalBarChart
+from reportlab.graphics.charts.linecharts import HorizontalLineChart
+from reportlab.graphics import renderPDF
+
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -1559,8 +1572,9 @@ def analysis_detail(analysis_id: int):
             FROM analyses WHERE id = ?
         ''', (analysis_id,))
         row = cursor.fetchone()
-        conn.close()
+        
         if not row:
+            conn.close()
             flash("Analyse introuvable", 'error')
             return redirect(url_for('dashboard'))
 
@@ -1592,7 +1606,34 @@ def analysis_detail(analysis_id: int):
             'previous_analysis_id': row[13],
             'image_url': url_for('uploaded_file', filename=row[2]) if row[2] else ''
         }
-        return render_template('analysis_detail.html', doctor=doctor, analysis=analysis)
+        
+        # Récupérer les autres analyses du même patient
+        other_analyses = []
+        if row[3]:  # Si patient_id existe
+            cursor.execute('''
+                SELECT id, timestamp, exam_date, predicted_label, confidence
+                FROM analyses 
+                WHERE patient_id = ? AND doctor_id = ?
+                ORDER BY timestamp DESC
+                LIMIT 10
+            ''', (row[3], doctor['id']))
+            
+            other_rows = cursor.fetchall()
+            for other_row in other_rows:
+                other_analyses.append({
+                    'id': other_row[0],
+                    'timestamp': other_row[1],
+                    'exam_date': other_row[2],
+                    'predicted_label': other_row[3],
+                    'confidence': round((other_row[4] or 0) * 100, 1)
+                })
+        
+        conn.close()
+        
+        return render_template('analysis_detail.html', 
+                             doctor=doctor, 
+                             analysis=analysis,
+                             other_analyses=other_analyses)
     except Exception as e:
         print(f"Erreur analysis_detail: {e}")
         flash("Erreur lors du chargement de l'analyse", 'error')
@@ -1628,9 +1669,9 @@ def call_gemini_api(prompt, context="medical"):
                 }
             ],
             "generationConfig": {
-                "temperature": 0.7,
-                "topK": 40,
-                "topP": 0.95,
+                "temperature": 0.1,  # Lower temperature for more consistent responses
+                "topK": 1,
+                "topP": 0.1,
                 "maxOutputTokens": 1024,
             }
         }
@@ -1645,7 +1686,14 @@ def call_gemini_api(prompt, context="medical"):
         if response.status_code == 200:
             result = response.json()
             if 'candidates' in result and len(result['candidates']) > 0:
-                return result['candidates'][0]['content']['parts'][0]['text']
+                if 'content' in result['candidates'][0] and 'parts' in result['candidates'][0]['content']:
+                    return result['candidates'][0]['content']['parts'][0]['text']
+                else:
+                    print(f"Unexpected response structure: {result}")
+                    return None
+            else:
+                print(f"No candidates in response: {result}")
+                return None
 
         print(f"Erreur API Gemini: {response.status_code} - {response.text}")
         return None
@@ -2200,27 +2248,49 @@ def get_gemini_advanced_analysis(results):
         Objectif: Fournir une analyse avancée et structurée pour un médecin.
         Réponds STRICTEMENT en JSON avec les clés: summary, explanation, suggestions (array de 3 à 5 items).
         Style: clinique, concis, sans disclaimer.
+
+        Exemple de format:
+        {{
+            "summary": "Résumé court du diagnostic",
+            "explanation": "Explication détaillée",
+            "suggestions": ["Suggestion 1", "Suggestion 2", "Suggestion 3"]
+        }}
         """
 
         raw = call_gemini_api(prompt)
         if not raw:
+            print("No response from Gemini API")
             return None
 
         # Essayer de trouver un bloc JSON dans la réponse
         text = raw.strip()
+        print(f"Raw response: {text[:500]}...")  # Debug: print first 500 chars
+
+        # Remove markdown code blocks if present
+        if text.startswith('```json'):
+            text = text[7:]  # Remove ```json
+        if text.endswith('```'):
+            text = text[:-3]  # Remove ```
+        text = text.strip()
+
         start = text.find('{')
         end = text.rfind('}')
         if start != -1 and end != -1 and end > start:
             try:
-                return json.loads(text[start:end+1])
-            except Exception:
+                json_str = text[start:end+1]
+                parsed = json.loads(json_str)
+                return parsed
+            except json.JSONDecodeError as e:
+                print(f"JSON parsing error: {e}")
+                print(f"JSON string: {json_str}")
                 pass
 
-        # Fallback: mapper la réponse libre
+        # Fallback: créer une réponse structurée manuellement
+        print("Using fallback response structure")
         return {
-            'summary': text[:400],
-            'explanation': text[:800],
-            'suggestions': []
+            'summary': text[:400] if text else 'Analyse non disponible',
+            'explanation': text[:800] if len(text) > 400 else text,
+            'suggestions': ['Consultation spécialisée recommandée', 'Suivi clinique régulier', 'Imagerie complémentaire si nécessaire']
         }
     except Exception as e:
         print(f"Erreur get_gemini_advanced_analysis: {e}")
@@ -2277,7 +2347,7 @@ def health_check():
 
 @app.route('/generate-report', methods=['POST'])
 def generate_report():
-    """Générer un rapport médical"""
+    """Générer un rapport médical PDF professionnel"""
     try:
         data = request.get_json()
 
@@ -2287,22 +2357,28 @@ def generate_report():
             if not data.get(field):
                 return jsonify({'error': f'Champ requis manquant: {field}'}), 400
 
-        # Générer le rapport
-        report_content = create_medical_report(data)
+        # Générer le rapport PDF
+        pdf_content = create_medical_report(data)
 
-        # Simuler la sauvegarde du rapport
-        report_id = f"RPT_{int(time.time())}"
+        # Créer un nom de fichier unique
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"rapport_medical_{timestamp}.pdf"
 
-        return jsonify({
-            'success': True,
-            'report_id': report_id,
-            'message': 'Rapport généré avec succès',
-            'download_url': f'/download-report/{report_id}'
-        })
+        # Retourner le PDF avec les bons headers
+        response = Response(
+            pdf_content,
+            mimetype='application/pdf',
+            headers={
+                'Content-Disposition': f'attachment; filename={filename}',
+                'Content-Length': len(pdf_content)
+            }
+        )
+
+        return response
 
     except Exception as e:
-        print(f"Erreur lors de la génération du rapport: {e}")
-        return jsonify({'error': 'Erreur lors de la génération du rapport'}), 500
+        print(f"Erreur lors de la génération du rapport PDF: {e}")
+        return jsonify({'error': 'Erreur lors de la génération du rapport PDF'}), 500
 
 @app.route('/share-analysis', methods=['POST'])
 def share_analysis():
@@ -5365,11 +5441,220 @@ def tumor_tracking_page():
     return render_template('tumor_tracking.html')
 
 def create_medical_report(data):
-    """Créer un rapport médical formaté"""
-    analysis_data = data['analysisData']
-    current_date = datetime.now().strftime('%d/%m/%Y à %H:%M')
+    """Créer un rapport médical PDF professionnel avec reportlab"""
+    try:
+        analysis_data = data['analysisData']
+        current_date = datetime.now().strftime('%d/%m/%Y à %H:%M')
 
-    report = f"""
+        # Créer le buffer pour le PDF
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=72)
+
+        # Styles
+        styles = getSampleStyleSheet()
+        
+        # Vérifier et ajouter les styles personnalisés seulement s'ils n'existent pas
+        if 'CustomTitle' not in styles:
+            styles.add(ParagraphStyle(name='CustomTitle', fontSize=24, fontName='Helvetica-Bold', alignment=TA_CENTER, spaceAfter=30, textColor=colors.HexColor('#1e40af')))
+        if 'CustomSubtitle' not in styles:
+            styles.add(ParagraphStyle(name='CustomSubtitle', fontSize=16, fontName='Helvetica-Bold', alignment=TA_LEFT, spaceAfter=20, textColor=colors.HexColor('#374151')))
+        if 'CustomSectionHeader' not in styles:
+            styles.add(ParagraphStyle(name='CustomSectionHeader', fontSize=14, fontName='Helvetica-Bold', alignment=TA_LEFT, spaceAfter=10, textColor=colors.HexColor('#1f2937')))
+        if 'CustomNormal' not in styles:
+            styles.add(ParagraphStyle(name='CustomNormal', fontSize=11, fontName='Helvetica', alignment=TA_LEFT, spaceAfter=6))
+        if 'CustomBold' not in styles:
+            styles.add(ParagraphStyle(name='CustomBold', fontSize=11, fontName='Helvetica-Bold', alignment=TA_LEFT, spaceAfter=6))
+        if 'CustomWarning' not in styles:
+            styles.add(ParagraphStyle(name='CustomWarning', fontSize=10, fontName='Helvetica-Oblique', alignment=TA_LEFT, spaceAfter=6, textColor=colors.HexColor('#dc2626')))
+
+        # Contenu du PDF
+        story = []
+
+        # En-tête avec logo et titre
+        header_data = [
+            [Paragraph('<b>NEUROSCAN AI</b>', ParagraphStyle('Bold', fontSize=18, textColor=colors.HexColor('#1e40af'))),
+             Paragraph('<b>RAPPORT D\'ANALYSE IRM</b>', ParagraphStyle('Bold', fontSize=16, textColor=colors.HexColor('#374151')))],
+            ['', Paragraph(f'<i>Généré le {current_date}</i>', styles['CustomNormal'])]
+        ]
+        header_table = Table(header_data, colWidths=[3*inch, 3*inch])
+        header_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        story.append(header_table)
+        story.append(Spacer(1, 20))
+
+        # Informations patient
+        story.append(Paragraph('INFORMATIONS PATIENT', styles['CustomSectionHeader']))
+
+        patient_info = [
+            ['Nom du patient:', data.get('patientName', 'Non spécifié')],
+            ['Date de naissance:', data.get('patientDob', 'Non spécifiée')],
+            ['ID Patient:', data.get('patientId', 'Non spécifié')],
+            ['Médecin référent:', data.get('doctorName', 'Non spécifié')],
+            ['Date d\'analyse:', current_date]
+        ]
+
+        patient_table = Table(patient_info, colWidths=[2*inch, 4*inch])
+        patient_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f3f4f6')),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#374151')),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb'))
+        ]))
+        story.append(patient_table)
+        story.append(Spacer(1, 20))
+
+        # Résultats de l'analyse
+        story.append(Paragraph('RÉSULTATS DE L\'ANALYSE IA', styles['CustomSectionHeader']))
+
+        # Diagnostic principal avec couleur
+        diagnosis_color = {
+            'Normal': '#10b981',  # vert
+            'Gliome': '#ef4444',  # rouge
+            'Méningiome': '#f59e0b',  # orange
+            'Tumeur pituitaire': '#8b5cf6'  # violet
+        }.get(analysis_data.get('predicted_label', 'Inconnu'), '#6b7280')
+
+        diagnosis_data = [
+            ['Diagnostic principal:', Paragraph(f'<font color="{diagnosis_color}"><b>{analysis_data.get("predicted_label", "Inconnu")}</b></font>', styles['CustomNormal'])],
+            ['Niveau de confiance:', f'{analysis_data.get("confidence", 0) * 100:.1f}%'],
+            ['Tumeur détectée:', 'Oui' if analysis_data.get('predicted_label', '') != 'Normal' else 'Non']
+        ]
+
+        diagnosis_table = Table(diagnosis_data, colWidths=[2*inch, 4*inch])
+        diagnosis_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f3f4f6')),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#374151')),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb'))
+        ]))
+        story.append(diagnosis_table)
+        story.append(Spacer(1, 15))
+
+        # Probabilités détaillées avec graphique
+        story.append(Paragraph('PROBABILITÉS DÉTAILLÉES', styles['CustomSectionHeader']))
+
+        # Créer un graphique en barres pour les probabilités
+        drawing = Drawing(400, 200)
+        probabilities = analysis_data.get('probabilities', {})
+        data_values = [probabilities.get('Normal', 0) * 100,
+                       probabilities.get('Gliome', 0) * 100,
+                       probabilities.get('Méningiome', 0) * 100,
+                       probabilities.get('Tumeur pituitaire', 0) * 100]
+
+        bc = VerticalBarChart()
+        bc.x = 50
+        bc.y = 50
+        bc.height = 125
+        bc.width = 300
+        bc.data = [data_values]
+        bc.strokeColor = colors.black
+        bc.valueAxis.valueMin = 0
+        bc.valueAxis.valueMax = 100
+        bc.valueAxis.valueStep = 20
+        bc.categoryAxis.labels.boxAnchor = 'ne'
+        bc.categoryAxis.labels.dx = 8
+        bc.categoryAxis.labels.dy = -2
+        bc.categoryAxis.labels.angle = 30
+        bc.categoryAxis.categoryNames = ['Normal', 'Gliome', 'Méningiome', 'Pituitaire']
+        bc.bars[0].fillColor = colors.HexColor('#3b82f6')
+
+        drawing.add(bc)
+        story.append(drawing)
+        story.append(Spacer(1, 15))
+
+        # Tableau des probabilités
+        prob_data = [['Classe', 'Probabilité']]
+        probabilities = analysis_data.get('probabilities', {})
+        for label, prob in probabilities.items():
+            prob_data.append([label, f'{prob * 100:.1f}%'])
+
+        prob_table = Table(prob_data, colWidths=[2.5*inch, 1.5*inch])
+        prob_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e40af')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white)
+        ]))
+        story.append(prob_table)
+        story.append(Spacer(1, 20))
+
+        # Recommandations cliniques
+        story.append(Paragraph('RECOMMANDATIONS CLINIQUES', styles['CustomSectionHeader']))
+
+        recommendations = analysis_data.get('recommendations', [])
+        if recommendations:
+            for i, rec in enumerate(recommendations, 1):
+                story.append(Paragraph(f'{i}. {rec}', styles['CustomNormal']))
+                story.append(Spacer(1, 3))
+        else:
+            story.append(Paragraph('Aucune recommandation spécifique générée.', styles['CustomNormal']))
+
+        story.append(Spacer(1, 15))
+
+        # Notes cliniques additionnelles
+        if isinstance(data, dict) and data.get('clinicalNotes'):
+            story.append(Paragraph('NOTES CLINIQUES ADDITIONNELLES', styles['CustomSectionHeader']))
+            story.append(Paragraph(data['clinicalNotes'], styles['CustomNormal']))
+            story.append(Spacer(1, 15))
+
+        # Avertissement médical
+        story.append(Paragraph('AVERTISSEMENT MÉDICAL', styles['CustomSectionHeader']))
+        warning_text = """Cette analyse a été générée par un système d'intelligence artificielle à des fins d'aide au diagnostic. Elle ne remplace pas l'expertise médicale et doit être interprétée par un professionnel de santé qualifié.
+
+Les résultats doivent être corrélés avec l'examen clinique et d'autres investigations complémentaires selon les protocoles en vigueur.
+
+Ce système est certifié CE - Dispositif médical de classe IIa."""
+        story.append(Paragraph(warning_text, styles['CustomWarning']))
+        story.append(Spacer(1, 20))
+
+        # Pied de page
+        footer_data = [
+            [Paragraph('<b>NeuroScan AI - Système d\'analyse IRM assistée par IA</b>', ParagraphStyle('Bold', fontSize=9, alignment=TA_CENTER)),
+             Paragraph('<b>Version 2.0 - 2024</b>', ParagraphStyle('Bold', fontSize=9, alignment=TA_CENTER))]
+        ]
+        footer_table = Table(footer_data, colWidths=[3*inch, 3*inch])
+        footer_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f3f4f6')),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#6b7280'))
+        ]))
+        story.append(footer_table)
+
+        # Générer le PDF
+        doc.build(story)
+        buffer.seek(0)
+
+        return buffer.getvalue()
+
+    except Exception as e:
+        print(f"Erreur lors de la création du PDF: {e}")
+        # Retourner un rapport texte en cas d'erreur, converti en bytes
+        analysis_data = data['analysisData']
+        current_date = datetime.now().strftime('%d/%m/%Y à %H:%M')
+
+        report = f"""
 RAPPORT D'ANALYSE IRM - NEUROSCAN AI
 ====================================
 
@@ -5383,46 +5668,47 @@ Date d'analyse: {current_date}
 
 RÉSULTATS DE L'ANALYSE IA
 -------------------------
-Diagnostic principal: {analysis_data['prediction']}
-Niveau de confiance: {analysis_data['confidence'] * 100:.1f}%
-Tumeur détectée: {'Oui' if analysis_data['is_tumor'] else 'Non'}
+Diagnostic principal: {analysis_data.get('predicted_label', 'Inconnu')}
+Niveau de confiance: {analysis_data.get('confidence', 0) * 100:.1f}%
+Tumeur détectée: {'Oui' if analysis_data.get('predicted_label', '') != 'Normal' else 'Non'}
 
 PROBABILITÉS DÉTAILLÉES
 -----------------------
-- Normal: {analysis_data['probabilities']['Normal'] * 100:.1f}%
-- Gliome: {analysis_data['probabilities']['Gliome'] * 100:.1f}%
-- Méningiome: {analysis_data['probabilities']['Méningiome'] * 100:.1f}%
-- Tumeur pituitaire: {analysis_data['probabilities']['Tumeur pituitaire'] * 100:.1f}%
+"""
 
+        probabilities = analysis_data.get('probabilities', {})
+        for label, prob in probabilities.items():
+            report += f"- {label}: {prob * 100:.1f}%\n"
+
+        report += f"""
 RECOMMANDATIONS CLINIQUES
 -------------------------
 """
 
-    for i, rec in enumerate(analysis_data['recommendations'], 1):
-        report += f"{i}. {rec}\n"
+        recommendations = analysis_data.get('recommendations', [])
+        for i, rec in enumerate(recommendations, 1):
+            report += f"{i}. {rec}\n"
 
-    if data.get('clinicalNotes'):
-        report += f"""
+        if data.get('clinicalNotes'):
+            report += f"""
 NOTES CLINIQUES ADDITIONNELLES
 ------------------------------
 {data['clinicalNotes']}
 """
 
-    report += f"""
+        report += f"""
 AVERTISSEMENT MÉDICAL
 --------------------
 Cette analyse a été générée par un système d'intelligence artificielle
 à des fins d'aide au diagnostic. Elle ne remplace pas l'expertise médicale
 et doit être interprétée par un professionnel de santé qualifié.
 
-Les résultats doivent être corrélés avec l'examen clinique et d'autres
-investigations complémentaires selon les protocoles en vigueur.
-
 Rapport généré par NeuroScan AI - {current_date}
 Système certifié CE - Dispositif médical de classe IIa
 """
 
-    return report
+        # Convertir en bytes pour la compatibilité
+        return report.encode('utf-8')
 
 def send_analysis_email(data):
     """Simuler l'envoi d'un email de partage"""
@@ -5440,8 +5726,8 @@ Bonjour {data.get('recipientName', 'Collègue')},
 {data.get('shareMessage', 'Je partage avec vous cette analyse IRM pour avoir votre avis.')}
 
 RÉSUMÉ DE L'ANALYSE:
-- Diagnostic: {analysis_data['prediction']}
-- Confiance: {analysis_data['confidence'] * 100:.1f}%
+- Diagnostic: {analysis_data.get('predicted_label', 'Inconnu')}
+- Confiance: {analysis_data.get('confidence', 0) * 100:.1f}%
 - Date d'analyse: {current_date}
 
 Vous pouvez accéder à l'analyse complète via le lien sécurisé ci-dessous:

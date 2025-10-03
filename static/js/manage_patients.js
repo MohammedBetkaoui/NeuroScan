@@ -6,6 +6,7 @@ let patientsPerPage = 20;
 let currentView = 'list';
 let sortColumn = 'name';
 let sortOrder = 'asc';
+let patientToDelete = null; // Variable pour stocker l'ID du patient à supprimer
 
 // Initialisation de la page
 document.addEventListener('DOMContentLoaded', function() {
@@ -48,7 +49,7 @@ function animatePageElements() {
     });
     
     // Animation pour les boutons d'action
-    const actionButtons = document.querySelectorAll('[onclick*="openAddPatientModal"], [onclick*="exportPatientsData"], [onclick*="importPatientsData"]');
+    const actionButtons = document.querySelectorAll('[onclick*="exportPatientsData"], [onclick*="importPatientsData"], [onclick*="refreshPatients"]');
     actionButtons.forEach((button, index) => {
         button.style.opacity = '0';
         button.style.transform = 'scale(0.9)';
@@ -262,14 +263,14 @@ function initializeKeyboardShortcuts() {
         
         // Échap pour fermer les modales
         if (e.key === 'Escape') {
-            closeAddPatientModal();
+            closeDeletePatientModal();
             closeQuickActions();
         }
         
         // Ctrl/Cmd + N pour nouveau patient
         if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
             e.preventDefault();
-            openAddPatientModal();
+            window.location.href = '/patients/new';
         }
     });
 }
@@ -545,6 +546,10 @@ function renderPatientsList() {
                                 class="inline-flex items-center px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 shadow-sm hover:shadow-md">
                             <i class="fas fa-edit mr-1"></i>Modifier
                         </button>
+                        <button onclick="event.stopPropagation(); confirmDeletePatient('${patient.patient_id}', '${patient.patient_name || `Patient ${patient.patient_id}`}')" 
+                                class="inline-flex items-center px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all duration-200 shadow-sm hover:shadow-md">
+                            <i class="fas fa-trash-alt mr-1"></i>Supprimer
+                        </button>
                     </div>
                 </td>
             </tr>
@@ -644,6 +649,10 @@ function renderPatientsCards() {
                             class="flex-1 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-center">
                         <i class="fas fa-edit mr-1"></i>Modifier
                     </button>
+                    <button onclick="event.stopPropagation(); confirmDeletePatient('${patient.patient_id}', '${patient.patient_name || `Patient ${patient.patient_id}`}')" 
+                            class="flex-1 px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-center">
+                        <i class="fas fa-trash-alt mr-1"></i>Supprimer
+                    </button>
                 </div>
             </div>
         `;
@@ -652,21 +661,13 @@ function renderPatientsCards() {
 
 // Fonctions de gestion des patients
 function openAddPatientModal() {
-    document.getElementById('addPatientModal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    generateNextId(); // Auto-générer l'ID suivant
-    
-    // Focus sur le premier champ
-    setTimeout(() => {
-        document.getElementById('patientIdInput').focus();
-    }, 300);
+    // Redirection vers la page dédiée d'ajout de patient
+    window.location.href = '/patients/new';
 }
 
 function closeAddPatientModal() {
-    document.getElementById('addPatientModal').classList.add('hidden');
-    document.body.style.overflow = 'auto';
-    document.getElementById('addPatientForm').reset();
-    resetIdValidation();
+    // Fonction désactivée car le modal a été supprimé
+    // Le modal n'existe plus, cette fonction ne fait rien
 }
 
 function closeQuickActions() {
@@ -678,39 +679,23 @@ function toggleQuickActions() {
     menu.classList.toggle('hidden');
 }
 
-// Validation de l'ID patient en temps réel
+// Validation de l'ID patient en temps réel (désactivée car le modal a été supprimé)
 function resetIdValidation() {
-    const indicator = document.getElementById('idValidationIndicator');
-    indicator.className = 'w-3 h-3 rounded-full bg-gray-300';
+    // Fonction désactivée - le modal n'existe plus
 }
 
 function validatePatientId(id) {
-    const indicator = document.getElementById('idValidationIndicator');
+    // Fonction simplifiée pour la validation côté serveur uniquement
     const existingIds = allPatients.map(p => p.patient_id.toLowerCase());
-    
-    if (!id) {
-        indicator.className = 'w-3 h-3 rounded-full bg-gray-300';
-        return false;
-    }
-    
-    if (existingIds.includes(id.toLowerCase())) {
-        indicator.className = 'w-3 h-3 rounded-full bg-red-500';
-        return false;
-    }
-    
-    indicator.className = 'w-3 h-3 rounded-full bg-green-500';
-    return true;
+    return id && !existingIds.includes(id.toLowerCase());
 }
 
 async function generateNextId() {
+    // Fonction simplifiée - utilisée uniquement pour la génération côté serveur
     try {
         const response = await fetch('/api/patients/next-id');
         const result = await response.json();
-        
-        if (result.success) {
-            document.getElementById('patientIdInput').value = result.next_id;
-            validatePatientId(result.next_id);
-        }
+        return result.success ? result.next_id : null;
     } catch (error) {
         console.error('Erreur génération ID:', error);
         // Génération locale en cas d'erreur
@@ -718,9 +703,7 @@ async function generateNextId() {
             const match = p.patient_id.match(/P(\d+)/);
             return match ? parseInt(match[1]) : 0;
         }), 0);
-        const nextId = `P${String(maxId + 1).padStart(4, '0')}`;
-        document.getElementById('patientIdInput').value = nextId;
-        validatePatientId(nextId);
+        return `P${String(maxId + 1).padStart(4, '0')}`;
     }
 }
 
@@ -871,10 +854,10 @@ document.getElementById('filterAnalysesCount').addEventListener('change', filter
 document.getElementById('filterActivity').addEventListener('change', filterPatients);
 document.getElementById('sortPatients').addEventListener('change', handleSort);
 
-// Validation en temps réel de l'ID
-document.getElementById('patientIdInput').addEventListener('input', function(e) {
-    validatePatientId(e.target.value);
-});
+// Validation en temps réel de l'ID (désactivée car le modal a été supprimé)
+// document.getElementById('patientIdInput')?.addEventListener('input', function(e) {
+//     validatePatientId(e.target.value);
+// });
 
 // Fonction de debounce pour la recherche
 function debounce(func, wait) {
@@ -1016,62 +999,11 @@ function clearFilters() {
     renderCurrentView();
 }
 
-// Gestion du formulaire d'ajout améliorée
-document.getElementById('addPatientForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const submitButton = e.target.querySelector('button[type="submit"]');
-    const originalText = submitButton.innerHTML;
-    
-    // Désactiver le bouton et afficher l'état de chargement
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i>Création en cours...';
-    
-    const formData = new FormData(this);
-    const patientData = Object.fromEntries(formData.entries());
-    
-    // Nettoyage des données
-    Object.keys(patientData).forEach(key => {
-        if (patientData[key] === '') {
-            delete patientData[key];
-        }
-    });
-    
-    // Validation côté client
-    if (!validatePatientId(patientData.patient_id)) {
-        showNotification('ID patient invalide ou déjà utilisé', 'error');
-        submitButton.disabled = false;
-        submitButton.innerHTML = originalText;
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/patients', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(patientData)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            showNotification('🎉 Patient ajouté avec succès!', 'success');
-            closeAddPatientModal();
-            loadPatients(); // Recharger la liste
-        } else {
-            showNotification(result.error || 'Erreur lors de l\'ajout du patient', 'error');
-        }
-    } catch (error) {
-        console.error('Erreur ajout patient:', error);
-        showNotification('Erreur de connexion - Vérifiez votre réseau', 'error');
-    } finally {
-        // Réactiver le bouton
-        submitButton.disabled = false;
-        submitButton.innerHTML = originalText;
-    }
-});
+// Gestion du formulaire d'ajout améliorée (désactivée car le modal a été supprimé)
+// document.getElementById('addPatientForm')?.addEventListener('submit', async function(e) {
+//     e.preventDefault();
+//     // Code du formulaire d'ajout...
+// });
 
 // Système de notifications modernisé
 function showNotification(message, type = 'info', duration = 4000) {
@@ -1153,11 +1085,7 @@ function showNotification(message, type = 'info', duration = 4000) {
 }
 
 // Fermer les modales en cliquant à l'extérieur
-document.getElementById('addPatientModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeAddPatientModal();
-    }
-});
+// Note: Le modal d'ajout de patient a été supprimé et remplacé par une redirection vers /patients/new
 
 // Fermer le menu d'actions en cliquant à l'extérieur
 document.addEventListener('click', function(e) {
@@ -1293,6 +1221,254 @@ document.addEventListener('DOMContentLoaded', function() {
     iconPreload.type = 'font/woff2';
     iconPreload.crossOrigin = 'anonymous';
     document.head.appendChild(iconPreload);
+});
+
+// Fonctions de gestion de la suppression de patient améliorées
+function confirmDeletePatient(patientId, patientName) {
+    // Validation des paramètres
+    if (!patientId || !patientName) {
+        showNotification('❌ Erreur: Informations du patient manquantes', 'error');
+        return;
+    }
+
+    patientToDelete = patientId;
+
+    // Mettre à jour le contenu du modal avec les nouvelles informations
+    const nameElement = document.getElementById('deletePatientName');
+    const idElement = document.getElementById('deletePatientId');
+
+    if (nameElement) nameElement.textContent = patientName;
+    if (idElement) idElement.textContent = patientId;
+
+    // Réinitialiser les cases à cocher
+    const confirmDataLoss = document.getElementById('confirmDataLoss');
+    const confirmBackup = document.getElementById('confirmBackup');
+
+    if (confirmDataLoss) confirmDataLoss.checked = false;
+    if (confirmBackup) confirmBackup.checked = false;
+
+    // Désactiver le bouton de suppression initialement
+    updateDeleteButtonState();
+
+    // Afficher le modal avec animation
+    const modal = document.getElementById('deletePatientModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        // Animation d'entrée fluide
+        requestAnimationFrame(() => {
+            const modalContent = modal.querySelector('.scale-95');
+            if (modalContent) {
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }
+        });
+
+        // Démarrer la barre de progression
+        startProgressAnimation();
+
+        // Focus sur la première case à cocher
+        setTimeout(() => {
+            if (confirmDataLoss) confirmDataLoss.focus();
+        }, 300);
+    }
+}
+
+function closeDeletePatientModal() {
+    const modal = document.getElementById('deletePatientModal');
+    if (modal) {
+        // Animation de sortie
+        const modalContent = modal.querySelector('.scale-100');
+        if (modalContent) {
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+        }
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            patientToDelete = null;
+
+            // Réinitialiser la barre de progression
+            const progressBar = document.getElementById('finalProgressBar');
+            if (progressBar) {
+                progressBar.style.width = '0%';
+            }
+        }, 300);
+    }
+}
+
+function updateDeleteButtonState() {
+    const confirmDataLoss = document.getElementById('confirmDataLoss');
+    const confirmBackup = document.getElementById('confirmBackup');
+    const deleteBtn = document.getElementById('confirmDeleteBtn');
+
+    if (!deleteBtn) return;
+
+    const isConfirmed = confirmDataLoss && confirmDataLoss.checked && confirmBackup && confirmBackup.checked;
+
+    deleteBtn.disabled = !isConfirmed;
+
+    if (isConfirmed) {
+        deleteBtn.classList.remove('disabled:opacity-50', 'disabled:cursor-not-allowed');
+        deleteBtn.classList.add('hover:scale-105');
+    } else {
+        deleteBtn.classList.add('disabled:opacity-50', 'disabled:cursor-not-allowed');
+        deleteBtn.classList.remove('hover:scale-105');
+    }
+}
+
+async function deletePatient() {
+    if (!patientToDelete) {
+        showNotification('❌ Erreur: Aucun patient sélectionné pour la suppression', 'error');
+        return;
+    }
+
+    // Vérifier que les cases sont cochées
+    const confirmDataLoss = document.getElementById('confirmDataLoss');
+    const confirmBackup = document.getElementById('confirmBackup');
+
+    if (!confirmDataLoss || !confirmDataLoss.checked || !confirmBackup || !confirmBackup.checked) {
+        showNotification('⚠️ Veuillez confirmer votre compréhension des conséquences', 'warning');
+        return;
+    }
+
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    const deleteBtnText = document.getElementById('deleteBtnText');
+
+    if (!confirmBtn || !deleteBtnText) return;
+
+    const originalText = deleteBtnText.textContent;
+
+    // Désactiver le bouton et afficher l'état de chargement
+    confirmBtn.disabled = true;
+    deleteBtnText.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i>Suppression en cours...';
+
+    // Animation de la barre de progression finale
+    const finalProgressBar = document.getElementById('finalProgressBar');
+    if (finalProgressBar) {
+        finalProgressBar.style.width = '0%';
+        setTimeout(() => {
+            finalProgressBar.style.width = '90%';
+        }, 100);
+    }
+
+    try {
+        const response = await fetch(`/api/patients/${patientToDelete}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Compléter la barre de progression
+            if (finalProgressBar) {
+                finalProgressBar.style.width = '100%';
+            }
+
+            showNotification(`✅ Patient supprimé avec succès`, 'success');
+            closeDeletePatientModal();
+            loadPatients(); // Recharger la liste des patients
+            updateLastSyncTime();
+        } else {
+            throw new Error(result.error || 'Erreur lors de la suppression du patient');
+        }
+    } catch (error) {
+        console.error('Erreur suppression patient:', error);
+        showNotification(`❌ ${error.message || 'Erreur de connexion - Vérifiez votre réseau'}`, 'error');
+
+        // Réinitialiser la barre de progression en cas d'erreur
+        if (finalProgressBar) {
+            finalProgressBar.style.width = '0%';
+        }
+    } finally {
+        // Réactiver le bouton
+        confirmBtn.disabled = false;
+        deleteBtnText.innerHTML = originalText;
+    }
+}
+
+// Fonctions d'animation pour le modal
+function startProgressAnimation() {
+    const progressBar = document.querySelector('#deletePatientModal .animate-progress-bar');
+    if (progressBar) {
+        progressBar.style.width = '0%';
+        setTimeout(() => {
+            progressBar.style.width = '100%';
+        }, 100);
+    }
+}
+
+// Gestion des cases à cocher dans le modal
+document.addEventListener('DOMContentLoaded', function() {
+    // Écouteurs pour les cases à cocher du modal de suppression
+    const confirmDataLoss = document.getElementById('confirmDataLoss');
+    const confirmBackup = document.getElementById('confirmBackup');
+
+    if (confirmDataLoss) {
+        confirmDataLoss.addEventListener('change', function() {
+            handleCheckboxAnimation(this);
+            updateDeleteButtonState();
+        });
+    }
+
+    if (confirmBackup) {
+        confirmBackup.addEventListener('change', function() {
+            handleCheckboxAnimation(this);
+            updateDeleteButtonState();
+        });
+    }
+});
+
+// Animation des cases à cocher
+function handleCheckboxAnimation(checkbox) {
+    if (checkbox.checked) {
+        checkbox.classList.add('checkbox-checked');
+        // Animation de l'icône de validation
+        const label = checkbox.closest('label');
+        if (label) {
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-check text-green-500 ml-2 animate-bounce';
+            label.appendChild(icon);
+            setTimeout(() => {
+                if (icon.parentNode) {
+                    icon.remove();
+                }
+            }, 1000);
+        }
+    } else {
+        checkbox.classList.remove('checkbox-checked');
+    }
+}
+
+// Fermer le modal de suppression en cliquant à l'extérieur
+document.getElementById('deletePatientModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeletePatientModal();
+    }
+});
+
+// Gestion des raccourcis clavier pour le modal de suppression
+document.addEventListener('keydown', function(e) {
+    if (document.getElementById('deletePatientModal').classList.contains('hidden')) return;
+    
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        closeDeletePatientModal();
+    }
+    
+    if (e.key === 'Enter' && e.ctrlKey) {
+        e.preventDefault();
+        deletePatient();
+    }
 });
 
 console.log('NeuroScan - Gestion des Patients v2.0 - Interface modernisée chargée avec succès ✨');

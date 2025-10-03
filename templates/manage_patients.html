@@ -113,148 +113,15 @@
 {% endblock %}
 
 {% block page_actions %}
-<!-- Barre d'actions modernisée -->
-<div class="bg-white/90 backdrop-blur-lg rounded-3xl p-6 mb-8 shadow-xl border border-white/50">
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-        <!-- Actions principales -->
-        <div class="flex flex-wrap gap-4">
-            <!-- Nouveau Patient -->
-            <button onclick="openAddPatientModal()" class="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                <div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div class="relative flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-user-plus text-lg group-hover:rotate-12 transition-transform duration-300"></i>
-                    </div>
-                    <div>
-                        <div class="font-bold">Nouveau Patient</div>
-                        <div class="text-xs text-blue-100">Ajouter rapidement</div>
-                    </div>
-                </div>
-                <div class="absolute bottom-0 left-0 h-1 bg-white/30 w-0 group-hover:w-full transition-all duration-500"></div>
-            </button>
-
-            <!-- Export de données -->
-            <button onclick="exportPatientsData()" class="group relative overflow-hidden bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 text-white px-6 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                <div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div class="relative flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-download text-lg group-hover:-translate-y-1 transition-transform duration-300"></i>
-                    </div>
-                    <div>
-                        <div class="font-bold hidden sm:block">Exporter Données</div>
-                        <div class="font-bold sm:hidden">Export</div>
-                        <div class="text-xs text-emerald-100">CSV, Excel, PDF</div>
-                    </div>
-                </div>
-                <div class="absolute bottom-0 left-0 h-1 bg-white/30 w-0 group-hover:w-full transition-all duration-500"></div>
-            </button>
-
-            <!-- Import de données -->
-            <button onclick="importPatientsData()" class="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white px-6 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                <div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div class="relative flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-upload text-lg group-hover:translate-y-1 transition-transform duration-300"></i>
-                    </div>
-                    <div>
-                        <div class="font-bold">Importer</div>
-                        <div class="text-xs text-purple-100">Depuis fichier</div>
-                    </div>
-                </div>
-                <div class="absolute bottom-0 left-0 h-1 bg-white/30 w-0 group-hover:w-full transition-all duration-500"></div>
-            </button>
-        </div>
-
-        <!-- Menu d'actions avancées -->
-        <div class="flex items-center space-x-4">
-            <!-- Raccourcis rapides -->
-            <div class="hidden xl:flex items-center space-x-2 px-4 py-2 bg-gray-100 rounded-2xl">
-                <span class="text-xs text-gray-600 font-medium">Raccourcis:</span>
-                <div class="flex space-x-1">
-                    <kbd class="px-2 py-1 text-xs bg-white rounded border text-gray-700">⌘N</kbd>
-                    <kbd class="px-2 py-1 text-xs bg-white rounded border text-gray-700">⌘K</kbd>
-                    <kbd class="px-2 py-1 text-xs bg-white rounded border text-gray-700">⌘E</kbd>
-                </div>
-            </div>
-
-            <!-- Menu déroulant d'actions -->
-            <div class="relative group">
-                
-                
-                <div id="quickActionsMenu" class="hidden absolute right-0 top-full mt-3 bg-white rounded-2xl shadow-2xl border border-gray-200 py-3 min-w-[280px] z-20 backdrop-blur-lg">
-                    <div class="px-4 py-2 border-b border-gray-100">
-                        <h4 class="font-semibold text-gray-900 text-sm">Actions avancées</h4>
-                        <p class="text-xs text-gray-500">Outils de gestion professionnels</p>
-                    </div>
-                    
-                    <div class="py-2">
-                        <button onclick="bulkEmailPatients()" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors group">
-                            <div class="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors">
-                                <i class="fas fa-envelope text-blue-600"></i>
-                            </div>
-                            <div class="text-left">
-                                <div class="font-medium">Email groupé</div>
-                                <div class="text-xs text-gray-500">Envoyer à plusieurs patients</div>
-                            </div>
-                        </button>
-                        
-                        <button onclick="generateReport()" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors group">
-                            <div class="w-8 h-8 bg-red-100 rounded-xl flex items-center justify-center mr-3 group-hover:bg-red-200 transition-colors">
-                                <i class="fas fa-file-pdf text-red-600"></i>
-                            </div>
-                            <div class="text-left">
-                                <div class="font-medium">Rapport PDF</div>
-                                <div class="text-xs text-gray-500">Générer un rapport détaillé</div>
-                            </div>
-                        </button>
-                        
-                        <button onclick="backupData()" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors group">
-                            <div class="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center mr-3 group-hover:bg-green-200 transition-colors">
-                                <i class="fas fa-shield-alt text-green-600"></i>
-                            </div>
-                            <div class="text-left">
-                                <div class="font-medium">Sauvegarde</div>
-                                <div class="text-xs text-gray-500">Backup sécurisé des données</div>
-                            </div>
-                        </button>
-                        
-                        <hr class="my-2 border-gray-100">
-                        
-                        <button onclick="showAnalytics()" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors group">
-                            <div class="w-8 h-8 bg-purple-100 rounded-xl flex items-center justify-center mr-3 group-hover:bg-purple-200 transition-colors">
-                                <i class="fas fa-chart-bar text-purple-600"></i>
-                            </div>
-                            <div class="text-left">
-                                <div class="font-medium">Analytics</div>
-                                <div class="text-xs text-gray-500">Statistiques détaillées</div>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Barre de progression globale -->
-    <div class="mt-4 pt-4 border-t border-gray-200/50">
-        <div class="flex items-center justify-between text-sm">
-            <div class="flex items-center space-x-4 text-gray-600">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-database text-blue-500"></i>
-                    <span>Base de données: <span class="font-semibold text-gray-900" id="dbStatus">Synchronisée</span></span>
-                </div>
-                <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-wifi text-green-500"></i>
-                    <span>Connexion: <span class="font-semibold text-green-600">Stable</span></span>
-                </div>
-            </div>
-            <div class="flex items-center space-x-2 text-gray-500">
-                <i class="fas fa-clock"></i>
-                <span>Dernière action: <span id="lastActionTime">Maintenant</span></span>
-            </div>
-        </div>
-    </div>
+<div class="flex gap-4 mb-6">
+    <button onclick="window.location.href='/patients/new'" class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200">
+        <i class="fas fa-user-plus"></i>
+        Ajouter Patient
+    </button>
+    <button onclick="exportPatientsData()" class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200">
+        <i class="fas fa-download"></i>
+        Export
+    </button>
 </div>
 {% endblock %}
 
@@ -541,205 +408,192 @@
     </div>
 </div>
 
-<!-- Modal d'ajout de patient modernisé -->
-<div id="addPatientModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[95vh] overflow-hidden border border-gray-200">
-        <!-- En-tête du modal -->
-        <div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center">
-                        <i class="fas fa-user-plus text-white text-xl"></i>
+<!-- Modal de confirmation de suppression de patient ultra-moderne -->
+<div id="deletePatientModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-slate-200/60 overflow-hidden transform transition-all duration-300 scale-95 animate-modal-appear">
+        <!-- En-tête du modal avec gradient professionnel -->
+        <div class="relative px-6 py-6 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 overflow-hidden">
+            <!-- Pattern de fond subtil -->
+            <div class="absolute inset-0 opacity-5">
+                <div class="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -translate-x-16 -translate-y-16 animate-pulse"></div>
+                <div class="absolute bottom-0 right-0 w-24 h-24 bg-white/10 rounded-full translate-x-12 translate-y-12 animate-pulse" style="animation-delay: 1s;"></div>
+            </div>
+
+            <!-- Ligne décorative supérieure -->
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-orange-500 to-red-500"></div>
+
+            <div class="relative flex items-center space-x-4">
+                <!-- Icône principale avec design impactant -->
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-xl rotate-3 hover:rotate-0 transition-transform duration-300">
+                        <i class="fas fa-brain text-white text-lg sm:text-xl"></i>
                     </div>
-                    <div>
-                        <h3 class="text-2xl font-bold text-gray-900">Nouveau Patient</h3>
-                        <p class="text-sm text-gray-600 mt-1">Ajoutez un nouveau patient à votre base de données</p>
-                    </div>
+
+                <div class="flex-1">
+                    <h3 class="text-2xl font-black text-white mb-1 tracking-tight">
+                        🚨 SUPPRESSION CRITIQUE
+                    </h3>
+                    <p class="text-red-200 font-medium text-sm leading-relaxed">
+                        Action définitive • Données médicales • Irréversible
+                    </p>
                 </div>
-                <button onclick="closeAddPatientModal()" class="w-10 h-10 rounded-full bg-white/50 hover:bg-white flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors">
-                    <i class="fas fa-times text-lg"></i>
-                </button>
+            </div>
+
+            <!-- Barre de progression élégante -->
+            <div class="absolute bottom-0 left-0 h-1 bg-slate-600 w-full">
+                <div class="h-full bg-gradient-to-r from-amber-400 to-orange-500 animate-progress-bar"></div>
             </div>
         </div>
 
-        <!-- Corps du modal -->
-        <form id="addPatientForm" class="max-h-[70vh] overflow-y-auto">
-            <div class="px-8 py-6 space-y-6">
-                <!-- Section 1: Informations essentielles -->
-                <div class="space-y-4">
-                    <div class="flex items-center space-x-3 mb-4">
-                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span class="text-sm font-semibold text-blue-600">1</span>
-                        </div>
-                        <h4 class="text-lg font-semibold text-gray-900">Informations essentielles</h4>
+        <!-- Corps du modal avec design professionnel -->
+        <div class="px-6 py-6 space-y-5 bg-gradient-to-b from-slate-50/30 to-white">
+            <!-- Section d'information principale -->
+            <div class="text-center space-y-3 modal-section-1">
+                <!-- Avatar du patient avec design moderne -->
+                <div class="relative inline-block">
+                    <div class="w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center shadow-lg border-2 border-white">
+                        <i class="fas fa-user text-3xl text-slate-500"></i>
                     </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-semibold text-gray-700 mb-3">ID Patient *</label>
-                            <div class="flex space-x-3">
-                                <div class="flex-1 relative group">
-                                    <input type="text" name="patient_id" id="patientIdInput" required
-                                           class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-300 font-mono text-lg"
-                                           placeholder="P0001">
-                                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center">
-                                        <div class="w-3 h-3 rounded-full bg-gray-300" id="idValidationIndicator"></div>
-                                    </div>
-                                </div>
-                                <button type="button" onclick="generateNextId()" class="px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg">
-                                    <i class="fas fa-magic"></i>
-                                </button>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-2 flex items-center">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                Format recommandé: P0001, P0002, etc. L'ID sera généré automatiquement si laissé vide
-                            </p>
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-semibold text-gray-700 mb-3">Nom complet du patient *</label>
-                            <input type="text" name="patient_name" required
-                                   class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-300 text-lg"
-                                   placeholder="Nom et prénom du patient">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-3">Date de naissance</label>
-                            <input type="date" name="date_of_birth"
-                                   class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-300">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-3">Genre</label>
-                            <select name="gender" class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-300">
-                                <option value="">Sélectionner le genre</option>
-                                <option value="M">🚹 Masculin</option>
-                                <option value="F">🚺 Féminin</option>
-                            </select>
-                        </div>
+                    <!-- Badge de suppression moderne -->
+                    <div class="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-lg animate-pulse border-2 border-white">
+                        <i class="fas fa-times text-xs"></i>
                     </div>
                 </div>
 
-                <!-- Section 2: Coordonnées -->
-                <div class="space-y-4 border-t border-gray-200 pt-6">
-                    <div class="flex items-center space-x-3 mb-4">
-                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                            <span class="text-sm font-semibold text-green-600">2</span>
-                        </div>
-                        <h4 class="text-lg font-semibold text-gray-900">Coordonnées</h4>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-3">Téléphone</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <i class="fas fa-phone text-gray-400"></i>
-                                </div>
-                                <input type="tel" name="phone"
-                                       class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-300"
-                                       placeholder="+33 1 23 45 67 89">
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-3">Email</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <i class="fas fa-envelope text-gray-400"></i>
-                                </div>
-                                <input type="email" name="email"
-                                       class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-300"
-                                       placeholder="patient@email.com">
-                            </div>
-                        </div>
-                    </div>
+                <div class="space-y-2">
+                    <h4 class="text-xl font-bold text-slate-900 leading-tight">
+                        Confirmer la suppression
+                    </h4>
+                    <p class="text-slate-600 text-sm leading-relaxed">
+                        Cette action entraînera la perte permanente de toutes les données médicales
+                    </p>
+                </div>
+            </div>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-3">Adresse complète</label>
-                        <textarea name="address" rows="3"
-                                  class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-300 resize-none"
-                                  placeholder="Adresse complète du patient (rue, ville, code postal)..."></textarea>
-                    </div>
+            <!-- Carte d'informations du patient -->
+            <div class="bg-gradient-to-r from-slate-50 to-blue-50/50 rounded-xl p-4 border border-slate-200/60 shadow-sm modal-section-2">
+                <div class="flex items-center justify-between mb-3">
+                    <h5 class="text-base font-bold text-slate-900 flex items-center">
+                        <i class="fas fa-id-card mr-2 text-blue-600"></i>
+                        Patient
+                    </h5>
+                    <span class="px-3 py-1 bg-gradient-to-r from-red-100 to-red-50 text-red-700 text-xs font-semibold rounded-full border border-red-200/60">
+                        À supprimer
+                    </span>
                 </div>
 
-                <!-- Section 3: Contact d'urgence -->
-                <div class="space-y-4 border-t border-gray-200 pt-6">
-                    <div class="flex items-center space-x-3 mb-4">
-                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                            <span class="text-sm font-semibold text-orange-600">3</span>
-                        </div>
-                        <h4 class="text-lg font-semibold text-gray-900">Contact d'urgence</h4>
+                <div class="grid grid-cols-1 gap-2">
+                    <div class="flex items-center justify-between py-1.5 border-b border-slate-200/40">
+                        <span class="text-xs font-medium text-slate-600">Nom</span>
+                        <span class="text-sm font-bold text-slate-900" id="deletePatientName">Patient</span>
                     </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-3">Nom du contact</label>
-                            <input type="text" name="emergency_contact_name"
-                                   class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-300"
-                                   placeholder="Nom et prénom du contact d'urgence">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-3">Téléphone urgence</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <i class="fas fa-phone text-red-400"></i>
-                                </div>
-                                <input type="tel" name="emergency_contact_phone"
-                                       class="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-300"
-                                       placeholder="+33 1 23 45 67 89">
-                            </div>
-                        </div>
+                    <div class="flex items-center justify-between py-1.5">
+                        <span class="text-xs font-medium text-slate-600">ID</span>
+                        <span class="text-sm font-mono font-bold text-blue-600" id="deletePatientId">ID</span>
                     </div>
                 </div>
+            </div>
 
-                <!-- Section 4: Informations médicales -->
-                <div class="space-y-4 border-t border-gray-200 pt-6">
-                    <div class="flex items-center space-x-3 mb-4">
-                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                            <span class="text-sm font-semibold text-purple-600">4</span>
+            <!-- Section d'avertissement avec design moderne -->
+            <div class="bg-gradient-to-r from-red-50/80 to-orange-50/60 border border-red-200/60 rounded-xl p-4 modal-section-3 shadow-sm">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <i class="fas fa-radiation text-red text-lg"></i>
                         </div>
-                        <h4 class="text-lg font-semibold text-gray-900">Informations médicales</h4>
-                        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Optionnel</span>
                     </div>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-3">Antécédents médicaux</label>
-                            <textarea name="medical_history" rows="3"
-                                      class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-300 resize-none"
-                                      placeholder="Antécédents médicaux pertinents, chirurgies antérieures, maladies chroniques..."></textarea>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-3">Allergies connues</label>
-                            <textarea name="allergies" rows="2"
-                                      class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-300 resize-none"
-                                      placeholder="Allergies médicamenteuses, alimentaires ou autres..."></textarea>
+                    <div class="flex-1 space-y-2">
+                        <h5 class="text-base font-bold text-red-800">
+                            ☠️ DANGER : Conséquences Fatales
+                        </h5>
+                        <div class="space-y-1.5 text-xs text-red-700 leading-relaxed">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-database text-red-500 text-sm"></i>
+                                <span><strong>Toutes les analyses médicales</strong> seront détruites</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-history text-red-500 text-sm"></i>
+                                <span><strong>L'historique complet</strong> sera effacé définitivement</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-file-alt text-red-500 text-sm"></i>
+                                <span><strong>Les rapports et diagnostics</strong> deviendront inaccessibles</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Pied du modal -->
-            <div class="px-8 py-6 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-                <div class="text-sm text-gray-600">
-                    <i class="fas fa-shield-alt mr-2 text-green-500"></i>
-                    Toutes les données sont cryptées et sécurisées
-                </div>
-                <div class="flex space-x-4">
-                    <button type="button" onclick="closeAddPatientModal()" 
-                            class="px-8 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium">
-                        Annuler
-                    </button>
-                    <button type="submit" 
-                            class="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl">
-                        <i class="fas fa-plus mr-2"></i>Créer le patient
-                    </button>
+            <!-- Section de confirmation avec design moderne -->
+            <div class="bg-gradient-to-r from-slate-50 to-slate-100/50 rounded-xl p-4 border border-slate-200/60 modal-section-4 shadow-sm">
+                <div class="space-y-3">
+                    <h6 class="text-sm font-bold text-slate-900 flex items-center">
+                        <i class="fas fa-lock text-red-500 mr-2 text-lg"></i>
+                        Dernière vérification de sécurité
+                    </h6>
+
+                    <div class="space-y-2">
+                        <label class="flex items-start space-x-2 cursor-pointer group">
+                            <input type="checkbox" id="confirmDataLoss" class="w-4 h-4 text-red-600 bg-slate-100 border-slate-300 rounded focus:ring-red-500 focus:ring-2 mt-0.5 group-hover:bg-red-50 transition-colors">
+                            <div class="flex-1">
+                                <span class="text-xs font-medium text-slate-900 group-hover:text-red-700 transition-colors">
+                                    ✅ Je confirme la suppression totale et irréversible
+                                </span>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start space-x-2 cursor-pointer group">
+                            <input type="checkbox" id="confirmBackup" class="w-4 h-4 text-red-600 bg-slate-100 border-slate-300 rounded focus:ring-red-500 focus:ring-2 mt-0.5 group-hover:bg-red-50 transition-colors">
+                            <div class="flex-1">
+                                <span class="text-xs font-medium text-slate-900 group-hover:text-red-700 transition-colors">
+                                    ✅ J'ai sauvegardé toutes les données importantes
+                                </span>
+                            </div>
+                        </label>
+                    </div>
                 </div>
             </div>
-        </form>
+        </div>
+
+        <!-- Pied du modal avec boutons modernisés -->
+        <div class="px-6 py-5 bg-gradient-to-r from-slate-50 to-slate-100 border-t border-slate-200/60">
+            <div class="flex items-center justify-between">
+                <!-- Bouton d'annulation stylisé -->
+                <button onclick="closeDeletePatientModal()"
+                        class="group relative px-6 py-3 bg-white border-2 border-slate-300 text-slate-700 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 hover:border-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-200">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-100 to-slate-200 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+                    <div class="relative flex items-center space-x-2">
+                        <i class="fas fa-arrow-left text-sm group-hover:-translate-x-1 transition-transform duration-300"></i>
+                        <span class="text-sm">Annuler</span>
+                    </div>
+                </button>
+
+                <!-- Bouton de suppression CRITIQUE en rouge intense -->
+                <button onclick="deletePatient()"
+                        id="confirmDeleteBtn"
+                        class="group relative px-8 py-4 bg-gradient-to-r from-red-600 via-red-700 to-red-800 hover:from-red-700 hover:via-red-800 hover:to-red-900 text-white rounded-xl font-bold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-red-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none border-2 border-red-500/30">
+                    <div class="absolute inset-0 bg-gradient-to-r from-red-800 to-red-900 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+                    <div class="relative flex items-center space-x-3">
+                        <div class="w-6 h-6 bg-red-200/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-skull text-red-200 text-sm group-hover:animate-pulse"></i>
+                        </div>
+                        <span id="deleteBtnText" class="text-base font-black tracking-wide">SUPPRIMER</span>
+                    </div>
+
+                    <!-- Indicateur de chargement intégré -->
+                    <div class="absolute inset-0 rounded-xl bg-red-900/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <div class="w-6 h-6 border-3 border-red-200/50 border-t-red-200 rounded-full animate-spin"></div>
+                    </div>
+
+                    <!-- Pulsation d'urgence -->
+                    <div class="absolute inset-0 rounded-xl bg-red-500/20 animate-pulse opacity-30"></div>
+                </button>
+            </div>
+
+            <!-- Barre de progression finale élégante -->
+            <div class="mt-3 bg-slate-200 rounded-full h-1 overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-red-500 to-red-600 transition-all duration-1000 ease-out w-0" id="finalProgressBar"></div>
+            </div>
+        </div>
     </div>
 </div>
 

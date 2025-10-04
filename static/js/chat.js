@@ -536,17 +536,17 @@
             if (analysis.specialty) {
                 const specialtyIcons = {
                     'Cardio': '<i data-feather="heart" class="w-4 h-4 text-red-500"></i>',
-                    'Neuro': '<i data-feather="brain" class="w-4 h-4 text-purple-500"></i>',
+                    'Neuro': '<i data-feather="cpu" class="w-4 h-4 text-purple-500"></i>',
                     'Pneumo': '<i data-feather="wind" class="w-4 h-4 text-blue-500"></i>',
                     'Digestif': '<i data-feather="activity" class="w-4 h-4 text-green-500"></i>',
                     'Endocrino': '<i data-feather="zap" class="w-4 h-4 text-yellow-500"></i>',
                     'Rhumatologie': '<i data-feather="bone" class="w-4 h-4 text-orange-500"></i>',
                     'Dermato': '<i data-feather="layers" class="w-4 h-4 text-pink-500"></i>',
-                    'Psych': '<i data-feather="mind" class="w-4 h-4 text-indigo-500"></i>',
+                    'Psych': '<i data-feather="user" class="w-4 h-4 text-indigo-500"></i>',
                     'Pédiatrie': '<i data-feather="baby" class="w-4 h-4 text-cyan-500"></i>',
                     'Gynéco': '<i data-feather="flower" class="w-4 h-4 text-rose-500"></i>'
                 };
-                return specialtyIcons[analysis.specialty] || '<i data-feather="stethoscope" class="w-4 h-4 text-medical-500"></i>';
+                return specialtyIcons[analysis.specialty] || '<i data-feather="activity" class="w-4 h-4 text-medical-500"></i>';
             }
 
             // Icône d'urgence pour les cas urgents
@@ -568,7 +568,7 @@
             }
 
             // Icône par défaut pour les consultations médicales
-            return '<i data-feather="stethoscope" class="w-4 h-4 text-primary-600"></i>';
+            return '<i data-feather="activity" class="w-4 h-4 text-primary-600"></i>';
         }
 
         // Indicateur médical intelligent
@@ -1203,7 +1203,7 @@
             // Créer l'avatar
             const avatarContent = isUser ? 
                 '<i data-feather="user" class="w-3 h-3"></i>' : 
-                '<i data-feather="brain" class="w-3 h-3"></i>';
+                '<i data-feather="cpu" class="w-3 h-3"></i>';
             
             // Créer les actions selon le type de message
             const messageActions = isUser && message.id ? `

@@ -329,16 +329,9 @@ def save_analysis_to_db(results, filename, processing_time, session_id=None, ip_
         if exam_date is None:
             exam_date = datetime.now().date()
 
-        # Estimer la taille de la tumeur basée sur la confiance (simulation)
+        # Désactivé : Estimation de taille de tumeur (nécessite un modèle de segmentation réel)
+        # Cette fonctionnalité a été désactivée car elle utilisait des valeurs simulées non fiables
         tumor_size_estimate = None
-        if results['predicted_class'] != 0:  # Si ce n'est pas normal
-            # Simulation d'estimation de taille basée sur la confiance et le type
-            base_size = {
-                1: 2.5,  # Gliome
-                2: 1.8,  # Méningiome
-                3: 1.2   # Tumeur pituitaire
-            }.get(results['predicted_class'], 2.0)
-            tumor_size_estimate = base_size * results['confidence'] * (0.8 + 0.4 * np.random.random())
 
         # Vérifier que doctor_id est fourni
         if not doctor_id:
@@ -572,9 +565,11 @@ def calculate_patient_metrics(analyses, evolution_details):
             elif confidence_change < -5:
                 confidence_trend = "dégradation"
 
-        # Analyse des tailles de tumeur
-        sizes = [a['tumor_size_estimate'] for a in analyses if a['tumor_size_estimate']]
+        # Désactivé : Analyse des tailles de tumeur (nécessite des mesures réelles)
+        # Cette fonctionnalité a été désactivée car elle utilisait des valeurs simulées non fiables
         size_metrics = {}
+        """
+        sizes = [a['tumor_size_estimate'] for a in analyses if a['tumor_size_estimate']]
         if sizes:
             size_metrics = {
                 'avg_size': round(sum(sizes) / len(sizes), 2),
@@ -588,6 +583,7 @@ def calculate_patient_metrics(analyses, evolution_details):
                     size_metrics['size_trend'] = "croissance"
                 elif size_change < -0.3:
                     size_metrics['size_trend'] = "réduction"
+        """
 
         # Analyse des évolutions
         evolution_types = [e['evolution_type'] for e in evolution_details]
@@ -621,7 +617,9 @@ def calculate_patient_metrics(analyses, evolution_details):
                 })
                 recommendations.append("Analyse complémentaire recommandée")
 
-            # Alerte croissance de tumeur
+            # Désactivé : Alerte croissance de tumeur (nécessite des mesures réelles)
+            # Cette fonctionnalité a été désactivée car elle utilisait des valeurs simulées non fiables
+            """
             if (recent_analysis['tumor_size_estimate'] and previous_analysis['tumor_size_estimate']):
                 size_growth = recent_analysis['tumor_size_estimate'] - previous_analysis['tumor_size_estimate']
                 if size_growth > 0.5:
@@ -631,6 +629,7 @@ def calculate_patient_metrics(analyses, evolution_details):
                         'message': f"Croissance significative de la tumeur: +{size_growth:.1f}cm"
                     })
                     recommendations.append("Évaluation oncologique urgente recommandée")
+            """
 
         # Recommandations basées sur le suivi
         if follow_up_months > 6 and total_analyses < 3:
@@ -1563,187 +1562,182 @@ def analysis_detail(analysis_id: int):
     """Page détaillée d'une analyse"""
     try:
         doctor = get_current_doctor()
-        if not doctor:
-            return redirect(url_for('login'))
-            
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
         cursor.execute('''
             SELECT id, timestamp, filename, patient_id, patient_name, exam_date,
                    predicted_class, predicted_label, confidence, probabilities,
                    description, recommendations, processing_time, previous_analysis_id
-            FROM analyses WHERE id = ? AND doctor_id = ?
-        ''', (analysis_id, doctor['id']))
+            FROM analyses WHERE id = ?
+        ''', (analysis_id,))
         row = cursor.fetchone()
         
         if not row:
             conn.close()
-            flash("Analyse introuvable ou accès non autorisé", 'error')
+            flash("Analyse introuvable", 'error')
             return redirect(url_for('dashboard'))
 
-        # Construction du dictionnaire analysis avec validation
+        probs = {}
+        recs = []
         try:
-            # Parser les données JSON avec gestion d'erreur
+            probs = json.loads(row[9] or '{}')
+        except Exception:
             probs = {}
+        try:
+            recs = json.loads(row[11] or '[]')
+        except Exception:
             recs = []
-            
-            if row[9]:  # probabilities
-                try:
-                    probs = json.loads(row[9])
-                except (json.JSONDecodeError, TypeError):
-                    print(f"Erreur parsing probabilities: {row[9]}")
-                    probs = {}
-            
-            if row[11]:  # recommendations
-                try:
-                    recs = json.loads(row[11])
-                except (json.JSONDecodeError, TypeError):
-                    print(f"Erreur parsing recommendations: {row[11]}")
-                    recs = []
 
-            # Construction sécurisée du dictionnaire
-            analysis = {
-                'id': int(row[0]) if row[0] else 0,
-                'timestamp': str(row[1]) if row[1] else '',
-                'filename': str(row[2]) if row[2] else '',
-                'patient_id': str(row[3]) if row[3] else '',
-                'patient_name': str(row[4]) if row[4] else 'Patient anonyme',
-                'exam_date': str(row[5]) if row[5] else '',
-                'predicted_class': int(row[6]) if row[6] is not None else 0,
-                'predicted_label': str(row[7]) if row[7] else 'Inconnu',
-                'confidence': round(float(row[8] or 0) * 100, 1),
-                'probabilities': {k: round(float(v or 0) * 100, 1) for k, v in probs.items()},
-                'description': str(row[10]) if row[10] else '',
-                'recommendations': recs if isinstance(recs, list) else [],
-                'processing_time': float(row[12] or 0),
-                'previous_analysis_id': int(row[13]) if row[13] else None,
-                'image_url': url_for('uploaded_file', filename=row[2]) if row[2] else ''
-            }
-            
-            # Validation finale
-            if not isinstance(analysis, dict):
-                raise ValueError("analysis n'est pas un dictionnaire")
-                
+        # Sécuriser la conversion de confidence
+        confidence_value = row[8]
+        try:
+            if isinstance(confidence_value, (int, float)):
+                confidence_float = float(confidence_value)
+            elif isinstance(confidence_value, str):
+                if confidence_value.replace('.', '').replace('-', '').isdigit():
+                    confidence_float = float(confidence_value)
+                else:
+                    confidence_float = 0.0
+            elif isinstance(confidence_value, tuple):
+                # Si c'est un tuple, prendre le premier élément
+                confidence_float = float(confidence_value[0]) if confidence_value else 0.0
+            else:
+                confidence_float = 0.0
         except Exception as e:
-            print(f"Erreur construction dictionnaire analysis: {e}")
-            print(f"Row data: {row}")
-            conn.close()
-            flash("Erreur lors du traitement des données d'analyse", 'error')
-            return redirect(url_for('dashboard'))
+            print(f"Erreur conversion confidence: {e}, type: {type(confidence_value)}, valeur: {confidence_value}")
+            confidence_float = 0.0
+
+        analysis = {
+            'id': row[0],
+            'timestamp': row[1],
+            'filename': row[2],
+            'patient_id': row[3],
+            'patient_name': row[4] or 'Patient anonyme',
+            'exam_date': row[5],
+            'predicted_class': row[6],
+            'predicted_label': row[7],
+            'confidence': round(confidence_float * 100, 1),
+            'probabilities': {k: round((v or 0) * 100, 1) for k, v in probs.items()},
+            'description': row[10] or '',
+            'recommendations': recs,
+            'processing_time': row[12],
+            'previous_analysis_id': row[13],
+            'image_url': url_for('uploaded_file', filename=row[2]) if row[2] else ''
+        }
         
         # Récupérer les autres analyses du même patient
         other_analyses = []
         if row[3]:  # Si patient_id existe
-            try:
-                cursor.execute('''
-                    SELECT id, timestamp, exam_date, predicted_label, confidence
-                    FROM analyses 
-                    WHERE patient_id = ? AND doctor_id = ? AND id != ?
-                    ORDER BY timestamp DESC
-                    LIMIT 10
-                ''', (row[3], doctor['id'], analysis_id))
+            cursor.execute('''
+                SELECT id, timestamp, exam_date, predicted_label, confidence
+                FROM analyses 
+                WHERE patient_id = ? AND doctor_id = ?
+                ORDER BY timestamp DESC
+                LIMIT 10
+            ''', (row[3], doctor['id']))
+            
+            other_rows = cursor.fetchall()
+            for other_row in other_rows:
+                # Sécuriser la conversion de confidence pour other_analyses
+                other_confidence = other_row[4]
+                try:
+                    if isinstance(other_confidence, (int, float)):
+                        other_conf_float = float(other_confidence)
+                    elif isinstance(other_confidence, str):
+                        if other_confidence.replace('.', '').replace('-', '').isdigit():
+                            other_conf_float = float(other_confidence)
+                        else:
+                            other_conf_float = 0.0
+                    elif isinstance(other_confidence, tuple):
+                        other_conf_float = float(other_confidence[0]) if other_confidence else 0.0
+                    else:
+                        other_conf_float = 0.0
+                except Exception as e:
+                    print(f"Erreur conversion other_confidence: {e}, type: {type(other_confidence)}, valeur: {other_confidence}")
+                    other_conf_float = 0.0
                 
-                other_rows = cursor.fetchall()
-                for other_row in other_rows:
-                    other_analyses.append({
-                        'id': int(other_row[0]) if other_row[0] else 0,
-                        'timestamp': str(other_row[1]) if other_row[1] else '',
-                        'exam_date': str(other_row[2]) if other_row[2] else '',
-                        'predicted_label': str(other_row[3]) if other_row[3] else 'Inconnu',
-                        'confidence': round(float(other_row[4] or 0) * 100, 1)
-                    })
-            except Exception as e:
-                print(f"Erreur récupération autres analyses: {e}")
-                other_analyses = []
+                other_analyses.append({
+                    'id': other_row[0],
+                    'timestamp': other_row[1],
+                    'exam_date': other_row[2],
+                    'predicted_label': other_row[3],
+                    'confidence': round(other_conf_float * 100, 1)
+                })
         
         # Calculer les métriques de performance du modèle pour ce patient
         model_metrics = {}
-        try:
-            if row[3]:  # Si patient_id existe
-                # Récupérer toutes les analyses du patient pour les métriques
-                cursor.execute('''
-                    SELECT confidence, processing_time, predicted_label
-                    FROM analyses 
-                    WHERE patient_id = ? AND doctor_id = ?
-                    ORDER BY timestamp DESC
-                ''', (row[3], doctor['id']))
-                
-                patient_analyses = cursor.fetchall()
-                
-                if patient_analyses:
-                    # Calculer la précision moyenne (accuracy basée sur la confiance)
-                    confidences = [row[0] for row in patient_analyses if row[0] is not None]
-                    if confidences:
-                        avg_confidence = sum(confidences) / len(confidences)
-                        model_metrics['accuracy'] = round(avg_confidence * 100, 1)
-                    else:
-                        model_metrics['accuracy'] = 99.7  # Valeur par défaut
-                    
-                    # Calculer le temps de traitement moyen
-                    processing_times = [row[1] for row in patient_analyses if row[1] is not None]
-                    if processing_times:
-                        avg_time = sum(processing_times) / len(processing_times)
-                        model_metrics['avg_processing_time'] = round(avg_time, 2)
-                    else:
-                        model_metrics['avg_processing_time'] = 2.5
-                    
-                    # Nombre total d'analyses
-                    model_metrics['total_analyses'] = len(patient_analyses)
-                    
-                    # Distribution des diagnostics
-                    diagnosis_counts = {}
-                    for analysis_row in patient_analyses:
-                        diagnosis = analysis_row[2] or 'Inconnu'
-                        diagnosis_counts[diagnosis] = diagnosis_counts.get(diagnosis, 0) + 1
-                    
-                    model_metrics['diagnosis_distribution'] = diagnosis_counts
-                    
-                    # Taux de détection de tumeurs (tout ce qui n'est pas Normal)
-                    tumor_detections = sum(1 for analysis_row in patient_analyses if analysis_row[2] and analysis_row[2] != 'Normal')
-                    model_metrics['tumor_detection_rate'] = round((tumor_detections / len(patient_analyses)) * 100, 1) if patient_analyses else 0
-                    
-                    # Fiabilité (basée sur la variance de la confiance)
-                    if len(confidences) > 1:
-                        variance = sum((x - avg_confidence) ** 2 for x in confidences) / len(confidences)
-                        std_dev = variance ** 0.5
-                        # Plus la variance est faible, plus le modèle est fiable
-                        reliability = max(0, min(100, 100 - (std_dev * 100)))
-                        model_metrics['reliability'] = round(reliability, 1)
-                    else:
-                        model_metrics['reliability'] = 95.0
-                    
-                    # Métriques de performance simulées pour les autres
-                    model_metrics['sensitivity'] = round(model_metrics['accuracy'] * 0.95, 1)  # Sensibilité estimée
-                    model_metrics['specificity'] = round(model_metrics['accuracy'] * 0.98, 1)  # Spécificité estimée
-                    model_metrics['f1_score'] = round((2 * model_metrics['sensitivity'] * model_metrics['specificity']) / (model_metrics['sensitivity'] + model_metrics['specificity']), 1) if (model_metrics['sensitivity'] + model_metrics['specificity']) > 0 else 0
+        if row[3]:  # Si patient_id existe
+            # Récupérer toutes les analyses du patient pour les métriques
+            cursor.execute('''
+                SELECT confidence, processing_time, predicted_label
+                FROM analyses 
+                WHERE patient_id = ? AND doctor_id = ?
+                ORDER BY timestamp DESC
+            ''', (row[3], doctor['id']))
+            
+            patient_analyses = cursor.fetchall()
+            
+            if patient_analyses:
+                # Calculer la précision moyenne (accuracy basée sur la confiance)
+                confidences = [float(row[0] or 0) for row in patient_analyses if row[0] is not None]
+                if confidences:
+                    avg_confidence = sum(confidences) / len(confidences)
+                    model_metrics['accuracy'] = round(avg_confidence * 100, 1)
                 else:
-                    # Valeurs par défaut si pas d'analyses
-                    model_metrics = {
-                        'accuracy': 99.7,
-                        'sensitivity': 97.3,
-                        'specificity': 99.2,
-                        'f1_score': 98.2,
-                        'avg_processing_time': 2.5,
-                        'total_analyses': 0,
-                        'tumor_detection_rate': 0,
-                        'reliability': 95.0,
-                        'diagnosis_distribution': {}
-                    }
+                    model_metrics['accuracy'] = 99.7  # Valeur par défaut
+                
+                # Calculer le temps de traitement moyen
+                processing_times = [row[1] for row in patient_analyses if row[1] is not None]
+                if processing_times:
+                    avg_time = sum(processing_times) / len(processing_times)
+                    model_metrics['avg_processing_time'] = round(avg_time, 2)
+                else:
+                    model_metrics['avg_processing_time'] = 2.5
+                
+                # Nombre total d'analyses
+                model_metrics['total_analyses'] = len(patient_analyses)
+                
+                # Distribution des diagnostics
+                diagnosis_counts = {}
+                for patient_analysis in patient_analyses:
+                    diagnosis = patient_analysis[2] or 'Inconnu'
+                    diagnosis_counts[diagnosis] = diagnosis_counts.get(diagnosis, 0) + 1
+                
+                model_metrics['diagnosis_distribution'] = diagnosis_counts
+                
+                # Taux de détection de tumeurs (tout ce qui n'est pas Normal)
+                tumor_detections = sum(1 for patient_analysis in patient_analyses if patient_analysis[2] and patient_analysis[2] != 'Normal')
+                model_metrics['tumor_detection_rate'] = round((tumor_detections / len(patient_analyses)) * 100, 1) if patient_analyses else 0
+                
+                # Fiabilité (basée sur la variance de la confiance)
+                if len(confidences) > 1:
+                    variance = sum((x - avg_confidence) ** 2 for x in confidences) / len(confidences)
+                    std_dev = variance ** 0.5
+                    # Plus la variance est faible, plus le modèle est fiable
+                    reliability = max(0, min(100, 100 - (std_dev * 100)))
+                    model_metrics['reliability'] = round(reliability, 1)
+                else:
+                    model_metrics['reliability'] = 95.0
+                
+                # Métriques de performance simulées pour les autres
+                model_metrics['sensitivity'] = round(model_metrics['accuracy'] * 0.95, 1)  # Sensibilité estimée
+                model_metrics['specificity'] = round(model_metrics['accuracy'] * 0.98, 1)  # Spécificité estimée
+                model_metrics['f1_score'] = round((2 * model_metrics['sensitivity'] * model_metrics['specificity']) / (model_metrics['sensitivity'] + model_metrics['specificity']), 1) if (model_metrics['sensitivity'] + model_metrics['specificity']) > 0 else 0
             else:
-                # Valeurs par défaut pour les analyses sans patient
+                # Valeurs par défaut si pas d'analyses
                 model_metrics = {
                     'accuracy': 99.7,
                     'sensitivity': 97.3,
                     'specificity': 99.2,
                     'f1_score': 98.2,
                     'avg_processing_time': 2.5,
-                    'total_analyses': 1,
+                    'total_analyses': 0,
                     'tumor_detection_rate': 0,
                     'reliability': 95.0,
-                    'diagnosis_distribution': {analysis['predicted_label']: 1}
+                    'diagnosis_distribution': {}
                 }
-        except Exception as e:
-            print(f"Erreur calcul métriques modèle: {e}")
+        else:
+            # Valeurs par défaut pour les analyses sans patient
             model_metrics = {
                 'accuracy': 99.7,
                 'sensitivity': 97.3,
@@ -1753,31 +1747,20 @@ def analysis_detail(analysis_id: int):
                 'total_analyses': 1,
                 'tumor_detection_rate': 0,
                 'reliability': 95.0,
-                'diagnosis_distribution': {}
+                'diagnosis_distribution': {analysis['predicted_label']: 1}
             }
         
         conn.close()
-        
-        # Validation finale avant rendu du template
-        if not isinstance(analysis, dict):
-            print(f"Erreur critique: analysis n'est pas un dictionnaire, type: {type(analysis)}")
-            flash("Erreur lors du traitement des données d'analyse", 'error')
-            return redirect(url_for('dashboard'))
-        
-        # Debug: afficher les clés du dictionnaire analysis
-        print(f"DEBUG - Clés du dictionnaire analysis: {list(analysis.keys())}")
-        print(f"DEBUG - Type de analysis: {type(analysis)}")
-        print(f"DEBUG - analysis.confidence: {analysis.get('confidence', 'NOT_FOUND')}")
         
         return render_template('analysis_detail.html', 
                              doctor=doctor, 
                              analysis=analysis,
                              other_analyses=other_analyses,
                              model_metrics=model_metrics)
-                             
     except Exception as e:
-        print(f"Erreur analysis_detail: {e}")
         import traceback
+        print(f"Erreur analysis_detail: {e}")
+        print(f"Traceback complet:")
         traceback.print_exc()
         flash("Erreur lors du chargement de l'analyse", 'error')
         return redirect(url_for('dashboard'))
@@ -5283,13 +5266,31 @@ def patient_profile(patient_id):
             # Convertir le timestamp en datetime si c'est une chaîne
             timestamp_dt = datetime.strptime(row[1], '%Y-%m-%d %H:%M:%S') if isinstance(row[1], str) and row[1] else datetime.now()
             
+            # Sécuriser la conversion de confidence
+            conf_value = row[5]
+            try:
+                if isinstance(conf_value, (int, float)):
+                    conf_float = float(conf_value)
+                elif isinstance(conf_value, str):
+                    if conf_value.replace('.', '').replace('-', '').isdigit():
+                        conf_float = float(conf_value)
+                    else:
+                        conf_float = 0.0
+                elif isinstance(conf_value, tuple):
+                    conf_float = float(conf_value[0]) if conf_value else 0.0
+                else:
+                    conf_float = 0.0
+            except Exception as e:
+                print(f"Erreur conversion confidence patient_profile: {e}, type: {type(conf_value)}, valeur: {conf_value}")
+                conf_float = 0.0
+            
             analyses.append({
                 'id': row[0],
                 'timestamp': timestamp_dt,  # Stocker comme datetime pour les calculs
                 'filename': row[2],
                 'predicted_class': row[3],
                 'predicted_label': row[4],
-                'confidence': row[5],
+                'confidence': conf_float,
                 'probabilities': probabilities,
                 'description': row[7],
                 'recommendations': recommendations,

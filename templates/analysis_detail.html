@@ -81,49 +81,11 @@
     <!-- Image IRM -->
     <div class="analysis-card p-0 overflow-hidden fade-in">
       <div class="image-container relative">
-        <!-- Actions sur l'image -->
-        <div class="image-actions">
-          <button class="image-action-btn" onclick="toggleFullscreen()" title="Plein écran">
-            <i class="fas fa-expand text-sm"></i>
-          </button>
-          <button class="image-action-btn" onclick="downloadImage()" title="Télécharger">
-            <i class="fas fa-download text-sm"></i>
-          </button>
-          <button class="image-action-btn" onclick="toggleImageInfo()" title="Informations">
-            <i class="fas fa-info text-sm"></i>
-          </button>
-        </div>
-
-        <!-- Indicateur de zoom -->
-        <div class="zoom-indicator">
-          <i class="fas fa-search-plus mr-1"></i>
-          Cliquer pour agrandir
-        </div>
-
         <!-- Image principale -->
         <img id="analysisImage" 
              src="{{ analysis.image_url }}" 
              alt="Image IRM - Analyse {{ analysis.id }}" 
-             class="w-full h-[400px] lg:h-[450px] object-contain bg-gradient-to-br from-gray-50 to-gray-100 cursor-pointer"
-             onclick="openImageModal()"
-             onload="hideImageLoading()"
-             onerror="showImageError()"/>
-
-        <!-- Animation de chargement -->
-        <div id="imageLoading" class="image-loading">
-          <div class="loading-spinner"></div>
-        </div>
-
-        <!-- Overlay avec informations -->
-        <div class="image-overlay" id="imageOverlay">
-          <div class="text-sm font-medium mb-1">{{ analysis.patient_name or 'Patient' }}</div>
-          <div class="text-xs opacity-75">
-            Analyse #{{ analysis.id }} • {{ analysis.exam_date or 'Date inconnue' }}
-          </div>
-          <div class="text-xs opacity-75 mt-1">
-            Résolution: <span id="imageResolution">Chargement...</span>
-          </div>
-        </div>
+             class="w-full h-[400px] lg:h-[450px] object-contain bg-gradient-to-br from-gray-50 to-gray-100"/>
       </div>
     </div>
     
@@ -590,41 +552,8 @@
 
 <!-- Section pleine largeur pour informations supplémentaires -->
 
-<!-- Modal pour l'affichage plein écran de l'image -->
-<div id="imageModal" 
-     class="fixed inset-0 bg-black bg-opacity-90 z-50 items-center justify-center opacity-0 transition-opacity duration-300" 
-     style="display: none;" 
-     onclick="closeImageModal()">
-  <div class="relative max-w-[95vw] max-h-[95vh] flex items-center justify-center">
-    <!-- Bouton de fermeture -->
-    <button class="absolute top-4 right-4 z-10 w-12 h-12 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-70 transition-all duration-200 flex items-center justify-center"
-            onclick="closeImageModal()">
-      <i class="fas fa-times text-lg"></i>
-    </button>
-    
-    <!-- Image en plein écran -->
-    <img id="modalImage" 
-         class="max-w-full max-h-full object-contain transform scale-90 transition-transform duration-300 rounded-lg shadow-2xl"
-         onclick="event.stopPropagation()">
-    
-    <!-- Informations de l'image -->
-    <div class="absolute bottom-4 left-4 bg-black bg-opacity-70 text-white p-4 rounded-lg backdrop-blur-sm">
-      <div class="font-semibold">{{ analysis.patient_name or 'Patient' }}</div>
-      <div class="text-sm opacity-75 mt-1">Analyse #{{ analysis.id }} • {{ analysis.exam_date or 'Date inconnue' }}</div>
-    </div>
-    
-    <!-- Actions rapides -->
-    <div class="absolute bottom-4 right-4 flex gap-2">
-      <button class="w-10 h-10 rounded-full bg-black bg-opacity-50 text-white hover:bg-opacity-70 transition-all duration-200 flex items-center justify-center"
-              onclick="downloadImage()" title="Télécharger">
-        <i class="fas fa-download"></i>
-      </button>
-    </div>
-  </div>
-</div>
-
 {% endblock %}
 
 {% block extra_js %}
-<script src="../static/js/res_analyse.js"></script>
+<script src="{{ url_for('static', filename='js/res_analyse.js') }}"></script>
 {% endblock %}

@@ -1490,7 +1490,9 @@
         });
       }
       
-      // Tumor size line (if any sizes)
+      // Graphique de taille de tumeur désactivé (nécessite un modèle de segmentation réel)
+      // Cette fonctionnalité a été désactivée car elle utilisait des valeurs simulées non fiables
+      /*
       const sizes = analyses.map(a => a.tumor_size_estimate).filter(v => v!=null);
       if (sizes.length>0) {
         document.getElementById('sizeCard').style.display = '';
@@ -1540,6 +1542,7 @@
           } 
         });
       }
+      */
     } catch (e) { console.error(e); }
   })();
 

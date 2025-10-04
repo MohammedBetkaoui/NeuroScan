@@ -32,6 +32,121 @@
   --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ===================================================================
+   STYLES GLOBAUX POUR TOUTES LES ICÔNES - Visibilité & Modernité
+   =================================================================== */
+
+/* Style de base pour toutes les icônes Font Awesome */
+i[class*="fa"] {
+  display: inline-block !important;
+  font-style: normal !important;
+  font-variant: normal;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* Assurer que les pseudo-éléments des icônes s'affichent */
+i[class*="fa"]::before {
+  display: inline-block !important;
+  font-family: "Font Awesome 6 Free" !important;
+  font-weight: 900 !important;
+  font-style: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Icônes regular (far) */
+i[class*="far"]::before {
+  font-family: "Font Awesome 6 Free" !important;
+  font-weight: 400 !important;
+}
+
+/* Icônes avec arrière-plan (dans les titres de section, etc.) */
+i[class*="bg-gradient"] {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Petites icônes inline avec texte */
+i.text-xs, i.text-sm {
+  font-size: inherit !important;
+  margin: 0 2px;
+}
+
+/* Icônes de taille moyenne */
+i.text-lg {
+  font-size: 1.125rem !important;
+}
+
+/* Icônes de grande taille */
+i.text-xl {
+  font-size: 1.25rem !important;
+}
+
+i.text-2xl {
+  font-size: 1.5rem !important;
+}
+
+i.text-3xl {
+  font-size: 1.875rem !important;
+}
+
+i.text-4xl {
+  font-size: 2.25rem !important;
+}
+
+/* Icônes avec espacement (mr-1, ml-1, etc.) */
+i.mr-1 { margin-right: 0.25rem !important; }
+i.ml-1 { margin-left: 0.25rem !important; }
+i.mr-2 { margin-right: 0.5rem !important; }
+i.ml-2 { margin-left: 0.5rem !important; }
+i.mt-1 { margin-top: 0.25rem !important; }
+
+/* Couleurs des icônes */
+i.text-blue-500 { color: #3b82f6 !important; }
+i.text-blue-600 { color: #2563eb !important; }
+i.text-purple-500 { color: #8b5cf6 !important; }
+i.text-purple-600 { color: #7c3aed !important; }
+i.text-green-500 { color: #10b981 !important; }
+i.text-green-600 { color: #059669 !important; }
+i.text-red-500 { color: #ef4444 !important; }
+i.text-red-600 { color: #dc2626 !important; }
+i.text-orange-500 { color: #f59e0b !important; }
+i.text-orange-600 { color: #ea580c !important; }
+i.text-indigo-500 { color: #6366f1 !important; }
+i.text-indigo-600 { color: #4f46e5 !important; }
+i.text-teal-600 { color: #0d9488 !important; }
+i.text-cyan-600 { color: #0891b2 !important; }
+i.text-gray-400 { color: #9ca3af !important; }
+i.text-gray-600 { color: #4b5563 !important; }
+i.text-white { color: #ffffff !important; }
+
+/* Icônes dans les boutons */
+button i, a i {
+  pointer-events: none;
+}
+
+/* Transitions pour les icônes */
+i {
+  transition: all var(--transition-fast);
+}
+
+/* Icônes qui tournent au survol des éléments parent */
+.group:hover i.group-hover\:translate-x-1 {
+  transform: translateX(0.25rem);
+}
+
+/* Couleurs des icônes qui changent au survol */
+.group:hover i.group-hover\:text-blue-500 {
+  color: #3b82f6 !important;
+}
+
 /* Couleurs des probabilités */
 .prob-color-0, .prob-color-bg-0 { background-color: #3b82f6 !important; }
 .prob-color-1, .prob-color-bg-1 { background-color: #7c3aed !important; }
@@ -133,6 +248,13 @@
 
 .analysis-header:hover p {
   opacity: 1;
+}
+
+/* Icônes dans l'en-tête */
+.analysis-header i {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Effet de brillance sur l'analysis-header */
@@ -278,69 +400,6 @@
   transform: translateY(0);
 }
 
-/* Boutons d'action pour l'image */
-.image-actions {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  display: flex;
-  gap: 8px;
-  opacity: 0;
-  transform: translateY(-10px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 4;
-}
-
-.image-container:hover .image-actions {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.image-action-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #374151;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.image-action-btn:hover {
-  background: rgba(255, 255, 255, 1);
-  transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-}
-
-/* Indicateur de zoom */
-.zoom-indicator {
-  position: absolute;
-  bottom: 15px;
-  left: 15px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  backdrop-filter: blur(10px);
-  opacity: 0;
-  transform: scale(0.8);
-  transition: all 0.3s ease;
-  z-index: 4;
-}
-
-.image-container:hover .zoom-indicator {
-  opacity: 1;
-  transform: scale(1);
-}
-
 /* Animation de chargement pour l'image */
 .image-loading {
   position: absolute;
@@ -415,6 +474,10 @@
 .result-badge i {
   font-size: 16px;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
 }
 
 /* ===================================================================
@@ -614,6 +677,9 @@
 
 .action-btn i {
   transition: transform var(--transition-fast);
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
 }
 
 .action-btn:hover i {
@@ -652,6 +718,9 @@
 .info-chip i {
   font-size: 16px;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ===================================================================
@@ -683,16 +752,41 @@
 }
 
 .section-title i {
+  min-width: 36px;
   width: 36px;
   height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   border-radius: 10px;
-  font-size: 16px;
+  font-size: 16px !important;
+  flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1),
               inset 0 1px 0 rgba(255, 255, 255, 0.5);
   transition: transform var(--transition-fast);
+  /* Force la visibilité */
+  opacity: 1 !important;
+  visibility: visible !important;
+  /* Fallback si l'icône ne charge pas - affiche au moins le fond */
+  position: relative;
+  overflow: visible;
+}
+
+.section-title i::before {
+  display: inline-block !important;
+  font-family: "Font Awesome 6 Free" !important;
+  font-weight: 900 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  /* S'assurer que le contenu existe */
+  min-width: 1em;
+  text-align: center;
+}
+
+/* Icônes avec background gradient dans les titres de section */
+.section-title i[class*="bg-gradient"] {
+  background-clip: padding-box !important;
+  -webkit-background-clip: padding-box !important;
 }
 
 .section-title:hover i {
@@ -757,7 +851,7 @@
   }
 }
 
-/* ===================================================================
+/* ===================================================================*/
 @media (max-width: 1024px) {
   :root {
     --radius-xl: 18px;
@@ -852,7 +946,10 @@
     width: 32px;
     height: 32px;
     font-size: 14px;
+    display: inline-flex !important;
   }
+}
+
 @media (max-width: 640px) {
   :root {
     --radius-md: 10px;
@@ -903,26 +1000,11 @@
     height: 320px !important;
   }
   
-  .image-actions {
-    top: 10px;
-    right: 10px;
-    gap: 6px;
-  }
-  
-  .image-action-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-  }
-  
   .image-overlay {
     padding: 15px;
   }
-  
-  .zoom-indicator {
-    bottom: 10px;
-    left: 10px;
-    padding: 5px 10px;
+
+
 /* Styles pour très petits écrans */
 @media (max-width: 480px) {
   .analysis-header {
@@ -946,26 +1028,9 @@
     height: 280px !important;
   }
   
-  .image-actions {
-    flex-direction: column;
-    gap: 4px;
-  }
-  
-  .image-action-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-  }
-  
   .image-overlay {
     padding: 12px;
     font-size: 12px;
-  }
-  
-  .zoom-indicator {
-    padding: 4px 8px;
-    font-size: 10px;
-    border-radius: 14px;
   }
   
   /* Modal responsive */
@@ -1069,8 +1134,7 @@ body {
 }
 
 /* Focus visible pour l'accessibilité */
-.action-btn:focus-visible,
-.image-action-btn:focus-visible {
+.action-btn:focus-visible {
   outline: 3px solid rgba(59, 130, 246, 0.5);
   outline-offset: 2px;
 }
@@ -1316,4 +1380,5 @@ body {
    FIN DES STYLES
    =================================================================== */
 
-  }
+}  transform: scale(1.1) rotate(-90deg);
+}

@@ -1457,6 +1457,15 @@ def index():
     doctor = get_current_doctor()
     return render_template('index.html', doctor=doctor)
 
+@app.route('/favicon.ico')
+def favicon():
+    """Servir un favicon par défaut pour éviter les erreurs 404"""
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'favicon.ico',
+        mimetype='image/vnd.microsoft.icon'
+    )
+
 @app.route('/upload', methods=['POST'])
 @login_required
 def upload_file():
@@ -7390,6 +7399,138 @@ def api_health_check():
             'status': 'unhealthy',
             'timestamp': datetime.now().isoformat(),
             'error': str(e)
+        }), 500
+
+@app.route('/api/visitor-chat', methods=['POST'])
+def visitor_chat():
+    """API pour le chatbot des visiteurs - Répond uniquement sur le projet NeuroScan"""
+    try:
+        data = request.get_json()
+        user_message = data.get('message', '').strip()
+        history = data.get('history', [])
+        
+        if not user_message:
+            return jsonify({
+                'success': False,
+                'error': 'Message vide'
+            }), 400
+        
+        # Contexte système strict pour limiter aux questions sur le projet
+        system_context = """Tu es l'assistant virtuel de NeuroScan, une plateforme médicale d'analyse IA pour les tumeurs cérébrales.
+
+RÈGLES STRICTES:
+1. Tu DOIS répondre UNIQUEMENT aux questions concernant le projet NeuroScan et ses fonctionnalités
+2. Tu NE DOIS PAS répondre aux questions médicales générales, diagnostics ou conseils de santé
+3. Si on te pose une question médicale, redirige poliment vers un professionnel de santé
+
+INFORMATIONS SUR NEUROSCAN:
+
+Présentation:
+- Plateforme d'intelligence artificielle pour l'analyse d'images IRM cérébrales
+- Détection automatique de tumeurs avec précision de 99.7%
+- Résultats en moins de 10 secondes
+- Interface moderne et intuitive
+
+Fonctionnalités principales:
+1. Analyse IA CNN (Réseau de Neurones Convolutionnel)
+   - Détection de 4 types: Normal, Gliome, Méningiome, Tumeur pituitaire
+   - Précision: 99.7% validée cliniquement
+   - Temps d'analyse: < 10 secondes
+   - Rapports détaillés avec probabilités
+
+2. Chat Médical IA
+   - Assistant conversationnel spécialisé en neurologie
+   - Questions médicales et interprétation d'examens
+   - Historique des conversations
+   - Interface moderne
+
+3. Gestion des Patients
+   - Dossiers médicaux complets
+   - Suivi longitudinal et évolution
+   - Historique des analyses
+   - Export de rapports PDF
+
+4. Tableau de Bord Professionnel
+   - Statistiques en temps réel
+   - Graphiques interactifs
+   - Métriques de performance
+   - Alertes médicales
+
+5. Sécurité et Conformité
+   - Chiffrement AES-256 de bout en bout
+   - Conformité RGPD
+   - Certification ISO 27001
+   - CE Médical
+   - Infrastructure cloud sécurisée
+
+Statistiques de performance:
+- Précision: 99.7%
+- Temps d'analyse: < 10 secondes
+- 50,000+ analyses effectuées
+- 500+ médecins utilisateurs
+- 98.7% de satisfaction médecins
+
+Processus d'utilisation:
+1. Upload sécurisé de l'image IRM (DICOM, NIfTI, JPEG, PNG)
+2. Analyse IA automatique en moins de 10s
+3. Résultats détaillés avec classification et probabilités
+4. Génération rapport PDF professionnel
+
+Technologies:
+- Deep Learning CNN (PyTorch)
+- Modèle entraîné sur 100,000+ images validées
+- API Gemini pour le chat médical
+- Base de données SQLite pour le suivi
+- Interface Flask avec design moderne
+
+Accès:
+- Inscription gratuite pour les médecins
+- Authentification sécurisée
+- Dashboard personnel
+- Support 24/7
+
+Contact:
+- Email: mohammed.betkaoui@neuroscan.ai
+- Téléphone: +123783962348
+- Adresse: Bordj Bou Arréridj, Algérie
+
+Réponds de manière concise, professionnelle et amicale. Si la question sort du contexte de NeuroScan, explique poliment que tu ne peux répondre qu'aux questions sur la plateforme."""
+        
+        # Construire le prompt avec historique
+        prompt = f"{system_context}\n\n"
+        
+        # Ajouter l'historique (derniers 5 échanges max)
+        for msg in history[-5:]:
+            role = msg.get('role', 'user')
+            content = msg.get('content', '')
+            prompt += f"{role}: {content}\n"
+        
+        prompt += f"\nuser: {user_message}\nassistant:"
+        
+        # Appeler Gemini
+        response_text = call_gemini_api(prompt, context="neuroscan_project")
+        
+        if not response_text:
+            return jsonify({
+                'success': False,
+                'error': 'Erreur lors de la génération de la réponse'
+            }), 500
+        
+        # Mettre à jour l'historique
+        history.append({'role': 'user', 'content': user_message})
+        history.append({'role': 'assistant', 'content': response_text})
+        
+        return jsonify({
+            'success': True,
+            'response': response_text,
+            'history': history
+        })
+        
+    except Exception as e:
+        print(f"Erreur dans visitor_chat: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Erreur serveur'
         }), 500
 
 if __name__ == '__main__':

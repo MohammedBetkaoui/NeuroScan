@@ -1286,6 +1286,66 @@
         </div>
     </footer>
 
+    <!-- Widget Chatbot pour Visiteurs -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visitor_chatbot.css') }}">
+    
+    <!-- Bouton flottant du chatbot -->
+    <div id="visitor-chatbot-button">
+        <i class="fas fa-comments"></i>
+        <span class="chatbot-notification-badge">!</span>
+    </div>
+
+    <!-- Fenêtre du chatbot -->
+    <div id="visitor-chatbot-window">
+        <!-- En-tête -->
+        <div class="chatbot-header">
+            <div class="chatbot-header-info">
+                <div class="chatbot-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="chatbot-title">
+                    <h3>Assistant NeuroScan</h3>
+                    <div class="chatbot-status">
+                        <span class="status-indicator"></span>
+                        <span>En ligne</span>
+                    </div>
+                </div>
+            </div>
+            <button class="chatbot-close-btn" id="chatbot-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Zone de messages -->
+        <div class="chatbot-messages" id="chatbot-messages">
+            <div class="welcome-message">
+                <i class="fas fa-robot"></i>
+                <h4>Assistant NeuroScan</h4>
+                <p>Posez-moi vos questions sur notre plateforme!</p>
+            </div>
+        </div>
+
+        <!-- Suggestions rapides -->
+        <div class="quick-suggestions"></div>
+
+        <!-- Zone d'entrée -->
+        <div class="chatbot-input-area">
+            <div class="chatbot-input-container">
+                <textarea 
+                    id="chatbot-input" 
+                    class="chatbot-input" 
+                    placeholder="Posez votre question..." 
+                    rows="1"
+                    maxlength="500"
+                ></textarea>
+                <button id="chatbot-send" class="chatbot-send-btn" disabled>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+   <script src="{{ url_for('static', filename='js/visitor_chatbot.js') }}"></script>
 </body>
 </html>

@@ -589,12 +589,8 @@
         };
         
         if (routes[routeName]) {
-            // Ouvrir le chat médical dans un nouvel onglet
-            if (routeName === 'chat') {
-                window.open(routes[routeName], '_blank');
-            } else {
-                window.location.href = routes[routeName];
-            }
+            // Naviguer vers la page dans le même onglet
+            window.location.href = routes[routeName];
         }
     }
 

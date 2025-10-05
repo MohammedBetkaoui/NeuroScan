@@ -227,21 +227,32 @@ Réponds de manière concise, professionnelle et amicale. Si la question sort du
                 })
             });
             
+            const data = await response.json();
+            
+            if (response.status === 429) {
+                // Quota dépassé
+                const retryAfter = data.retry_after || 15;
+                return `⚠️ **Quota d'utilisation dépassé**\n\nLe service de chat a atteint sa limite gratuite de 250 requêtes par jour.\n\nVeuillez réessayer dans **${retryAfter} secondes** ou contactez-nous pour plus d'informations.\n\n📧 Email: mohammed.betkaoui@neuroscan.ai`;
+            }
+            
             if (!response.ok) {
                 throw new Error(`Erreur HTTP: ${response.status}`);
             }
-            
-            const data = await response.json();
             
             if (data.success) {
                 conversationHistory = data.history;
                 return data.response;
             } else {
-                throw new Error(data.error || 'Erreur inconnue');
+                if (data.error === 'quota_exceeded') {
+                    const retryAfter = data.retry_after || 15;
+                    return `⚠️ **Quota d'utilisation dépassé**\n\nLe service de chat a atteint sa limite gratuite de 250 requêtes par jour.\n\nVeuillez réessayer dans **${retryAfter} secondes**.\n\n💡 **Astuce**: Vous pouvez toujours créer un compte et explorer les fonctionnalités d'analyse IA sans limitation!`;
+                } else {
+                    throw new Error(data.message || data.error || 'Erreur inconnue');
+                }
             }
         } catch (error) {
             console.error('Erreur API:', error);
-            return "Désolé, je rencontre un problème technique. Veuillez réessayer dans quelques instants.";
+            return `😔 **Service temporairement indisponible**\n\nDésolé, je rencontre un problème technique.\n\nVeuillez réessayer dans quelques instants ou contactez notre support:\n📧 mohammed.betkaoui@neuroscan.ai`;
         }
     }
     

@@ -19,6 +19,10 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from torchvision import transforms
 from functools import wraps
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement depuis le fichier .env
+load_dotenv()
 
 # PDF Generation
 from reportlab.lib import colors
@@ -36,13 +40,17 @@ from reportlab.graphics import renderPDF
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['SECRET_KEY'] = 'neuroscan_secret_key_2024_medical_auth'  # Clé secrète pour les sessions
+# Charger la clé secrète depuis .env ou utiliser une valeur par défaut
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'neuroscan_secret_key_2024_medical_auth')
 
 # Créer le dossier uploads s'il n'existe pas
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Configuration de l'API Gemini
-GEMINI_API_KEY = "AIzaSyDNhBXUjMKVo9fJQBQXtLPwbXJafw6lHPU"
+# Configuration de l'API Gemini - Chargée depuis .env
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+if not GEMINI_API_KEY or GEMINI_API_KEY == 'your_gemini_api_key_here':
+    print("⚠️  ATTENTION: Clé API Gemini non configurée. Le chatbot ne fonctionnera pas.")
+    print("   Ajoutez votre clé dans le fichier .env : GEMINI_API_KEY=votre_clé_ici")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
 # Configuration de la base de données
@@ -1829,12 +1837,40 @@ def call_gemini_api(prompt, context="medical"):
             else:
                 print(f"No candidates in response: {result}")
                 return None
+        
+        # Gestion spécifique des erreurs
+        elif response.status_code == 429:
+            error_data = response.json()
+            print(f"⚠️  Quota API Gemini dépassé: {response.status_code}")
+            
+            # Extraire le temps de retry si disponible
+            retry_delay = 15  # Par défaut
+            if 'error' in error_data and 'details' in error_data['error']:
+                for detail in error_data['error']['details']:
+                    if detail.get('@type') == 'type.googleapis.com/google.rpc.RetryInfo':
+                        retry_delay = int(detail.get('retryDelay', '15s').replace('s', ''))
+            
+            print(f"   Veuillez réessayer dans {retry_delay} secondes")
+            print(f"   Limite gratuite: 250 requêtes/jour atteinte")
+            return f"QUOTA_EXCEEDED:{retry_delay}"
+        
+        elif response.status_code == 400:
+            print(f"❌ Erreur de requête API Gemini: {response.status_code}")
+            print(f"   Vérifiez votre clé API dans le fichier .env")
+            return None
+        
+        else:
+            print(f"❌ Erreur API Gemini: {response.status_code} - {response.text}")
+            return None
 
-        print(f"Erreur API Gemini: {response.status_code} - {response.text}")
+    except requests.exceptions.Timeout:
+        print(f"⏱️  Timeout lors de l'appel à Gemini API (>30s)")
         return None
-
+    except requests.exceptions.ConnectionError:
+        print(f"🌐 Erreur de connexion à l'API Gemini - Vérifiez votre connexion internet")
+        return None
     except Exception as e:
-        print(f"Erreur lors de l'appel à Gemini: {e}")
+        print(f"❌ Erreur lors de l'appel à Gemini: {e}")
         return None
 
 def get_gemini_analysis(results):
@@ -7510,10 +7546,21 @@ Réponds de manière concise, professionnelle et amicale. Si la question sort du
         # Appeler Gemini
         response_text = call_gemini_api(prompt, context="neuroscan_project")
         
+        # Vérifier si c'est une erreur de quota
+        if response_text and response_text.startswith("QUOTA_EXCEEDED:"):
+            retry_delay = response_text.split(":")[1]
+            return jsonify({
+                'success': False,
+                'error': 'quota_exceeded',
+                'message': f"Le quota d'utilisation gratuit de l'API Gemini a été atteint (250 requêtes/jour). Veuillez réessayer dans {retry_delay} secondes.",
+                'retry_after': int(retry_delay)
+            }), 429
+        
         if not response_text:
             return jsonify({
                 'success': False,
-                'error': 'Erreur lors de la génération de la réponse'
+                'error': 'api_error',
+                'message': 'Le service de chat est temporairement indisponible. Veuillez réessayer plus tard.'
             }), 500
         
         # Mettre à jour l'historique

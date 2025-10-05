@@ -297,15 +297,53 @@ pip install -r requirements_basic.txt
 
 Pour activer le chatbot avec Google Gemini AI :
 
+#### Méthode 1 : Script automatique (recommandé)
+
 ```bash
-# 1. Obtenir une clé API gratuite sur https://makersuite.google.com/app/apikey
+# Utiliser le script de configuration
+./setup_env.sh
 
-# 2. Créer un fichier .env à la racine du projet
-echo "GEMINI_API_KEY=votre_clé_api_ici" > .env
-
-# 3. OU définir la variable d'environnement directement
-export GEMINI_API_KEY="votre_clé_api_ici"
+# Le script va :
+# - Créer le fichier .env depuis .env.example
+# - Générer automatiquement une SECRET_KEY sécurisée
+# - Vous demander votre clé API Gemini
 ```
+
+#### Méthode 2 : Configuration manuelle
+
+```bash
+# 1. Copier le fichier exemple
+cp .env.example .env
+
+# 2. Éditer le fichier .env
+nano .env  # ou vim, code, etc.
+
+# 3. Remplacer "your_gemini_api_key_here" par votre vraie clé
+GEMINI_API_KEY=AIzaSyD...votre_clé_réelle_ici
+
+# 4. (Optionnel) Modifier aussi SECRET_KEY pour plus de sécurité
+SECRET_KEY=votre_clé_secrète_aléatoire_longue
+```
+
+#### Obtenir une clé API Gemini
+
+1. **Visitez** : [https://makersuite.google.com/app/apikey](https://makersuite.google.com/app/apikey)
+2. **Connectez-vous** avec votre compte Google
+3. **Cliquez** sur "Create API Key"
+4. **Copiez** la clé générée
+5. **Collez** dans le fichier `.env`
+
+#### Vérifier la configuration
+
+```bash
+# Vérifier que le .env est chargé correctement
+python3 -c "from dotenv import load_dotenv; import os; load_dotenv(); print('✅ Configuration OK' if os.getenv('GEMINI_API_KEY') else '❌ Clé manquante')"
+```
+
+⚠️ **Important** : 
+- Le fichier `.env` contient des informations sensibles
+- Il est déjà dans `.gitignore` pour ne pas être commité sur Git
+- Ne partagez JAMAIS votre clé API publiquement
 
 ### 📁 Fichiers requis
 
@@ -316,14 +354,18 @@ Assurez-vous que les fichiers suivants sont présents dans votre projet :
 - ✅ `app_demo.py` - Application Flask en mode démo (sans PyTorch)
 - ✅ `best_brain_tumor_model.pth` - Modèle PyTorch entraîné (280MB)
 - ✅ `neuroscan_analytics.db` - Base de données SQLite (créée automatiquement)
+- ✅ `.env` - Variables d'environnement (créé depuis .env.example)
 
 **Scripts :**
 - ✅ `start_demo.sh` - Script de démarrage rapide mode démo
 - ✅ `install_pytorch.sh` - Script d'installation PyTorch automatique
+- ✅ `setup_env.sh` - Script de configuration du fichier .env
 
 **Configuration :**
 - ✅ `requirements.txt` - Liste complète des dépendances
 - ✅ `requirements_basic.txt` - Dépendances minimales pour le mode démo
+- ✅ `.env.example` - Template pour les variables d'environnement
+- ✅ `.gitignore` - Fichiers à ignorer par Git (inclut .env)
 
 **Dossiers :**
 - ✅ `templates/` - Templates HTML de l'interface
@@ -3163,22 +3205,38 @@ app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32MB au lieu de 16MB
 **Erreur** :
 ```
 API Gemini indisponible
+ou
+⚠️  ATTENTION: Clé API Gemini non configurée
 ```
 
 **Solution** :
 ```bash
-# Vérifier que la clé API est définie
-echo $GEMINI_API_KEY
+# Méthode 1 : Utiliser le script de configuration
+./setup_env.sh
 
-# Si vide, définir
+# Méthode 2 : Créer/modifier .env manuellement
+# Vérifier si .env existe
+ls -la .env
+
+# Si absent, créer depuis le template
+cp .env.example .env
+
+# Éditer et ajouter votre clé API
+nano .env
+# Remplacer: GEMINI_API_KEY=your_gemini_api_key_here
+# Par:       GEMINI_API_KEY=AIzaSy...votre_vraie_clé
+
+# Méthode 3 : Variable d'environnement temporaire (non recommandé)
 export GEMINI_API_KEY="votre_clé_api"
 
-# Ou créer un fichier .env
-echo "GEMINI_API_KEY=votre_clé_api" > .env
+# Vérifier que la clé est bien chargée
+python3 -c "from dotenv import load_dotenv; import os; load_dotenv(); print(f'Clé présente: {bool(os.getenv(\"GEMINI_API_KEY\"))}')"
 
-# Installer python-dotenv
-pip install python-dotenv
+# Redémarrer l'application
+python3 app.py
 ```
+
+**Note** : La clé API doit être dans le fichier `.env` pour être chargée automatiquement au démarrage de l'application.
 
 ---
 

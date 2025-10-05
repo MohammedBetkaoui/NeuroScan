@@ -545,6 +545,11 @@ function renderPatientsList() {
                                 class="inline-flex items-center px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all duration-200 shadow-sm hover:shadow-md">
                             <i class="fas fa-edit mr-1"></i>Modifier
                         </button>
+                        <button onclick="event.stopPropagation(); deletePatient('${patient.patient_id}')" 
+                                class="inline-flex items-center px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all duration-200 shadow-sm hover:shadow-md"
+                                title="Supprimer ce patient">
+                            <i class="fas fa-trash-alt mr-1"></i>Supprimer
+                        </button>
                     </div>
                 </td>
             </tr>
@@ -643,6 +648,11 @@ function renderPatientsCards() {
                     <button onclick="event.stopPropagation(); editPatient('${patient.patient_id}')" 
                             class="flex-1 px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-center">
                         <i class="fas fa-edit mr-1"></i>Modifier
+                    </button>
+                    <button onclick="event.stopPropagation(); deletePatient('${patient.patient_id}')" 
+                            class="px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                            title="Supprimer">
+                        <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
             </div>

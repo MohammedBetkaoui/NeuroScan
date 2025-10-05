@@ -1,6 +1,9 @@
-// Chatbot pour visiteurs - JavaScript
+// ==========================================
+// Chatbot Visiteur - Version Moderne & Pro
+// ==========================================
+
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🤖 Initialisation du chatbot visiteurs...');
+    console.log('🤖 Initialisation du chatbot visiteurs (Version Pro)...');
     
     // Éléments DOM
     const chatbotButton = document.getElementById('visitor-chatbot-button');
@@ -13,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // État du chatbot
     let isOpen = false;
     let conversationHistory = [];
+    let isTyping = false;
     
     // Messages de bienvenue et contexte
     const SYSTEM_CONTEXT = `Tu es l'assistant virtuel de NeuroScan, une plateforme médicale d'analyse IA pour les tumeurs cérébrales.
@@ -95,15 +99,15 @@ Contact:
 
 Réponds de manière concise, professionnelle et amicale. Si la question sort du contexte de NeuroScan, explique poliment que tu ne peux répondre qu'aux questions sur la plateforme.`;
 
-    const WELCOME_MESSAGE = "👋 Bonjour! Je suis l'assistant virtuel de **NeuroScan**.\n\nJe peux vous aider à comprendre notre plateforme d'analyse IA pour les tumeurs cérébrales.\n\nQue souhaitez-vous savoir?";
+    const WELCOME_MESSAGE = "👋 **Bienvenue sur NeuroScan!**\n\nJe suis votre assistant virtuel, prêt à vous aider à découvrir notre plateforme d'analyse IA pour les tumeurs cérébrales.\n\n💡 *Astuce: Cliquez sur une suggestion ci-dessous ou posez votre question!*";
     
     // Suggestions rapides
     const QUICK_SUGGESTIONS = [
-        "Comment fonctionne l'analyse IA?",
-        "Quelles fonctionnalités proposez-vous?",
-        "Quelle est la précision du système?",
-        "Comment créer un compte?",
-        "Quels types de tumeurs détectez-vous?"
+        "Comment fonctionne l'analyse IA? 🧠",
+        "Quelles fonctionnalités proposez-vous? ⚡",
+        "Quelle est la précision du système? 🎯",
+        "Comment créer un compte? 👤",
+        "Quels types de tumeurs détectez-vous? 🔬"
     ];
     
     // Vérification des éléments
@@ -114,22 +118,53 @@ Réponds de manière concise, professionnelle et amicale. Si la question sort du
     
     console.log('✅ Éléments du chatbot trouvés');
     
-    // Fonction pour formater le markdown simple
+    // ==========================================
+    // Fonctions utilitaires
+    // ==========================================
+    
+    // Formater le markdown avec support étendu
     function formatMarkdown(text) {
         return text
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
             .replace(/\n/g, '<br>')
-            .replace(/`(.*?)`/g, '<code>$1</code>');
+            // Support des listes
+            .replace(/^• (.+)$/gm, '<li>$1</li>')
+            .replace(/^- (.+)$/gm, '<li>$1</li>')
+            // Support des liens
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
     }
     
-    // Fonction pour obtenir l'heure actuelle
+    // Obtenir l'heure actuelle
     function getCurrentTime() {
         const now = new Date();
         return now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     }
     
-    // Fonction pour ajouter un message
+    // Scroll fluide vers le bas
+    function scrollToBottom(smooth = true) {
+        if (smooth) {
+            chatbotMessages.scrollTo({
+                top: chatbotMessages.scrollHeight,
+                behavior: 'smooth'
+            });
+        } else {
+            chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+        }
+    }
+    
+    // Auto-resize du textarea
+    function autoResizeTextarea() {
+        chatbotInput.style.height = 'auto';
+        chatbotInput.style.height = Math.min(chatbotInput.scrollHeight, 120) + 'px';
+    }
+    
+    // ==========================================
+    // Fonctions de gestion des messages
+    // ==========================================
+    
+    // Ajouter un message
     function addMessage(content, isBot = true) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${isBot ? 'bot' : 'user'}`;
@@ -163,11 +198,24 @@ Réponds de manière concise, professionnelle et amicale. Si la question sort du
         }
         
         chatbotMessages.appendChild(messageDiv);
-        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+        scrollToBottom();
+        
+        // Ajouter effet sonore léger (optionnel)
+        playMessageSound(isBot);
     }
     
-    // Fonction pour afficher l'indicateur de frappe
+    // Effet sonore léger pour les messages (optionnel)
+    function playMessageSound(isBot) {
+        // Peut être activé pour ajouter un feedback audio
+        // const audio = new Audio(isBot ? '/static/sounds/bot.mp3' : '/static/sounds/user.mp3');
+        // audio.volume = 0.2;
+        // audio.play().catch(e => console.log('Son désactivé'));
+    }
+    
+    // Afficher l'indicateur de frappe
     function showTypingIndicator() {
+        if (document.getElementById('typing-indicator')) return;
+        
         const typingDiv = document.createElement('div');
         typingDiv.className = 'typing-indicator';
         typingDiv.id = 'typing-indicator';
@@ -184,36 +232,54 @@ Réponds de manière concise, professionnelle et amicale. Si la question sort du
         `;
         
         chatbotMessages.appendChild(typingDiv);
-        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+        scrollToBottom();
+        isTyping = true;
     }
     
-    // Fonction pour masquer l'indicateur de frappe
+    // Masquer l'indicateur de frappe
     function hideTypingIndicator() {
         const typingIndicator = document.getElementById('typing-indicator');
         if (typingIndicator) {
-            typingIndicator.remove();
+            typingIndicator.style.animation = 'messageSlideIn 0.3s ease reverse';
+            setTimeout(() => typingIndicator.remove(), 300);
         }
+        isTyping = false;
     }
     
-    // Fonction pour afficher les suggestions rapides
+    // Afficher les suggestions rapides
     function showQuickSuggestions() {
         const suggestionsContainer = document.querySelector('.quick-suggestions');
         if (!suggestionsContainer) return;
         
         suggestionsContainer.innerHTML = '';
-        QUICK_SUGGESTIONS.forEach(suggestion => {
+        suggestionsContainer.style.display = 'flex';
+        
+        QUICK_SUGGESTIONS.forEach((suggestion, index) => {
             const chip = document.createElement('div');
             chip.className = 'suggestion-chip';
             chip.innerHTML = `<i class="fas fa-lightbulb"></i>${suggestion}`;
+            chip.style.animationDelay = `${index * 0.1}s`;
             chip.onclick = () => {
-                chatbotInput.value = suggestion;
+                chatbotInput.value = suggestion.replace(/[🧠⚡🎯👤🔬]/g, '').trim();
                 sendMessage();
             };
             suggestionsContainer.appendChild(chip);
         });
     }
     
-    // Fonction pour appeler l'API Gemini
+    // Masquer les suggestions
+    function hideSuggestions() {
+        const suggestionsContainer = document.querySelector('.quick-suggestions');
+        if (suggestionsContainer) {
+            suggestionsContainer.style.display = 'none';
+        }
+    }
+    
+    // ==========================================
+    // Fonctions API
+    // ==========================================
+    
+    // Appeler l'API Gemini
     async function callGeminiAPI(userMessage) {
         try {
             const response = await fetch('/api/visitor-chat', {
@@ -230,9 +296,8 @@ Réponds de manière concise, professionnelle et amicale. Si la question sort du
             const data = await response.json();
             
             if (response.status === 429) {
-                // Quota dépassé
                 const retryAfter = data.retry_after || 15;
-                return `⚠️ **Quota d'utilisation dépassé**\n\nLe service de chat a atteint sa limite gratuite de 250 requêtes par jour.\n\nVeuillez réessayer dans **${retryAfter} secondes** ou contactez-nous pour plus d'informations.\n\n📧 Email: mohammed.betkaoui@neuroscan.ai`;
+                return `⚠️ **Quota d'utilisation dépassé**\n\nLe service de chat a atteint sa limite gratuite de 250 requêtes par jour.\n\n⏱️ Veuillez réessayer dans **${retryAfter} secondes** ou contactez-nous pour plus d'informations.\n\n📧 Email: mohammed.betkaoui@neuroscan.ai\n📞 Téléphone: +123783962348`;
             }
             
             if (!response.ok) {
@@ -245,51 +310,56 @@ Réponds de manière concise, professionnelle et amicale. Si la question sort du
             } else {
                 if (data.error === 'quota_exceeded') {
                     const retryAfter = data.retry_after || 15;
-                    return `⚠️ **Quota d'utilisation dépassé**\n\nLe service de chat a atteint sa limite gratuite de 250 requêtes par jour.\n\nVeuillez réessayer dans **${retryAfter} secondes**.\n\n💡 **Astuce**: Vous pouvez toujours créer un compte et explorer les fonctionnalités d'analyse IA sans limitation!`;
+                    return `⚠️ **Quota d'utilisation dépassé**\n\nLe service de chat a atteint sa limite gratuite de 250 requêtes par jour.\n\n⏱️ Veuillez réessayer dans **${retryAfter} secondes**.\n\n💡 **Astuce**: Vous pouvez toujours créer un compte et explorer les fonctionnalités d'analyse IA sans limitation!`;
                 } else {
                     throw new Error(data.message || data.error || 'Erreur inconnue');
                 }
             }
         } catch (error) {
             console.error('Erreur API:', error);
-            return `😔 **Service temporairement indisponible**\n\nDésolé, je rencontre un problème technique.\n\nVeuillez réessayer dans quelques instants ou contactez notre support:\n📧 mohammed.betkaoui@neuroscan.ai`;
+            return `😔 **Service temporairement indisponible**\n\nDésolé, je rencontre un problème technique.\n\n🔄 Veuillez réessayer dans quelques instants ou contactez notre support:\n📧 mohammed.betkaoui@neuroscan.ai\n📞 +123783962348`;
         }
     }
     
-    // Fonction pour envoyer un message
+    // ==========================================
+    // Fonctions principales
+    // ==========================================
+    
+    // Envoyer un message
     async function sendMessage() {
         const message = chatbotInput.value.trim();
         
-        if (!message) return;
+        if (!message || isTyping) return;
         
         // Ajouter le message utilisateur
         addMessage(message, false);
         chatbotInput.value = '';
+        chatbotInput.style.height = 'auto';
         chatbotSend.disabled = true;
         
         // Masquer les suggestions
-        const suggestionsContainer = document.querySelector('.quick-suggestions');
-        if (suggestionsContainer) {
-            suggestionsContainer.style.display = 'none';
-        }
+        hideSuggestions();
         
         // Afficher l'indicateur de frappe
         showTypingIndicator();
         
-        // Appeler l'API
-        const response = await callGeminiAPI(message);
-        
-        // Masquer l'indicateur de frappe
-        hideTypingIndicator();
-        
-        // Ajouter la réponse du bot
-        addMessage(response, true);
-        
-        chatbotSend.disabled = false;
-        chatbotInput.focus();
+        // Appeler l'API avec délai réaliste
+        setTimeout(async () => {
+            const response = await callGeminiAPI(message);
+            
+            // Masquer l'indicateur de frappe
+            hideTypingIndicator();
+            
+            // Ajouter la réponse du bot avec délai pour effet naturel
+            setTimeout(() => {
+                addMessage(response, true);
+                chatbotSend.disabled = false;
+                chatbotInput.focus();
+            }, 300);
+        }, 800);
     }
     
-    // Fonction pour ouvrir/fermer le chatbot
+    // Ouvrir/fermer le chatbot
     function toggleChatbot() {
         isOpen = !isOpen;
         chatbotWindow.classList.toggle('show', isOpen);
@@ -303,17 +373,52 @@ Réponds de manière concise, professionnelle et amicale. Si la question sort du
                 setTimeout(() => {
                     addMessage(WELCOME_MESSAGE, true);
                     showQuickSuggestions();
-                }, 300);
+                }, 400);
             }
+            
+            // Marquer comme vu dans le localStorage
+            localStorage.setItem('chatbot_opened', 'true');
+        } else {
+            // Sauvegarder l'état
+            saveChatState();
         }
     }
     
-    // Event listeners
+    // Sauvegarder l'état du chat
+    function saveChatState() {
+        try {
+            localStorage.setItem('chatbot_history', JSON.stringify(conversationHistory));
+        } catch (e) {
+            console.log('Impossible de sauvegarder l\'historique');
+        }
+    }
+    
+    // Restaurer l'état du chat
+    function restoreChatState() {
+        try {
+            const savedHistory = localStorage.getItem('chatbot_history');
+            if (savedHistory) {
+                conversationHistory = JSON.parse(savedHistory);
+            }
+        } catch (e) {
+            console.log('Impossible de restaurer l\'historique');
+        }
+    }
+    
+    // ==========================================
+    // Event Listeners
+    // ==========================================
+    
+    // Bouton chatbot - Toggle
     chatbotButton.addEventListener('click', toggleChatbot);
+    
+    // Bouton fermeture
     chatbotClose.addEventListener('click', toggleChatbot);
     
+    // Bouton envoi
     chatbotSend.addEventListener('click', sendMessage);
     
+    // Input - Entrée pour envoyer
     chatbotInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -321,19 +426,148 @@ Réponds de manière concise, professionnelle et amicale. Si la question sort du
         }
     });
     
+    // Input - Auto-resize et activation bouton
     chatbotInput.addEventListener('input', () => {
+        autoResizeTextarea();
         chatbotSend.disabled = !chatbotInput.value.trim();
     });
     
-    // Animation d'attention au démarrage
-    setTimeout(() => {
-        chatbotButton.classList.add('attention');
-    }, 2000);
+    // Input - Shift+Enter pour nouvelle ligne
+    chatbotInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.shiftKey) {
+            e.stopPropagation();
+        }
+    });
     
-    // Retirer l'animation après 10 secondes
-    setTimeout(() => {
-        chatbotButton.classList.remove('attention');
-    }, 12000);
+    // Fermer avec Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isOpen) {
+            toggleChatbot();
+        }
+    });
     
-    console.log('✅ Chatbot visiteurs initialisé avec succès');
+    // Fermer en cliquant à l'extérieur (optionnel)
+    document.addEventListener('click', (e) => {
+        if (isOpen && 
+            !chatbotWindow.contains(e.target) && 
+            !chatbotButton.contains(e.target)) {
+            // Optionnel: décommenter pour fermer en cliquant dehors
+            // toggleChatbot();
+        }
+    });
+    
+    // ==========================================
+    // Initialisation
+    // ==========================================
+    
+    // Restaurer l'état sauvegardé
+    restoreChatState();
+    
+    // Animation d'attention au démarrage (si pas déjà ouvert)
+    const hasOpened = localStorage.getItem('chatbot_opened');
+    if (!hasOpened) {
+        setTimeout(() => {
+            chatbotButton.classList.add('attention');
+        }, 3000);
+        
+        // Retirer l'animation après 15 secondes
+        setTimeout(() => {
+            chatbotButton.classList.remove('attention');
+        }, 18000);
+    }
+    
+    // Afficher tooltip au survol (optionnel)
+    let tooltipTimeout;
+    chatbotButton.addEventListener('mouseenter', () => {
+        if (!isOpen) {
+            tooltipTimeout = setTimeout(() => {
+                // Créer tooltip
+                const tooltip = document.createElement('div');
+                tooltip.id = 'chatbot-tooltip';
+                tooltip.style.cssText = `
+                    position: fixed;
+                    bottom: 105px;
+                    right: 24px;
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    color: white;
+                    padding: 12px 18px;
+                    border-radius: 16px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+                    z-index: 999;
+                    animation: slideInUp 0.3s ease;
+                    white-space: nowrap;
+                `;
+                tooltip.textContent = '💬 Besoin d\'aide? Cliquez ici!';
+                document.body.appendChild(tooltip);
+            }, 1000);
+        }
+    });
+    
+    chatbotButton.addEventListener('mouseleave', () => {
+        clearTimeout(tooltipTimeout);
+        const tooltip = document.getElementById('chatbot-tooltip');
+        if (tooltip) {
+            tooltip.style.animation = 'slideInUp 0.3s ease reverse';
+            setTimeout(() => tooltip.remove(), 300);
+        }
+    });
+    
+    // Support du copier-coller d'images (fonctionnalité avancée - optionnel)
+    chatbotInput.addEventListener('paste', (e) => {
+        const items = e.clipboardData?.items;
+        if (items) {
+            for (let item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    e.preventDefault();
+                    addMessage('ℹ️ Les images ne sont pas supportées dans ce chat. Pour analyser une image médicale, veuillez vous connecter à votre compte.', true);
+                    break;
+                }
+            }
+        }
+    });
+    
+    // Détection de l'inactivité (optionnel)
+    let inactivityTimer;
+    function resetInactivityTimer() {
+        clearTimeout(inactivityTimer);
+        if (isOpen && conversationHistory.length > 0) {
+            inactivityTimer = setTimeout(() => {
+                if (!isTyping) {
+                    addMessage('👋 Vous avez d\'autres questions? Je suis toujours là pour vous aider!', true);
+                }
+            }, 120000); // 2 minutes
+        }
+    }
+    
+    // Reset timer lors d'une interaction
+    chatbotInput.addEventListener('focus', resetInactivityTimer);
+    chatbotMessages.addEventListener('scroll', resetInactivityTimer);
+    
+    // Log d'initialisation réussie
+    console.log('✅ Chatbot visiteurs initialisé avec succès (Version Pro)');
+    console.log('📊 Fonctionnalités activées:');
+    console.log('   - Messages formatés (Markdown)');
+    console.log('   - Suggestions rapides');
+    console.log('   - Auto-resize textarea');
+    console.log('   - Sauvegarde état');
+    console.log('   - Animations fluides');
+    console.log('   - Responsive design');
+    console.log('   - Raccourcis clavier (Enter, Shift+Enter, Esc)');
+    console.log('   - Détection inactivité');
+    
+    // Analytics (optionnel - pour suivre l'utilisation)
+    if (window.gtag) {
+        chatbotButton.addEventListener('click', () => {
+            gtag('event', 'chatbot_opened', {
+                event_category: 'engagement',
+                event_label: 'visitor_chatbot'
+            });
+        });
+    }
 });
+
+// ==========================================
+// Fin du fichier JavaScript
+// ==========================================

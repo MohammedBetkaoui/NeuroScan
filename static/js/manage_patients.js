@@ -330,16 +330,33 @@ function updateStatistics() {
 // Animation des compteurs
 function animateCounter(elementId, targetValue) {
     const element = document.getElementById(elementId);
+    if (!element) return;
+    
     const currentValue = parseInt(element.textContent) || 0;
-    const increment = targetValue > currentValue ? 1 : -1;
-    const stepTime = Math.abs(Math.floor(300 / (targetValue - currentValue))) || 10;
+    
+    // Si la valeur est déjà correcte, ne pas animer
+    if (currentValue === targetValue) {
+        return;
+    }
+    
+    // Calculer l'incrément et le nombre de pas
+    const difference = targetValue - currentValue;
+    const increment = difference > 0 ? 1 : -1;
+    const steps = Math.abs(difference);
+    
+    // Limiter la durée de l'animation à 500ms max
+    const duration = Math.min(500, steps * 20);
+    const stepTime = Math.max(10, Math.floor(duration / steps));
     
     let current = currentValue;
     const timer = setInterval(() => {
         current += increment;
         element.textContent = current;
         
-        if (current === targetValue) {
+        // Arrêter quand on atteint la valeur cible
+        if ((increment > 0 && current >= targetValue) || 
+            (increment < 0 && current <= targetValue)) {
+            element.textContent = targetValue;
             clearInterval(timer);
         }
     }, stepTime);

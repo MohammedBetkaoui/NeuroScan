@@ -51,7 +51,7 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 if not GEMINI_API_KEY or GEMINI_API_KEY == 'your_gemini_api_key_here':
     print("⚠️  ATTENTION: Clé API Gemini non configurée. Le chatbot ne fonctionnera pas.")
     print("   Ajoutez votre clé dans le fichier .env : GEMINI_API_KEY=votre_clé_ici")
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 # Configuration de la base de données
 DATABASE_PATH = 'neuroscan_analytics.db'
@@ -1337,7 +1337,15 @@ def dashboard():
     # Récupérer les statistiques du médecin
     doctor_stats = get_doctor_statistics(doctor['id'])
     
-    return render_template('dashboard.html', doctor=doctor, doctor_stats=doctor_stats)
+    # Ajouter les statistiques au contexte
+    total_analyses = doctor_stats.get('total_analyses', 0)
+    total_patients = doctor_stats.get('total_patients', 0)
+    
+    return render_template('dashboard.html', 
+                         doctor=doctor, 
+                         doctor_stats=doctor_stats,
+                         total_analyses=total_analyses,
+                         total_patients=total_patients)
 
 @app.route('/api/doctor/stats')
 @login_required

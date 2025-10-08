@@ -1,5 +1,6 @@
         // Variables globales
         let alertsData = [];
+        let lastAlertCount = 0; // Pour détecter les nouvelles alertes
         let currentDoctor = {};
         try {
             const el = document.getElementById('doctor-data');
@@ -107,6 +108,36 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    const newAlertCount = data.data.length;
+                    
+                    // Détecter nouvelles alertes et jouer le son
+                    if (lastAlertCount > 0 && newAlertCount > lastAlertCount) {
+                        const newAlertsNumber = newAlertCount - lastAlertCount;
+                        console.log(`🔔 ${newAlertsNumber} nouvelle(s) alerte(s) détectée(s)`);
+                        
+                        // Jouer le son de notification
+                        if (notificationAudio) {
+                            try {
+                                const audio = notificationAudio.cloneNode();
+                                audio.volume = 0.5;
+                                audio.play().catch(error => {
+                                    console.log('Impossible de jouer le son:', error);
+                                });
+                            } catch (error) {
+                                console.log('Erreur lecture son:', error);
+                            }
+                        }
+                        
+                        // Afficher notification visuelle
+                        showNotification(
+                            `🔔 ${newAlertsNumber} nouvelle${newAlertsNumber > 1 ? 's' : ''} alerte${newAlertsNumber > 1 ? 's' : ''} médicale${newAlertsNumber > 1 ? 's' : ''}`,
+                            'info',
+                            5000,
+                            false // Ne pas jouer le son deux fois
+                        );
+                    }
+                    
+                    lastAlertCount = newAlertCount;
                     alertsData = data.data;
                     updateAlertsUI();
                 }
@@ -262,7 +293,17 @@
         }
 
         // Notifications système
-        function showNotification(message, type = 'info', duration = 5000) {
+        // Audio de notification préchargé
+        let notificationAudio = null;
+        try {
+            notificationAudio = new Audio('/static/shop-notification-355746.mp3');
+            notificationAudio.volume = 0.5;
+            notificationAudio.preload = 'auto';
+        } catch (error) {
+            console.log('Audio de notification non disponible');
+        }
+
+        function showNotification(message, type = 'info', duration = 5000, playSound = true) {
             const notification = document.createElement('div');
             notification.className = `notification ${type} show animate-slide-in-right`;
             notification.innerHTML = `
@@ -276,6 +317,19 @@
             `;
             
             document.body.appendChild(notification);
+            
+            // Jouer le son de notification
+            if (playSound && notificationAudio) {
+                try {
+                    const audio = notificationAudio.cloneNode();
+                    audio.volume = 0.5;
+                    audio.play().catch(error => {
+                        console.log('Impossible de jouer le son:', error);
+                    });
+                } catch (error) {
+                    console.log('Erreur lecture son:', error);
+                }
+            }
             
             setTimeout(() => {
                 notification.remove();

@@ -130,28 +130,122 @@
             </div>
     </div>
 
-    <!-- Liste des alertes -->
-    <div class="dashboard-card p-0" style="height: calc(100vh - 280px); display: flex; flex-direction: column;">
-            <div class="flex items-center justify-between p-6 pb-4">
-                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                            <i class="fas fa-bell text-neuroscan-600 mr-2"></i>
-                            Alertes Actives
-                            <span id="totalAlertsCount" class="ml-2 badge info">0</span>
-                    </h3>
-                    <div class="flex items-center space-x-2">
-                            <button class="btn-dashboard secondary" onclick="alertsPage_refresh()"><i class="fas fa-sync-alt"></i></button>
-                            <button class="btn-dashboard success" onclick="alertsPage_export()"><i class="fas fa-download"></i></button>
+    <!-- Liste des alertes modernisée -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden" style="height: calc(100vh - 280px); display: flex; flex-direction: column;">
+            <!-- En-tête amélioré -->
+            <div class="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-b border-gray-200">
+                    <div class="flex items-center justify-between p-6">
+                            <!-- Titre avec icône et badge -->
+                            <div class="flex items-center gap-4">
+                                    <div class="relative">
+                                            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-all duration-300">
+                                                    <i class="fas fa-bell text-white text-xl animate-pulse"></i>
+                                            </div>
+                                            <div class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                                                    <span id="unreadBadgeMini" class="text-white text-xs font-bold">0</span>
+                                            </div>
+                                    </div>
+                                    <div>
+                                            <h3 class="text-2xl font-black text-gray-900 flex items-center gap-3">
+                                                    Alertes Actives
+                                                    <span id="totalAlertsCount" class="inline-flex items-center px-3 py-1 bg-white rounded-xl text-blue-600 text-sm font-bold shadow-sm border border-blue-200">
+                                                            <i class="fas fa-list-ul mr-1.5 text-xs"></i>
+                                                            0
+                                                    </span>
+                                            </h3>
+                                            <p class="text-sm text-gray-600 mt-1 font-medium">
+                                                    <i class="fas fa-clock mr-1"></i>
+                                                    Mise à jour en temps réel
+                                            </p>
+                                    </div>
+                            </div>
+
+                            <!-- Actions rapides -->
+                            <div class="flex items-center gap-3">
+                                    <!-- Bouton Actualiser -->
+                                    <button class="group relative overflow-hidden px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md" 
+                                            onclick="alertsPage_refresh()"
+                                            title="Actualiser les alertes">
+                                            <div class="flex items-center gap-2">
+                                                    <i class="fas fa-sync-alt text-gray-700 group-hover:rotate-180 transition-transform duration-500"></i>
+                                                    <span class="hidden sm:inline font-semibold text-gray-700">Actualiser</span>
+                                            </div>
+                                    </button>
+
+                                    <!-- Bouton Exporter -->
+                                    <button class="group relative overflow-hidden px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg" 
+                                            onclick="alertsPage_export()"
+                                            title="Exporter en CSV">
+                                            <div class="flex items-center gap-2">
+                                                    <i class="fas fa-download group-hover:-translate-y-1 transition-transform duration-300"></i>
+                                                    <span class="hidden sm:inline font-semibold">Exporter</span>
+                                            </div>
+                                    </button>
+
+                                    <!-- Bouton Paramètres -->
+                                    <button class="group relative overflow-hidden px-3 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md" 
+                                            onclick="toggleAlertsSettings()"
+                                            title="Paramètres d'affichage">
+                                            <i class="fas fa-cog text-gray-700 group-hover:rotate-90 transition-transform duration-300"></i>
+                                    </button>
+                            </div>
+                    </div>
+
+                    <!-- Barre de statut -->
+                    <div class="px-6 pb-4">
+                            <div class="flex flex-wrap items-center gap-3 text-xs">
+                                    <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg shadow-sm border border-gray-200">
+                                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                            <span class="font-semibold text-gray-700">En ligne</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg shadow-sm border border-gray-200">
+                                            <i class="fas fa-sync text-blue-500"></i>
+                                            <span class="text-gray-600">Auto-refresh: <span class="font-semibold text-gray-900">2 min</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg shadow-sm border border-gray-200">
+                                            <i class="fas fa-filter text-purple-500"></i>
+                                            <span class="text-gray-600">Filtres actifs: <span id="activeFiltersCount" class="font-semibold text-gray-900">0</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg shadow-sm border border-gray-200">
+                                            <i class="fas fa-eye text-amber-500"></i>
+                                            <span class="text-gray-600">Non lues: <span id="unreadCountStatus" class="font-semibold text-amber-600">0</span></span>
+                                    </div>
+                            </div>
                     </div>
             </div>
 
-            <div id="alertsPageList" class="space-y-4 px-6 pb-4 overflow-y-auto" style="flex:1 1 auto; min-height: 0; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
+            <!-- Zone de liste avec scroll personnalisé -->
+            <div id="alertsPageList" class="alerts-list-container flex-1 overflow-y-auto px-6 py-4 space-y-3" style="min-height: 0; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
                     <div class="text-center py-8 text-gray-500">
                             <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                             <p>Chargement des alertes...</p>
                     </div>
             </div>
 
-            <div class="flex items-center justify-center p-4 border-t" id="paginationContainer" style="flex: 0 0 auto"></div>
+            <!-- Pied de page avec pagination -->
+            <div class="bg-gradient-to-r from-gray-50 to-blue-50 border-t border-gray-200 p-4" style="flex: 0 0 auto">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <!-- Informations de pagination -->
+                            <div class="flex items-center gap-2 text-sm text-gray-600">
+                                    <i class="fas fa-info-circle text-blue-500"></i>
+                                    <span>Affichage des alertes actives</span>
+                                    <span class="hidden md:inline text-gray-400">•</span>
+                                    <span class="hidden md:inline text-gray-500" id="paginationInfo">Page 1</span>
+                            </div>
+
+                            <!-- Contrôles de pagination -->
+                            <div id="paginationContainer" class="flex items-center gap-2"></div>
+
+                            <!-- Actions supplémentaires -->
+                            <div class="flex items-center gap-2">
+                                    <select id="pageSizeSelector" class="text-sm px-3 py-1.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" onchange="changePageSize(this.value)">
+                                            <option value="10">10 par page</option>
+                                            <option value="20">20 par page</option>
+                                            <option value="50">50 par page</option>
+                                    </select>
+                            </div>
+                    </div>
+            </div>
     </div>
 
     <!-- Modal Détails Alerte -->
@@ -175,319 +269,24 @@
     {% endblock %}
 
     {% block extra_js %}
+    <script src="{{ url_for('static', filename='js/alerts_manager.js') }}"></script>
     <script>
-    (() => {
-        let ALERTS = [];
-        let FILTERED = [];
-        let PAGE = 1;
-        const PAGE_SIZE = 10;
-        let CURRENT = null;
+    // Fonctions globales pour compatibilité avec les boutons onclick
+    function alertsPage_markAllAsRead() {
+        if (window.alertsManager) alertsManager.markAllAsRead();
+    }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            setup();
-            alertsPage_loadAlerts();
-        });
+    function alertsPage_export() {
+        if (window.alertsManager) alertsManager.exportAlerts();
+    }
 
-        function setup() {
-            document.getElementById('severityFilter').addEventListener('change', alertsPage_applyFilters);
-            document.getElementById('typeFilter').addEventListener('change', alertsPage_applyFilters);
-            document.getElementById('statusFilter').addEventListener('change', alertsPage_applyFilters);
-            document.getElementById('searchInput').addEventListener('input', debounce(alertsPage_applyFilters, 250));
-            document.getElementById('alertDetailsResolveBtn').addEventListener('click', () => { if (CURRENT) alertsPage_resolve(CURRENT.id); });
-            document.getElementById('alertDetailsViewBtn').addEventListener('click', () => { if (CURRENT) window.location.href = `/patient/${CURRENT.patient_id}`; });
+    function alertsPage_refresh() {
+        if (window.alertsManager) alertsManager.refresh();
+    }
 
-            // Empêcher la molette de faire défiler la page quand on est sur la liste
-            const scroller = document.getElementById('alertsPageList');
-            if (scroller) trapScroll(scroller);
-        }
-
-        async function alertsPage_loadAlerts() {
-            try {
-                const res = await fetch('/api/alerts');
-                const json = await res.json();
-                if (json && json.success) {
-                    ALERTS = json.data;
-                    FILTERED = [...ALERTS];
-                    alertsPage_display();
-                    alertsPage_updateStats();
-                }
-            } catch (e) { console.error('Erreur chargement alertes:', e); }
-        }
-
-        function alertsPage_updateStats() {
-            const c = ALERTS.filter(a => a.severity === 'high').length;
-            const m = ALERTS.filter(a => a.severity === 'medium').length;
-            const l = ALERTS.filter(a => a.severity === 'low').length;
-            const u = ALERTS.filter(a => !a.is_read).length;
-            setText('criticalCount', c);
-            setText('mediumCount', m);
-            setText('lowCount', l);
-            setText('unreadCount', u);
-            setText('totalAlertsCount', FILTERED.length);
-        }
-
-            function alertsPage_display() {
-                const list = document.getElementById('alertsPageList');
-            const start = (PAGE - 1) * PAGE_SIZE;
-            const end = start + PAGE_SIZE;
-            const slice = FILTERED.slice(start, end);
-
-            if (slice.length === 0) {
-                list.innerHTML = `
-                    <div class="text-center py-10 text-gray-500">
-                        <i class="fas fa-check-circle text-green-500 text-4xl mb-2"></i>
-                        <h3 class="text-lg font-semibold mb-1">Aucune alerte trouvée</h3>
-                        <p>Essayez d'élargir vos filtres.</p>
-                        <button class="btn-dashboard secondary mt-4" onclick="alertsPage_clearFilters()"><i class=\"fas fa-times\"></i> Effacer les filtres</button>
-                    </div>`;
-                renderPagination(0);
-                return;
-            }
-
-            list.innerHTML = slice.map(a => alertCardHTML(a)).join('');
-            renderPagination(Math.ceil(FILTERED.length / PAGE_SIZE));
-        }
-
-        function alertCardHTML(alert) {
-            const sevColor = getSeverityColor(alert.severity);
-            const sevText = getSeverityText(alert.severity);
-            const sevBadge = getSeverityBadgeClass(alert.severity);
-            const lamp = getSeverityLampClass(alert.severity);
-            return `
-                <div class="patient-card alert-card p-5 ${alert.is_read ? '' : 'alert-unread'} alert-${alert.severity}" onclick="alertsPage_showDetails(${alert.id})">
-                    <div class="flex items-start gap-4">
-                        <div class="flex items-center">
-                            <span class="lamp-dot ${lamp}"></span>
-                            <i class="fas fa-${getSeverityIcon(alert.severity)} text-${sevColor} text-lg"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-start justify-between gap-3">
-                                <h4 class="font-semibold text-gray-900">${escapeHTML(alert.title)}</h4>
-                                <div class="flex items-center gap-2">
-                                    <span class="severity-badge badge-${sevBadge}">${sevText}</span>
-                                    <span class="status-chip ${alert.is_read ? 'status-read' : 'status-unread'}"><i class="fas fa-${alert.is_read ? 'envelope-open' : 'envelope'}"></i> ${alert.is_read ? 'Lue' : 'Non lue'}</span>
-                                </div>
-                            </div>
-                            <p class="text-gray-600 mt-2">${escapeHTML(alert.message)}</p>
-                            <div class="flex items-center justify-between mt-3">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <span class="meta-chip"><i class="fas fa-tag"></i> ${getAlertTypeText(alert.alert_type)}</span>
-                                    <span class="meta-chip"><i class="fas fa-user"></i> ${escapeHTML(alert.patient_name || '')}</span>
-                                    <span class="meta-chip"><i class="fas fa-hashtag"></i> ${escapeHTML(String(alert.patient_id || ''))}</span>
-                                    <span class="meta-chip"><i class="fas fa-clock"></i> ${alertsPage_formatDate(alert.created_at)}</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    ${!alert.is_read ? `<button class=\"btn-dashboard secondary\" onclick=\"event.stopPropagation(); alertsPage_markRead(${alert.id})\"><i class=\"fas fa-check-double\"></i></button>` : ''}
-                                    <button class="btn-dashboard success" onclick="event.stopPropagation(); alertsPage_resolve(${alert.id})"><i class="fas fa-check"></i></button>
-                                    <button class="btn-dashboard primary" onclick="event.stopPropagation(); alertsPage_showDetails(${alert.id})"><i class="fas fa-eye"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-        }
-
-        function alertsPage_applyFilters() {
-            const sev = document.getElementById('severityFilter').value;
-            const type = document.getElementById('typeFilter').value;
-            const status = document.getElementById('statusFilter').value;
-            const q = (document.getElementById('searchInput').value || '').toLowerCase();
-
-            FILTERED = ALERTS.filter(a => {
-                const mSev = !sev || a.severity === sev;
-                const mType = !type || a.alert_type === type;
-                const mStatus = !status || (status === 'unread' ? !a.is_read : a.is_read);
-                const mQ = !q ||
-                    (a.title && a.title.toLowerCase().includes(q)) ||
-                    (a.message && a.message.toLowerCase().includes(q)) ||
-                    (a.patient_name && a.patient_name.toLowerCase().includes(q));
-                return mSev && mType && mStatus && mQ;
-            });
-
-            PAGE = 1;
-            alertsPage_display();
-            alertsPage_updateStats();
-        }
-
-        function renderPagination(totalPages) {
-            const el = document.getElementById('paginationContainer');
-            if (totalPages <= 1) { el.innerHTML = ''; return; }
-            let html = '';
-            html += `<button class="btn-dashboard secondary text-xs" ${PAGE===1?'disabled':''} onclick="alertsPage_changePage(${PAGE-1})"><i class=\"fas fa-chevron-left\"></i></button>`;
-            for (let i=1;i<=totalPages;i++) {
-                if (i===PAGE) html += `<button class="btn-dashboard primary text-xs">${i}</button>`;
-                else if (i===1 || i===totalPages || Math.abs(i-PAGE)<=1) html += `<button class="btn-dashboard secondary text-xs" onclick="alertsPage_changePage(${i})">${i}</button>`;
-                else if (i===PAGE-2 || i===PAGE+2) html += `<span class="text-gray-400 px-2">...</span>`;
-            }
-            html += `<button class="btn-dashboard secondary text-xs" ${PAGE===totalPages?'disabled':''} onclick="alertsPage_changePage(${PAGE+1})"><i class=\"fas fa-chevron-right\"></i></button>`;
-            el.innerHTML = html;
-        }
-
-        function alertsPage_changePage(p) {
-            const total = Math.ceil(FILTERED.length / PAGE_SIZE);
-            if (p>=1 && p<=total) { PAGE = p; alertsPage_display(); renderPagination(total); }
-        }
-
-        async function alertsPage_markRead(id) {
-            try {
-                const res = await fetch(`/api/alerts/${id}/mark-read`, { method:'POST', headers:{'Content-Type':'application/json'} });
-                if (res.ok) {
-                    const a = ALERTS.find(x=>x.id===id); if (a) a.is_read = true;
-                    const b = FILTERED.find(x=>x.id===id); if (b) b.is_read = true;
-                    alertsPage_display(); alertsPage_updateStats();
-                }
-            } catch(e){ console.error(e); }
-        }
-
-        async function alertsPage_resolve(id) {
-            try {
-                const res = await fetch(`/api/alerts/${id}/resolve`, { method:'POST', headers:{'Content-Type':'application/json'} });
-                if (res.ok) {
-                    ALERTS = ALERTS.filter(x=>x.id!==id);
-                    FILTERED = FILTERED.filter(x=>x.id!==id);
-                    alertsPage_display(); alertsPage_updateStats(); alertsPage_closeDetails();
-                    showNotification('Alerte résolue avec succès', 'success');
-                }
-            } catch(e){ console.error(e); showNotification('Erreur lors de la résolution', 'error'); }
-        }
-
-        function alertsPage_markAllAsRead() {
-            const unread = ALERTS.filter(a => !a.is_read);
-            Promise.all(unread.map(a => alertsPage_markRead(a.id))).then(() => showNotification('Toutes les alertes ont été marquées comme lues', 'success'));
-        }
-
-        function alertsPage_refresh() { alertsPage_loadAlerts(); }
-
-        function alertsPage_export() {
-            const rows = FILTERED.map(a => [a.id, a.title, a.message, a.severity, a.patient_name, a.created_at, a.is_read ? 'Lu':'Non lu']);
-            const csv = ['ID,Titre,Message,Sévérité,Patient,Date,Statut', ...rows.map(r => r.map(v => `"${String(v??'').replace(/"/g,'""')}"`).join(','))].join('\n');
-            const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `alertes_${new Date().toISOString().split('T')[0]}.csv`;
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
-            showNotification('Export terminé', 'success');
-        }
-
-        function alertsPage_clearFilters() {
-            document.getElementById('severityFilter').value = '';
-            document.getElementById('typeFilter').value = '';
-            document.getElementById('statusFilter').value = '';
-            document.getElementById('searchInput').value = '';
-            alertsPage_applyFilters();
-        }
-
-        function alertsPage_showDetails(id) {
-            const a = ALERTS.find(x=>x.id===id); if (!a) return; CURRENT = a;
-            const body = document.getElementById('alertDetailsBody');
-            body.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="dashboard-card p-4">
-                        <h3 class="font-semibold text-gray-900 mb-3">Informations</h3>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between"><span class="text-gray-600">Type</span><span class="font-medium">${getAlertTypeText(a.alert_type)}</span></div>
-                            <div class="flex justify-between"><span class="text-gray-600">Sévérité</span><span class="severity-badge badge-${getSeverityColor(a.severity)}">${getSeverityText(a.severity)}</span></div>
-                            <div class="flex justify-between"><span class="text-gray-600">Date</span><span class="font-medium">${alertsPage_formatDate(a.created_at)}</span></div>
-                            <div class="flex justify-between"><span class="text-gray-600">Statut</span><span class="status-chip ${a.is_read?'status-read':'status-unread'}">${a.is_read?'Lue':'Non lue'}</span></div>
-                        </div>
-                    </div>
-                    <div class="dashboard-card p-4">
-                        <h3 class="font-semibold text-gray-900 mb-3">Patient</h3>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between"><span class="text-gray-600">Nom</span><span class="font-medium">${escapeHTML(a.patient_name || '')}</span></div>
-                            <div class="flex justify-between"><span class="text-gray-600">ID</span><span class="font-medium">${escapeHTML(String(a.patient_id || ''))}</span></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="dashboard-card p-4">
-                    <h3 class="font-semibold text-gray-900 mb-3">Message</h3>
-                    <p class="text-gray-700">${escapeHTML(a.message || '')}</p>
-                </div>`;
-
-            document.getElementById('alertDetailsModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-            if (!a.is_read) alertsPage_markRead(a.id);
-        }
-
-        function alertsPage_closeDetails() {
-            document.getElementById('alertDetailsModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
-        // Utils
-        function getSeverityIcon(sev) { return sev==='high'?'exclamation-triangle': sev==='medium'?'exclamation-circle':'info-circle'; }
-        function getSeverityText(sev) { return sev==='high'?'Critique': sev==='medium'?'Moyenne': sev==='low'?'Faible':'Inconnue'; }
-            function getSeverityColor(sev) { return sev==='high'?'red-500': sev==='medium'?'amber-500': sev==='low'?'blue-500':'gray-500'; }
-            function getSeverityBadgeClass(sev) { return sev==='high'?'danger': sev==='medium'?'warning':'info'; }
-        function getSeverityLampClass(sev) { return sev==='high'?'lamp-danger': sev==='medium'?'lamp-warning':'lamp-info'; }
-        function getAlertTypeText(t) {
-            switch(t){
-                case 'new_tumor_detected': return 'Nouvelle tumeur détectée';
-                case 'diagnosis_change': return 'Changement de diagnostic';
-                case 'rapid_growth': return 'Croissance rapide';
-                case 'confidence_drop': return 'Baisse de confiance';
-                case 'tumor_resolved': return 'Amélioration significative';
-                case 'high_grade_tumor': return 'Tumeur de haut grade';
-                default: return t || '-';
-            }
-        }
-        function alertsPage_formatDate(s){ const d=new Date(s); if(isNaN(d)) return '-'; const n=new Date(); const ms=n-d; const m=Math.floor(ms/60000), h=Math.floor(m/60), day=Math.floor(h/24); if(m<1) return "À l'instant"; if(m<60) return `Il y a ${m} min`; if(h<24) return `Il y a ${h}h`; if(day<7) return `Il y a ${day}j`; try { return d.toLocaleDateString('fr-FR'); } catch { return '-'; } }
-        function setText(id, v){ const el=document.getElementById(id); if (el) el.textContent = v; }
-        function escapeHTML(str){ return String(str).replace(/[&<>"']/g, s=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[s])); }
-        function debounce(fn, wait){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); } }
-
-        // Expose pour onclick
-        window.alertsPage_markAllAsRead = alertsPage_markAllAsRead;
-        window.alertsPage_export = alertsPage_export;
-        window.alertsPage_refresh = alertsPage_refresh;
-        window.alertsPage_clearFilters = alertsPage_clearFilters;
-        window.alertsPage_changePage = alertsPage_changePage;
-        window.alertsPage_showDetails = alertsPage_showDetails;
-        window.alertsPage_markRead = alertsPage_markRead;
-        window.alertsPage_resolve = alertsPage_resolve;
-        window.alertsPage_closeDetails = alertsPage_closeDetails;
-
-        // Scroll trap util to keep wheel/touch/keys within a container
-        function trapScroll(el){
-            // Wheel
-            el.addEventListener('wheel', (e)=>{
-                const delta = e.deltaY;
-                const atTop = el.scrollTop === 0;
-                const atBottom = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight;
-                if ((delta < 0 && atTop) || (delta > 0 && atBottom)) {
-                    e.preventDefault();
-                }
-                e.stopPropagation();
-            }, { passive: false });
-
-            // Keys
-            el.addEventListener('keydown', (e)=>{
-                const keys = ['ArrowUp','ArrowDown','PageUp','PageDown','Home','End','Space'];
-                if (!keys.includes(e.key)) return;
-                const atTop = el.scrollTop === 0;
-                const atBottom = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight;
-                if ((e.key==='ArrowUp'||e.key==='PageUp'||e.key==='Home') && atTop) {
-                    e.preventDefault(); e.stopPropagation();
-                } else if ((e.key==='ArrowDown'||e.key==='PageDown'||e.key==='End'||e.key==='Space') && atBottom) {
-                    e.preventDefault(); e.stopPropagation();
-                }
-            });
-
-            // Touch
-            let startY = 0;
-            el.addEventListener('touchstart', (e)=>{ startY = e.touches[0].clientY; }, { passive: true });
-            el.addEventListener('touchmove', (e)=>{
-                const y = e.touches[0].clientY;
-                const delta = startY - y;
-                const atTop = el.scrollTop === 0;
-                const atBottom = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight;
-                if ((delta < 0 && atTop) || (delta > 0 && atBottom)) {
-                    e.preventDefault();
-                }
-                e.stopPropagation();
-            }, { passive: false });
-        }
-    })();
+    function alertsPage_closeDetails() {
+        if (window.alertsManager) alertsManager.closeDetails();
+    }
     </script>
     {% endblock %}
                 <div class="toast show" role="alert" style="

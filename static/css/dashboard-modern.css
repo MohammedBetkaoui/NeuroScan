@@ -4,13 +4,13 @@
    SECTION HERO WELCOME
    ======================================== */
 .welcome-hero {
-    background: linear-gradient(135deg, #d3d7e7 0%, #4270d1 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #e1e3e9 50%, #c2c2c2 100%);
     border-radius: 24px;
     padding: 48px;
     color: white;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 10px 40px rgba(30, 58, 138, 0.2);
 }
 
 .welcome-hero::before {
@@ -102,12 +102,13 @@
 
 .btn-hero.primary {
     background: white;
-    color: #667eea;
+    color: #1e40af;
 }
 
 .btn-hero.primary:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.3);
+    background: #f8fafc;
 }
 
 .btn-hero.secondary {
@@ -159,8 +160,8 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(229, 231, 235, 0.5);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(229, 231, 235, 0.6);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
@@ -172,33 +173,34 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
+    height: 3px;
     background: linear-gradient(90deg, var(--stat-color-1), var(--stat-color-2));
 }
 
 .stat-card-modern.primary {
-    --stat-color-1: #3b82f6;
-    --stat-color-2: #1d4ed8;
+    --stat-color-1: #a7c1f8;
+    --stat-color-2: #1e40af;
 }
 
 .stat-card-modern.success {
-    --stat-color-1: #10b981;
-    --stat-color-2: #059669;
+    --stat-color-1: #059669;
+    --stat-color-2: #047857;
 }
 
 .stat-card-modern.warning {
-    --stat-color-1: #f59e0b;
-    --stat-color-2: #d97706;
+    --stat-color-1: #d97706;
+    --stat-color-2: #b45309;
 }
 
 .stat-card-modern.purple {
-    --stat-color-1: #a855f7;
-    --stat-color-2: #7c3aed;
+    --stat-color-1: #7c3aed;
+    --stat-color-2: #6d28d9;
 }
 
 .stat-card-modern:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
 }
 
 .stat-card-modern .stat-icon {
@@ -211,7 +213,7 @@
     font-size: 28px;
     color: white;
     background: linear-gradient(135deg, var(--stat-color-1), var(--stat-color-2));
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
 }
 
@@ -276,28 +278,28 @@
     background: white;
     border-radius: 24px;
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(229, 231, 235, 0.5);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(229, 231, 235, 0.6);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     cursor: pointer;
 }
 
 .action-card.featured {
-    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-    border: 2px solid #10b981;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 2px solid #059669;
 }
 
 .action-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
 }
 
 .action-card-badge {
     position: absolute;
     top: 16px;
     right: 16px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #2563eb, #1e40af);
     color: white;
     padding: 6px 14px;
     border-radius: 12px;
@@ -306,7 +308,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
     z-index: 2;
 }
 
@@ -321,15 +323,15 @@
     color: white;
     margin: 24px 24px 0 24px;
     position: relative;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .action-card-icon.emerald {
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: linear-gradient(135deg, #059669, #047857);
 }
 
 .action-card-icon.blue {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, #2563eb, #1e40af);
 }
 
 .action-card-icon .icon-glow {
@@ -423,12 +425,12 @@
     align-items: center;
     justify-content: space-between;
     font-weight: 600;
-    color: #667eea;
+    color: #2563eb;
     font-size: 14px;
 }
 
 .action-card.featured .action-link {
-    color: #059669;
+    color: #047857;
 }
 
 .action-link i {
@@ -458,21 +460,21 @@
     align-items: center;
     gap: 24px;
     padding: 32px;
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .profile-avatar {
     width: 96px;
     height: 96px;
     border-radius: 24px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #2563eb, #1e40af);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-size: 42px;
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);
     flex-shrink: 0;
 }
 
@@ -562,19 +564,19 @@
 }
 
 .detail-icon.email {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, #2563eb, #1e40af);
 }
 
 .detail-icon.hospital {
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: linear-gradient(135deg, #059669, #047857);
 }
 
 .detail-icon.license {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
+    background: linear-gradient(135deg, #d97706, #b45309);
 }
 
 .detail-icon.specialty {
-    background: linear-gradient(135deg, #a855f7, #7c3aed);
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
 }
 
 .detail-content {
@@ -619,16 +621,16 @@
     background: white;
     border-radius: 20px;
     padding: 28px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(229, 231, 235, 0.5);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(229, 231, 235, 0.6);
     text-align: center;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
 }
 
 .support-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .support-icon {
@@ -641,19 +643,19 @@
     font-size: 32px;
     color: white;
     margin: 0 auto 20px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .support-icon.guide {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, #2563eb, #1e40af);
 }
 
 .support-icon.support {
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: linear-gradient(135deg, #059669, #047857);
 }
 
 .support-icon.phone {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
 }
 
 .support-title {
@@ -676,7 +678,7 @@
     justify-content: center;
     gap: 8px;
     padding: 12px 24px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #2563eb, #1e40af);
     color: white;
     border: none;
     border-radius: 12px;
@@ -689,7 +691,8 @@
 
 .support-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
 }
 
 /* ========================================

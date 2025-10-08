@@ -303,6 +303,18 @@
             color: white;
         }
 
+        /* Active view button */
+        .heatmap-view-btn.active-view {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            border-color: transparent;
+        }
+
+        .heatmap-view-btn.active-view:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
         /* Quick buttons */
         .quick-btn {
             background: rgba(255, 255, 255, 0.9);
@@ -562,6 +574,20 @@
             50% {
                 opacity: .5;
             }
+        }
+
+        /* Marges personnalisées pour les icônes des sections */
+        .ml-13 {
+            margin-left: 3.25rem;
+        }
+
+        /* Animation des icônes de section au hover */
+        .modern-card h3 > div {
+            transition: transform 0.3s ease;
+        }
+
+        .modern-card:hover h3 > div {
+            transform: scale(1.1) rotate(5deg);
         }
     </style>
 </head>
@@ -1006,17 +1032,22 @@
             <div class="xl:col-span-2 modern-card p-6 fade-in-up" style="animation-delay: 0.5s;">
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
                     <div>
-                        <h3 class="text-2xl font-bold text-gray-800 mb-1">Comparaison Temporelle</h3>
-                        <p class="text-gray-600 text-sm">Analyse comparative des performances</p>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                                <i class="fas fa-chart-bar text-white text-lg"></i>
+                            </div>
+                            Comparaison Temporelle
+                        </h3>
+                        <p class="text-gray-600 text-sm ml-13">Analyse comparative des performances</p>
                     </div>
                     <div class="flex space-x-2 bg-gray-100 p-1 rounded-xl">
-                        <button class="comparison-period-btn active text-sm px-3 py-2 rounded-lg transition-all" data-period="day">
+                        <button class="comparison-period-btn text-sm px-3 py-2 rounded-lg transition-all" data-period="day">
                             <i class="fas fa-clock mr-1"></i>Jour
                         </button>
                         <button class="comparison-period-btn text-sm px-3 py-2 rounded-lg transition-all" data-period="week">
                             <i class="fas fa-calendar-week mr-1"></i>Semaine
                         </button>
-                        <button class="comparison-period-btn text-sm px-3 py-2 rounded-lg transition-all" data-period="month">
+                        <button class="comparison-period-btn active text-sm px-3 py-2 rounded-lg transition-all" data-period="month">
                             <i class="fas fa-calendar mr-1"></i>Mois
                         </button>
                     </div>
@@ -1035,8 +1066,13 @@
             <!-- Performance Trends -->
             <div class="modern-card p-6 fade-in-up" style="animation-delay: 0.6s;">
                 <div class="mb-6">
-                    <h3 class="text-2xl font-bold text-gray-800 mb-1">Performance</h3>
-                    <p class="text-gray-600 text-sm">Tendances de performance</p>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                            <i class="fas fa-tachometer-alt text-white text-lg"></i>
+                        </div>
+                        Performance
+                    </h3>
+                    <p class="text-gray-600 text-sm ml-13">Tendances de performance</p>
                 </div>
                 <div class="chart-container relative">
                     <canvas id="performanceChart"></canvas>
@@ -1066,9 +1102,14 @@
             <!-- Diagnostic Distribution -->
             <div class="modern-card p-6 fade-in-up" style="animation-delay: 0.7s;">
                 <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-2xl font-bold text-gray-800 mb-1">Distribution des Diagnostics</h3>
-                        <p class="text-gray-600 text-sm">Répartition par type de diagnostic</p>
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                                <i class="fas fa-brain text-white text-lg"></i>
+                            </div>
+                            Distribution des Diagnostics
+                        </h3>
+                        <p class="text-gray-600 text-sm ml-13">Répartition par type de diagnostic</p>
                     </div>
                     <div class="flex space-x-2">
                         <button class="modern-btn outline text-sm" onclick="exportDiagnosticData()">
@@ -1115,15 +1156,20 @@
             <!-- Hourly Activity Heatmap -->
             <div class="modern-card p-6 fade-in-up" style="animation-delay: 0.8s;">
                 <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-2xl font-bold text-gray-800 mb-1">Activité par Heure</h3>
-                        <p class="text-gray-600 text-sm">Heatmap d'activité sur 24h</p>
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                                <i class="fas fa-clock text-white text-lg"></i>
+                            </div>
+                            Activité par Heure
+                        </h3>
+                        <p class="text-gray-600 text-sm ml-13">Heatmap d'activité sur 24h</p>
                     </div>
                     <div class="flex space-x-2">
-                        <button class="modern-btn outline text-sm" onclick="changeHeatmapView('today')">
+                        <button class="modern-btn outline text-sm heatmap-view-btn" onclick="changeHeatmapView('today')">
                             <i class="fas fa-calendar-day mr-1"></i>Aujourd'hui
                         </button>
-                        <button class="modern-btn outline text-sm" onclick="changeHeatmapView('week')">
+                        <button class="modern-btn outline text-sm heatmap-view-btn active-view" onclick="changeHeatmapView('week')">
                             <i class="fas fa-calendar-week mr-1"></i>7 jours
                         </button>
                     </div>
@@ -1154,8 +1200,13 @@
             <!-- Confidence Distribution -->
             <div class="modern-card p-6 fade-in-up" style="animation-delay: 0.9s;">
                 <div class="mb-6">
-                    <h3 class="text-2xl font-bold text-gray-800 mb-1">Distribution Confiance</h3>
-                    <p class="text-gray-600 text-sm">Répartition des niveaux de confiance</p>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                            <i class="fas fa-chart-pie text-white text-lg"></i>
+                        </div>
+                        Distribution Confiance
+                    </h3>
+                    <p class="text-gray-600 text-sm ml-13">Répartition des niveaux de confiance</p>
                 </div>
                 <div class="chart-container relative">
                     <canvas id="confidenceHistogramChart"></canvas>
@@ -1184,8 +1235,13 @@
             <!-- Processing Time Analysis -->
             <div class="modern-card p-6 fade-in-up" style="animation-delay: 1.0s;">
                 <div class="mb-6">
-                    <h3 class="text-2xl font-bold text-gray-800 mb-1">Temps de Traitement</h3>
-                    <p class="text-gray-600 text-sm">Analyse des temps de réponse</p>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                            <i class="fas fa-stopwatch text-white text-lg"></i>
+                        </div>
+                        Temps de Traitement
+                    </h3>
+                    <p class="text-gray-600 text-sm ml-13">Analyse des temps de réponse</p>
                 </div>
                 <div class="chart-container relative">
                     <canvas id="processingTimeChart"></canvas>
@@ -1214,8 +1270,13 @@
             <!-- Monthly Trends -->
             <div class="modern-card p-6 fade-in-up" style="animation-delay: 1.1s;">
                 <div class="mb-6">
-                    <h3 class="text-2xl font-bold text-gray-800 mb-1">Tendances Mensuelles</h3>
-                    <p class="text-gray-600 text-sm">Évolution sur 12 mois</p>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                            <i class="fas fa-chart-line text-white text-lg"></i>
+                        </div>
+                        Tendances Mensuelles
+                    </h3>
+                    <p class="text-gray-600 text-sm ml-13">Évolution sur 12 mois</p>
                 </div>
                 <div class="chart-container relative">
                     <canvas id="monthlyTrendsChart"></canvas>
@@ -1344,9 +1405,14 @@
         <div id="filteredResults" class="modern-card fade-in-up" style="animation-delay: 1.3s;">
             <div class="p-6 border-b border-gray-100">
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
-                    <div>
-                        <h3 class="text-2xl font-bold text-gray-800 mb-1">Analyses Filtrées</h3>
-                        <p class="text-gray-600 text-sm">Résultats correspondant à vos critères de recherche</p>
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                                <i class="fas fa-table text-white text-lg"></i>
+                            </div>
+                            Analyses Filtrées
+                        </h3>
+                        <p class="text-gray-600 text-sm ml-13">Résultats correspondant à vos critères de recherche</p>
                     </div>
                     <div class="flex items-center space-x-4">
                         <span id="filteredCount" class="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-full">0 résultats</span>
@@ -1410,9 +1476,14 @@
             <!-- Year-over-Year Comparison -->
             <div class="modern-card p-6 fade-in-up" style="animation-delay: 1.4s;">
                 <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-2xl font-bold text-gray-800 mb-1">Comparaison Annuelle</h3>
-                        <p class="text-gray-600 text-sm">Évolution sur les 12 derniers mois</p>
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                                <i class="fas fa-calendar-alt text-white text-lg"></i>
+                            </div>
+                            Comparaison Annuelle
+                        </h3>
+                        <p class="text-gray-600 text-sm ml-13">Évolution sur les 12 derniers mois</p>
                     </div>
                     <div class="flex space-x-2">
                         <button class="modern-btn outline text-sm" onclick="toggleYearComparison()">
@@ -1442,11 +1513,16 @@
             <!-- Advanced Metrics Dashboard -->
             <div class="modern-card p-6 fade-in-up" style="animation-delay: 1.5s;">
                 <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-2xl font-bold text-gray-800 mb-1">Métriques Avancées</h3>
-                        <p class="text-gray-600 text-sm">Indicateurs de performance clés</p>
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                                <i class="fas fa-chart-area text-white text-lg"></i>
+                            </div>
+                            Métriques Avancées
+                        </h3>
+                        <p class="text-gray-600 text-sm ml-13">Indicateurs de performance clés</p>
                     </div>
-                    <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-md">
                         <i class="fas fa-analytics text-white text-xl"></i>
                     </div>
                 </div>

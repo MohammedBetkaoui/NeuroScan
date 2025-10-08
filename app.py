@@ -2673,7 +2673,16 @@ def send_chat_message():
 
         data = request.get_json()
         conversation_id = data.get('conversation_id')
-        message = data.get('message', '').strip()
+        
+        # Vérifier que message est une chaîne de caractères
+        message_raw = data.get('message', '')
+        if isinstance(message_raw, dict):
+            # Si c'est un dictionnaire, essayer d'extraire le contenu
+            message = str(message_raw.get('content', message_raw.get('text', ''))).strip()
+        elif isinstance(message_raw, str):
+            message = message_raw.strip()
+        else:
+            message = str(message_raw).strip()
 
         if not conversation_id or not message:
             return jsonify({'success': False, 'error': 'Données manquantes'}), 400
@@ -3131,7 +3140,15 @@ def chat_with_bot():
     """Ancienne API de chatbot (conservée pour compatibilité)"""
     try:
         data = request.get_json()
-        message = data.get('message', '').strip()
+        
+        # Vérifier que message est une chaîne de caractères
+        message_raw = data.get('message', '')
+        if isinstance(message_raw, dict):
+            message = str(message_raw.get('content', message_raw.get('text', ''))).strip()
+        elif isinstance(message_raw, str):
+            message = message_raw.strip()
+        else:
+            message = str(message_raw).strip()
 
         if not message:
             return jsonify({'error': 'Message vide'}), 400
@@ -4297,65 +4314,107 @@ def get_filtered_analytics():
 def get_comparison_data():
     """API pour les données de comparaison temporelle"""
     try:
+        # Récupérer le paramètre de période (par défaut 'month')
+        period = request.args.get('period', 'month')  # 'day', 'week', ou 'month'
+        
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
 
-        # Comparaison cette semaine vs semaine dernière
-        cursor.execute('''
-            SELECT
-                CASE
-                    WHEN DATE(timestamp) >= DATE('now', '-7 days') THEN 'Cette semaine'
-                    WHEN DATE(timestamp) >= DATE('now', '-14 days') THEN 'Semaine dernière'
-                END as period,
-                COUNT(*) as count,
-                AVG(confidence) as avg_confidence,
-                predicted_label
-            FROM analyses
-            WHERE DATE(timestamp) >= DATE('now', '-14 days')
-            GROUP BY period, predicted_label
-            ORDER BY period, predicted_label
-        ''')
+        comparison_data = {}
 
-        weekly_comparison = {}
-        for row in cursor.fetchall():
-            period = row[0]
-            if period not in weekly_comparison:
-                weekly_comparison[period] = {}
-            weekly_comparison[period][row[3]] = {
-                'count': row[1],
-                'avg_confidence': round(row[2] * 100, 1) if row[2] else 0
+        if period == 'day':
+            # Comparaison aujourd'hui vs hier
+            cursor.execute('''
+                SELECT
+                    CASE
+                        WHEN DATE(timestamp) = DATE('now') THEN 'Aujourd''hui'
+                        WHEN DATE(timestamp) = DATE('now', '-1 day') THEN 'Hier'
+                    END as period,
+                    COUNT(*) as count,
+                    AVG(confidence) as avg_confidence
+                FROM analyses
+                WHERE DATE(timestamp) >= DATE('now', '-1 day')
+                GROUP BY period
+            ''')
+            
+            daily_comparison = {}
+            for row in cursor.fetchall():
+                if row[0]:
+                    daily_comparison[row[0]] = {
+                        'count': row[1],
+                        'avg_confidence': round(row[2] * 100, 1) if row[2] else 0
+                    }
+            
+            comparison_data = {
+                'daily': daily_comparison,
+                'period': 'day',
+                'period_label': 'Jour'
             }
 
-        # Comparaison ce mois vs mois dernier
-        cursor.execute('''
-            SELECT
-                CASE
-                    WHEN strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now') THEN 'Ce mois'
-                    WHEN strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now', '-1 month') THEN 'Mois dernier'
-                END as period,
-                COUNT(*) as count,
-                AVG(confidence) as avg_confidence
-            FROM analyses
-            WHERE strftime('%Y-%m', timestamp) >= strftime('%Y-%m', 'now', '-1 month')
-            GROUP BY period
-        ''')
+        elif period == 'week':
+            # Comparaison cette semaine vs semaine dernière
+            cursor.execute('''
+                SELECT
+                    CASE
+                        WHEN DATE(timestamp) >= DATE('now', '-7 days') THEN 'Cette semaine'
+                        WHEN DATE(timestamp) >= DATE('now', '-14 days') THEN 'Semaine dernière'
+                    END as period,
+                    COUNT(*) as count,
+                    AVG(confidence) as avg_confidence
+                FROM analyses
+                WHERE DATE(timestamp) >= DATE('now', '-14 days')
+                GROUP BY period
+                ORDER BY period DESC
+            ''')
 
-        monthly_comparison = {}
-        for row in cursor.fetchall():
-            if row[0]:  # Vérifier que period n'est pas None
-                monthly_comparison[row[0]] = {
-                    'count': row[1],
-                    'avg_confidence': round(row[2] * 100, 1) if row[2] else 0
-                }
+            weekly_comparison = {}
+            for row in cursor.fetchall():
+                if row[0]:
+                    weekly_comparison[row[0]] = {
+                        'count': row[1],
+                        'avg_confidence': round(row[2] * 100, 1) if row[2] else 0
+                    }
+
+            comparison_data = {
+                'weekly': weekly_comparison,
+                'period': 'week',
+                'period_label': 'Semaine'
+            }
+
+        else:  # 'month' par défaut
+            # Comparaison ce mois vs mois dernier
+            cursor.execute('''
+                SELECT
+                    CASE
+                        WHEN strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now') THEN 'Ce mois'
+                        WHEN strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now', '-1 month') THEN 'Mois dernier'
+                    END as period,
+                    COUNT(*) as count,
+                    AVG(confidence) as avg_confidence
+                FROM analyses
+                WHERE strftime('%Y-%m', timestamp) >= strftime('%Y-%m', 'now', '-1 month')
+                GROUP BY period
+            ''')
+
+            monthly_comparison = {}
+            for row in cursor.fetchall():
+                if row[0]:
+                    monthly_comparison[row[0]] = {
+                        'count': row[1],
+                        'avg_confidence': round(row[2] * 100, 1) if row[2] else 0
+                    }
+
+            comparison_data = {
+                'monthly': monthly_comparison,
+                'period': 'month',
+                'period_label': 'Mois'
+            }
 
         conn.close()
 
         return jsonify({
             'success': True,
-            'data': {
-                'weekly': weekly_comparison,
-                'monthly': monthly_comparison
-            }
+            'data': comparison_data
         })
 
     except Exception as e:
@@ -4583,16 +4642,27 @@ def get_diagnostic_distribution():
 def get_hourly_activity():
     """API pour l'activité par heure"""
     try:
+        # Récupérer le paramètre de période (par défaut 'week')
+        period = request.args.get('period', 'week')  # 'today' ou 'week'
+        
         conn = sqlite3.connect(DATABASE_PATH)
         cursor = conn.cursor()
 
-        # Activité par heure pour les 7 derniers jours
-        cursor.execute('''
+        # Déterminer la clause WHERE selon la période
+        if period == 'today':
+            where_clause = "WHERE DATE(timestamp) = DATE('now')"
+            period_label = "aujourd'hui"
+        else:  # 'week' par défaut
+            where_clause = "WHERE DATE(timestamp) >= DATE('now', '-7 days')"
+            period_label = "7 derniers jours"
+
+        # Activité par heure pour la période sélectionnée
+        cursor.execute(f'''
             SELECT
                 strftime('%H', timestamp) as hour,
                 COUNT(*) as count
             FROM analyses
-            WHERE DATE(timestamp) >= DATE('now', '-7 days')
+            {where_clause}
             GROUP BY strftime('%H', timestamp)
             ORDER BY hour
         ''')
@@ -4607,8 +4677,8 @@ def get_hourly_activity():
             activity_by_hour[hour] = count
 
         # Statistiques
-        max_activity = max(activity_by_hour)
-        peak_hour = activity_by_hour.index(max_activity)
+        max_activity = max(activity_by_hour) if activity_by_hour else 0
+        peak_hour = activity_by_hour.index(max_activity) if max_activity > 0 else 0
         
         # Trouver l'heure la plus calme (heure avec le moins d'activité, en excluant 0)
         non_zero_activities = [(i, count) for i, count in enumerate(activity_by_hour) if count > 0]
@@ -4622,7 +4692,9 @@ def get_hourly_activity():
                 'hourly_activity': activity_by_hour,
                 'peak_hour': peak_hour,
                 'max_hourly_analyses': max_activity,
-                'quiet_hour': quiet_hour
+                'quiet_hour': quiet_hour,
+                'period': period,
+                'period_label': period_label
             }
         })
 
@@ -4779,16 +4851,29 @@ def get_monthly_trends():
         counts = [row[1] for row in monthly_data]
         confidences = [round(row[2] * 100, 1) if row[2] else 0 for row in monthly_data]
 
-        # Calculer le taux de croissance mensuel moyen
-        if len(counts) > 1:
-            growth_rates = []
-            for i in range(1, len(counts)):
-                if counts[i-1] > 0:
-                    growth_rate = ((counts[i] - counts[i-1]) / counts[i-1]) * 100
-                    growth_rates.append(growth_rate)
-            avg_growth = round(sum(growth_rates) / len(growth_rates), 1) if growth_rates else 0
+        # Calculer le taux de croissance entre les deux derniers mois
+        # (le plus pertinent pour l'utilisateur)
+        if len(counts) >= 2:
+            # Prendre les deux derniers mois
+            previous_month_count = counts[-2]
+            current_month_count = counts[-1]
+            
+            if previous_month_count >= 10:
+                # Si on a au moins 10 analyses le mois précédent, 
+                # le pourcentage est significatif
+                avg_growth = round(((current_month_count - previous_month_count) / previous_month_count) * 100, 1)
+            elif previous_month_count > 0:
+                # Pour de petits nombres, plafonner à +200% max
+                raw_growth = ((current_month_count - previous_month_count) / previous_month_count) * 100
+                avg_growth = round(min(raw_growth, 200.0), 1)
+            elif current_month_count > 0:
+                # Si le mois précédent était à 0, afficher +100%
+                avg_growth = 100.0
+            else:
+                # Les deux sont à 0
+                avg_growth = 0.0
         else:
-            avg_growth = 0
+            avg_growth = 0.0
 
         # Mois le plus actif
         max_count = max(counts)
@@ -7450,7 +7535,16 @@ def visitor_chat():
     """API pour le chatbot des visiteurs - Répond uniquement sur le projet NeuroScan"""
     try:
         data = request.get_json()
-        user_message = data.get('message', '').strip()
+        
+        # Vérifier que message est une chaîne de caractères
+        message_raw = data.get('message', '')
+        if isinstance(message_raw, dict):
+            user_message = str(message_raw.get('content', message_raw.get('text', ''))).strip()
+        elif isinstance(message_raw, str):
+            user_message = message_raw.strip()
+        else:
+            user_message = str(message_raw).strip()
+            
         history = data.get('history', [])
         
         if not user_message:

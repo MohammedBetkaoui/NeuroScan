@@ -17,6 +17,8 @@ let monthlyTrendsChart = null;
 let currentFilters = {};
 let dashboardData = null;
 let autoRefreshInterval = null;
+let currentHeatmapView = 'week'; // Vue par défaut pour l'activité horaire
+let currentComparisonPeriod = 'month'; // Vue par défaut pour la comparaison temporelle
 
 // Configuration Chart.js par défaut
 Chart.defaults.font.family = "'Inter', sans-serif";
@@ -112,7 +114,7 @@ async function loadAlerts() {
 
 async function loadComparisons() {
     try {
-        const response = await fetch('/api/analytics/comparison');
+        const response = await fetch(`/api/analytics/comparison?period=${currentComparisonPeriod}`);
         const data = await response.json();
 
         console.log('📊 Données Comparison reçues:', data);
@@ -151,7 +153,7 @@ async function loadAdvancedAnalytics() {
     try {
         const [diagnostic, hourly, confidence, processing, monthly] = await Promise.all([
             fetch('/api/analytics/diagnostic-distribution'),
-            fetch('/api/analytics/hourly-activity'),
+            fetch(`/api/analytics/hourly-activity?period=${currentHeatmapView}`),
             fetch('/api/analytics/confidence-distribution'),
             fetch('/api/analytics/processing-time-analysis'),
             fetch('/api/analytics/monthly-trends')
@@ -353,11 +355,35 @@ function updateNavbarAlerts(alerts) {
 }
 
 function updatePerformanceMetrics(data) {
+    console.log('🔍 updatePerformanceMetrics - données reçues:', data);
+    
     // Vérification robuste des données avec plusieurs niveaux de sécurité
-    if (data && data.daily_trends && data.daily_trends.data && Array.isArray(data.daily_trends.data) && data.daily_trends.data.length > 0) {
-        const values = data.daily_trends.data;
+    // L'API renvoie {daily_trends: {labels, count, confidence, processing_time}}
+    let values = null;
+    
+    if (data && data.daily_trends) {
+        // Essayer d'abord 'count', puis 'data'
+        values = data.daily_trends.count || data.daily_trends.data;
+    }
+    
+    if (values && Array.isArray(values) && values.length > 0) {
         const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
         const peak = Math.max(...values).toFixed(2);
+        
+        console.log('📊 Métriques calculées:', { avg, peak, values });
+        
+        const avgElement = document.getElementById('avgTime');
+        const peakElement = document.getElementById('peakTime');
+        
+        if (avgElement) avgElement.textContent = avg + 's';
+        if (peakElement) peakElement.textContent = peak + 's';
+    } else if (data && data.daily_trends && data.daily_trends.processing_time && Array.isArray(data.daily_trends.processing_time) && data.daily_trends.processing_time.length > 0) {
+        // Utiliser les temps de traitement si disponibles
+        const processingTimes = data.daily_trends.processing_time;
+        const avg = (processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length).toFixed(2);
+        const peak = Math.max(...processingTimes).toFixed(2);
+        
+        console.log('📊 Métriques de temps de traitement:', { avg, peak, processingTimes });
         
         const avgElement = document.getElementById('avgTime');
         const peakElement = document.getElementById('peakTime');
@@ -366,6 +392,7 @@ function updatePerformanceMetrics(data) {
         if (peakElement) peakElement.textContent = peak + 's';
     } else {
         // Valeurs par défaut si les données sont absentes
+        console.warn('⚠️ Données de performance non disponibles');
         const avgElement = document.getElementById('avgTime');
         const peakElement = document.getElementById('peakTime');
         
@@ -396,37 +423,33 @@ function updateComparisonChart(data) {
     if (!ctx) return;
     
     console.log('🔍 updateComparisonChart - données reçues:', data);
-    console.log('🔍 data.monthly:', data.monthly);
+    console.log('🔍 period:', data.period);
     
     if (comparisonChart) {
         comparisonChart.destroy();
     }
 
-    const labels = ['Ce mois', 'Mois dernier'];
+    let labels = [];
+    let thisCount = 0;
+    let lastCount = 0;
     
-    // L'API peut renvoyer différents formats
-    let thisMonth = 0;
-    let lastMonth = 0;
-    
-    if (data.monthly) {
-        console.log('📊 Structure monthly:', Object.keys(data.monthly));
-        // Format: {monthly: {'Ce mois': {count: N}, 'Mois dernier': {count: N}}}
-        thisMonth = data.monthly['Ce mois']?.count || data.monthly['Ce mois'] || 0;
-        lastMonth = data.monthly['Mois dernier']?.count || data.monthly['Mois dernier'] || 0;
-        
-        console.log('📊 Extraction depuis monthly:', {
-            'Ce mois': data.monthly['Ce mois'],
-            'Mois dernier': data.monthly['Mois dernier'],
-            thisMonth,
-            lastMonth
-        });
-    } else if (data.thisMonth !== undefined && data.lastMonth !== undefined) {
-        // Format direct: {thisMonth: N, lastMonth: N}
-        thisMonth = data.thisMonth || 0;
-        lastMonth = data.lastMonth || 0;
+    // Déterminer les labels et valeurs selon la période
+    if (data.period === 'day' && data.daily) {
+        labels = ['Aujourd\'hui', 'Hier'];
+        thisCount = data.daily['Aujourd\'hui']?.count || 0;
+        lastCount = data.daily['Hier']?.count || 0;
+    } else if (data.period === 'week' && data.weekly) {
+        labels = ['Cette semaine', 'Semaine dernière'];
+        thisCount = data.weekly['Cette semaine']?.count || 0;
+        lastCount = data.weekly['Semaine dernière']?.count || 0;
+    } else if (data.monthly) {
+        // Format par défaut (month)
+        labels = ['Ce mois', 'Mois dernier'];
+        thisCount = data.monthly['Ce mois']?.count || 0;
+        lastCount = data.monthly['Mois dernier']?.count || 0;
     }
 
-    console.log('📊 Valeurs FINALES pour comparisonChart:', { thisMonth, lastMonth });
+    console.log('📊 Valeurs FINALES pour comparisonChart:', { labels, thisCount, lastCount });
 
     comparisonChart = new Chart(ctx, {
         type: 'bar',
@@ -434,7 +457,7 @@ function updateComparisonChart(data) {
             labels: labels,
             datasets: [{
                 label: 'Analyses',
-                data: [thisMonth, lastMonth],
+                data: [thisCount, lastCount],
                 backgroundColor: [
                     'rgba(99, 102, 241, 0.8)',
                     'rgba(139, 92, 246, 0.8)'
@@ -457,7 +480,6 @@ function updateComparisonChart(data) {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            // Protection contre context.parsed undefined
                             if (!context || !context.parsed || context.parsed.y === undefined) {
                                 return context.dataset?.label || 'Données';
                             }
@@ -841,6 +863,8 @@ function updateMonthlyTrends(data) {
     if (!ctx) return;
     
     console.log('🔍 updateMonthlyTrends - données reçues:', data);
+    console.log('🔍 growth_rate:', data?.growth_rate);
+    console.log('🔍 most_active_month:', data?.most_active_month);
     
     if (monthlyTrendsChart) {
         monthlyTrendsChart.destroy();
@@ -895,17 +919,52 @@ function updateMonthlyTrends(data) {
         }
     });
 
-    // Mettre à jour les insights
+    // Mettre à jour les insights avec vérification robuste
     if (data.growth_rate !== undefined) {
         const growthElement = document.getElementById('monthlyGrowth');
         if (growthElement) {
-            const growth = data.growth_rate;
-            growthElement.textContent = `${growth > 0 ? '+' : ''}${growth.toFixed(1)}%`;
-            growthElement.className = `text-2xl font-bold ${growth >= 0 ? 'text-green-600' : 'text-red-600'}`;
+            const growth = parseFloat(data.growth_rate);
+            
+            // Formater le texte avec une limite raisonnable pour l'affichage
+            let displayText;
+            if (growth > 500) {
+                displayText = '+500%+'; // Croissance très importante
+            } else if (growth < -90) {
+                displayText = '-90%'; // Baisse maximale
+            } else {
+                displayText = `${growth > 0 ? '+' : ''}${growth.toFixed(1)}%`;
+            }
+            
+            growthElement.textContent = displayText;
+            
+            // Colorer selon la valeur
+            if (growth > 50) {
+                growthElement.className = 'text-sm font-bold text-green-600';
+            } else if (growth > 0) {
+                growthElement.className = 'text-sm font-bold text-blue-600';
+            } else if (growth > -20) {
+                growthElement.className = 'text-sm font-bold text-orange-600';
+            } else {
+                growthElement.className = 'text-sm font-bold text-red-600';
+            }
+            
+            console.log('📊 Croissance mensuelle mise à jour:', displayText);
+        } else {
+            console.warn('⚠️ Élément monthlyGrowth non trouvé dans le DOM');
         }
+    } else {
+        console.warn('⚠️ growth_rate non défini dans les données:', data);
     }
+    
     if (data.most_active_month) {
-        document.getElementById('mostActiveMonth').textContent = data.most_active_month;
+        const mostActiveElement = document.getElementById('mostActiveMonth');
+        if (mostActiveElement) {
+            mostActiveElement.textContent = data.most_active_month;
+        } else {
+            console.warn('⚠️ Élément mostActiveMonth non trouvé dans le DOM');
+        }
+    } else {
+        console.warn('⚠️ most_active_month non défini dans les données:', data);
     }
 }
 
@@ -1434,7 +1493,7 @@ function initializeChartControls() {
             document.querySelectorAll('.comparison-period-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             const period = this.dataset.period;
-            loadComparisonByPeriod(period);
+            changeComparisonPeriod(period);
         });
     });
 
@@ -1449,9 +1508,19 @@ function initializeChartControls() {
     });
 }
 
-async function loadComparisonByPeriod(period) {
-    showNotification(`Chargement de la période: ${period}`, 'info');
-    // Cette fonction peut être étendue pour charger des données spécifiques selon la période
+function changeComparisonPeriod(period) {
+    console.log(`🔄 Changement de période de comparaison: ${period}`);
+    currentComparisonPeriod = period;
+    
+    const periodLabels = {
+        'day': 'Jour',
+        'week': 'Semaine',
+        'month': 'Mois'
+    };
+    
+    showNotification(`Comparaison ${periodLabels[period]} sélectionnée`, 'info');
+    
+    // Recharger uniquement les données de comparaison
     loadComparisons();
 }
 
@@ -1689,8 +1758,36 @@ function toggleYearComparison() {
 }
 
 function changeHeatmapView(view) {
+    console.log(`🔄 Changement de vue heatmap: ${view}`);
+    currentHeatmapView = view;
+    
+    // Mettre à jour l'état actif des boutons
+    document.querySelectorAll('.heatmap-view-btn').forEach(btn => {
+        btn.classList.remove('active-view');
+    });
+    document.querySelector(`[onclick="changeHeatmapView('${view}')"]`)?.classList.add('active-view');
+    
     showNotification(`Vue ${view === 'today' ? 'aujourd\'hui' : '7 jours'} sélectionnée`, 'info');
-    loadAdvancedAnalytics();
+    
+    // Recharger uniquement les données d'activité horaire
+    loadHourlyActivity();
+}
+
+async function loadHourlyActivity() {
+    try {
+        const response = await fetch(`/api/analytics/hourly-activity?period=${currentHeatmapView}`);
+        const data = await response.json();
+        
+        console.log('📊 Données Hourly Activity reçues:', data);
+        
+        if (data && data.success && data.data) {
+            updateHourlyActivity(data.data);
+        } else {
+            console.warn('⚠️ Données d\'activité horaire non disponibles');
+        }
+    } catch (error) {
+        console.error('Erreur chargement activité horaire:', error);
+    }
 }
 
 function convertToCSV(data) {

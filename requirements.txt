@@ -16,6 +16,8 @@ opencv-python>=4.5.0
 
 # Database
 SQLAlchemy>=2.0.0
+pymongo>=4.5.0
+dnspython>=2.4.0  # Required for MongoDB srv connection
 
 # Production server
 gunicorn>=21.0.0

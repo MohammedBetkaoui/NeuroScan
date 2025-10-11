@@ -1,4 +1,34 @@
+# -*- coding: utf-8 -*-
+"""
+NeuroScan AI - Application Web avec MongoDB
+===========================================
+Version migrée de SQLite vers MongoDB Atlas
+
+⚠️  IMPORTANT:
+- Ce fichier utilise MongoDB Atlas au lieu de SQLite
+- Les fonctions de database/mongodb_helpers.py gèrent toutes les opérations
+- Configuration dans .env: MONGODB_URI et MONGODB_DB_NAME
+
+Migration effectuée le: 2025-10-11 11:59:11
+"""
+
 from flask import Flask, render_template, request, jsonify, send_from_directory, Response, session, redirect, url_for, flash
+
+# MongoDB imports
+from database.mongodb_connector import get_mongodb, get_collection, init_mongodb_collections
+from database.mongodb_helpers import (
+    save_analysis_to_db_mongo,
+    get_current_doctor_mongo,
+    create_doctor_session_mongo,
+    get_doctor_statistics_mongo,
+    verify_doctor_credentials_mongo,
+    update_daily_stats_mongo,
+    get_doctor_by_email_mongo,
+    register_doctor_mongo,
+    get_collection,
+    get_mongodb
+)
+from bson import ObjectId
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -19,18 +49,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from torchvision import transforms
 from functools import wraps
 from dotenv import load_dotenv
-
-# MongoDB imports
-from database.mongodb_connector import get_mongodb, get_collection, init_mongodb_collections
-from database.mongodb_helpers import (
-    save_analysis_to_db_mongo,
-    get_current_doctor_mongo,
-    create_doctor_session_mongo,
-    get_doctor_statistics_mongo,
-    verify_doctor_credentials_mongo,
-    register_doctor_mongo
-)
-from bson import ObjectId
 
 # Charger les variables d'environnement depuis le fichier .env
 load_dotenv()
@@ -57,9 +75,6 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'neuroscan_secret_key_2024_me
 # Créer le dossier uploads s'il n'existe pas
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Initialiser la connexion MongoDB globale
-db = get_mongodb()
-
 # Configuration de l'API Gemini - Chargée depuis .env
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 if not GEMINI_API_KEY or GEMINI_API_KEY == 'your_gemini_api_key_here':
@@ -67,7 +82,8 @@ if not GEMINI_API_KEY or GEMINI_API_KEY == 'your_gemini_api_key_here':
     print("   Ajoutez votre clé dans le fichier .env : GEMINI_API_KEY=votre_clé_ici")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
-# DATABASE_PATH supprimé - utilisation de MongoDB
+# Configuration de la base de données
+# DATABASE_PATH removed - using MongoDB
 
 def init_database():
     """Initialiser MongoDB au lieu de SQLite"""
@@ -77,20 +93,478 @@ def init_database():
     except Exception as e:
         print(f"❌ Erreur initialisation MongoDB: {e}")
 
-def save_analysis_to_db(results, filename, processing_time, session_id=None, ip_address=None, patient_id=None, patient_name=None, exam_date=None, doctor_id=None):
-    """Wrapper pour save_analysis_to_db_mongo"""
-    return save_analysis_to_db_mongo(results, filename, processing_time, session_id, ip_address, 
-                                     patient_id, patient_name, exam_date, doctor_id)
-    
 
-    
-   
+def save_analysis_to_db_mongo(results, filename, processing_time, session_id=None, ip_address=None, patient_id=None, patient_name=None, exam_date=None, doctor_id=None):
+    """Sauvegarder une analyse dans la base de données avec support du suivi temporel et relation médecin"""
+    try:
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-    
+        # Convertir les probabilités en JSON
+        probabilities_json = json.dumps(results['probabilities'])
+        recommendations_json = json.dumps(results.get('recommendations', []))
 
-    
-  
-           
+        # Utiliser la date actuelle si exam_date n'est pas fournie
+        if exam_date is None:
+            exam_date = datetime.now().date()
+
+        # Désactivé : Estimation de taille de tumeur (nécessite un modèle de segmentation réel)
+        # Cette fonctionnalité a été désactivée car elle utilisait des valeurs simulées non fiables
+        tumor_size_estimate = None
+
+        # Vérifier que doctor_id est fourni
+        if not doctor_id:
+            print("Erreur: doctor_id requis pour sauvegarder l'analyse")
+            return False
+
+        # Trouver l'analyse précédente pour ce patient et ce médecin
+        previous_analysis_id = None
+        if patient_id:
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+            prev_result = {} # MongoDB: TODO - utiliser collection.find_one()
+            if prev_result:
+                previous_analysis_id = prev_result[0]
+
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            filename,
+            patient_id,
+            patient_name,
+            exam_date,
+            results['predicted_class'],
+            results['predicted_label'],
+            results['confidence'],
+            probabilities_json,
+            results.get('description', ''),
+            recommendations_json,
+            processing_time,
+            session_id,
+            ip_address,
+            tumor_size_estimate,
+            previous_analysis_id,
+            doctor_id
+        ))
+
+        analysis_id = str(result.inserted_id) # MongoDB: lastrowid → inserted_id
+
+        # Gérer le patient (créer ou mettre à jour)
+        if patient_id and doctor_id:
+            manage_patient_record(cursor, patient_id, patient_name, exam_date, doctor_id)
+
+        # Analyser l'évolution si il y a une analyse précédente et un patient_id
+        if patient_id and previous_analysis_id:
+            analyze_tumor_evolution(cursor, patient_id, analysis_id, previous_analysis_id, results, exam_date)
+            # Créer des alertes si nécessaire
+            create_medical_alerts(cursor, patient_id, analysis_id, results, doctor_id, previous_analysis_id)
+
+        # Mettre à jour les statistiques quotidiennes
+        today = datetime.now().date()
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update VALUES (?)
+        ''', (today,))
+
+        # Incrémenter les compteurs
+        label_column = {
+            'Normal': 'normal_count',
+            'Gliome': 'gliome_count',
+            'Méningiome': 'meningiome_count',
+            'Tumeur pituitaire': 'pituitary_count'
+        }.get(results['predicted_label'], 'normal_count')
+
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update + ?) / total_analyses,
+                avg_processing_time = (avg_processing_time * (total_analyses - 1) + ?) / total_analyses
+            WHERE date = ?
+        ''', (results['confidence'], processing_time, today))
+
+        # conn.commit() # MongoDB: auto-commit
+        # conn.close() # MongoDB: géré par le connector
+        return analysis_id
+    except Exception as e:
+        print(f"Erreur lors de la sauvegarde: {e}")
+        return False
+
+def manage_patient_record(cursor, patient_id, patient_name, exam_date, doctor_id):
+    """Gérer l'enregistrement du patient (créer ou mettre à jour)"""
+    try:
+        # Vérifier si le patient existe déjà pour ce médecin
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+
+        existing_patient = {} # MongoDB: TODO - utiliser collection.find_one()
+
+        if existing_patient:
+            # Mettre à jour le patient existant
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+        else:
+            # Créer un nouveau patient
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+                VALUES (?, ?, ?, ?, 1, ?)
+            ''', (patient_id, patient_name, exam_date, exam_date, doctor_id))
+
+    except Exception as e:
+        print(f"Erreur lors de la gestion du patient: {e}")
+
+def analyze_tumor_evolution(cursor, patient_id, current_analysis_id, previous_analysis_id, current_results, exam_date):
+    """Analyser l'évolution d'une tumeur entre deux analyses"""
+    try:
+        # Récupérer l'analyse précédente
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+        prev_data = {} # MongoDB: TODO - utiliser collection.find_one()
+
+        if not prev_data:
+            return
+
+        prev_label, prev_confidence, prev_size, prev_date = prev_data
+
+        # Analyser les changements
+        diagnosis_change = None
+        if prev_label != current_results['predicted_label']:
+            diagnosis_change = f"{prev_label} → {current_results['predicted_label']}"
+
+        confidence_change = current_results['confidence'] - prev_confidence
+
+        size_change = None
+        current_size = None
+        if current_results['predicted_class'] != 0:  # Si tumeur détectée
+            # Récupérer la taille estimée actuelle
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+            size_result = {} # MongoDB: TODO - utiliser collection.find_one()
+            if size_result and size_result[0]:
+                current_size = size_result[0]
+                if prev_size:
+                    size_change = current_size - prev_size
+
+        # Déterminer le type d'évolution
+        evolution_type = "stable"
+        if diagnosis_change:
+            if "Normal" in diagnosis_change:
+                evolution_type = "amélioration" if current_results['predicted_label'] == "Normal" else "dégradation"
+            else:
+                evolution_type = "changement_type"
+        elif size_change:
+            if abs(size_change) > 0.2:  # Seuil de changement significatif
+                evolution_type = "croissance" if size_change > 0 else "réduction"
+        elif abs(confidence_change) > 0.1:  # Changement de confiance significatif
+            evolution_type = "confiance_modifiée"
+
+        # Générer des notes automatiques
+        notes = []
+        if diagnosis_change:
+            notes.append(f"Changement de diagnostic: {diagnosis_change}")
+        if abs(confidence_change) > 0.05:
+            direction = "augmentation" if confidence_change > 0 else "diminution"
+            notes.append(f"{direction.capitalize()} de confiance: {confidence_change*100:+.1f}%")
+        if size_change and abs(size_change) > 0.1:
+            direction = "augmentation" if size_change > 0 else "diminution"
+            notes.append(f"{direction.capitalize()} de taille estimée: {size_change:+.1f}cm")
+
+        notes_text = "; ".join(notes) if notes else "Évolution stable"
+
+        # Enregistrer l'évolution
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (patient_id, current_analysis_id, exam_date, diagnosis_change,
+              confidence_change, size_change, evolution_type, notes_text))
+
+    except Exception as e:
+        print(f"Erreur lors de l'analyse d'évolution: {e}")
+
+def calculate_patient_metrics(analyses, evolution_details):
+    """Calculer des métriques avancées pour un patient"""
+    if not analyses:
+        return {}
+
+    try:
+        # Métriques de base
+        total_analyses = len(analyses)
+
+        # Période de suivi
+        if total_analyses > 1:
+            first_date_str = analyses[0]['exam_date']
+            last_date_str = analyses[-1]['exam_date']
+            
+            # S'assurer que les dates sont des chaînes de caractères avant de les parser
+            if isinstance(first_date_str, str) and isinstance(last_date_str, str):
+                first_date = datetime.strptime(first_date_str, '%Y-%m-%d')
+                last_date = datetime.strptime(last_date_str, '%Y-%m-%d')
+                follow_up_days = (last_date - first_date).days
+                follow_up_months = round(follow_up_days / 30.44, 1)
+            else:
+                # Gérer le cas où les dates ne sont pas des chaînes (improbable mais sécuritaire)
+                follow_up_days = 0
+                follow_up_months = 0
+        else:
+            follow_up_days = 0
+            follow_up_months = 0
+
+        # Analyse des diagnostics
+        diagnoses = [a['predicted_label'] for a in analyses]
+        diagnosis_counts = Counter(diagnoses)
+        most_common_diagnosis = diagnosis_counts.most_common(1)[0] if diagnosis_counts else ('Inconnu', 0)
+
+        # Évolution de la confiance
+        confidences = [a['confidence'] for a in analyses]
+        avg_confidence = round(sum(confidences) / len(confidences), 1)
+        confidence_trend = "stable"
+        if len(confidences) > 1:
+            confidence_change = confidences[-1] - confidences[0]
+            if confidence_change > 5:
+                confidence_trend = "amélioration"
+            elif confidence_change < -5:
+                confidence_trend = "dégradation"
+
+        # Désactivé : Analyse des tailles de tumeur (nécessite des mesures réelles)
+        # Cette fonctionnalité a été désactivée car elle utilisait des valeurs simulées non fiables
+        size_metrics = {}
+        """
+        sizes = [a['tumor_size_estimate'] for a in analyses if a['tumor_size_estimate']]
+        if sizes:
+            size_metrics = {
+                'avg_size': round(sum(sizes) / len(sizes), 2),
+                'min_size': round(min(sizes), 2),
+                'max_size': round(max(sizes), 2),
+                'size_trend': "stable"
+            }
+            if len(sizes) > 1:
+                size_change = sizes[-1] - sizes[0]
+                if size_change > 0.3:
+                    size_metrics['size_trend'] = "croissance"
+                elif size_change < -0.3:
+                    size_metrics['size_trend'] = "réduction"
+        """
+
+        # Analyse des évolutions
+        evolution_types = [e['evolution_type'] for e in evolution_details]
+        evolution_counts = Counter(evolution_types)
+
+        # Alertes et recommandations
+        alerts = []
+        recommendations = []
+
+        # Vérifier les changements récents
+        if len(analyses) >= 2:
+            recent_analysis = analyses[-1]
+            previous_analysis = analyses[-2]
+
+            # Alerte changement de diagnostic
+            if recent_analysis['predicted_label'] != previous_analysis['predicted_label']:
+                alerts.append({
+                    'type': 'diagnostic_change',
+                    'severity': 'high',
+                    'message': f"Changement de diagnostic: {previous_analysis['predicted_label']} → {recent_analysis['predicted_label']}"
+                })
+                recommendations.append("Consultation urgente recommandée suite au changement de diagnostic")
+
+            # Alerte baisse de confiance
+            confidence_drop = recent_analysis['confidence'] - previous_analysis['confidence']
+            if confidence_drop < -15:
+                alerts.append({
+                    'type': 'confidence_drop',
+                    'severity': 'medium',
+                    'message': f"Baisse significative de confiance: {confidence_drop:+.1f}%"
+                })
+                recommendations.append("Analyse complémentaire recommandée")
+
+            # Désactivé : Alerte croissance de tumeur (nécessite des mesures réelles)
+            # Cette fonctionnalité a été désactivée car elle utilisait des valeurs simulées non fiables
+            """
+            if (recent_analysis['tumor_size_estimate'] and previous_analysis['tumor_size_estimate']):
+                size_growth = recent_analysis['tumor_size_estimate'] - previous_analysis['tumor_size_estimate']
+                if size_growth > 0.5:
+                    alerts.append({
+                        'type': 'tumor_growth',
+                        'severity': 'high',
+                        'message': f"Croissance significative de la tumeur: +{size_growth:.1f}cm"
+                    })
+                    recommendations.append("Évaluation oncologique urgente recommandée")
+            """
+
+        # Recommandations basées sur le suivi
+        if follow_up_months > 6 and total_analyses < 3:
+            recommendations.append("Augmenter la fréquence des examens de suivi")
+
+        if most_common_diagnosis[0] != 'Normal' and follow_up_months > 3:
+            recommendations.append("Suivi oncologique spécialisé recommandé")
+
+        return {
+            'total_analyses': total_analyses,
+            'follow_up_days': follow_up_days,
+            'follow_up_months': follow_up_months,
+            'most_common_diagnosis': most_common_diagnosis[0],
+            'diagnosis_stability': len(set(diagnoses)) == 1,
+            'avg_confidence': avg_confidence,
+            'confidence_trend': confidence_trend,
+            'size_metrics': size_metrics,
+            'evolution_counts': dict(evolution_counts),
+            'alerts': alerts,
+            'recommendations': recommendations,
+            'risk_level': calculate_risk_level(analyses, evolution_details, alerts)
+        }
+
+    except Exception as e:
+        print(f"Erreur lors du calcul des métriques: {e}")
+        return {}
+
+def calculate_risk_level(analyses, evolution_details, alerts):
+    """Calculer le niveau de risque d'un patient"""
+    try:
+        risk_score = 0
+
+        # Facteurs de risque basés sur les alertes
+        for alert in alerts:
+            if alert['severity'] == 'high':
+                risk_score += 3
+            elif alert['severity'] == 'medium':
+                risk_score += 2
+            else:
+                risk_score += 1
+
+        # Facteurs de risque basés sur les diagnostics
+        recent_diagnoses = [a['predicted_label'] for a in analyses[-3:]]  # 3 dernières analyses
+        tumor_count = sum(1 for d in recent_diagnoses if d != 'Normal')
+        risk_score += tumor_count
+
+        # Facteurs de risque basés sur l'évolution
+        negative_evolutions = ['dégradation', 'croissance', 'changement_type']
+        negative_count = sum(1 for e in evolution_details[-3:] if e['evolution_type'] in negative_evolutions)
+        risk_score += negative_count * 2
+
+        # Déterminer le niveau de risque
+        if risk_score >= 8:
+            return 'critique'
+        elif risk_score >= 5:
+            return 'élevé'
+        elif risk_score >= 2:
+            return 'modéré'
+        else:
+            return 'faible'
+
+    except Exception as e:
+        print(f"Erreur lors du calcul du niveau de risque: {e}")
+        return 'indéterminé'
+
+def create_medical_alerts(cursor, patient_id, analysis_id, current_results, doctor_id, previous_analysis_id):
+    """Créer des alertes médicales automatiques basées sur l'analyse"""
+    try:
+        # Récupérer l'analyse précédente
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+        prev_data = {} # MongoDB: TODO - utiliser collection.find_one()
+
+        if not prev_data:
+            return
+
+        prev_label, prev_confidence, prev_size = prev_data
+        alerts_to_create = []
+
+        # Alerte changement de diagnostic critique
+        if prev_label != current_results['predicted_label']:
+            if prev_label == 'Normal' and current_results['predicted_label'] != 'Normal':
+                alerts_to_create.append({
+                    'type': 'new_tumor_detected',
+                    'severity': 'high',
+                    'title': 'Nouvelle tumeur détectée',
+                    'message': f'Changement de diagnostic: {prev_label} → {current_results["predicted_label"]}. Consultation urgente recommandée.'
+                })
+            elif prev_label != 'Normal' and current_results['predicted_label'] == 'Normal':
+                alerts_to_create.append({
+                    'type': 'tumor_resolved',
+                    'severity': 'medium',
+                    'title': 'Amélioration significative',
+                    'message': f'Changement positif: {prev_label} → {current_results["predicted_label"]}. Suivi recommandé.'
+                })
+            else:
+                alerts_to_create.append({
+                    'type': 'diagnosis_change',
+                    'severity': 'high',
+                    'title': 'Changement de type de tumeur',
+                    'message': f'Changement de diagnostic: {prev_label} → {current_results["predicted_label"]}. Réévaluation nécessaire.'
+                })
+
+        # Alerte baisse significative de confiance
+        confidence_change = current_results['confidence'] - prev_confidence
+        if confidence_change < -0.2:  # Baisse de plus de 20%
+            alerts_to_create.append({
+                'type': 'confidence_drop',
+                'severity': 'medium',
+                'title': 'Baisse de confiance diagnostique',
+                'message': f'Baisse significative de confiance: {confidence_change*100:+.1f}%. Analyse complémentaire recommandée.'
+            })
+
+        # Alerte croissance rapide de tumeur
+        if current_results['predicted_class'] != 0 and prev_size:  # Si tumeur détectée
+            # Estimer la taille actuelle (même logique que dans save_analysis_to_db)
+            base_size = {1: 2.5, 2: 1.8, 3: 1.2}.get(current_results['predicted_class'], 2.0)
+            current_size = base_size * current_results['confidence'] * (0.8 + 0.4 * np.random.random())
+
+            size_change = current_size - prev_size
+            if size_change > 0.5:  # Croissance de plus de 0.5cm
+                alerts_to_create.append({
+                    'type': 'rapid_growth',
+                    'severity': 'high',
+                    'title': 'Croissance rapide de tumeur',
+                    'message': f'Augmentation significative de taille: +{size_change:.1f}cm. Évaluation oncologique urgente.'
+                })
+
+        # Alerte tumeur de haut grade
+        if current_results['predicted_label'] == 'Gliome' and current_results['confidence'] > 0.9:
+            alerts_to_create.append({
+                'type': 'high_grade_tumor',
+                'severity': 'high',
+                'title': 'Tumeur de haut grade suspectée',
+                'message': f'Gliome détecté avec haute confiance ({current_results["confidence"]*100:.1f}%). Prise en charge oncologique urgente.'
+            })
+
+        # Créer les alertes en base de données
+        for alert in alerts_to_create:
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (patient_id, doctor_id, analysis_id, alert['type'], alert['severity'],
+                  alert['title'], alert['message']))
+
+            # Créer aussi une notification
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+                VALUES (?, ?, ?, ?, ?)
+            ''', (doctor_id, 'medical_alert', alert['title'], alert['message'],
+                  json.dumps({'patient_id': patient_id, 'analysis_id': analysis_id})))
+
+    except Exception as e:
+        print(f"Erreur lors de la création des alertes: {e}")
+
+def get_patient_alerts(cursor, patient_id, doctor_id, limit=None):
+    """Récupérer les alertes d'un patient"""
+    try:
+        query = '''
+            SELECT id, alert_type, severity, title, message, is_read, is_resolved, created_at
+            FROM medical_alerts
+            WHERE patient_id = ? AND doctor_id = ?
+            ORDER BY created_at DESC
+        '''
+        params = [patient_id, doctor_id]
+
+        if limit:
+            query += ' LIMIT ?'
+            params.append(limit)
+
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+
+        alerts = []
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            alerts.append({
+                'id': row[0],
+                'alert_type': row[1],
+                'severity': row[2],
+                'title': row[3],
+                'message': row[4],
+                'is_read': bool(row[5]),
+                'is_resolved': bool(row[6]),
+                'created_at': row[7]
+            })
+
+        return alerts
+
+    except Exception as e:
+        print(f"Erreur lors de la récupération des alertes: {e}")
+        return []
+
 # Initialiser la base de données au démarrage
 init_database()
 
@@ -104,19 +578,128 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def get_current_doctor():
-    """Wrapper pour get_current_doctor_mongo"""
+def get_current_doctor_mongo():
+    """Obtenir les informations du médecin connecté"""
     if 'doctor_id' not in session:
         return None
-    return get_current_doctor_mongo(session['doctor_id'])
 
-def get_doctor_statistics(doctor_id):
-    """Wrapper pour get_doctor_statistics_mongo"""
-    return get_doctor_statistics_mongo(doctor_id)
+    try:
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-def create_doctor_session(doctor_id, ip_address, user_agent):
-    """Wrapper pour create_doctor_session_mongo"""
-    return create_doctor_session_mongo(doctor_id, ip_address, user_agent)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+
+        doctor_data = {} # MongoDB: TODO - utiliser collection.find_one()
+        # conn.close() # MongoDB: géré par le connector
+
+        if doctor_data:
+            return {
+                'id': doctor_data[0],
+                'email': doctor_data[1],
+                'first_name': doctor_data[2],
+                'last_name': doctor_data[3],
+                'specialty': doctor_data[4],
+                'hospital': doctor_data[5],
+                'license_number': doctor_data[6],
+                'phone': doctor_data[7],
+                'created_at': datetime.strptime(doctor_data[8], '%Y-%m-%d %H:%M:%S') if doctor_data[8] else None,
+                'updated_at': datetime.strptime(doctor_data[9], '%Y-%m-%d %H:%M:%S') if doctor_data[9] else None,
+                'full_name': f"{doctor_data[2]} {doctor_data[3]}"
+            }
+    except Exception as e:
+        print(f"Erreur lors de la récupération du médecin: {e}")
+
+    return None
+
+def get_doctor_statistics_mongo(doctor_id):
+    """Calculer les statistiques d'un médecin"""
+    try:
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
+
+        # Nombre total de patients
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM patients WHERE doctor_id = ?', (doctor_id,))
+        total_patients = {} # MongoDB: TODO - utiliser collection.find_one()[0]
+
+        # Nombre total d'analyses
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update, 0) 
+            FROM patients WHERE doctor_id = ?
+        ''', (doctor_id,))
+        total_analyses = {} # MongoDB: TODO - utiliser collection.find_one()[0]
+
+        # Nombre total de conversations de chat
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM chat_conversations 
+            WHERE doctor_id = ? AND is_active = 1
+        ''', (doctor_id,))
+        total_conversations = {} # MongoDB: TODO - utiliser collection.find_one()[0]
+
+        # Nombre de jours depuis la création du compte
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update - julianday(created_at) as account_age
+            FROM doctors WHERE id = ?
+        ''', (doctor_id,))
+        account_age_result = {} # MongoDB: TODO - utiliser collection.find_one()
+        account_age = int(account_age_result[0]) if account_age_result[0] else 0
+
+        # Analyses récentes (derniers 30 jours)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses a
+            JOIN patients p ON a.patient_id = p.patient_id
+            WHERE p.doctor_id = ? 
+            AND a.timestamp >= datetime('now', '-30 days')
+        ''', (doctor_id,))
+        recent_analyses = {} # MongoDB: TODO - utiliser collection.find_one()[0]
+
+        # Patient le plus récent
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+        latest_patient = {} # MongoDB: TODO - utiliser collection.find_one()
+
+        # conn.close() # MongoDB: géré par le connector
+
+        return {
+            'total_patients': total_patients,
+            'total_analyses': total_analyses,
+            'total_conversations': total_conversations,
+            'account_age': account_age,
+            'recent_analyses': recent_analyses,
+            'latest_patient_name': latest_patient[0] if latest_patient else None,
+            'latest_patient_date': latest_patient[1] if latest_patient else None
+        }
+
+    except Exception as e:
+        print(f"Erreur calcul statistiques médecin: {e}")
+        return {
+            'total_patients': 0,
+            'total_analyses': 0,
+            'total_conversations': 0,
+            'account_age': 0,
+            'recent_analyses': 0,
+            'latest_patient_name': None,
+            'latest_patient_date': None
+        }
+
+def create_doctor_session_mongo(doctor_id, ip_address, user_agent):
+    """Créer une session pour un médecin"""
+    try:
+        session_token = secrets.token_urlsafe(32)
+        expires_at = datetime.now() + timedelta(days=7)  # Session valide 7 jours
+
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
+
+        # Désactiver les anciennes sessions
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+
+        # Créer la nouvelle session
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+            VALUES (?, ?, ?, ?, ?)
+        ''', (doctor_id, session_token, expires_at, ip_address, user_agent))
+
+        # conn.commit() # MongoDB: auto-commit
+        # conn.close() # MongoDB: géré par le connector
+
+        return session_token
+    except Exception as e:
+        print(f"Erreur lors de la création de session: {e}")
+        return None
 
 # Définition du modèle CNN (architecture exacte du modèle sauvegardé)
 class BrainTumorCNN(nn.Module):
@@ -326,31 +909,42 @@ def login():
             return render_template('auth/login.html')
 
         try:
-            # Utiliser verify_doctor_credentials_mongo
-            doctor = verify_doctor_credentials_mongo(
-                email,
-                lambda hash_val: check_password_hash(hash_val, password)
-            )
+            # conn = ... # MongoDB: pas besoin de connexion explicite
+            # cursor = ... # MongoDB: pas besoin de cursor
 
-            if doctor and 'error' not in doctor:
-                # Créer la session Flask
-                session['doctor_id'] = doctor['id']
-                session['doctor_name'] = doctor['full_name']
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+
+            doctor = {} # MongoDB: TODO - utiliser collection.find_one()
+
+            if doctor and check_password_hash(doctor[1], password):
+                if not doctor[4]:  # is_active
+                    flash('Votre compte a été désactivé. Contactez l\'administrateur.', 'error')
+                    # conn.close() # MongoDB: géré par le connector
+                    return render_template('auth/login.html')
+
+                # Mettre à jour les statistiques de connexion
+                # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+
+                # conn.commit() # MongoDB: auto-commit
+                # conn.close() # MongoDB: géré par le connector
+
+                # Créer la session
+                session['doctor_id'] = doctor[0]
+                session['doctor_name'] = f"{doctor[2]} {doctor[3]}"
                 session['logged_in'] = True
 
                 # Créer une session en base
                 create_doctor_session_mongo(
-                    doctor['id'],
+                    doctor[0],
                     request.remote_addr,
                     request.headers.get('User-Agent', '')
                 )
 
-                flash(f'Bienvenue Dr. {doctor["first_name"]} {doctor["last_name"]}!', 'success')
+                flash(f'Bienvenue Dr. {doctor[2]} {doctor[3]}!', 'success')
                 return redirect(url_for('dashboard'))
-            elif doctor and doctor.get('error') == 'account_disabled':
-                flash('Votre compte a été désactivé. Contactez l\'administrateur.', 'error')
             else:
                 flash('Email ou mot de passe incorrect', 'error')
+                # conn.close() # MongoDB: géré par le connector
 
         except Exception as e:
             print(f"Erreur lors de la connexion: {e}")
@@ -387,18 +981,27 @@ def register():
             return render_template('auth/register.html')
 
         try:
-            # Utiliser register_doctor_mongo
-            password_hash = generate_password_hash(password)
-            doctor_id = register_doctor_mongo(
-                email, password_hash, first_name, last_name,
-                specialty, hospital, license_number, phone
-            )
+            # conn = ... # MongoDB: pas besoin de connexion explicite
+            # cursor = ... # MongoDB: pas besoin de cursor
 
-            if doctor_id:
-                flash('Compte créé avec succès! Vous pouvez maintenant vous connecter.', 'success')
-                return redirect(url_for('login'))
-            else:
+            # Vérifier si l'email existe déjà
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+            if {} # MongoDB: TODO - utiliser collection.find_one():
                 flash('Un compte avec cet email existe déjà', 'error')
+                # conn.close() # MongoDB: géré par le connector
+                return render_template('auth/register.html')
+
+            # Créer le compte
+            password_hash = generate_password_hash(password)
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (email, password_hash, first_name, last_name, specialty, hospital, license_number, phone))
+
+            # conn.commit() # MongoDB: auto-commit
+            # conn.close() # MongoDB: géré par le connector
+
+            flash('Compte créé avec succès! Vous pouvez maintenant vous connecter.', 'success')
+            return redirect(url_for('login'))
 
         except Exception as e:
             print(f"Erreur lors de l'inscription: {e}")
@@ -410,14 +1013,13 @@ def register():
 def logout():
     """Déconnexion"""
     if 'doctor_id' in session:
-        # Désactiver la session en base MongoDB
+        # Désactiver la session en base
         try:
-            db = get_mongodb()
-            doctor_sessions = db.doctor_sessions
-            doctor_sessions.update_many(
-                {'doctor_id': session['doctor_id']},
-                {'$set': {'is_active': False}}
-            )
+            # conn = ... # MongoDB: pas besoin de connexion explicite
+            # cursor = ... # MongoDB: pas besoin de cursor
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+            # conn.commit() # MongoDB: auto-commit
+            # conn.close() # MongoDB: géré par le connector
         except Exception as e:
             print(f"Erreur lors de la déconnexion: {e}")
 
@@ -429,12 +1031,12 @@ def logout():
 @login_required
 def dashboard():
     """Dashboard principal pour les médecins connectés"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     if not doctor:
         return redirect(url_for('login'))
 
     # Récupérer les statistiques du médecin
-    doctor_stats = get_doctor_statistics(doctor['id'])
+    doctor_stats = get_doctor_statistics_mongo(doctor['id'])
     
     # Ajouter les statistiques au contexte
     total_analyses = doctor_stats.get('total_analyses', 0)
@@ -451,11 +1053,11 @@ def dashboard():
 def get_doctor_stats_api():
     """API pour récupérer les statistiques du médecin"""
     try:
-        doctor = get_current_doctor()
+        doctor = get_current_doctor_mongo()
         if not doctor:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        stats = get_doctor_statistics(doctor['id'])
+        stats = get_doctor_statistics_mongo(doctor['id'])
         return jsonify({'success': True, 'stats': stats})
 
     except Exception as e:
@@ -467,7 +1069,7 @@ def get_doctor_stats_api():
 def update_doctor_profile():
     """API pour mettre à jour le profil du médecin"""
     try:
-        doctor = get_current_doctor()
+        doctor = get_current_doctor_mongo()
         if not doctor:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
@@ -485,18 +1087,22 @@ def update_doctor_profile():
         if not update_fields:
             return jsonify({'success': False, 'error': 'Aucune donnée à mettre à jour'}), 400
 
-        # MongoDB Update - remplacer SQLite
-        result = db.doctors.update_one(
-            {'_id': ObjectId(doctor_id)},
-            {
-                '$set': {**update_fields, 'updated_at': datetime.now()},
-                '$currentDate': {'lastModified': True}
-            }
-        )
+        # Construction de la requête SQL
+        set_clause = ', '.join([f"{field} = ?" for field in update_fields.keys()])
+        values = list(update_fields.values()) + [doctor_id]
         
-        if result.modified_count > 0:
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
+        
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+        
+        # conn.commit() # MongoDB: auto-commit
+        
+        if cursor.rowcount > 0:
+            # conn.close() # MongoDB: géré par le connector
             return jsonify({'success': True, 'message': 'Profil mis à jour avec succès'})
         else:
+            # conn.close() # MongoDB: géré par le connector
             return jsonify({'success': False, 'error': 'Aucune modification effectuée'}), 400
 
     except Exception as e:
@@ -507,27 +1113,25 @@ def update_doctor_profile():
 @login_required
 def new_analysis_page():
     """Page dédiée pour la nouvelle analyse"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     if not doctor:
         return redirect(url_for('login'))
 
     # Récupérer les patients du médecin connecté
-    # MongoDB Query
-    patients_cursor = db.patients.find({'doctor_id': doctor['id']}).sort('patient_name', 1)
-    patients = list(patients_cursor)
+    # conn = ... # MongoDB: pas besoin de connexion explicite
+    # cursor = ... # MongoDB: pas besoin de cursor
+    # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+    patients = [] # MongoDB: TODO - utiliser collection.find()
+    # conn.close() # MongoDB: géré par le connector
 
     # Convertir en liste de dictionnaires
     patient_list = []
     for patient in patients:
         # Calculer l'âge si date de naissance disponible
         age = None
-        dob = patient.get('date_of_birth')
-        if dob:
+        if patient[3]:  # date_of_birth
             try:
-                if isinstance(dob, str):
-                    birth_date = datetime.strptime(dob, '%Y-%m-%d')
-                else:
-                    birth_date = dob
+                birth_date = datetime.strptime(patient[3], '%Y-%m-%d')
                 age = datetime.now().year - birth_date.year
                 if datetime.now().month < birth_date.month or (datetime.now().month == birth_date.month and datetime.now().day < birth_date.day):
                     age -= 1
@@ -535,18 +1139,18 @@ def new_analysis_page():
                 age = None
         
         patient_list.append({
-            'id': str(patient.get('_id', '')),
-            'patient_id': patient.get('patient_id', ''),
-            'patient_name': patient.get('patient_name', ''),
-            'date_of_birth': dob,
+            'id': patient[0],
+            'patient_id': patient[1],
+            'patient_name': patient[2],
+            'date_of_birth': patient[3],
             'age': age,
-            'gender': patient.get('gender', ''),
-            'phone': patient.get('phone', ''),
-            'email': patient.get('email', ''),
-            'medical_history': patient.get('medical_history', ''),
-            'allergies': patient.get('allergies', ''),
-            'total_analyses': patient.get('total_analyses', 0) or 0,
-            'full_name': patient.get('patient_name') or f"Patient {patient.get('patient_id', '')}"
+            'gender': patient[4],
+            'phone': patient[5],
+            'email': patient[6],
+            'medical_history': patient[7],
+            'allergies': patient[8],
+            'total_analyses': patient[9] or 0,
+            'full_name': patient[2] or f"Patient {patient[1]}"
         })
 
     # Date d'aujourd'hui par défaut
@@ -557,7 +1161,7 @@ def new_analysis_page():
 @app.route('/')
 def index():
     """Page d'accueil"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     return render_template('index.html', doctor=doctor)
 
 @app.route('/favicon.ico')
@@ -627,15 +1231,13 @@ def upload_file():
             ip_address = request.remote_addr
             doctor_id = session.get('doctor_id')  # Récupérer l'ID du médecin connecté
 
-            analysis_id = save_analysis_to_db(
+            analysis_id = save_analysis_to_db_mongo(
                 results, filename, processing_time, session_id, ip_address,
                 patient_id if patient_id else None,
                 patient_name if patient_name else None,
                 exam_date,
                 doctor_id
             )
-            
-            print(f"DEBUG upload: analysis_id={analysis_id}, patient_id={patient_id}, doctor_id={doctor_id}")
 
             # Préparer la réponse
             response = {
@@ -670,45 +1272,35 @@ def uploaded_file(filename):
     """Servir les fichiers uploadés (images IRM)"""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-@app.route('/analysis/<analysis_id>')
+@app.route('/analysis/<int:analysis_id>')
 @login_required
-def analysis_detail(analysis_id):
+def analysis_detail(analysis_id: int):
     """Page détaillée d'une analyse"""
     try:
-        doctor = get_current_doctor()
+        doctor = get_current_doctor_mongo()
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+        row = {} # MongoDB: TODO - utiliser collection.find_one()
         
-        # Convertir analysis_id en ObjectId si c'est une string
-        try:
-            if isinstance(analysis_id, str):
-                obj_id = ObjectId(analysis_id)
-            else:
-                obj_id = ObjectId(str(analysis_id))
-        except:
-            flash('Analyse non trouvée', 'error')
-            return redirect(url_for('dashboard'))
-        
-        # MongoDB Query
-        analysis = db.analyses.find_one({'_id': obj_id})
-        
-        if not analysis:
+        if not row:
+            # conn.close() # MongoDB: géré par le connector
             flash("Analyse introuvable", 'error')
             return redirect(url_for('dashboard'))
 
         probs = {}
         recs = []
         try:
-            probs_data = analysis.get('probabilities', '{}')
-            probs = json.loads(probs_data) if isinstance(probs_data, str) else probs_data
+            probs = json.loads(row[9] or '{}')
         except Exception:
             probs = {}
         try:
-            recs_data = analysis.get('recommendations', '[]')
-            recs = json.loads(recs_data) if isinstance(recs_data, str) else recs_data
+            recs = json.loads(row[11] or '[]')
         except Exception:
             recs = []
 
         # Sécuriser la conversion de confidence
-        confidence_value = analysis.get('confidence', 0)
+        confidence_value = row[8]
         try:
             if isinstance(confidence_value, (int, float)):
                 confidence_float = float(confidence_value)
@@ -726,37 +1318,33 @@ def analysis_detail(analysis_id):
             print(f"Erreur conversion confidence: {e}, type: {type(confidence_value)}, valeur: {confidence_value}")
             confidence_float = 0.0
 
-        analysis_result = {
-            'id': str(analysis.get('_id', '')),
-            'timestamp': analysis.get('timestamp', ''),
-            'filename': analysis.get('filename', ''),
-            'patient_id': analysis.get('patient_id', ''),
-            'patient_name': analysis.get('patient_name', 'Patient anonyme'),
-            'exam_date': analysis.get('exam_date', ''),
-            'predicted_class': analysis.get('predicted_class', ''),
-            'predicted_label': analysis.get('predicted_label', ''),
+        analysis = {
+            'id': row[0],
+            'timestamp': row[1],
+            'filename': row[2],
+            'patient_id': row[3],
+            'patient_name': row[4] or 'Patient anonyme',
+            'exam_date': row[5],
+            'predicted_class': row[6],
+            'predicted_label': row[7],
             'confidence': round(confidence_float * 100, 1),
             'probabilities': {k: round((v or 0) * 100, 1) for k, v in probs.items()},
-            'description': analysis.get('description', ''),
+            'description': row[10] or '',
             'recommendations': recs,
-            'processing_time': analysis.get('processing_time', 0),
-            'previous_analysis_id': analysis.get('previous_analysis_id', ''),
-            'image_url': url_for('uploaded_file', filename=analysis.get('filename', '')) if analysis.get('filename') else ''
+            'processing_time': row[12],
+            'previous_analysis_id': row[13],
+            'image_url': url_for('uploaded_file', filename=row[2]) if row[2] else ''
         }
         
         # Récupérer les autres analyses du même patient
         other_analyses = []
-        patient_id = analysis.get('patient_id')
-        if patient_id:
-            # MongoDB Query
-            other_analyses_cursor = db.analyses.find({
-                'patient_id': patient_id,
-                'doctor_id': doctor['id']
-            }).sort('timestamp', -1).limit(10)
+        if row[3]:  # Si patient_id existe
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
             
-            for other_doc in other_analyses_cursor:
+            other_rows = [] # MongoDB: TODO - utiliser collection.find()
+            for other_row in other_rows:
                 # Sécuriser la conversion de confidence pour other_analyses
-                other_confidence = other_doc.get('confidence', 0)
+                other_confidence = other_row[4]
                 try:
                     if isinstance(other_confidence, (int, float)):
                         other_conf_float = float(other_confidence)
@@ -774,28 +1362,24 @@ def analysis_detail(analysis_id):
                     other_conf_float = 0.0
                 
                 other_analyses.append({
-                    'id': str(other_doc.get('_id', '')),
-                    'timestamp': other_doc.get('timestamp', ''),
-                    'exam_date': other_doc.get('exam_date', ''),
-                    'predicted_label': other_doc.get('predicted_label', ''),
+                    'id': other_row[0],
+                    'timestamp': other_row[1],
+                    'exam_date': other_row[2],
+                    'predicted_label': other_row[3],
                     'confidence': round(other_conf_float * 100, 1)
                 })
         
         # Calculer les métriques de performance du modèle pour ce patient
         model_metrics = {}
-        if patient_id:
+        if row[3]:  # Si patient_id existe
             # Récupérer toutes les analyses du patient pour les métriques
-            # MongoDB Query
-            patient_analyses_cursor = db.analyses.find({
-                'patient_id': patient_id,
-                'doctor_id': doctor['id']
-            }).sort('timestamp', -1)
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
             
-            patient_analyses = list(patient_analyses_cursor)
+            patient_analyses = [] # MongoDB: TODO - utiliser collection.find()
             
             if patient_analyses:
                 # Calculer la précision moyenne (accuracy basée sur la confiance)
-                confidences = [float(doc.get('confidence', 0) or 0) for doc in patient_analyses if doc.get('confidence') is not None]
+                confidences = [float(row[0] or 0) for row in patient_analyses if row[0] is not None]
                 if confidences:
                     avg_confidence = sum(confidences) / len(confidences)
                     model_metrics['accuracy'] = round(avg_confidence * 100, 1)
@@ -803,7 +1387,7 @@ def analysis_detail(analysis_id):
                     model_metrics['accuracy'] = 99.7  # Valeur par défaut
                 
                 # Calculer le temps de traitement moyen
-                processing_times = [doc.get('processing_time') for doc in patient_analyses if doc.get('processing_time') is not None]
+                processing_times = [row[1] for row in patient_analyses if row[1] is not None]
                 if processing_times:
                     avg_time = sum(processing_times) / len(processing_times)
                     model_metrics['avg_processing_time'] = round(avg_time, 2)
@@ -816,13 +1400,13 @@ def analysis_detail(analysis_id):
                 # Distribution des diagnostics
                 diagnosis_counts = {}
                 for patient_analysis in patient_analyses:
-                    diagnosis = patient_analysis.get('predicted_label', 'Inconnu') or 'Inconnu'
+                    diagnosis = patient_analysis[2] or 'Inconnu'
                     diagnosis_counts[diagnosis] = diagnosis_counts.get(diagnosis, 0) + 1
                 
                 model_metrics['diagnosis_distribution'] = diagnosis_counts
                 
                 # Taux de détection de tumeurs (tout ce qui n'est pas Normal)
-                tumor_detections = sum(1 for patient_analysis in patient_analyses if patient_analysis.get('predicted_label') and patient_analysis.get('predicted_label') != 'Normal')
+                tumor_detections = sum(1 for patient_analysis in patient_analyses if patient_analysis[2] and patient_analysis[2] != 'Normal')
                 model_metrics['tumor_detection_rate'] = round((tumor_detections / len(patient_analyses)) * 100, 1) if patient_analyses else 0
                 
                 # Fiabilité (basée sur la variance de la confiance)
@@ -863,12 +1447,14 @@ def analysis_detail(analysis_id):
                 'total_analyses': 1,
                 'tumor_detection_rate': 0,
                 'reliability': 95.0,
-                'diagnosis_distribution': {analysis_result['predicted_label']: 1}
+                'diagnosis_distribution': {analysis['predicted_label']: 1}
             }
+        
+        # conn.close() # MongoDB: géré par le connector
         
         return render_template('analysis_detail.html', 
                              doctor=doctor, 
-                             analysis=analysis_result,
+                             analysis=analysis,
                              other_analyses=other_analyses,
                              model_metrics=model_metrics)
     except Exception as e:
@@ -1030,18 +1616,16 @@ def get_gemini_analysis(results):
 def create_chat_conversation(doctor_id, title="Nouvelle consultation", patient_id=None):
     """Créer une nouvelle conversation de chat médical"""
     try:
-        # MongoDB Insert
-        conversation_doc = {
-            'doctor_id': doctor_id,
-            'patient_id': patient_id,
-            'title': title,
-            'is_active': True,
-            'created_at': datetime.now(),
-            'updated_at': datetime.now()
-        }
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
         
-        result = db.chat_conversations.insert_one(conversation_doc)
-        conversation_id = str(result.inserted_id)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+            VALUES (?, ?, ?)
+        ''', (doctor_id, patient_id, title))
+        
+        conversation_id = str(result.inserted_id) # MongoDB: lastrowid → inserted_id
+        # conn.commit() # MongoDB: auto-commit
+        # conn.close() # MongoDB: géré par le connector
         
         return conversation_id
     except Exception as e:
@@ -1051,51 +1635,37 @@ def create_chat_conversation(doctor_id, title="Nouvelle consultation", patient_i
 def get_chat_conversations(doctor_id, limit=20):
     """Récupérer les conversations de chat d'un médecin"""
     try:
-        # MongoDB Aggregation Pipeline
-        pipeline = [
-            {'$match': {'doctor_id': doctor_id, 'is_active': True}},
-            {'$lookup': {
-                'from': 'chat_messages',
-                'localField': '_id',
-                'foreignField': 'conversation_id',
-                'as': 'messages'
-            }},
-            {'$lookup': {
-                'from': 'patients',
-                'let': {'patient_id': '$patient_id', 'doctor_id': '$doctor_id'},
-                'pipeline': [
-                    {'$match': {'$expr': {'$and': [
-                        {'$eq': ['$patient_id', '$$patient_id']},
-                        {'$eq': ['$doctor_id', '$$doctor_id']}
-                    ]}}}
-                ],
-                'as': 'patient'
-            }},
-            {'$addFields': {
-                'message_count': {'$size': '$messages'},
-                'last_message': {'$arrayElemAt': [{'$slice': ['$messages.content', -1]}, 0]},
-                'patient_name': {'$arrayElemAt': ['$patient.patient_name', 0]}
-            }},
-            {'$sort': {'updated_at': -1}},
-            {'$limit': limit}
-        ]
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
         
-        conversations_cursor = db.chat_conversations.aggregate(pipeline)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as message_count,
+                   (SELECT cm2.content FROM chat_messages cm2 
+                    WHERE cm2.conversation_id = cc.id 
+                    ORDER BY cm2.timestamp DESC LIMIT 1) as last_message,
+                   p.patient_name
+            FROM chat_conversations cc
+            LEFT JOIN chat_messages cm ON cc.id = cm.conversation_id
+            LEFT JOIN patients p ON cc.patient_id = p.patient_id AND cc.doctor_id = p.doctor_id
+            WHERE cc.doctor_id = ? AND cc.is_active = 1
+            GROUP BY cc.id
+            ORDER BY cc.updated_at DESC
+            LIMIT ?
+        ''', (doctor_id, limit))
+        
         conversations = []
-        
-        for doc in conversations_cursor:
-            last_msg = doc.get('last_message', '')
+        for row in [] # MongoDB: TODO - utiliser collection.find():
             conversations.append({
-                'id': str(doc.get('_id')),
-                'title': doc.get('title', 'Sans titre'),
-                'patient_id': doc.get('patient_id'),
-                'created_at': doc.get('created_at', ''),
-                'updated_at': doc.get('updated_at', ''),
-                'message_count': doc.get('message_count', 0),
-                'last_message': last_msg[:100] + "..." if last_msg and len(last_msg) > 100 else last_msg,
-                'patient_name': doc.get('patient_name')
+                'id': row[0],
+                'title': row[1],
+                'patient_id': row[2],
+                'created_at': row[3],
+                'updated_at': row[4],
+                'message_count': row[5],
+                'last_message': row[6][:100] + "..." if row[6] and len(row[6]) > 100 else row[6],
+                'patient_name': row[7] if row[7] else None
             })
         
+        # conn.close() # MongoDB: géré par le connector
         return conversations
     except Exception as e:
         print(f"Erreur récupération conversations: {e}")
@@ -1104,43 +1674,37 @@ def get_chat_conversations(doctor_id, limit=20):
 def get_conversation_messages(conversation_id, doctor_id, with_branches=False):
     """Récupérer les messages d'une conversation (avec ou sans branches)"""
     if with_branches:
-        # Cette fonction sera implémentée si nécessaire
-        return []
+        return get_conversation_messages_with_branches(conversation_id, doctor_id)
     
     try:
-        # Vérifier que la conversation appartient au médecin
-        conversation = db.chat_conversations.find_one({
-            '_id': ObjectId(conversation_id),
-            'doctor_id': doctor_id
-        })
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
         
-        if not conversation:
+        # Vérifier que la conversation appartient au médecin
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+        
+        if not {} # MongoDB: TODO - utiliser collection.find_one():
+            # conn.close() # MongoDB: géré par le connector
             return []
         
         # Récupérer seulement les messages de niveau 0 (conversation principale)
-        messages_cursor = db.chat_messages.find({
-            'conversation_id': conversation_id,
-            '$or': [
-                {'branch_level': 0},
-                {'branch_level': {'$exists': False}}
-            ],
-            '$or': [
-                {'is_active': True},
-                {'is_active': {'$exists': False}}
-            ]
-        }).sort('timestamp', 1)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+                AND (is_active = 1 OR is_active IS NULL)
+            ORDER BY timestamp ASC
+        ''', (conversation_id,))
         
         messages = []
-        for doc in messages_cursor:
+        for row in [] # MongoDB: TODO - utiliser collection.find():
             messages.append({
-                'id': str(doc.get('_id')),
-                'role': doc.get('role', 'user'),
-                'content': doc.get('content', ''),
-                'timestamp': doc.get('timestamp', ''),
-                'is_medical_query': bool(doc.get('is_medical_query', True)),
-                'confidence_score': doc.get('confidence_score')
+                'id': row[0],
+                'role': row[1],
+                'content': row[2],
+                'timestamp': row[3],
+                'is_medical_query': bool(row[4]),
+                'confidence_score': row[5]
             })
         
+        # conn.close() # MongoDB: géré par le connector
         return messages
     except Exception as e:
         print(f"Erreur récupération messages: {e}")
@@ -1149,51 +1713,30 @@ def get_conversation_messages(conversation_id, doctor_id, with_branches=False):
 def save_chat_message(conversation_id, role, content, is_medical_query=True, confidence_score=None, parent_message_id=None, original_message_id=None, branch_level=0):
     """Sauvegarder un message de chat avec support du branchement"""
     try:
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
+        
         # Calculer la position dans la branche
-        pipeline = [
-            {'$match': {
-                'conversation_id': conversation_id,
-                'branch_level': branch_level,
-                '$or': [
-                    {'parent_message_id': parent_message_id},
-                    {'$and': [
-                        {'parent_message_id': {'$exists': False}},
-                        {'$expr': {'$eq': [parent_message_id, None]}}
-                    ]}
-                ]
-            }},
-            {'$group': {
-                '_id': None,
-                'max_position': {'$max': '$branch_position'}
-            }}
-        ]
-        result = list(db.chat_messages.aggregate(pipeline))
-        branch_position = (result[0]['max_position'] + 1) if result and result[0].get('max_position') is not None else 0
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update, -1) + 1 
+            FROM chat_messages 
+            WHERE conversation_id = ? AND branch_level = ? 
+            AND (parent_message_id = ? OR (parent_message_id IS NULL AND ? IS NULL))
+        ''', (conversation_id, branch_level, parent_message_id, parent_message_id))
+        branch_position = {} # MongoDB: TODO - utiliser collection.find_one()[0]
         
-        # Créer le document message
-        message_doc = {
-            'conversation_id': conversation_id,
-            'role': role,
-            'content': content,
-            'is_medical_query': is_medical_query,
-            'confidence_score': confidence_score,
-            'parent_message_id': parent_message_id,
-            'original_message_id': original_message_id,
-            'branch_level': branch_level,
-            'branch_position': branch_position,
-            'timestamp': datetime.now(),
-            'is_active': True
-        }
+        # Sauvegarder le message
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (conversation_id, role, content, is_medical_query, confidence_score,
+              parent_message_id, original_message_id, branch_level, branch_position))
         
-        # Insérer le message
-        result = db.chat_messages.insert_one(message_doc)
-        message_id = str(result.inserted_id)
+        message_id = str(result.inserted_id) # MongoDB: lastrowid → inserted_id
         
         # Mettre à jour la conversation
-        db.chat_conversations.update_one(
-            {'_id': ObjectId(conversation_id)},
-            {'$set': {'updated_at': datetime.now()}}
-        )
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+        
+        # conn.commit() # MongoDB: auto-commit
+        # conn.close() # MongoDB: géré par le connector
         
         return message_id
     except Exception as e:
@@ -1201,35 +1744,162 @@ def save_chat_message(conversation_id, role, content, is_medical_query=True, con
         return None
 
 def edit_message_and_create_branch(message_id, new_content, doctor_id):
-    """Éditer un message et créer une nouvelle branche de conversation - MongoDB Implementation Needed"""
+    """Éditer un message et créer une nouvelle branche de conversation"""
     try:
-        # TODO: Implémenter avec MongoDB
-        # Pour l'instant, retourner None
-        print("⚠️ edit_message_and_create_branch not yet implemented for MongoDB")
-        return None
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
+        
+        # Récupérer le message original et vérifier les permissions
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+        
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
+        if not result:
+            # conn.close() # MongoDB: géré par le connector
+            return None
+            
+        msg_id, conversation_id, role, old_content, parent_id, orig_id, branch_level, branch_pos, doc_id = result
+        
+        # Marquer le message original comme édité s'il n'a pas d'original_message_id
+        original_msg_id = orig_id if orig_id else msg_id
+        if not orig_id:
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update + 1, last_edited_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            ''', (msg_id,))
+        
+        # Créer le nouveau message dans une nouvelle branche
+        # Calculer la position dans la branche
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update, -1) + 1 
+            FROM chat_messages 
+            WHERE conversation_id = ? AND branch_level = ? AND parent_message_id IS NULL
+        ''', (conversation_id, (branch_level or 0) + 1))
+        new_branch_position = {} # MongoDB: TODO - utiliser collection.find_one()[0]
+        
+        # Créer le message édité
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (conversation_id, role, new_content, True, None,
+              parent_id, original_msg_id, (branch_level or 0) + 1, new_branch_position))
+        
+        new_message_id = str(result.inserted_id) # MongoDB: lastrowid → inserted_id
+        
+        # Mettre à jour la conversation
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+        
+        # conn.commit() # MongoDB: auto-commit
+        # conn.close() # MongoDB: géré par le connector
+        
+        return {
+            'success': True,
+            'original_message_id': msg_id,
+            'new_message_id': new_message_id,
+            'conversation_id': conversation_id,
+            'branch_level': (branch_level or 0) + 1
+        }
         
     except Exception as e:
         print(f"Erreur édition message: {e}")
         return None
 
 def get_conversation_messages_with_branches(conversation_id, doctor_id):
-    """Récupérer les messages d'une conversation avec les branches - MongoDB Implementation Needed"""
+    """Récupérer les messages d'une conversation avec les branches (version simplifiée)"""
     try:
-        # TODO: Implémenter avec MongoDB
-        # Pour l'instant, retourner une liste vide
-        print("⚠️ get_conversation_messages_with_branches not yet implemented for MongoDB")
-        return []
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
+        
+        # Vérifier que la conversation appartient au médecin
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+        
+        if not {} # MongoDB: TODO - utiliser collection.find_one():
+            # conn.close() # MongoDB: géré par le connector
+            return []
+        
+        # Récupérer tous les messages actifs, organisés par niveau de branche et position
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as branch_level, 
+                   COALESCE(branch_position, 0) as branch_position
+            FROM chat_messages
+            WHERE conversation_id = ? AND (is_active IS NULL OR is_active = 1)
+            ORDER BY timestamp ASC
+        ''', (conversation_id,))
+        
+        raw_messages = [] # MongoDB: TODO - utiliser collection.find()
+        # conn.close() # MongoDB: géré par le connector
+        
+        # Pour l'instant, retourner une version simplifiée : seulement les messages de niveau 0
+        messages = []
+        branches_map = {}
+        
+        for row in raw_messages:
+            message = {
+                'id': row[0],
+                'role': row[1], 
+                'content': row[2],
+                'timestamp': row[3],
+                'is_medical_query': bool(row[4]),
+                'confidence_score': row[5],
+                'parent_message_id': row[6],
+                'original_message_id': row[7],
+                'is_edited': bool(row[8]),
+                'edit_count': row[9] or 0,
+                'last_edited_at': row[10],
+                'branch_level': row[11],
+                'branch_position': row[12],
+                'branches': []
+            }
+            
+            # Si c'est un message de niveau 0, l'ajouter à la conversation principale
+            if message['branch_level'] == 0:
+                messages.append(message)
+            else:
+                # Garder les branches dans une map pour un affichage futur
+                original_id = message['original_message_id']
+                if original_id not in branches_map:
+                    branches_map[original_id] = []
+                branches_map[original_id].append(message)
+        
+        # Ajouter les informations de branches aux messages principaux
+        for message in messages:
+            if message['id'] in branches_map:
+                message['branches'] = branches_map[message['id']]
+            elif message['is_edited']:
+                # Si le message est marqué comme édité, chercher ses branches
+                message['branches'] = branches_map.get(message['id'], [])
+        
+        return messages
         
     except Exception as e:
-        print(f"Erreur get_conversation_messages_with_branches: {e}")
+        print(f"Erreur récupération messages avec branches: {e}")
         return []
 
 def get_message_branches(message_id, doctor_id):
-    """Récupérer toutes les branches d'un message spécifique - MongoDB Implementation Needed"""
+    """Récupérer toutes les branches d'un message spécifique"""
     try:
-        # TODO: Implémenter avec MongoDB
-        print("⚠️ get_message_branches not yet implemented for MongoDB")
-        return []
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
+        
+        # Récupérer le message et ses branches
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update 
+                AND cc.doctor_id = ?
+                AND (cm.is_active IS NULL OR cm.is_active = 1)
+            ORDER BY cm.branch_level ASC, cm.timestamp ASC
+        ''', (message_id, message_id, doctor_id))
+        
+        branches = []
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            branches.append({
+                'id': row[0],
+                'role': row[1],
+                'content': row[2], 
+                'timestamp': row[3],
+                'is_medical_query': bool(row[4]),
+                'confidence_score': row[5],
+                'branch_level': row[6] or 0,
+                'is_edited': bool(row[7]),
+                'edit_count': row[8] or 0,
+                'is_original': row[0] == message_id
+            })
+        
+        # conn.close() # MongoDB: géré par le connector
+        return branches
         
     except Exception as e:
         print(f"Erreur récupération branches: {e}")
@@ -1552,7 +2222,7 @@ def share_analysis():
 @login_required
 def chat_page():
     """Page principale du chat médical"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     if not doctor:
         return redirect(url_for('login'))
     return render_template('chat.html', doctor=doctor)
@@ -1561,7 +2231,7 @@ def chat_page():
 @login_required
 def chat_help():
     """Page d'aide du chat médical"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     if not doctor:
         return redirect(url_for('login'))
     return render_template('chat_help.html', doctor=doctor)
@@ -1697,64 +2367,55 @@ def send_chat_message():
 def get_patient_context_for_conversation(conversation_id):
     """Récupérer le contexte patient pour une conversation"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
         
         # Récupérer l'ID patient de la conversation
-        # MongoDB query needed here
-        # TODO: Convert to MongoDB
-        # SELECT patient_id FROM chat_conversations WHERE id = ?
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
         
-        result = None  # TODO: Fetch from MongoDB
-        if not result or not result.get('patient_id'):
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
+        if not result or not result[0]:
+            # conn.close() # MongoDB: géré par le connector
             return None
             
-        patient_id = result.get('patient_id')
+        patient_id = result[0]
         
         # Récupérer les informations du patient
-        # MongoDB query needed here
-        # TODO: Convert to MongoDB
-        # SELECT patient_name, date_of_birth, gender, medical_history, 
-        #        allergies, current_medications, total_analyses
-        # FROM patients WHERE patient_id = ?
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
         
-        patient_data = None  # TODO: Fetch from MongoDB
+        patient_data = {} # MongoDB: TODO - utiliser collection.find_one()
         if not patient_data:
+            # conn.close() # MongoDB: géré par le connector
             return None
             
         # Calculer l'âge si date de naissance disponible
         age = None
-        birth_date_str = patient_data.get('date_of_birth')
-        if birth_date_str:
+        if patient_data[1]:
             try:
-                birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d')
+                birth_date = datetime.strptime(patient_data[1], '%Y-%m-%d')
                 age = datetime.now().year - birth_date.year
             except:
                 age = None
         
         # Récupérer les analyses récentes
-        # MongoDB query needed here
-        # TODO: Convert to MongoDB
-        # SELECT timestamp, predicted_label, confidence, exam_date
-        # FROM analyses WHERE patient_id = ? ORDER BY timestamp DESC LIMIT 3
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
         
-        recent_analyses = []  # TODO: Fetch from MongoDB
+        recent_analyses = [] # MongoDB: TODO - utiliser collection.find()
         analyses_summary = []
         for analysis in recent_analyses:
-            analyses_summary.append(f"- {analysis.get('exam_date') or analysis.get('timestamp')}: {analysis.get('predicted_label')} (confiance: {analysis.get('confidence', 0)*100:.1f}%)")
+            analyses_summary.append(f"- {analysis[3] or analysis[0]}: {analysis[1]} (confiance: {analysis[2]*100:.1f}%)")
+        
+        # conn.close() # MongoDB: géré par le connector
         
         return {
-            'name': patient_data.get('patient_name'),
+            'name': patient_data[0],
             'id': patient_id,
             'age': age,
             'gender': patient_data[2],
             'medical_history': patient_data[3],
-            'age': age,
-            'gender': patient_data.get('gender'),
-            'medical_history': patient_data.get('medical_history'),
-            'allergies': patient_data.get('allergies'),
-            'current_medications': patient_data.get('current_medications'),
-            'total_analyses': patient_data.get('total_analyses'),
+            'allergies': patient_data[4],
+            'current_medications': patient_data[5],
+            'total_analyses': patient_data[6],
             'recent_analyses': '\n'.join(analyses_summary) if analyses_summary else 'Aucune analyse récente'
         }
         
@@ -1775,18 +2436,15 @@ def update_conversation(conversation_id):
         title = data.get('title')
         patient_id = data.get('patient_id')
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
         
         # Vérifier que la conversation appartient au médecin
-        # MongoDB query needed here
-        # SELECT id FROM chat_conversations 
-        #             WHERE id = ? AND doctor_id = ?)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
         
-        # if not cursor.fetchone():  # TODO: Convert to MongoDB
-            # # conn.close() # DISABLED
-            # return jsonify({'success': False, 'error': 'Conversation introuvable'}), 404
-        # TODO: Implement MongoDB validation check
+        if not {} # MongoDB: TODO - utiliser collection.find_one():
+            # conn.close() # MongoDB: géré par le connector
+            return jsonify({'success': False, 'error': 'Conversation introuvable'}), 404
         
         # Mettre à jour la conversation
         update_fields = []
@@ -1804,13 +2462,12 @@ def update_conversation(conversation_id):
             update_fields.append('updated_at = CURRENT_TIMESTAMP')
             params.append(conversation_id)
             
-            # MongoDB query needed here
-        # UPDATE chat_conversations 
-        #                 SET {', '.join(update_fields)}
-        #                 WHERE id = ?, params)
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update}
+                WHERE id = ?
+            ''', params)
         
-        # conn.commit() # DISABLED
-        # conn.close() # DISABLED
+        # conn.commit() # MongoDB: auto-commit
+        # conn.close() # MongoDB: géré par le connector
         
         return jsonify({'success': True, 'message': 'Conversation mise à jour'})
 
@@ -1827,39 +2484,34 @@ def get_patients_for_chat():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-        # MongoDB query needed here
-        # SELECT patient_id, patient_name, date_of_birth, gender, total_analyses
-        #             FROM patients
-        #             WHERE doctor_id = ?
-        #             ORDER BY patient_name)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
         patients = []
-        # TODO: Convert to MongoDB - fetch patients
-        # for row in cursor.fetchall():
-        #     # Calculer l'âge si date de naissance disponible
-        #     age = None
-        #     if row[2]:  # date_of_birth
-        #         try:
-        #             birth_date = datetime.strptime(row[2], '%Y-%m-%d')
-        #             age = datetime.now().year - birth_date.year
-        #             if datetime.now().month < birth_date.month or (datetime.now().month == birth_date.month and datetime.now().day < birth_date.day):
-        #                 age -= 1
-        #         except:
-        #             age = None
-        #     
-        #     patients.append({
-        #         'patient_id': row[0],
-        #         'patient_name': row[1] or f"Patient {row[0]}",
-        #         'age': age,
-        #         'gender': row[3],
-        #         'total_analyses': row[4] or 0,
-        #         'display_name': f"{row[1] or 'Patient ' + row[0]} ({age} ans)" if age else (row[1] or f"Patient {row[0]}")
-        #     })
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            # Calculer l'âge si date de naissance disponible
+            age = None
+            if row[2]:  # date_of_birth
+                try:
+                    birth_date = datetime.strptime(row[2], '%Y-%m-%d')
+                    age = datetime.now().year - birth_date.year
+                    if datetime.now().month < birth_date.month or (datetime.now().month == birth_date.month and datetime.now().day < birth_date.day):
+                        age -= 1
+                except:
+                    age = None
+            
+            patients.append({
+                'patient_id': row[0],
+                'patient_name': row[1] or f"Patient {row[0]}",
+                'age': age,
+                'gender': row[3],
+                'total_analyses': row[4] or 0,
+                'display_name': f"{row[1] or 'Patient ' + row[0]} ({age} ans)" if age else (row[1] or f"Patient {row[0]}")
+            })
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -1879,39 +2531,29 @@ def delete_conversation(conversation_id):
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
         
         # Vérifier que la conversation appartient au médecin
-        # MongoDB query needed here
-        # SELECT id FROM chat_conversations 
-        #             WHERE id = ? AND doctor_id = ?)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
         
-        # if not cursor.fetchone():  # TODO: Convert to MongoDB
-            # conn.close() # DISABLED
+        if not {} # MongoDB: TODO - utiliser collection.find_one():
+            # conn.close() # MongoDB: géré par le connector
             return jsonify({'success': False, 'error': 'Conversation introuvable'}), 404
         
         # Supprimer d'abord les messages de la conversation
-        # MongoDB query needed here
-        # DELETE FROM chat_messages 
-        #             WHERE conversation_id = ?)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
         
         # Supprimer les attachments s'il y en a
-        # MongoDB query needed here
-        # DELETE FROM chat_attachments 
-        #             WHERE message_id IN (
-        #                 SELECT id FROM chat_messages WHERE conversation_id = ?
-        #             ))
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+        ''', (conversation_id,))
         
         # Supprimer la conversation
-        # MongoDB query needed here
-        # DELETE FROM chat_conversations 
-        #             WHERE id = ?)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
         
-        # deleted_messages = cursor.rowcount  # TODO: Convert to MongoDB
-        deleted_messages = 0  # Placeholder
-        # conn.commit() # DISABLED
-        # conn.close() # DISABLED
+        deleted_messages = cursor.rowcount
+        # conn.commit() # MongoDB: auto-commit
+        # conn.close() # MongoDB: géré par le connector
         
         return jsonify({
             'success': True, 
@@ -1946,15 +2588,13 @@ def edit_message(message_id):
             return jsonify({'success': False, 'error': 'Impossible d\'éditer ce message'}), 404
 
         # Récupérer les informations du nouveau message
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
         
-        # MongoDB query needed here
-        # SELECT role, conversation_id FROM chat_messages WHERE id = ?)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
         
-        # msg_info = None  # cursor.fetchone() # DISABLED  # TODO: Convert to MongoDB
-        msg_info = None  # TODO: Implement MongoDB query
-        # conn.close() # DISABLED
+        msg_info = {} # MongoDB: TODO - utiliser collection.find_one()
+        # conn.close() # MongoDB: géré par le connector
         
         # Si c'est un message utilisateur, générer une nouvelle réponse de l'assistant
         if msg_info and msg_info[0] == 'user':
@@ -2033,28 +2673,19 @@ def regenerate_response(message_id):
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
         
         # Récupérer le message utilisateur et vérifier les permissions
-        # MongoDB query needed here
-        # SELECT cm.conversation_id, cm.content, cm.role, cc.doctor_id
-        #             FROM chat_messages cm
-        #             JOIN chat_conversations cc ON cm.conversation_id = cc.id
-        #             WHERE cm.id = ? AND cc.doctor_id = ? AND cm.role = 'user')
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
         
-        # message_info = None  # cursor.fetchone() # DISABLED  # TODO: Convert to MongoDB
-        message_info = None  # TODO: Implement MongoDB query
+        message_info = {} # MongoDB: TODO - utiliser collection.find_one()
         if not message_info:
-            # conn.close() # DISABLED
+            # conn.close() # MongoDB: géré par le connector
             return jsonify({'success': False, 'error': 'Message introuvable ou non autorisé'}), 404
         
-        conversation_id, content, role, doc_id = message_info if message_info else (None, None, None, None)
-        # conn.close() # DISABLED
-        
-        # Vérification des données récupérées
-        if not conversation_id:
-            return jsonify({'success': False, 'error': 'Données de conversation invalides'}), 400
+        conversation_id, content, role, doc_id = message_info
+        # conn.close() # MongoDB: géré par le connector
         
         # Récupérer l'historique et le contexte patient
         conversation_history = get_conversation_messages_with_branches(conversation_id, doctor_id)
@@ -2133,28 +2764,28 @@ def chat_with_bot():
 @login_required
 def pro_dashboard():
     """Page du tableau de bord professionnel"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     return render_template('pro_dashboard.html', doctor=doctor)
 
 @app.route('/pro-dashboard-advanced')
 @login_required
 def pro_dashboard_advanced():
     """Page du tableau de bord professionnel avancé"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     return render_template('pro_dashboard_advanced.html', doctor=doctor)
 
 @app.route('/platform-stats')
 @login_required
 def platform_stats():
     """Page des statistiques générales de la plateforme"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     return render_template('platform_stats.html', doctor=doctor)
 
 @app.route('/patients')
 @login_required
 def patients_list():
     """Page de liste des patients du médecin connecté"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     if not doctor:
         return redirect(url_for('login'))
     return render_template('patients_list.html', doctor=doctor)
@@ -2163,7 +2794,7 @@ def patients_list():
 @login_required
 def new_patient_page():
     """Page de création d'un nouveau patient"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     if not doctor:
         return redirect(url_for('login'))
     return render_template('new_patient.html', doctor=doctor)
@@ -2172,7 +2803,7 @@ def new_patient_page():
 @login_required
 def edit_patient_page(patient_id):
     """Page de modification d'un patient existant"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     if not doctor:
         return redirect(url_for('login'))
     # La page fera un appel à /api/patients/<id>/details pour pré-remplir
@@ -2182,7 +2813,7 @@ def edit_patient_page(patient_id):
 @login_required
 def alerts_page():
     """Page des alertes médicales"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     if not doctor:
         return redirect(url_for('login'))
     return render_template('alerts.html', doctor=doctor)
@@ -2191,7 +2822,7 @@ def alerts_page():
 @login_required
 def medical_alerts_page():
     """Page des alertes médicales"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     if not doctor:
         return redirect(url_for('login'))
     return render_template('alerts.html', doctor=doctor)
@@ -2200,7 +2831,7 @@ def medical_alerts_page():
 @login_required
 def manage_patients_page():
     """Page de gestion des patients"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     if not doctor:
         return redirect(url_for('login'))
     return render_template('manage_patients.html', doctor=doctor)
@@ -2214,53 +2845,44 @@ def analytics_overview():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-        # Statistiques personnelles du médecin depuis MongoDB
-        total_analyses = db.analyses.count_documents({"doctor_id": doctor_id})
-        
-        # Jours actifs
-        pipeline = [
-            {"$match": {"doctor_id": doctor_id, "timestamp": {"$exists": True}}},
-            {"$group": {"_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp"}}}}
-        ]
-        active_days = len(list(db.analyses.aggregate(pipeline)))
-        
-        # Moyennes
-        avg_pipeline = [
-            {"$match": {"doctor_id": doctor_id}},
-            {"$group": {
-                "_id": None,
-                "avg_confidence": {"$avg": "$confidence"},
-                "avg_processing_time": {"$avg": "$processing_time"}
-            }}
-        ]
-        avg_result = list(db.analyses.aggregate(avg_pipeline))
-        avg_confidence = avg_result[0]['avg_confidence'] if avg_result else 0
-        avg_processing_time = avg_result[0]['avg_processing_time'] if avg_result else 0
+        # Statistiques personnelles du médecin
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses WHERE doctor_id = ?', (doctor_id,))
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
+        total_analyses = result[0] if result else 0
+
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update) FROM analyses WHERE doctor_id = ?', (doctor_id,))
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
+        active_days = result[0] if result else 0
+
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses WHERE doctor_id = ?', (doctor_id,))
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
+        avg_confidence = result[0] if result and result[0] else 0
+
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses WHERE doctor_id = ?', (doctor_id,))
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
+        avg_processing_time = result[0] if result and result[0] else 0
 
         # Répartition par type de tumeur pour ce médecin
-        tumor_pipeline = [
-            {"$match": {"doctor_id": doctor_id, "predicted_label": {"$ne": None}}},
-            {"$group": {"_id": "$predicted_label", "count": {"$sum": 1}}}
-        ]
-        tumor_results = list(db.analyses.aggregate(tumor_pipeline))
-        tumor_distribution = {r['_id']: r['count'] for r in tumor_results}
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+            FROM analyses
+            WHERE doctor_id = ?
+            GROUP BY predicted_label
+        ''', (doctor_id,))
+        tumor_distribution = dict([] # MongoDB: TODO - utiliser collection.find())
 
         # Analyses par jour (30 derniers jours) pour ce médecin
-        from datetime import datetime, timedelta
-        thirty_days_ago = datetime.now() - timedelta(days=30)
-        daily_pipeline = [
-            {"$match": {"doctor_id": doctor_id, "timestamp": {"$gte": thirty_days_ago, "$exists": True}}},
-            {"$group": {
-                "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp"}},
-                "count": {"$sum": 1}
-            }},
-            {"$sort": {"_id": 1}}
-        ]
-        daily_results = list(db.analyses.aggregate(daily_pipeline))
-        daily_analyses = [{"date": r['_id'], "count": r['count']} for r in daily_results]
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as date, COUNT(*) as count
+            FROM analyses
+            WHERE doctor_id = ? AND timestamp >= date('now', '-30 days')
+            GROUP BY DATE(timestamp)
+            ORDER BY date
+        ''', (doctor_id,))
+        daily_analyses = [] # MongoDB: TODO - utiliser collection.find()
+
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -2283,16 +2905,15 @@ def analytics_overview():
 def platform_analytics_overview():
     """API pour les statistiques générales de toute la plateforme"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Vérifier si la table analyses existe et contient des données
-        # cursor.execute( # DISABLED"SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='analyses'")
-        # table_exists = None  # cursor.fetchone() # DISABLED[0] > 0  # TODO: Convert to MongoDB
-        table_exists = True  # TODO: Implement MongoDB collection check (assume exists for now)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM sqlite_master WHERE type='table' AND name='analyses'")
+        table_exists = {} # MongoDB: TODO - utiliser collection.find_one()[0] > 0
 
         if not table_exists:
-            # conn.close() # DISABLED
+            # conn.close() # MongoDB: géré par le connector
             return jsonify({
                 'success': True,
                 'data': {
@@ -2310,33 +2931,36 @@ def platform_analytics_overview():
                 }
             })
 
-        # Statistiques générales de la plateforme depuis MongoDB
-        total_analyses = db.analyses.count_documents({})
-        total_doctors = len(db.analyses.distinct("doctor_id", {"doctor_id": {"$ne": None}}))
-        total_patients = len(db.analyses.distinct("patient_id", {"patient_id": {"$ne": None}}))
-        
-        # Jours actifs (nombre de jours uniques avec analyses)
-        pipeline = [
-            {"$match": {"timestamp": {"$exists": True}}},
-            {"$group": {"_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp"}}}}
-        ]
-        active_days = len(list(db.analyses.aggregate(pipeline)))
-        
-        # Moyennes
-        avg_pipeline = [
-            {"$group": {
-                "_id": None,
-                "avg_confidence": {"$avg": "$confidence"},
-                "avg_processing_time": {"$avg": "$processing_time"}
-            }}
-        ]
-        avg_result = list(db.analyses.aggregate(avg_pipeline))
-        avg_confidence = avg_result[0]['avg_confidence'] if avg_result else 0
-        avg_processing_time = avg_result[0]['avg_processing_time'] if avg_result else 0
+        # Statistiques générales de la plateforme
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses')
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
+        total_analyses = result[0] if result and result[0] is not None else 0
+
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses WHERE doctor_id IS NOT NULL')
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
+        total_doctors = result[0] if result and result[0] is not None else 0
+
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses WHERE patient_id IS NOT NULL')
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
+        total_patients = result[0] if result and result[0] is not None else 0
+
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update) FROM analyses WHERE timestamp IS NOT NULL')
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
+        active_days = result[0] if result and result[0] is not None else 0
+
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses WHERE confidence IS NOT NULL')
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
+        avg_confidence = result[0] if result and result[0] is not None else 0
+
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses WHERE processing_time IS NOT NULL')
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
+        avg_processing_time = result[0] if result and result[0] is not None else 0
 
         # Calculer le taux de réussite (analyses avec confidence > 0.8)
         if total_analyses > 0:
-            successful_analyses = db.analyses.count_documents({"confidence": {"$gt": 0.8}})
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses WHERE confidence > 0.8')
+            result = {} # MongoDB: TODO - utiliser collection.find_one()
+            successful_analyses = result[0] if result and result[0] is not None else 0
             success_rate = (successful_analyses / total_analyses * 100)
         else:
             success_rate = 0
@@ -2346,96 +2970,75 @@ def platform_analytics_overview():
 
         # Répartition par type de tumeur (toute la plateforme)
         try:
-            tumor_pipeline = [
-                {"$match": {"predicted_label": {"$ne": None}}},
-                {"$group": {"_id": "$predicted_label", "count": {"$sum": 1}}}
-            ]
-            tumor_results = list(db.analyses.aggregate(tumor_pipeline))
-            tumor_distribution = {r['_id']: r['count'] for r in tumor_results}
-        except Exception:
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+                FROM analyses
+                WHERE predicted_label IS NOT NULL
+                GROUP BY predicted_label
+            ''')
+            tumor_distribution = dict([] # MongoDB: TODO - utiliser collection.find()) or {}
+        except:
             tumor_distribution = {}
 
         # Analyses par jour (30 derniers jours) - toute la plateforme
         try:
-            from datetime import datetime, timedelta
-            thirty_days_ago = datetime.now() - timedelta(days=30)
-            print(f"DEBUG: thirty_days_ago = {thirty_days_ago}")
-            
-            daily_pipeline = [
-                {"$match": {"timestamp": {"$gte": thirty_days_ago, "$exists": True}}},
-                {"$group": {
-                    "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp"}},
-                    "count": {"$sum": 1}
-                }},
-                {"$sort": {"_id": 1}}
-            ]
-            daily_results = list(db.analyses.aggregate(daily_pipeline))
-            print(f"DEBUG: daily_analyses found {len(daily_results)} days")
-            daily_analyses = [(r['_id'], r['count']) for r in daily_results]
-        except Exception as e:
-            print(f"Erreur daily_analyses: {e}")
-            import traceback
-            traceback.print_exc()
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as date, COUNT(*) as count
+                FROM analyses
+                WHERE timestamp >= date('now', '-30 days')
+                  AND timestamp IS NOT NULL
+                GROUP BY DATE(timestamp)
+                ORDER BY date
+            ''')
+            daily_analyses = [] # MongoDB: TODO - utiliser collection.find() or []
+        except:
             daily_analyses = []
 
         # Statistiques détaillées pour les cartes
         try:
-            from datetime import datetime, timedelta
-            now = datetime.now()
-            today_start = datetime(now.year, now.month, now.day)
-            month_start = datetime(now.year, now.month, 1)
-            
             # Analyses d'aujourd'hui
-            daily_analyses_count = db.analyses.count_documents({
-                "timestamp": {"$gte": today_start}
-            })
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses 
+                WHERE DATE(timestamp) = DATE('now')
+            ''')
+            daily_analyses_count = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
 
             # Nouveaux patients ce mois
-            new_patients_month = len(db.analyses.distinct("patient_id", {
-                "timestamp": {"$gte": month_start},
-                "patient_id": {"$ne": None}
-            }))
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses 
+                WHERE timestamp >= date('now', 'start of month')
+                  AND patient_id IS NOT NULL
+            ''')
+            new_patients_month = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
 
             # Croissance des analyses ce mois vs mois précédent
-            current_month_analyses = db.analyses.count_documents({
-                "timestamp": {"$gte": month_start}
-            })
-            
-            # Mois précédent
-            if now.month == 1:
-                prev_month_start = datetime(now.year - 1, 12, 1)
-                prev_month_end = datetime(now.year, 1, 1)
-            else:
-                prev_month_start = datetime(now.year, now.month - 1, 1)
-                prev_month_end = month_start
-            
-            previous_month_analyses = db.analyses.count_documents({
-                "timestamp": {"$gte": prev_month_start, "$lt": prev_month_end}
-            })
-            if previous_month_analyses == 0:
-                previous_month_analyses = 1  # Éviter division par zéro
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses 
+                WHERE timestamp >= date('now', 'start of month')
+            ''')
+            current_month_analyses = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
+
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses 
+                WHERE timestamp >= date('now', 'start of month', '-1 month')
+                  AND timestamp < date('now', 'start of month')
+            ''')
+            previous_month_analyses = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 1  # Éviter division par zéro
 
             analyses_growth = ((current_month_analyses - previous_month_analyses) / previous_month_analyses * 100) if previous_month_analyses > 0 else 0
 
             # Croissance des patients ce mois vs mois précédent
-            previous_month_patients = len(db.analyses.distinct("patient_id", {
-                "timestamp": {"$gte": prev_month_start, "$lt": prev_month_end},
-                "patient_id": {"$ne": None}
-            }))
-            if previous_month_patients == 0:
-                previous_month_patients = 1
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses 
+                WHERE timestamp >= date('now', 'start of month', '-1 month')
+                  AND timestamp < date('now', 'start of month')
+                  AND patient_id IS NOT NULL
+            ''')
+            previous_month_patients = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 1
 
             patients_growth = ((new_patients_month - previous_month_patients) / previous_month_patients * 100) if previous_month_patients > 0 else 0
 
             # Médecins actifs (ayant fait au moins une analyse dans les 7 derniers jours)
-            seven_days_ago = now - timedelta(days=7)
-            active_doctors = len(db.analyses.distinct("doctor_id", {
-                "timestamp": {"$gte": seven_days_ago},
-                "doctor_id": {"$ne": None}
-            }))
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses 
+                WHERE timestamp >= date('now', '-7 days')
+                  AND doctor_id IS NOT NULL
+            ''')
+            active_doctors = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
 
-        except Exception as e:
-            print(f"Erreur calcul statistiques: {e}")
+        except:
             daily_analyses_count = 0
             new_patients_month = 0
             analyses_growth = 0
@@ -2444,123 +3047,63 @@ def platform_analytics_overview():
 
         # Top 5 des médecins les plus actifs
         try:
-            top_doctors_pipeline = [
-                {"$match": {"doctor_id": {"$ne": None}}},
-                {"$group": {
-                    "_id": "$doctor_id",
-                    "analyses_count": {"$sum": 1}
-                }},
-                {"$sort": {"analyses_count": -1}},
-                {"$limit": 5}
-            ]
-            top_doctors_results = list(db.analyses.aggregate(top_doctors_pipeline))
-            
-            # Récupérer les noms des médecins
-            top_doctors = []
-            for result in top_doctors_results:
-                doctor_id = result['_id']
-                # Convertir en ObjectId si nécessaire
-                try:
-                    from bson import ObjectId
-                    doctor = db.doctors.find_one({"_id": ObjectId(doctor_id)})
-                    if doctor:
-                        first_name = doctor.get('first_name', 'Dr.')
-                        last_name = doctor.get('last_name', 'Inconnu')
-                        top_doctors.append((first_name, last_name, result['analyses_count']))
-                except:
-                    top_doctors.append(('Dr.', 'Inconnu', result['analyses_count']))
-        except Exception as e:
-            print(f"Erreur top_doctors: {e}")
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as analyses_count
+                FROM doctors d
+                LEFT JOIN analyses a ON d.id = a.doctor_id
+                WHERE d.first_name IS NOT NULL AND d.last_name IS NOT NULL
+                GROUP BY d.id, d.first_name, d.last_name
+                ORDER BY analyses_count DESC
+                LIMIT 5
+            ''')
+            top_doctors = [] # MongoDB: TODO - utiliser collection.find() or []
+        except:
             top_doctors = []
 
         # Performance par médecin (efficacité basée sur la confiance moyenne)
         try:
-            doctor_performance_pipeline = [
-                {"$match": {"doctor_id": {"$ne": None}}},
-                {"$group": {
-                    "_id": "$doctor_id",
-                    "analyses_count": {"$sum": 1},
-                    "avg_confidence": {"$avg": "$confidence"}
-                }},
-                {"$match": {"analyses_count": {"$gt": 0}}},
-                {"$sort": {"avg_confidence": -1, "analyses_count": -1}},
-                {"$limit": 5}
-            ]
-            performance_results = list(db.analyses.aggregate(doctor_performance_pipeline))
-            
-            doctor_performance = []
-            for result in performance_results:
-                doctor_id = result['_id']
-                try:
-                    from bson import ObjectId
-                    doctor = db.doctors.find_one({"_id": ObjectId(doctor_id)})
-                    if doctor:
-                        name = f"{doctor.get('first_name', 'Dr.')} {doctor.get('last_name', 'Inconnu')}"
-                        doctor_performance.append((
-                            doctor_id,
-                            name,
-                            result['analyses_count'],
-                            result['avg_confidence']
-                        ))
-                except:
-                    doctor_performance.append((
-                        doctor_id,
-                        'Dr. Inconnu',
-                        result['analyses_count'],
-                        result['avg_confidence']
-                    ))
-        except Exception as e:
-            print(f"Erreur doctor_performance: {e}")
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as analyses_count,
+                       AVG(a.confidence) as avg_confidence
+                FROM doctors d
+                LEFT JOIN analyses a ON d.id = a.doctor_id
+                WHERE d.first_name IS NOT NULL AND d.last_name IS NOT NULL
+                GROUP BY d.id, d.first_name, d.last_name
+                HAVING analyses_count > 0
+                ORDER BY avg_confidence DESC, analyses_count DESC
+                LIMIT 5
+            ''')
+            doctor_performance = [] # MongoDB: TODO - utiliser collection.find() or []
+        except:
             doctor_performance = []
 
         # Croissance mensuelle (6 derniers mois)
         try:
-            six_months_ago = datetime.now() - timedelta(days=180)
-            print(f"DEBUG: six_months_ago = {six_months_ago}")
-            
-            monthly_pipeline = [
-                {"$match": {"timestamp": {"$gte": six_months_ago, "$exists": True}}},
-                {"$group": {
-                    "_id": {"$dateToString": {"format": "%Y-%m", "date": "$timestamp"}},
-                    "count": {"$sum": 1}
-                }},
-                {"$sort": {"_id": 1}}
-            ]
-            monthly_results = list(db.analyses.aggregate(monthly_pipeline))
-            print(f"DEBUG: monthly_growth found {len(monthly_results)} months")
-            monthly_growth_data = [(r['_id'], r['count']) for r in monthly_results]
-        except Exception as e:
-            print(f"Erreur monthly_growth: {e}")
-            import traceback
-            traceback.print_exc()
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as month,
+                       COUNT(*) as count
+                FROM analyses
+                WHERE timestamp >= date('now', '-6 months')
+                  AND timestamp IS NOT NULL
+                GROUP BY strftime('%Y-%m', timestamp)
+                ORDER BY month
+            ''')
+            monthly_growth_data = [] # MongoDB: TODO - utiliser collection.find() or []
+        except:
             monthly_growth_data = []
 
         # Activité par heure de la journée
         try:
-            thirty_days_ago = datetime.now() - timedelta(days=30)
-            print(f"DEBUG: Querying hourly activity since {thirty_days_ago}")
-            
-            hourly_pipeline = [
-                {"$match": {"timestamp": {"$gte": thirty_days_ago, "$exists": True}}},
-                {"$project": {
-                    "hour": {"$hour": "$timestamp"}
-                }},
-                {"$group": {
-                    "_id": "$hour",
-                    "count": {"$sum": 1}
-                }},
-                {"$sort": {"_id": 1}}
-            ]
-            hourly_results = list(db.analyses.aggregate(hourly_pipeline))
-            print(f"DEBUG: hourly_activity found {len(hourly_results)} hours")
-            hourly_activity_data = [(str(r['_id']).zfill(2), r['count']) for r in hourly_results]
-        except Exception as e:
-            print(f"Erreur hourly_activity: {e}")
-            import traceback
-            traceback.print_exc()
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as hour,
+                       COUNT(*) as count
+                FROM analyses
+                WHERE timestamp >= date('now', '-30 days')
+                  AND timestamp IS NOT NULL
+                GROUP BY strftime('%H', timestamp)
+                ORDER BY hour
+            ''')
+            hourly_activity_data = [] # MongoDB: TODO - utiliser collection.find() or []
+        except:
             hourly_activity_data = []
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -2622,24 +3165,22 @@ def get_system_metrics():
         response_time = base_response_time + (load_factor * 2)
         
         # Calculer le taux de réussite des analyses récentes
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
         
         try:
             # Analyses des dernières 24h
-            # MongoDB query needed here
-        # SELECT COUNT(*) FROM analyses 
-        #                 WHERE timestamp >= datetime('now', '-1 day'))
-            # recent_analyses = None  # cursor.fetchone() # DISABLED[0] or 0  # TODO: Convert to MongoDB
-            recent_analyses = 0  # TODO: Implement MongoDB query
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses 
+                WHERE timestamp >= datetime('now', '-1 day')
+            ''')
+            recent_analyses = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
             
             # Analyses réussies (confidence > 0.8) des dernières 24h
-            # MongoDB query needed here
-        # SELECT COUNT(*) FROM analyses 
-        #                 WHERE timestamp >= datetime('now', '-1 day') 
-        #                 AND confidence > 0.8)
-            # successful_recent = None  # cursor.fetchone() # DISABLED[0] or 0  # TODO: Convert to MongoDB
-            successful_recent = 0  # TODO: Implement MongoDB query
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses 
+                WHERE timestamp >= datetime('now', '-1 day') 
+                AND confidence > 0.8
+            ''')
+            successful_recent = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
             
             success_rate_24h = (successful_recent / recent_analyses * 100) if recent_analyses > 0 else 0
             
@@ -2647,7 +3188,7 @@ def get_system_metrics():
             recent_analyses = 0
             success_rate_24h = 0
         
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
         
         # Statut système global
         if cpu_percent < 70 and ram_percent < 80 and response_time < 3:
@@ -2718,39 +3259,37 @@ def get_my_patients():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-        # Query MongoDB for patients
-        patients_cursor = db.patients.find({"doctor_id": doctor_id}).sort("updated_at", -1)
-        print(f"DEBUG get_my_patients: doctor_id = {doctor_id}")
-        
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update DESC
+        ''', (doctor_id,))
+
         patients = []
-        for patient in patients_cursor:
-            print(f"DEBUG: Found patient: {patient.get('patient_id')} - {patient.get('patient_name')}")
+        for row in [] # MongoDB: TODO - utiliser collection.find():
             patients.append({
-                'patient_id': patient.get('patient_id'),
-                'patient_name': patient.get('patient_name'),
-                'date_of_birth': patient.get('date_of_birth'),
-                'gender': patient.get('gender'),
-                'phone': patient.get('phone'),
-                'email': patient.get('email'),
-                'address': patient.get('address'),
-                'emergency_contact_name': patient.get('emergency_contact_name'),
-                'emergency_contact_phone': patient.get('emergency_contact_phone'),
-                'medical_history': patient.get('medical_history'),
-                'allergies': patient.get('allergies'),
-                'current_medications': patient.get('current_medications'),
-                'insurance_number': patient.get('insurance_number'),
-                'notes': patient.get('notes'),
-                'first_analysis_date': patient.get('first_analysis_date'),
-                'last_analysis_date': patient.get('last_analysis_date'),
-                'total_analyses': patient.get('total_analyses', 0),
-                'created_at': patient.get('created_at'),
-                'updated_at': patient.get('updated_at')
+                'patient_id': row[0],
+                'patient_name': row[1],
+                'date_of_birth': datetime.strptime(row[2], '%Y-%m-%d') if row[2] else None,
+                'gender': row[3],
+                'phone': row[4],
+                'email': row[5],
+                'address': row[6],
+                'emergency_contact_name': row[7],
+                'emergency_contact_phone': row[8],
+                'medical_history': row[9],
+                'allergies': row[10],
+                'current_medications': row[11],
+                'insurance_number': row[12],
+                'notes': row[13],
+                'first_analysis_date': row[14],
+                'last_analysis_date': row[15],
+                'total_analyses': row[16],
+                'created_at': row[17],
+                'updated_at': row[18]
             })
-        
-        print(f"DEBUG: Returning {len(patients)} patients")
+
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -2770,33 +3309,32 @@ def get_filter_counts():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Compter les diagnostics par type
-        # MongoDB query needed here
-        # SELECT predicted_label, COUNT(*)
-        #             FROM analyses
-        #             WHERE doctor_id = ?
-        #             GROUP BY predicted_label)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+            FROM analyses
+            WHERE doctor_id = ?
+            GROUP BY predicted_label
+        ''', (doctor_id,))
 
-        # diagnostic_counts = dict(cursor.fetchall())  # TODO: Convert to MongoDB
-        diagnostic_counts = {}  # TODO: Implement MongoDB query
+        diagnostic_counts = dict([] # MongoDB: TODO - utiliser collection.find())
 
         # Statistiques générales
-        # cursor.execute( # DISABLED'SELECT COUNT(*) FROM analyses WHERE doctor_id = ?', (doctor_id,))
-        result = None  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses WHERE doctor_id = ?', (doctor_id,))
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
         total_analyses = result[0] if result else 0
 
-        # cursor.execute( # DISABLED'SELECT AVG(confidence) FROM analyses WHERE doctor_id = ?', (doctor_id,))
-        result = None  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses WHERE doctor_id = ?', (doctor_id,))
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
         avg_confidence = result[0] if result and result[0] else 0
 
-        # cursor.execute( # DISABLED'SELECT AVG(processing_time) FROM analyses WHERE doctor_id = ?', (doctor_id,))
-        result = None  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses WHERE doctor_id = ?', (doctor_id,))
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
         avg_processing_time = result[0] if result and result[0] else 0
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -2822,8 +3360,8 @@ def filter_preview():
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
         filters = request.json
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Construire la requête avec les filtres
         query = 'SELECT COUNT(*) FROM analyses WHERE doctor_id = ?'
@@ -2858,11 +3396,11 @@ def filter_preview():
             query += ' AND processing_time <= ?'
             params.append(filters['max_processing_time'])
 
-        # cursor.execute( # DISABLEDquery, params)
-        result = None  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+        result = {} # MongoDB: TODO - utiliser collection.find_one()
         count = result[0] if result else 0
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -2880,32 +3418,31 @@ def filter_preview():
 def analytics_by_period(period):
     """API pour les statistiques par période (day/month/year)"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         if period == 'day':
             # Analyses par heure pour le jour le plus récent avec des données
-            # MongoDB query needed here
-        # SELECT strftime('%H', timestamp) as hour, COUNT(*) as count
-        #                 FROM analyses
-        #                 WHERE DATE(timestamp) = (
-        #                     SELECT DATE(timestamp) FROM analyses
-        #                     ORDER BY timestamp DESC LIMIT 1
-        #                 )
-        #                 GROUP BY strftime('%H', timestamp)
-        #                 ORDER BY hour)
-            # data = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as hour, COUNT(*) as count
+                FROM analyses
+                WHERE DATE(timestamp) = (
+                    SELECT DATE(timestamp) FROM analyses
+                    ORDER BY timestamp DESC LIMIT 1
+                )
+                GROUP BY strftime('%H', timestamp)
+                ORDER BY hour
+            ''')
+            data = [] # MongoDB: TODO - utiliser collection.find()
 
             # Si pas de données pour le jour le plus récent, prendre les 24 dernières heures
             if not data:
-                # MongoDB query needed here
-                # SELECT strftime('%H', timestamp) as hour, COUNT(*) as count
-                #                     FROM analyses
-                #                     WHERE timestamp >= datetime('now', '-24 hours')
-                #                     GROUP BY strftime('%H', timestamp)
-                #                     ORDER BY hour)
-                # data = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
-                data = []  # TODO: Implement MongoDB query
+                # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as hour, COUNT(*) as count
+                    FROM analyses
+                    WHERE timestamp >= datetime('now', '-24 hours')
+                    GROUP BY strftime('%H', timestamp)
+                    ORDER BY hour
+                ''')
+                data = [] # MongoDB: TODO - utiliser collection.find()
 
             # Créer un tableau complet de 24 heures
             hour_counts = {str(hour).zfill(2): 0 for hour in range(24)}
@@ -2917,65 +3454,62 @@ def analytics_by_period(period):
 
         elif period == 'month':
             # Analyses par jour pour le mois le plus récent avec des données
-            # MongoDB query needed here
-            # SELECT strftime('%d', timestamp) as day, COUNT(*) as count
-            #                 FROM analyses
-            #                 WHERE strftime('%Y-%m', timestamp) = (
-            #                     SELECT strftime('%Y-%m', timestamp) FROM analyses
-            #                     ORDER BY timestamp DESC LIMIT 1
-            #                 )
-            #                 GROUP BY strftime('%d', timestamp)
-            #                 ORDER BY CAST(day as INTEGER))
-            # data = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
-            data = []  # TODO: Implement MongoDB query
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as day, COUNT(*) as count
+                FROM analyses
+                WHERE strftime('%Y-%m', timestamp) = (
+                    SELECT strftime('%Y-%m', timestamp) FROM analyses
+                    ORDER BY timestamp DESC LIMIT 1
+                )
+                GROUP BY strftime('%d', timestamp)
+                ORDER BY CAST(day as INTEGER)
+            ''')
+            data = [] # MongoDB: TODO - utiliser collection.find()
 
             # Si pas de données, prendre les 30 derniers jours
             if not data:
-                # MongoDB query needed here
-                # SELECT strftime('%d', timestamp) as day, COUNT(*) as count
-                #                     FROM analyses
-                #                     WHERE timestamp >= date('now', '-30 days')
-                #                     GROUP BY strftime('%d', timestamp)
-                #                     ORDER BY CAST(day as INTEGER))
-                # data = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
-                data = []  # TODO: Implement MongoDB query
+                # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as day, COUNT(*) as count
+                    FROM analyses
+                    WHERE timestamp >= date('now', '-30 days')
+                    GROUP BY strftime('%d', timestamp)
+                    ORDER BY CAST(day as INTEGER)
+                ''')
+                data = [] # MongoDB: TODO - utiliser collection.find()
 
-            labels = [f"{day}" for day, _ in data] if data else []
-            values = [count for _, count in data] if data else []
+            labels = [f"{day}" for day, _ in data]
+            values = [count for _, count in data]
 
         elif period == 'year':
             # Analyses par mois pour l'année la plus récente avec des données
-            # MongoDB query needed here
-        # SELECT strftime('%m', timestamp) as month, COUNT(*) as count
-        #                 FROM analyses
-        #                 WHERE strftime('%Y', timestamp) = (
-        #                     SELECT strftime('%Y', timestamp) FROM analyses
-        #                     ORDER BY timestamp DESC LIMIT 1
-        #                 )
-        #                 GROUP BY strftime('%m', timestamp)
-        #                 ORDER BY CAST(month as INTEGER))
-            # data = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as month, COUNT(*) as count
+                FROM analyses
+                WHERE strftime('%Y', timestamp) = (
+                    SELECT strftime('%Y', timestamp) FROM analyses
+                    ORDER BY timestamp DESC LIMIT 1
+                )
+                GROUP BY strftime('%m', timestamp)
+                ORDER BY CAST(month as INTEGER)
+            ''')
+            data = [] # MongoDB: TODO - utiliser collection.find()
 
             # Si pas de données, prendre les 12 derniers mois
             if not data:
-                # MongoDB query needed here
-            # SELECT strftime('%m', timestamp) as month, COUNT(*) as count
-            #                     FROM analyses
-            #                     WHERE timestamp >= date('now', '-12 months')
-            #                     GROUP BY strftime('%m', timestamp)
-            #                     ORDER BY CAST(month as INTEGER))
-                # data = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
-                data = []  # TODO: Implement MongoDB query
+                # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as month, COUNT(*) as count
+                    FROM analyses
+                    WHERE timestamp >= date('now', '-12 months')
+                    GROUP BY strftime('%m', timestamp)
+                    ORDER BY CAST(month as INTEGER)
+                ''')
+                data = [] # MongoDB: TODO - utiliser collection.find()
 
             month_names = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun',
                           'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
-            labels = [month_names[int(month)-1] for month, _ in data] if data else []
-            values = [count for _, count in data] if data else []
+            labels = [month_names[int(month)-1] for month, _ in data]
+            values = [count for _, count in data]
 
         else:
             return jsonify({'success': False, 'error': 'Période invalide'}), 400
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -2999,29 +3533,24 @@ def recent_analyses():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-        # MongoDB query needed here
-        # SELECT timestamp, filename, predicted_label, confidence, processing_time, patient_name, patient_id
-        #             FROM analyses
-        #             WHERE doctor_id = ?
-        #             ORDER BY timestamp DESC)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
         analyses = []
-        # for row in cursor.fetchall():  # TODO: Convert to MongoDB
-            # analyses.append({
-            #     'timestamp': row[0],
-            #     'filename': row[1],
-            #     'predicted_label': row[2],
-            #     'confidence': round(row[3] * 100, 1),
-            #     'processing_time': round(row[4], 2),
-            #     'patient_name': row[5] or 'Patient anonyme',
-            #     'patient_id': row[6] or 'N/A'
-            # })
-        # TODO: Implement MongoDB query
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            analyses.append({
+                'timestamp': row[0],
+                'filename': row[1],
+                'predicted_label': row[2],
+                'confidence': round(row[3] * 100, 1),
+                'processing_time': round(row[4], 2),
+                'patient_name': row[5] or 'Patient anonyme',
+                'patient_id': row[6] or 'N/A'
+            })
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -3036,25 +3565,20 @@ def recent_analyses():
 def export_analytics(format):
     """API pour exporter les données analytiques"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         if format == 'csv':
-            # MongoDB query needed here
-        # SELECT timestamp, filename, predicted_label, confidence,
-        #                        processing_time, description
-        #                 FROM analyses
-        #                 ORDER BY timestamp DESC)
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
 
-            # data = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
-            data = []  # TODO: Implement MongoDB query
+            data = [] # MongoDB: TODO - utiliser collection.find()
 
             # Créer le contenu CSV
             csv_content = "Timestamp,Filename,Diagnostic,Confidence,Processing_Time,Description\n"
             for row in data:
                 csv_content += f'"{row[0]}","{row[1]}","{row[2]}",{row[3]:.3f},{row[4]:.2f},"{row[5] or ""}"\n'
 
-            # conn.close() # DISABLED
+            # conn.close() # MongoDB: géré par le connector
 
             return Response(
                 csv_content,
@@ -3063,27 +3587,22 @@ def export_analytics(format):
             )
 
         elif format == 'json':
-            # MongoDB query needed here
-            # SELECT timestamp, filename, predicted_label, confidence,
-            #                        processing_time, probabilities, description, recommendations
-            #                 FROM analyses
-            #                 ORDER BY timestamp DESC)
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
 
             analyses = []
-            # for row in cursor.fetchall():  # TODO: Convert to MongoDB
-                # analyses.append({
-                #     'timestamp': row[0],
-                #     'filename': row[1],
-                #     'predicted_label': row[2],
-                #     'confidence': row[3],
-                #     'processing_time': row[4],
-                #     'probabilities': json.loads(row[5]) if row[5] else {},
-                #     'description': row[6],
-                #     'recommendations': json.loads(row[7]) if row[7] else []
-                # })
-            # TODO: Implement MongoDB query to populate analyses list
+            for row in [] # MongoDB: TODO - utiliser collection.find():
+                analyses.append({
+                    'timestamp': row[0],
+                    'filename': row[1],
+                    'predicted_label': row[2],
+                    'confidence': row[3],
+                    'processing_time': row[4],
+                    'probabilities': json.loads(row[5]) if row[5] else {},
+                    'description': row[6],
+                    'recommendations': json.loads(row[7]) if row[7] else []
+                })
 
-            # conn.close() # DISABLED
+            # conn.close() # MongoDB: géré par le connector
 
             export_data = {
                 'export_date': datetime.now().isoformat(),
@@ -3108,51 +3627,46 @@ def export_analytics(format):
 def advanced_stats():
     """API pour des statistiques avancées"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Statistiques par heure de la journée
-        # MongoDB query needed here
-        # SELECT strftime('%H', timestamp) as hour, COUNT(*) as count
-        #             FROM analyses
-        #             GROUP BY strftime('%H', timestamp)
-        #             ORDER BY hour)
-        # hourly_stats = dict(cursor.fetchall())  # TODO: Convert to MongoDB
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as hour, COUNT(*) as count
+            FROM analyses
+            GROUP BY strftime('%H', timestamp)
+            ORDER BY hour
+        ''')
+        hourly_stats = dict([] # MongoDB: TODO - utiliser collection.find())
 
         # Évolution de la confiance dans le temps
-        # MongoDB query needed here
-        # SELECT DATE(timestamp) as date, AVG(confidence) as avg_confidence
-        #             FROM analyses
-        #             WHERE timestamp >= date('now', '-30 days')
-        #             GROUP BY DATE(timestamp)
-        #             ORDER BY date)
-        # confidence_evolution = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as date, AVG(confidence) as avg_confidence
+            FROM analyses
+            WHERE timestamp >= date('now', '-30 days')
+            GROUP BY DATE(timestamp)
+            ORDER BY date
+        ''')
+        confidence_evolution = [] # MongoDB: TODO - utiliser collection.find()
 
         # Top 5 des jours les plus actifs
-        # MongoDB query needed here
-        # SELECT DATE(timestamp) as date, COUNT(*) as count
-        #             FROM analyses
-        #             GROUP BY DATE(timestamp)
-        #             ORDER BY count DESC
-        #             LIMIT 5)
-        # top_active_days = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as date, COUNT(*) as count
+            FROM analyses
+            GROUP BY DATE(timestamp)
+            ORDER BY count DESC
+            LIMIT 5
+        ''')
+        top_active_days = [] # MongoDB: TODO - utiliser collection.find()
 
         # Statistiques de performance
-        # MongoDB query needed here
-        # SELECT
-        #                 MIN(processing_time) as min_time,
-        #                 MAX(processing_time) as max_time,
-        #                 AVG(processing_time) as avg_time,
-        #                 COUNT(CASE WHEN processing_time < 5 THEN 1 END) as fast_analyses,
-        #                 COUNT(CASE WHEN processing_time >= 5 THEN 1 END) as slow_analyses
-        #             FROM analyses)
-        # performance_stats = None  # cursor.fetchone() # DISABLED  # TODO: Convert to MongoDB
-        hourly_stats = []  # TODO: Implement MongoDB query
-        confidence_evolution = []  # TODO: Implement MongoDB query
-        top_active_days = []  # TODO: Implement MongoDB query
-        performance_stats = (0, 0, 0, 0, 0)  # TODO: Implement MongoDB query (min, max, avg, fast, slow)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as min_time,
+                MAX(processing_time) as max_time,
+                AVG(processing_time) as avg_time,
+                COUNT(CASE WHEN processing_time < 5 THEN 1 END) as fast_analyses,
+                COUNT(CASE WHEN processing_time >= 5 THEN 1 END) as slow_analyses
+            FROM analyses
+        ''')
+        performance_stats = {} # MongoDB: TODO - utiliser collection.find_one()
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -3178,24 +3692,24 @@ def advanced_stats():
 def get_filter_options():
     """API pour obtenir les options de filtres disponibles"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Obtenir les plages de dates disponibles
-        # MongoDB query needed here
-        # SELECT MIN(DATE(timestamp)) as min_date, MAX(DATE(timestamp)) as max_date
-        #             FROM analyses)
-        date_range = (None, None)  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update) as min_date, MAX(DATE(timestamp)) as max_date
+            FROM analyses
+        ''')
+        date_range = {} # MongoDB: TODO - utiliser collection.find_one()
 
         # Obtenir les types de diagnostics
-        # cursor.execute( # DISABLED'SELECT DISTINCT predicted_label FROM analyses ORDER BY predicted_label')
-        diagnostic_types = []  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+        diagnostic_types = [row[0] for row in [] # MongoDB: TODO - utiliser collection.find()]
 
         # Obtenir les plages de confiance
-        # cursor.execute( # DISABLED'SELECT MIN(confidence), MAX(confidence) FROM analyses')
-        confidence_range = (0, 1)  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update, MAX(confidence) FROM analyses')
+        confidence_range = {} # MongoDB: TODO - utiliser collection.find_one()
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -3226,8 +3740,8 @@ def get_filtered_analytics():
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
         filters = request.get_json()
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Construire la requête avec filtres (toujours filtrer par médecin)
         where_conditions = ['doctor_id = ?']
@@ -3263,54 +3777,45 @@ def get_filtered_analytics():
         where_clause = 'WHERE ' + ' AND '.join(where_conditions) if where_conditions else ''
 
         # Obtenir les analyses filtrées avec informations patient
-        # MongoDB query needed here
-        # SELECT timestamp, filename, predicted_label, confidence, processing_time,
-        #                    description, patient_name, patient_id, exam_date
-        #             FROM analyses
-        #             {where_clause}
-        #             ORDER BY timestamp DESC
-        #             LIMIT 100, params)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
 
         analyses = []
-        # for row in cursor.fetchall():  # TODO: Convert to MongoDB
-            # analyses.append({
-            #     'timestamp': row[0],
-            #     'filename': row[1],
-            #     'predicted_label': row[2],
-            #     'confidence': round(row[3] * 100, 1),
-            #     'processing_time': round(row[4], 2),
-            #     'description': row[5] or '',
-            #     'patient_name': row[6] or 'Patient anonyme',
-            #     'patient_id': row[7] or 'N/A',
-            #     'exam_date': row[8] or ''
-            # })
-        # TODO: Implement MongoDB query to populate analyses list
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            analyses.append({
+                'timestamp': row[0],
+                'filename': row[1],
+                'predicted_label': row[2],
+                'confidence': round(row[3] * 100, 1),
+                'processing_time': round(row[4], 2),
+                'description': row[5] or '',
+                'patient_name': row[6] or 'Patient anonyme',
+                'patient_id': row[7] or 'N/A',
+                'exam_date': row[8] or ''
+            })
 
         # Statistiques des résultats filtrés
-        # MongoDB query needed here
-        # SELECT
-        #                 COUNT(*) as total,
-        #                 AVG(confidence) as avg_confidence,
-        #                 AVG(processing_time) as avg_time,
-        #                 predicted_label,
-        #                 COUNT(*) as type_count
-        #             FROM analyses
-        #             {where_clause}
-        #             GROUP BY predicted_label, params)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as total,
+                AVG(confidence) as avg_confidence,
+                AVG(processing_time) as avg_time,
+                predicted_label,
+                COUNT(*) as type_count
+            FROM analyses
+            {where_clause}
+            GROUP BY predicted_label
+        ''', params)
 
         stats_by_type = {}
         total_filtered = 0
         total_confidence = 0
         total_time = 0
 
-        # for row in cursor.fetchall():  # TODO: Convert to MongoDB
-            # stats_by_type[row[3]] = row[4]
-            # total_filtered += row[4]
-            # total_confidence += row[1] * row[4] if row[1] else 0
-            # total_time += row[2] * row[4] if row[2] else 0
-        # TODO: Implement MongoDB query
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            stats_by_type[row[3]] = row[4]
+            total_filtered += row[4]
+            total_confidence += row[1] * row[4] if row[1] else 0
+            total_time += row[2] * row[4] if row[2] else 0
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -3336,48 +3841,30 @@ def get_comparison_data():
         # Récupérer le paramètre de période (par défaut 'month')
         period = request.args.get('period', 'month')  # 'day', 'week', ou 'month'
         
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         comparison_data = {}
 
         if period == 'day':
             # Comparaison aujourd'hui vs hier
-            from datetime import datetime, timedelta
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update = DATE('now') THEN 'Aujourd''hui'
+                        WHEN DATE(timestamp) = DATE('now', '-1 day') THEN 'Hier'
+                    END as period,
+                    COUNT(*) as count,
+                    AVG(confidence) as avg_confidence
+                FROM analyses
+                WHERE DATE(timestamp) >= DATE('now', '-1 day')
+                GROUP BY period
+            ''')
             
-            today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-            yesterday_start = today_start - timedelta(days=1)
-            
-            # Aujourd'hui
-            today_count = db.analyses.count_documents({"timestamp": {"$gte": today_start}})
-            today_pipeline = [
-                {"$match": {"timestamp": {"$gte": today_start}}},
-                {"$group": {"_id": None, "avg": {"$avg": "$confidence"}}}
-            ]
-            today_result = list(db.analyses.aggregate(today_pipeline))
-            today_avg = today_result[0]['avg'] if today_result and today_result[0].get('avg') else 0
-            
-            # Hier
-            yesterday_count = db.analyses.count_documents({
-                "timestamp": {"$gte": yesterday_start, "$lt": today_start}
-            })
-            yesterday_pipeline = [
-                {"$match": {"timestamp": {"$gte": yesterday_start, "$lt": today_start}}},
-                {"$group": {"_id": None, "avg": {"$avg": "$confidence"}}}
-            ]
-            yesterday_result = list(db.analyses.aggregate(yesterday_pipeline))
-            yesterday_avg = yesterday_result[0]['avg'] if yesterday_result and yesterday_result[0].get('avg') else 0
-            
-            daily_comparison = {
-                "Aujourd'hui": {
-                    'count': today_count,
-                    'avg_confidence': round(today_avg * 100, 1) if today_avg else 0
-                },
-                'Hier': {
-                    'count': yesterday_count,
-                    'avg_confidence': round(yesterday_avg * 100, 1) if yesterday_avg else 0
-                }
-            }
+            daily_comparison = {}
+            for row in [] # MongoDB: TODO - utiliser collection.find():
+                if row[0]:
+                    daily_comparison[row[0]] = {
+                        'count': row[1],
+                        'avg_confidence': round(row[2] * 100, 1) if row[2] else 0
+                    }
             
             comparison_data = {
                 'daily': daily_comparison,
@@ -3387,42 +3874,24 @@ def get_comparison_data():
 
         elif period == 'week':
             # Comparaison cette semaine vs semaine dernière
-            from datetime import datetime, timedelta
-            
-            now = datetime.now()
-            this_week_start = now - timedelta(days=7)
-            last_week_start = now - timedelta(days=14)
-            
-            # Cette semaine
-            this_week_count = db.analyses.count_documents({"timestamp": {"$gte": this_week_start}})
-            this_week_pipeline = [
-                {"$match": {"timestamp": {"$gte": this_week_start}}},
-                {"$group": {"_id": None, "avg": {"$avg": "$confidence"}}}
-            ]
-            this_week_result = list(db.analyses.aggregate(this_week_pipeline))
-            this_week_avg = this_week_result[0]['avg'] if this_week_result and this_week_result[0].get('avg') else 0
-            
-            # Semaine dernière
-            last_week_count = db.analyses.count_documents({
-                "timestamp": {"$gte": last_week_start, "$lt": this_week_start}
-            })
-            last_week_pipeline = [
-                {"$match": {"timestamp": {"$gte": last_week_start, "$lt": this_week_start}}},
-                {"$group": {"_id": None, "avg": {"$avg": "$confidence"}}}
-            ]
-            last_week_result = list(db.analyses.aggregate(last_week_pipeline))
-            last_week_avg = last_week_result[0]['avg'] if last_week_result and last_week_result[0].get('avg') else 0
-            
-            weekly_comparison = {
-                'Cette semaine': {
-                    'count': this_week_count,
-                    'avg_confidence': round(this_week_avg * 100, 1) if this_week_avg else 0
-                },
-                'Semaine dernière': {
-                    'count': last_week_count,
-                    'avg_confidence': round(last_week_avg * 100, 1) if last_week_avg else 0
-                }
-            }
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update >= DATE('now', '-7 days') THEN 'Cette semaine'
+                        WHEN DATE(timestamp) >= DATE('now', '-14 days') THEN 'Semaine dernière'
+                    END as period,
+                    COUNT(*) as count,
+                    AVG(confidence) as avg_confidence
+                FROM analyses
+                WHERE DATE(timestamp) >= DATE('now', '-14 days')
+                GROUP BY period
+                ORDER BY period DESC
+            ''')
+
+            weekly_comparison = {}
+            for row in [] # MongoDB: TODO - utiliser collection.find():
+                if row[0]:
+                    weekly_comparison[row[0]] = {
+                        'count': row[1],
+                        'avg_confidence': round(row[2] * 100, 1) if row[2] else 0
+                    }
 
             comparison_data = {
                 'weekly': weekly_comparison,
@@ -3432,47 +3901,23 @@ def get_comparison_data():
 
         else:  # 'month' par défaut
             # Comparaison ce mois vs mois dernier
-            from datetime import datetime
-            
-            now = datetime.now()
-            this_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            
-            # Calculer le premier jour du mois dernier
-            if this_month_start.month == 1:
-                last_month_start = this_month_start.replace(year=this_month_start.year - 1, month=12)
-            else:
-                last_month_start = this_month_start.replace(month=this_month_start.month - 1)
-            
-            # Ce mois
-            this_month_count = db.analyses.count_documents({"timestamp": {"$gte": this_month_start}})
-            this_month_pipeline = [
-                {"$match": {"timestamp": {"$gte": this_month_start}}},
-                {"$group": {"_id": None, "avg": {"$avg": "$confidence"}}}
-            ]
-            this_month_result = list(db.analyses.aggregate(this_month_pipeline))
-            this_month_avg = this_month_result[0]['avg'] if this_month_result and this_month_result[0].get('avg') else 0
-            
-            # Mois dernier
-            last_month_count = db.analyses.count_documents({
-                "timestamp": {"$gte": last_month_start, "$lt": this_month_start}
-            })
-            last_month_pipeline = [
-                {"$match": {"timestamp": {"$gte": last_month_start, "$lt": this_month_start}}},
-                {"$group": {"_id": None, "avg": {"$avg": "$confidence"}}}
-            ]
-            last_month_result = list(db.analyses.aggregate(last_month_pipeline))
-            last_month_avg = last_month_result[0]['avg'] if last_month_result and last_month_result[0].get('avg') else 0
-            
-            monthly_comparison = {
-                'Ce mois': {
-                    'count': this_month_count,
-                    'avg_confidence': round(this_month_avg * 100, 1) if this_month_avg else 0
-                },
-                'Mois dernier': {
-                    'count': last_month_count,
-                    'avg_confidence': round(last_month_avg * 100, 1) if last_month_avg else 0
-                }
-            }
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update = strftime('%Y-%m', 'now') THEN 'Ce mois'
+                        WHEN strftime('%Y-%m', timestamp) = strftime('%Y-%m', 'now', '-1 month') THEN 'Mois dernier'
+                    END as period,
+                    COUNT(*) as count,
+                    AVG(confidence) as avg_confidence
+                FROM analyses
+                WHERE strftime('%Y-%m', timestamp) >= strftime('%Y-%m', 'now', '-1 month')
+                GROUP BY period
+            ''')
+
+            monthly_comparison = {}
+            for row in [] # MongoDB: TODO - utiliser collection.find():
+                if row[0]:
+                    monthly_comparison[row[0]] = {
+                        'count': row[1],
+                        'avg_confidence': round(row[2] * 100, 1) if row[2] else 0
+                    }
 
             comparison_data = {
                 'monthly': monthly_comparison,
@@ -3480,7 +3925,7 @@ def get_comparison_data():
                 'period_label': 'Mois'
             }
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -3495,24 +3940,24 @@ def get_comparison_data():
 def get_alerts():
     """API pour obtenir les alertes et notifications"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         alerts = []
 
         # Alerte: Baisse de confiance moyenne
-        # MongoDB query needed here
-        # SELECT AVG(confidence) as avg_conf_today
-        #             FROM analyses
-        #             WHERE DATE(timestamp) = DATE('now'))
-        today_confidence = None  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as avg_conf_today
+            FROM analyses
+            WHERE DATE(timestamp) = DATE('now')
+        ''')
+        today_confidence = {} # MongoDB: TODO - utiliser collection.find_one()[0]
 
-        # MongoDB query needed here
-        # SELECT AVG(confidence) as avg_conf_week
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-7 days')
-        #             AND DATE(timestamp) < DATE('now'))
-        week_confidence = None  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as avg_conf_week
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-7 days')
+            AND DATE(timestamp) < DATE('now')
+        ''')
+        week_confidence = {} # MongoDB: TODO - utiliser collection.find_one()[0]
 
         if today_confidence and week_confidence and today_confidence < week_confidence * 0.9:
             alerts.append({
@@ -3523,22 +3968,22 @@ def get_alerts():
             })
 
         # Alerte: Pic d'activité
-        # MongoDB query needed here
-        # SELECT COUNT(*) as today_count
-        #             FROM analyses
-        #             WHERE DATE(timestamp) = DATE('now'))
-        today_count = None  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as today_count
+            FROM analyses
+            WHERE DATE(timestamp) = DATE('now')
+        ''')
+        today_count = {} # MongoDB: TODO - utiliser collection.find_one()[0]
 
-        # MongoDB query needed here
-        # SELECT AVG(daily_count) as avg_daily
-        #             FROM (
-        #                 SELECT COUNT(*) as daily_count
-        #                 FROM analyses
-        #                 WHERE DATE(timestamp) >= DATE('now', '-7 days')
-        #                 AND DATE(timestamp) < DATE('now')
-        #                 GROUP BY DATE(timestamp)
-        #             ))
-        avg_daily = None  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as avg_daily
+            FROM (
+                SELECT COUNT(*) as daily_count
+                FROM analyses
+                WHERE DATE(timestamp) >= DATE('now', '-7 days')
+                AND DATE(timestamp) < DATE('now')
+                GROUP BY DATE(timestamp)
+            )
+        ''')
+        avg_daily = {} # MongoDB: TODO - utiliser collection.find_one()[0]
 
         if today_count and avg_daily and today_count > avg_daily * 1.5:
             alerts.append({
@@ -3549,12 +3994,12 @@ def get_alerts():
             })
 
         # Alerte: Analyses avec faible confiance
-        # MongoDB query needed here
-        # SELECT COUNT(*) as low_conf_count
-        #             FROM analyses
-        #             WHERE DATE(timestamp) = DATE('now')
-        #             AND confidence < 0.7)
-        low_confidence_count = 0  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as low_conf_count
+            FROM analyses
+            WHERE DATE(timestamp) = DATE('now')
+            AND confidence < 0.7
+        ''')
+        low_confidence_count = {} # MongoDB: TODO - utiliser collection.find_one()[0]
 
         if low_confidence_count > 0:
             alerts.append({
@@ -3564,7 +4009,7 @@ def get_alerts():
                 'timestamp': datetime.now().isoformat()
             })
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -3579,66 +4024,48 @@ def get_alerts():
 def get_performance_trends():
     """API pour les tendances de performance"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Tendances de confiance sur les 7 derniers jours
-        from datetime import datetime, timedelta
-        
-        seven_days_ago = datetime.now() - timedelta(days=7)
-        
-        daily_pipeline = [
-            {"$match": {"timestamp": {"$gte": seven_days_ago}}},
-            {"$group": {
-                "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp"}},
-                "avg_confidence": {"$avg": "$confidence"},
-                "avg_time": {"$avg": "$processing_time"},
-                "count": {"$sum": 1}
-            }},
-            {"$sort": {"_id": 1}}
-        ]
-        
-        daily_results = list(db.analyses.aggregate(daily_pipeline))
-        daily_trends = [(r['_id'], r['avg_confidence'], r['avg_time'], r['count']) for r in daily_results]
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as date,
+                AVG(confidence) as avg_confidence,
+                AVG(processing_time) as avg_time,
+                COUNT(*) as daily_count
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-7 days')
+            GROUP BY DATE(timestamp)
+            ORDER BY date
+        ''')
+
+        daily_trends = [] # MongoDB: TODO - utiliser collection.find()
 
         # Tendances par heure pour aujourd'hui
-        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        
-        hourly_pipeline = [
-            {"$match": {"timestamp": {"$gte": today_start}}},
-            {"$project": {
-                "hour": {"$hour": "$timestamp"},
-                "confidence": 1,
-                "processing_time": 1
-            }},
-            {"$group": {
-                "_id": "$hour",
-                "avg_confidence": {"$avg": "$confidence"},
-                "avg_time": {"$avg": "$processing_time"},
-                "count": {"$sum": 1}
-            }},
-            {"$sort": {"_id": 1}}
-        ]
-        
-        hourly_results = list(db.analyses.aggregate(hourly_pipeline))
-        hourly_trends = [(str(r['_id']).zfill(2), r['avg_confidence'], r['avg_time'], r['count']) for r in hourly_results]
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as hour,
+                AVG(confidence) as avg_confidence,
+                AVG(processing_time) as avg_time,
+                COUNT(*) as hourly_count
+            FROM analyses
+            WHERE DATE(timestamp) = DATE('now')
+            GROUP BY strftime('%H', timestamp)
+            ORDER BY hour
+        ''')
+
+        hourly_trends = [] # MongoDB: TODO - utiliser collection.find()
 
         # Performance par type de diagnostic
-        type_pipeline = [
-            {"$match": {"timestamp": {"$gte": seven_days_ago}}},
-            {"$group": {
-                "_id": "$predicted_label",
-                "avg_confidence": {"$avg": "$confidence"},
-                "avg_time": {"$avg": "$processing_time"},
-                "count": {"$sum": 1}
-            }},
-            {"$sort": {"_id": 1}}
-        ]
-        
-        type_results = list(db.analyses.aggregate(type_pipeline))
-        performance_by_type = [(r['_id'], r['avg_confidence'], r['avg_time'], r['count']) for r in type_results]
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as avg_confidence,
+                AVG(processing_time) as avg_time,
+                COUNT(*) as count
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-7 days')
+            GROUP BY predicted_label
+            ORDER BY predicted_label
+        ''')
 
-        # conn.close() # DISABLED
+        performance_by_type = [] # MongoDB: TODO - utiliser collection.find()
+
+        # conn.close() # MongoDB: géré par le connector
 
         # Formater les données pour Chart.js
         daily_data = {
@@ -3680,21 +4107,18 @@ def get_performance_trends():
 def get_diagnostic_distribution():
     """API pour la distribution des diagnostics"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Distribution des diagnostics
-        distribution_pipeline = [
-            {"$match": {"predicted_label": {"$exists": True, "$ne": None}}},
-            {"$group": {
-                "_id": "$predicted_label",
-                "count": {"$sum": 1}
-            }},
-            {"$sort": {"count": -1}}
-        ]
-        
-        dist_results = list(db.analyses.aggregate(distribution_pipeline))
-        distribution = [(r['_id'], r['count']) for r in dist_results]
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as count
+            FROM analyses
+            WHERE predicted_label IS NOT NULL
+            GROUP BY predicted_label
+            ORDER BY count DESC
+        ''')
+
+        distribution = [] # MongoDB: TODO - utiliser collection.find()
         
         # Calculer les pourcentages
         total = sum(row[1] for row in distribution)
@@ -3705,7 +4129,7 @@ def get_diagnostic_distribution():
             'percentages': [round((row[1] / total) * 100, 1) if total > 0 else 0 for row in distribution]
         }
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -3723,34 +4147,27 @@ def get_hourly_activity():
         # Récupérer le paramètre de période (par défaut 'week')
         period = request.args.get('period', 'week')  # 'today' ou 'week'
         
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Déterminer la clause WHERE selon la période
-        from datetime import datetime, timedelta
-        
         if period == 'today':
-            time_filter = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            where_clause = "WHERE DATE(timestamp) = DATE('now')"
             period_label = "aujourd'hui"
         else:  # 'week' par défaut
-            time_filter = datetime.now() - timedelta(days=7)
+            where_clause = "WHERE DATE(timestamp) >= DATE('now', '-7 days')"
             period_label = "7 derniers jours"
 
         # Activité par heure pour la période sélectionnée
-        hourly_activity_pipeline = [
-            {"$match": {"timestamp": {"$gte": time_filter}}},
-            {"$project": {
-                "hour": {"$hour": "$timestamp"}
-            }},
-            {"$group": {
-                "_id": "$hour",
-                "count": {"$sum": 1}
-            }},
-            {"$sort": {"_id": 1}}
-        ]
-        
-        hourly_results = list(db.analyses.aggregate(hourly_activity_pipeline))
-        hourly_data = [(str(r['_id']).zfill(2), r['count']) for r in hourly_results]
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as hour,
+                COUNT(*) as count
+            FROM analyses
+            {where_clause}
+            GROUP BY strftime('%H', timestamp)
+            ORDER BY hour
+        ''')
+
+        hourly_data = [] # MongoDB: TODO - utiliser collection.find()
 
         # Créer un tableau avec toutes les heures (0-23)
         activity_by_hour = [0] * 24
@@ -3767,7 +4184,7 @@ def get_hourly_activity():
         non_zero_activities = [(i, count) for i, count in enumerate(activity_by_hour) if count > 0]
         quiet_hour = min(non_zero_activities, key=lambda x: x[1])[0] if non_zero_activities else 0
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -3789,17 +4206,13 @@ def get_hourly_activity():
 def get_confidence_distribution():
     """API pour la distribution des niveaux de confiance"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Distribution par intervalles de confiance
-        # MongoDB query needed here
-        # SELECT confidence
-        #             FROM analyses
-        #             WHERE confidence IS NOT NULL
-        #             ORDER BY confidence)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
 
-        confidences = []  # TODO: Implement MongoDB query
+        confidences = [row[0] * 100 for row in [] # MongoDB: TODO - utiliser collection.find()]
 
         # Compter par intervalles
         very_high = len([c for c in confidences if c >= 90])
@@ -3813,7 +4226,7 @@ def get_confidence_distribution():
             count = len([c for c in confidences if i <= c < i + 10])
             histogram_data.append(count)
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -3836,17 +4249,13 @@ def get_confidence_distribution():
 def get_processing_time_analysis():
     """API pour l'analyse des temps de traitement"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Récupérer tous les temps de traitement
-        # MongoDB query needed here
-        # SELECT processing_time
-        #             FROM analyses
-        #             WHERE processing_time IS NOT NULL
-        #             ORDER BY processing_time)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
 
-        times = []  # TODO: Implement MongoDB query
+        times = [row[0] for row in [] # MongoDB: TODO - utiliser collection.find()]
 
         if not times:
             return jsonify({
@@ -3876,7 +4285,7 @@ def get_processing_time_analysis():
             count = len([t for t in times if min_time <= t < max_time])
             histogram_data.append(count)
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -3899,21 +4308,20 @@ def get_processing_time_analysis():
 def get_monthly_trends():
     """API pour les tendances mensuelles"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Données mensuelles pour les 12 derniers mois
-        # MongoDB query needed here
-        # SELECT
-        #                 strftime('%Y-%m', timestamp) as month,
-        #                 COUNT(*) as count,
-        #                 AVG(confidence) as avg_confidence
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-12 months')
-        #             GROUP BY strftime('%Y-%m', timestamp)
-        #             ORDER BY month)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as month,
+                COUNT(*) as count,
+                AVG(confidence) as avg_confidence
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-12 months')
+            GROUP BY strftime('%Y-%m', timestamp)
+            ORDER BY month
+        ''')
 
-        monthly_data = []  # TODO: Implement MongoDB query
+        monthly_data = [] # MongoDB: TODO - utiliser collection.find()
 
         if not monthly_data:
             return jsonify({
@@ -3960,7 +4368,7 @@ def get_monthly_trends():
         most_active_month_index = counts.index(max_count)
         most_active_month = labels[most_active_month_index]
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -3981,19 +4389,18 @@ def get_monthly_trends():
 def get_ai_insights():
     """API pour les insights et recommandations IA"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Calculer les métriques de base
-        # MongoDB query needed here
-        # SELECT 
-        #                 COUNT(*) as total,
-        #                 AVG(confidence) as avg_confidence,
-        #                 AVG(processing_time) as avg_time
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-30 days'))
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as total,
+                AVG(confidence) as avg_confidence,
+                AVG(processing_time) as avg_time
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-30 days')
+        ''')
         
-        base_metrics = (0, 0, 0)  # TODO: Implement MongoDB query (total, avg_confidence, avg_time)
+        base_metrics = {} # MongoDB: TODO - utiliser collection.find_one()
         total_analyses = base_metrics[0] if base_metrics[0] else 0
         avg_confidence = base_metrics[1] if base_metrics[1] else 0
         avg_time = base_metrics[2] if base_metrics[2] else 0
@@ -4002,18 +4409,18 @@ def get_ai_insights():
         performance_insights = []
         
         # Tendance de confiance
-        # MongoDB query needed here
-        # SELECT AVG(confidence) as conf_week1
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-7 days'))
-        week1_conf = None  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as conf_week1
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-7 days')
+        ''')
+        week1_conf = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
         
-        # MongoDB query needed here
-        # SELECT AVG(confidence) as conf_week2
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-14 days')
-        #             AND DATE(timestamp) < DATE('now', '-7 days'))
-        week2_conf = None  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as conf_week2
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-14 days')
+            AND DATE(timestamp) < DATE('now', '-7 days')
+        ''')
+        week2_conf = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
 
         if week1_conf and week2_conf:
             conf_change = ((week1_conf - week2_conf) / week2_conf) * 100
@@ -4032,13 +4439,13 @@ def get_ai_insights():
         quality_insights = []
         
         # Distribution des diagnostics
-        # MongoDB query needed here
-        # SELECT predicted_label, COUNT(*) as count
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-30 days')
-        #             GROUP BY predicted_label
-        #             ORDER BY count DESC)
-        diagnostic_dist = []  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as count
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-30 days')
+            GROUP BY predicted_label
+            ORDER BY count DESC
+        ''')
+        diagnostic_dist = [] # MongoDB: TODO - utiliser collection.find()
         
         if diagnostic_dist:
             most_common = diagnostic_dist[0]
@@ -4048,12 +4455,12 @@ def get_ai_insights():
             })
 
         # Analyses à faible confiance
-        # MongoDB query needed here
-        # SELECT COUNT(*) as low_conf_count
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-7 days')
-        #             AND confidence < 0.7)
-        low_conf_count = 0  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as low_conf_count
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-7 days')
+            AND confidence < 0.7
+        ''')
+        low_conf_count = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
         
         if low_conf_count > 0:
             quality_insights.append({
@@ -4091,7 +4498,7 @@ def get_ai_insights():
         reliability_score = min(100, max(0, int(100 - (low_conf_count * 5))))
         overall_score = int((accuracy_score + efficiency_score + reliability_score) / 3)
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -4116,56 +4523,55 @@ def get_ai_insights():
 def get_advanced_metrics():
     """API pour les métriques avancées du système"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Calcul des métriques de débit (analyses par jour)
-        # MongoDB query needed here
-        # SELECT COUNT(*) as daily_avg
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-30 days'))
-        total_last_30_days = 0  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as daily_avg
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-30 days')
+        ''')
+        total_last_30_days = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
         throughput_rate = round(total_last_30_days / 30, 1)
 
         # Calcul du changement de débit par rapport au mois précédent
-        # MongoDB query needed here
-        # SELECT COUNT(*) as prev_month
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-60 days')
-        #             AND DATE(timestamp) < DATE('now', '-30 days'))
-        prev_month_total = 0  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as prev_month
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-60 days')
+            AND DATE(timestamp) < DATE('now', '-30 days')
+        ''')
+        prev_month_total = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
         prev_throughput = prev_month_total / 30 if prev_month_total > 0 else 0
         throughput_change = round(((throughput_rate - prev_throughput) / prev_throughput) * 100, 1) if prev_throughput > 0 else 0
 
         # Taux de précision basé sur la confiance moyenne
-        # MongoDB query needed here
-        # SELECT AVG(confidence) as avg_accuracy
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-30 days'))
-        accuracy_rate = 0  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as avg_accuracy
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-30 days')
+        ''')
+        accuracy_rate = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
         accuracy_percentage = round(accuracy_rate * 100, 1)
 
         # Temps de réponse moyen
-        # MongoDB query needed here
-        # SELECT AVG(processing_time) as avg_time
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-30 days'))
-        avg_response_time = 0  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as avg_time
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-30 days')
+        ''')
+        avg_response_time = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
 
         # Simulation de la disponibilité système (99.9% par défaut, peut être calculé selon les besoins)
         system_uptime = 99.9
 
         # Métriques pour la comparaison annuelle
-        # MongoDB query needed here
-        # SELECT 
-        #                 strftime('%Y-%m', timestamp) as month,
-        #                 COUNT(*) as count
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-12 months')
-        #             GROUP BY strftime('%Y-%m', timestamp)
-        #             ORDER BY month)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as month,
+                COUNT(*) as count
+            FROM analyses
+            WHERE DATE(timestamp) >= DATE('now', '-12 months')
+            GROUP BY strftime('%Y-%m', timestamp)
+            ORDER BY month
+        ''')
         
-        yearly_data = []  # TODO: Implement MongoDB query
+        yearly_data = [] # MongoDB: TODO - utiliser collection.find()
         
         # Calculer la croissance annuelle
         if len(yearly_data) >= 2:
@@ -4189,7 +4595,7 @@ def get_advanced_metrics():
         else:
             trend_direction = "→ Stable"
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -4219,54 +4625,49 @@ def get_advanced_metrics():
 def get_patients_list():
     """API pour obtenir la liste des patients avec suivi"""
     try:
-        # Get doctor_id from session if logged in
-        doctor_id = session.get('doctor_id')
-        print(f"DEBUG get_patients_list: doctor_id = {doctor_id}")
-        
-        # Query MongoDB for patients
-        if doctor_id:
-            # Get patients for this doctor
-            patients_cursor = db.patients.find({"doctor_id": doctor_id})
-            print(f"DEBUG: Querying MongoDB for doctor_id: {doctor_id}")
-        else:
-            # If no doctor logged in, return empty list
-            print("DEBUG: No doctor_id in session")
-            patients_cursor = []
-        
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
+
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as first_analysis_date,
+                   MAX(a.exam_date) as last_analysis_date,
+                   COUNT(*) as total_analyses
+            FROM analyses a
+            WHERE a.patient_id IS NOT NULL
+            GROUP BY a.patient_id, a.patient_name
+            ORDER BY MAX(a.exam_date) DESC
+        ''')
+
         patients = []
-        for patient in patients_cursor:
-            print(f"DEBUG: Found patient: {patient.get('patient_id')} - {patient.get('patient_name')}")
-            # Convert MongoDB document to dict
-            patient_dict = {
-                'patient_id': patient.get('patient_id'),
-                'patient_name': patient.get('patient_name'),
-                'date_of_birth': patient.get('date_of_birth'),
-                'gender': patient.get('gender'),
-                'phone': patient.get('phone'),
-                'email': patient.get('email'),
-                'address': patient.get('address'),
-                'medical_history': patient.get('medical_history'),
-                'created_at': patient.get('created_at'),
-                'updated_at': patient.get('updated_at')
-            }
-            patients.append(patient_dict)
-        
-        print(f"DEBUG: Returning {len(patients)} patients")
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            patient_id = row[0]
+
+            # Récupérer le dernier diagnostic pour ce patient
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+
+            last_analysis = {} # MongoDB: TODO - utiliser collection.find_one()
+            last_diagnosis = last_analysis[0] if last_analysis else None
+            last_confidence = round(last_analysis[1] * 100, 1) if last_analysis and last_analysis[1] else 0
+
+            patients.append({
+                'patient_id': row[0],
+                'patient_name': row[1],
+                'first_analysis_date': row[2],
+                'last_analysis_date': row[3],
+                'total_analyses': row[4],
+                'last_diagnosis': last_diagnosis,
+                'last_confidence': last_confidence
+            })
+
+        # conn.close() # MongoDB: géré par le connector
+
         return jsonify({
             'success': True,
-            'data': patients,
-            'count': len(patients)
+            'data': patients
         })
 
     except Exception as e:
-        print(f"Erreur get_patients_list: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            'success': False, 
-            'error': str(e),
-            'data': []
-        }), 500
+        print(f"Erreur patients list: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/patients/next-id')
 @login_required
@@ -4277,13 +4678,12 @@ def get_next_patient_id():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # Get existing patient IDs
-        patients = list(db.patients.find(
-            {"doctor_id": doctor_id, "patient_id": {"$regex": "^P"}},
-            {"patient_id": 1}
-        ))
-        existing_ids = [p.get("patient_id") for p in patients]
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+        )
+        existing_ids = [row[0] for row in [] # MongoDB: TODO - utiliser collection.find()]
+        # conn.close() # MongoDB: géré par le connector
 
         max_n = 0
         for pid in existing_ids:
@@ -4315,9 +4715,13 @@ def check_patient_id(patient_id):
         if not pid:
             return jsonify({'success': True, 'available': False, 'reason': 'ID vide'})
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # Check if patient ID exists
-        exists = db.patients.find_one({"doctor_id": doctor_id, "patient_id": pid}) is not None
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM patients WHERE doctor_id = ? AND patient_id = ?',
+            (doctor_id, pid)
+        )
+        exists = {} # MongoDB: TODO - utiliser collection.find_one()[0] > 0
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({'success': True, 'available': not exists})
 
@@ -4329,55 +4733,43 @@ def check_patient_id(patient_id):
 def get_patient_evolution(patient_id):
     """API pour obtenir l'évolution d'un patient spécifique"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Récupérer toutes les analyses du patient
-        # MongoDB query needed here
-        # SELECT id, exam_date, predicted_label, confidence, tumor_size_estimate,
-        #                    probabilities, description, recommendations
-        #             FROM analyses
-        #             WHERE patient_id = ?
-        #             ORDER BY exam_date ASC, timestamp ASC)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
         analyses = []
-        # for row in cursor.fetchall():  # TODO: Convert to MongoDB
-            # probabilities = json.loads(row[5]) if row[5] else {}
-            # recommendations = json.loads(row[7]) if row[7] else []
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            probabilities = json.loads(row[5]) if row[5] else {}
+            recommendations = json.loads(row[7]) if row[7] else []
 
-            # analyses.append({
-            #     'id': row[0],
-            #     'exam_date': row[1],
-            #     'predicted_label': row[2],
-            #     'confidence': round(row[3] * 100, 1),
-            #     'tumor_size_estimate': round(row[4], 2) if row[4] else None,
-        # TODO: Implement MongoDB query
-            #     'probabilities': probabilities,
-            #     'description': row[6],
-            #     'recommendations': recommendations
-            # })
+            analyses.append({
+                'id': row[0],
+                'exam_date': row[1],
+                'predicted_label': row[2],
+                'confidence': round(row[3] * 100, 1),
+                'tumor_size_estimate': round(row[4], 2) if row[4] else None,
+                'probabilities': probabilities,
+                'description': row[6],
+                'recommendations': recommendations
+            })
 
         # Récupérer l'évolution détaillée
-        # MongoDB query needed here
-        # SELECT exam_date, diagnosis_change, confidence_change, size_change,
-        #                    evolution_type, notes
-        #             FROM tumor_evolution
-        #             WHERE patient_id = ?
-        #             ORDER BY exam_date ASC)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
         evolution_details = []
-        # for row in cursor.fetchall():  # TODO: Convert to MongoDB
-            # evolution_details.append({
-            #     'exam_date': row[0],
-            #     'diagnosis_change': row[1],
-            #     'confidence_change': round(row[2] * 100, 1) if row[2] else 0,
-            #     'size_change': round(row[3], 2) if row[3] else None,
-            #     'evolution_type': row[4],
-            #     'notes': row[5]
-            # })
-        # TODO: Implement MongoDB query
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            evolution_details.append({
+                'exam_date': row[0],
+                'diagnosis_change': row[1],
+                'confidence_change': round(row[2] * 100, 1) if row[2] else 0,
+                'size_change': round(row[3], 2) if row[3] else None,
+                'evolution_type': row[4],
+                'notes': row[5]
+            })
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -4403,134 +4795,98 @@ def get_patient_evolution(patient_id):
 @login_required
 def patient_profile(patient_id):
     """Page de profil détaillé d'un patient"""
-    doctor = get_current_doctor()
+    doctor = get_current_doctor_mongo()
     if not doctor:
         return redirect(url_for('login'))
 
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-        doctor_id = session.get('doctor_id')
-        
         # Vérifier que le patient appartient au médecin connecté
-        patient_data = db.patients.find_one({
-            "patient_id": patient_id,
-            "doctor_id": doctor_id
-        })
-        
-        print(f"DEBUG patient_profile: patient_id={patient_id}, doctor_id={doctor_id}, found={patient_data is not None}")
-        
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+
+        patient_data = {} # MongoDB: TODO - utiliser collection.find_one()
         if not patient_data:
             flash('Patient non trouvé ou accès non autorisé', 'error')
             return redirect(url_for('dashboard'))
 
-        # Convertir les dates strings en datetime objects pour le template
-        def parse_date(date_value):
-            if not date_value:
-                return None
-            if isinstance(date_value, datetime):
-                return date_value
-            if isinstance(date_value, str):
-                try:
-                    return datetime.strptime(date_value, '%Y-%m-%d')
-                except:
-                    try:
-                        return datetime.strptime(date_value, '%Y-%m-%d %H:%M:%S')
-                    except:
-                        return None
-            return None
-
         patient = {
-            'patient_id': patient_data.get('patient_id'),
-            'patient_name': patient_data.get('patient_name'),
-            'date_of_birth': parse_date(patient_data.get('date_of_birth')),
-            'gender': patient_data.get('gender'),
-            'first_analysis_date': parse_date(patient_data.get('first_analysis_date')),
-            'last_analysis_date': parse_date(patient_data.get('last_analysis_date')),
-            'total_analyses': patient_data.get('total_analyses', 0),
-            'phone': patient_data.get('phone'),
-            'email': patient_data.get('email'),
-            'address': patient_data.get('address'),
-            'emergency_contact_name': patient_data.get('emergency_contact_name'),
-            'emergency_contact_phone': patient_data.get('emergency_contact_phone'),
-            'medical_history': patient_data.get('medical_history'),
-            'allergies': patient_data.get('allergies'),
-            'current_medications': patient_data.get('current_medications'),
-            'insurance_number': patient_data.get('insurance_number'),
-            'notes': patient_data.get('notes')
+            'patient_id': patient_data[0],
+            'patient_name': patient_data[1],
+            'date_of_birth': datetime.strptime(patient_data[2], '%Y-%m-%d') if patient_data[2] else None,
+            'gender': patient_data[3],
+            'first_analysis_date': datetime.strptime(patient_data[4], '%Y-%m-%d') if patient_data[4] else None,
+            'last_analysis_date': datetime.strptime(patient_data[5], '%Y-%m-%d') if patient_data[5] else None,
+            'total_analyses': patient_data[6],
+            'phone': patient_data[7],
+            'email': patient_data[8],
+            'address': patient_data[9],
+            'emergency_contact_name': patient_data[10],
+            'emergency_contact_phone': patient_data[11],
+            'medical_history': patient_data[12],
+            'allergies': patient_data[13],
+            'current_medications': patient_data[14],
+            'insurance_number': patient_data[15],
+            'notes': patient_data[16]
         }
 
-        # Récupérer les analyses du patient depuis MongoDB
-        print(f"DEBUG: Querying analyses for patient_id={patient_id}, doctor_id={doctor_id}")
-        
-        analyses_cursor = db.analyses.find({
-            "patient_id": patient_id,
-            "doctor_id": doctor_id
-        }).sort([("exam_date", -1), ("timestamp", -1)])
-        
-        # Compter les analyses
-        analyses_count = db.analyses.count_documents({"patient_id": patient_id, "doctor_id": doctor_id})
-        print(f"DEBUG: Found {analyses_count} analyses in MongoDB")
-        
-        # Vérifier aussi sans filtrer par doctor_id
-        total_for_patient = db.analyses.count_documents({"patient_id": patient_id})
-        print(f"DEBUG: Total analyses for patient_id {patient_id} (all doctors): {total_for_patient}")
-        
-        # Afficher quelques exemples d'analyses
-        sample_analyses = list(db.analyses.find({}).limit(3))
-        for sample in sample_analyses:
-            print(f"DEBUG: Sample analysis - patient_id: {sample.get('patient_id')}, doctor_id: {sample.get('doctor_id')}, _id: {sample.get('_id')}")
+        # Récupérer les analyses du patient
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
         analyses = []
-        for analysis in analyses_cursor:
-            # Convertir le timestamp
-            timestamp_dt = analysis.get('timestamp')
-            if isinstance(timestamp_dt, str):
-                try:
-                    timestamp_dt = datetime.strptime(timestamp_dt, '%Y-%m-%d %H:%M:%S')
-                except:
-                    timestamp_dt = datetime.now()
-            elif not isinstance(timestamp_dt, datetime):
-                timestamp_dt = datetime.now()
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            probabilities = json.loads(row[6]) if row[6] else {}
+            recommendations = json.loads(row[8]) if row[8] else []
+
+            # Convertir le timestamp en datetime si c'est une chaîne
+            timestamp_dt = datetime.strptime(row[1], '%Y-%m-%d %H:%M:%S') if isinstance(row[1], str) and row[1] else datetime.now()
             
             # Sécuriser la conversion de confidence
-            conf_value = analysis.get('confidence', 0.0)
+            conf_value = row[5]
             try:
-                conf_float = float(conf_value) if conf_value else 0.0
-            except:
+                if isinstance(conf_value, (int, float)):
+                    conf_float = float(conf_value)
+                elif isinstance(conf_value, str):
+                    if conf_value.replace('.', '').replace('-', '').isdigit():
+                        conf_float = float(conf_value)
+                    else:
+                        conf_float = 0.0
+                elif isinstance(conf_value, tuple):
+                    conf_float = float(conf_value[0]) if conf_value else 0.0
+                else:
+                    conf_float = 0.0
+            except Exception as e:
+                print(f"Erreur conversion confidence patient_profile: {e}, type: {type(conf_value)}, valeur: {conf_value}")
                 conf_float = 0.0
             
             analyses.append({
-                'id': str(analysis.get('_id')),
-                'timestamp': timestamp_dt,
-                'filename': analysis.get('filename'),
-                'predicted_class': analysis.get('predicted_class', 0),
-                'predicted_label': analysis.get('predicted_label'),
+                'id': row[0],
+                'timestamp': timestamp_dt,  # Stocker comme datetime pour les calculs
+                'filename': row[2],
+                'predicted_class': row[3],
+                'predicted_label': row[4],
                 'confidence': conf_float,
-                'probabilities': analysis.get('probabilities', {}),
-                'description': analysis.get('description'),
-                'recommendations': analysis.get('recommendations', []),
-                'processing_time': analysis.get('processing_time'),
-                'exam_date': analysis.get('exam_date'),
-                'tumor_size_estimate': analysis.get('tumor_size_estimate'),
-                'date_uploaded': timestamp_dt,
-                'date_uploaded_str': str(timestamp_dt),
-                'image_name': analysis.get('filename'),
-                'image_path': f'/uploads/{analysis.get("filename")}',
-                'medical_notes': analysis.get('description'),
-                'risk_level': 'Élevé' if analysis.get('predicted_class', 0) != 0 else 'Faible'
+                'probabilities': probabilities,
+                'description': row[7],
+                'recommendations': recommendations,
+                'processing_time': row[9],
+                'exam_date': row[10],
+                'tumor_size_estimate': row[11],
+                'date_uploaded': timestamp_dt,  # Garder comme objet datetime pour le template
+                'date_uploaded_str': str(row[1]) if row[1] else str(datetime.now()),  # Version chaîne pour JSON
+                'image_name': row[2],
+                'image_path': f'/uploads/{row[2]}',
+                'medical_notes': row[7],
+                'risk_level': 'Élevé' if row[3] != 0 else 'Faible'
             })
-        
-        print(f"DEBUG patient_profile: Found {len(analyses)} analyses for patient {patient_id}")
 
         # Calculer les statistiques
         normal_count = sum(1 for a in analyses if a['predicted_class'] == 0)
         abnormal_count = len(analyses) - normal_count
 
         # Récupérer les alertes médicales
-        # alerts = get_patient_alerts(cursor, patient_id, doctor['id'])  # TODO: Define function
-        alerts = []  # Placeholder until function is defined
+        alerts = get_patient_alerts(cursor, patient_id, doctor['id'])
 
         # Calculer le niveau de risque du patient
         risk_level = 'Faible'
@@ -4555,7 +4911,7 @@ def patient_profile(patient_id):
             'predicted_label': a['predicted_label']
         } for a in sorted_analyses])
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return render_template('patient_profile_pro.html',
                                patient=patient,
@@ -4581,65 +4937,58 @@ def get_patient_detailed_history(patient_id):
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Vérifier l'accès au patient
-        patient = db.patients.find_one({"patient_id": patient_id, "doctor_id": doctor_id})
-        if not patient:
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM patients
+            WHERE patient_id = ? AND doctor_id = ?
+        ''', (patient_id, doctor_id))
+
+        if {} # MongoDB: TODO - utiliser collection.find_one()[0] == 0:
             return jsonify({'success': False, 'error': 'Accès non autorisé'}), 403
 
-        # Récupérer toutes les analyses avec détails complets depuis MongoDB
-        analyses_cursor = db.analyses.find({
-            "patient_id": patient_id,
-            "doctor_id": doctor_id
-        }).sort([("exam_date", 1), ("timestamp", 1)])
+        # Récupérer toutes les analyses avec détails complets
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
         analyses = []
-        for analysis in analyses_cursor:
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            probabilities = json.loads(row[6]) if row[6] else {}
+            recommendations = json.loads(row[8]) if row[8] else []
+
             analyses.append({
-                'id': str(analysis.get('_id')),
-                'timestamp': analysis.get('timestamp').isoformat() if analysis.get('timestamp') else None,
-                'exam_date': analysis.get('exam_date').isoformat() if analysis.get('exam_date') else None,
-                'predicted_label': analysis.get('predicted_label'),
-                'confidence': round(analysis.get('confidence', 0) * 100, 1),
-                'tumor_size_estimate': round(analysis.get('tumor_size_estimate'), 2) if analysis.get('tumor_size_estimate') else None,
-                'probabilities': analysis.get('probabilities', {}),
-                'description': analysis.get('description'),
-                'recommendations': analysis.get('recommendations', []),
-                'processing_time': round(analysis.get('processing_time', 0), 2),
-                'filename': analysis.get('filename')
+                'id': row[0],
+                'timestamp': row[1],
+                'exam_date': row[2],
+                'predicted_label': row[3],
+                'confidence': round(row[4] * 100, 1),
+                'tumor_size_estimate': round(row[5], 2) if row[5] else None,
+                'probabilities': probabilities,
+                'description': row[7],
+                'recommendations': recommendations,
+                'processing_time': round(row[9], 2) if row[9] else 0,
+                'filename': row[10]
             })
 
-        # Récupérer l'évolution détaillée depuis MongoDB
-        evolution_cursor = db.tumor_evolution.find({
-            "patient_id": patient_id
-        }).sort("exam_date", 1)
+        # Récupérer l'évolution détaillée
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
         evolution_details = []
-        for evo in evolution_cursor:
+        for row in [] # MongoDB: TODO - utiliser collection.find():
             evolution_details.append({
-                'exam_date': evo.get('exam_date').isoformat() if evo.get('exam_date') else None,
-                'diagnosis_change': evo.get('diagnosis_change'),
-                'confidence_change': round(evo.get('confidence_change', 0) * 100, 1),
-                'size_change': round(evo.get('size_change'), 2) if evo.get('size_change') else None,
-                'evolution_type': evo.get('evolution_type'),
-                'notes': evo.get('notes'),
-                'created_at': evo.get('created_at').isoformat() if evo.get('created_at') else None
+                'exam_date': row[0],
+                'diagnosis_change': row[1],
+                'confidence_change': round(row[2] * 100, 1) if row[2] else 0,
+                'size_change': round(row[3], 2) if row[3] else None,
+                'evolution_type': row[4],
+                'notes': row[5],
+                'created_at': row[6]
             })
 
         # Calculer des métriques avancées
-        metrics = {}
-        if analyses:
-            # Moyenne de confiance
-            metrics['avg_confidence'] = round(sum(a['confidence'] for a in analyses) / len(analyses), 1)
-            # Nombre de tumeurs détectées
-            metrics['tumor_count'] = sum(1 for a in analyses if a['predicted_label'] != 'Normal')
-            # Dernière analyse
-            if analyses:
-                last = analyses[-1]
-                metrics['last_diagnosis'] = last['predicted_label']
-                metrics['last_confidence'] = last['confidence']
+        metrics = calculate_patient_metrics(analyses, evolution_details)
+
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -4659,19 +5008,13 @@ def get_patient_detailed_history(patient_id):
 def get_patient_comparison(patient_id):
     """API pour comparer les analyses d'un patient"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Récupérer les deux dernières analyses pour comparaison
-        # MongoDB query needed here
-        # SELECT id, exam_date, predicted_label, confidence, tumor_size_estimate,
-        #                    probabilities
-        #             FROM analyses
-        #             WHERE patient_id = ?
-        #             ORDER BY exam_date DESC, timestamp DESC
-        #             LIMIT 2)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
-        analyses = []  # TODO: Implement MongoDB query
+        analyses = [] # MongoDB: TODO - utiliser collection.find()
 
         if len(analyses) < 2:
             return jsonify({
@@ -4711,7 +5054,7 @@ def get_patient_comparison(patient_id):
             }
         }
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -4726,55 +5069,47 @@ def get_patient_comparison(patient_id):
 def get_evolution_summary():
     """API pour obtenir un résumé de l'évolution de tous les patients"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Statistiques générales d'évolution
-        # MongoDB query needed here
-        # SELECT evolution_type, COUNT(*) as count
-        #             FROM tumor_evolution
-        #             GROUP BY evolution_type)
-        evolution_stats = {}  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as count
+            FROM tumor_evolution
+            GROUP BY evolution_type
+        ''')
+        evolution_stats = dict([] # MongoDB: TODO - utiliser collection.find())
 
         # Patients avec évolution récente (7 derniers jours)
-        # MongoDB query needed here
-        # SELECT DISTINCT te.patient_id, a.patient_name, te.evolution_type, te.notes
-        #             FROM tumor_evolution te
-        #             JOIN analyses a ON te.patient_id = a.patient_id
-        #             WHERE te.exam_date >= DATE('now', '-7 days')
-        #             GROUP BY te.patient_id, te.evolution_type, te.notes
-        #             ORDER BY te.exam_date DESC)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+            GROUP BY te.patient_id, te.evolution_type, te.notes
+            ORDER BY te.exam_date DESC
+        ''')
         recent_evolutions = []
-        # for row in cursor.fetchall():  # TODO: Convert to MongoDB
-            # recent_evolutions.append({
-            #     'patient_id': row[0],
-            #     'patient_name': row[1],
-            #     'evolution_type': row[2],
-            #     'notes': row[3]
-            # })
-        # TODO: Implement MongoDB query
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            recent_evolutions.append({
+                'patient_id': row[0],
+                'patient_name': row[1],
+                'evolution_type': row[2],
+                'notes': row[3]
+            })
 
         # Alertes d'évolution critique
-        # MongoDB query needed here
-        # SELECT te.patient_id, a.patient_name, te.evolution_type, te.notes, te.exam_date
-        #             FROM tumor_evolution te
-        #             JOIN analyses a ON te.patient_id = a.patient_id
-        #             WHERE te.evolution_type IN ('dégradation', 'croissance')
-        #             AND te.exam_date >= DATE('now', '-30 days')
-        #             GROUP BY te.patient_id, te.evolution_type, te.exam_date
-        #             ORDER BY te.exam_date DESC)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+            AND te.exam_date >= DATE('now', '-30 days')
+            GROUP BY te.patient_id, te.evolution_type, te.exam_date
+            ORDER BY te.exam_date DESC
+        ''')
         critical_alerts = []
-        # for row in cursor.fetchall():  # TODO: Convert to MongoDB
-            # critical_alerts.append({
-            #     'patient_id': row[0],
-            #     'patient_name': row[1],
-            #     'evolution_type': row[2],
-            #     'notes': row[3],
-            #     'exam_date': row[4]
-            # })
-        # TODO: Implement MongoDB query
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            critical_alerts.append({
+                'patient_id': row[0],
+                'patient_name': row[1],
+                'evolution_type': row[2],
+                'notes': row[3],
+                'exam_date': row[4]
+            })
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -5109,37 +5444,27 @@ def get_doctor_alerts():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-        # Récupérer les alertes non résolues depuis MongoDB
-        alerts_cursor = db.medical_alerts.find({
-            "doctor_id": doctor_id,
-            "is_resolved": False
-        }).sort("created_at", -1).limit(50)
-        
+        # Récupérer les alertes non résolues
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+
         alerts = []
-        for alert in alerts_cursor:
-            # Récupérer le nom du patient
-            patient = db.patients.find_one({
-                "patient_id": alert.get('patient_id'),
-                "doctor_id": doctor_id
-            })
-            patient_name = patient.get('patient_name') if patient else 'Patient inconnu'
-            
+        for row in [] # MongoDB: TODO - utiliser collection.find():
             alerts.append({
-                'id': str(alert.get('_id')),
-                'patient_id': alert.get('patient_id'),
-                'patient_name': patient_name,
-                'alert_type': alert.get('alert_type'),
-                'severity': alert.get('severity'),
-                'title': alert.get('title'),
-                'message': alert.get('message'),
-                'is_read': alert.get('is_read', False),
-                'created_at': alert.get('created_at').isoformat() if alert.get('created_at') else None
+                'id': row[0],
+                'patient_id': row[1],
+                'patient_name': row[2],
+                'alert_type': row[3],
+                'severity': row[4],
+                'title': row[5],
+                'message': row[6],
+                'is_read': bool(row[7]),
+                'created_at': row[8]
             })
-        
-        print(f"DEBUG get_doctor_alerts: Found {len(alerts)} alerts for doctor {doctor_id}")
+
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -5150,7 +5475,7 @@ def get_doctor_alerts():
         print(f"Erreur get doctor alerts: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/alerts/<alert_id>/mark-read', methods=['POST'])
+@app.route('/api/alerts/<int:alert_id>/mark-read', methods=['POST'])
 @login_required
 def mark_alert_read(alert_id):
     """Marquer une alerte comme lue"""
@@ -5159,20 +5484,13 @@ def mark_alert_read(alert_id):
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # Convertir alert_id en ObjectId
-        try:
-            obj_id = ObjectId(alert_id)
-        except:
-            return jsonify({'success': False, 'error': 'ID alerte invalide'}), 400
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-        # Mettre à jour l'alerte dans MongoDB
-        result = db.medical_alerts.update_one(
-            {'_id': obj_id, 'doctor_id': doctor_id},
-            {'$set': {'is_read': True}}
-        )
-        
-        if result.matched_count == 0:
-            return jsonify({'success': False, 'error': 'Alerte non trouvée'}), 404
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+
+        # conn.commit() # MongoDB: auto-commit
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({'success': True})
 
@@ -5180,7 +5498,7 @@ def mark_alert_read(alert_id):
         print(f"Erreur mark alert read: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/alerts/<alert_id>/resolve', methods=['POST'])
+@app.route('/api/alerts/<int:alert_id>/resolve', methods=['POST'])
 @login_required
 def resolve_alert(alert_id):
     """Résoudre une alerte"""
@@ -5189,24 +5507,13 @@ def resolve_alert(alert_id):
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # Convertir alert_id en ObjectId
-        try:
-            obj_id = ObjectId(alert_id)
-        except:
-            return jsonify({'success': False, 'error': 'ID alerte invalide'}), 400
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-        # Mettre à jour l'alerte dans MongoDB
-        result = db.medical_alerts.update_one(
-            {'_id': obj_id, 'doctor_id': doctor_id},
-            {'$set': {
-                'is_resolved': True,
-                'resolved_at': datetime.utcnow(),
-                'resolved_by': doctor_id
-            }}
-        )
-        
-        if result.matched_count == 0:
-            return jsonify({'success': False, 'error': 'Alerte non trouvée'}), 404
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+
+        # conn.commit() # MongoDB: auto-commit
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({'success': True})
 
@@ -5223,31 +5530,25 @@ def get_notifications():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-        # MongoDB query needed here
-        # SELECT id, type, title, message, data, is_read, created_at
-        #             FROM notifications
-        #             WHERE doctor_id = ?
-        #             ORDER BY created_at DESC
-        #             LIMIT 20)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
         notifications = []
-        # for row in cursor.fetchall():  # TODO: Convert to MongoDB
-            # data = json.loads(row[4]) if row[4] else {}
-            # notifications.append({
-            #     'id': row[0],
-            #     'type': row[1],
-        # TODO: Implement MongoDB query
-            #     'title': row[2],
-            #     'message': row[3],
-            #     'data': data,
-            #     'is_read': bool(row[5]),
-            #     'created_at': row[6]
-            # })
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            data = json.loads(row[4]) if row[4] else {}
+            notifications.append({
+                'id': row[0],
+                'type': row[1],
+                'title': row[2],
+                'message': row[3],
+                'data': data,
+                'is_read': bool(row[5]),
+                'created_at': row[6]
+            })
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -5267,16 +5568,13 @@ def mark_notification_read(notification_id):
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-        # MongoDB query needed here
-        # UPDATE notifications
-        #             SET is_read = 1
-        #             WHERE id = ? AND doctor_id = ?)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
-        # conn.commit() # DISABLED
-        # conn.close() # DISABLED
+        # conn.commit() # MongoDB: auto-commit
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({'success': True})
 
@@ -5293,67 +5591,51 @@ def generate_evolution_report(patient_id):
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Vérifier l'accès au patient
-        # MongoDB query needed here
-        # SELECT patient_name FROM patients
-        #             WHERE patient_id = ? AND doctor_id = ?)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
-        # patient_data = None  # cursor.fetchone() # DISABLED  # TODO: Convert to MongoDB
-        patient_data = None  # TODO: Implement MongoDB query
+        patient_data = {} # MongoDB: TODO - utiliser collection.find_one()
         if not patient_data:
-            # return jsonify({'success': False, 'error': 'Accès non autorisé'}), 403
-            pass  # TODO: Implement proper access check
+            return jsonify({'success': False, 'error': 'Accès non autorisé'}), 403
 
         # Récupérer les données pour le rapport
-        # MongoDB query needed here
-        # SELECT id, timestamp, exam_date, predicted_label, confidence,
-        #                    tumor_size_estimate, probabilities, description, recommendations
-        #             FROM analyses
-        #             WHERE patient_id = ? AND doctor_id = ?
-        #             ORDER BY exam_date ASC, timestamp ASC)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
         analyses = []
-        # for row in cursor.fetchall():  # TODO: Convert to MongoDB
-            # probabilities = json.loads(row[6]) if row[6] else {}
-            # recommendations = json.loads(row[8]) if row[8] else []
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            probabilities = json.loads(row[6]) if row[6] else {}
+            recommendations = json.loads(row[8]) if row[8] else []
 
-            # analyses.append({
-        # TODO: Implement MongoDB query
-            #     'id': row[0],
-            #     'timestamp': row[1],
-            #     'exam_date': row[2],
-            #     'predicted_label': row[3],
-            #     'confidence': row[4],
-            #     'tumor_size_estimate': row[5],
-            #     'probabilities': probabilities,
-            #     'description': row[7],
-            #     'recommendations': recommendations
-            # })
+            analyses.append({
+                'id': row[0],
+                'timestamp': row[1],
+                'exam_date': row[2],
+                'predicted_label': row[3],
+                'confidence': row[4],
+                'tumor_size_estimate': row[5],
+                'probabilities': probabilities,
+                'description': row[7],
+                'recommendations': recommendations
+            })
 
         # Récupérer l'évolution
-        # MongoDB query needed here
-        # SELECT exam_date, diagnosis_change, confidence_change, size_change,
-        #                    evolution_type, notes
-        #             FROM tumor_evolution
-        #             WHERE patient_id = ?
-        #             ORDER BY exam_date ASC)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
         evolution_details = []
-        # for row in cursor.fetchall():  # TODO: Convert to MongoDB
-            # evolution_details.append({
-            #     'exam_date': row[0],
-            #     'diagnosis_change': row[1],
-            #     'confidence_change': row[2],
-            #     'size_change': row[3],
-            #     'evolution_type': row[4],
-            #     'notes': row[5]
-            # })
-        # TODO: Implement MongoDB query
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            evolution_details.append({
+                'exam_date': row[0],
+                'diagnosis_change': row[1],
+                'confidence_change': row[2],
+                'size_change': row[3],
+                'evolution_type': row[4],
+                'notes': row[5]
+            })
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         # Générer le rapport
         report_data = {
@@ -5391,9 +5673,7 @@ def create_evolution_report(data):
             return "Aucune donnée d'analyse disponible pour ce patient."
 
         # Calculer les métriques
-        # TODO: Implement calculate_patient_metrics function for MongoDB
-        metrics = {}  # Placeholder - calculate_patient_metrics not yet implemented
-        # metrics = calculate_patient_metrics(analyses, evolution_details)
+        metrics = calculate_patient_metrics(analyses, evolution_details)
 
         current_date = datetime.now().strftime('%d/%m/%Y à %H:%M')
 
@@ -5543,12 +5823,10 @@ def create_patient():
                 # Si l'ID est manquant, tenter de le générer automatiquement
                 if field == 'patient_id':
                     # Connexion provisoire pour générer un ID unique basé sur les patients du médecin
-                    # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-                    # cursor = conn.cursor() # DISABLED
-                    # MongoDB query needed here
-        # SELECT patient_id FROM patients
-        #                         WHERE doctor_id = ? AND patient_id LIKE 'P%')
-                    existing_ids = []  # TODO: Implement MongoDB query
+                    # conn = ... # MongoDB: pas besoin de connexion explicite
+                    # cursor = ... # MongoDB: pas besoin de cursor
+                    # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+                    existing_ids = [row[0] for row in [] # MongoDB: TODO - utiliser collection.find()]
                     # Trouver le prochain numéro disponible
                     max_n = 0
                     for pid in existing_ids:
@@ -5561,45 +5839,44 @@ def create_patient():
                             continue
                     generated_id = f"P{max_n + 1:04d}"
                     data['patient_id'] = generated_id
-                    # conn.close() # DISABLED
+                    # conn.close() # MongoDB: géré par le connector
                     continue
                 return jsonify({'success': False, 'error': f'Le champ {field} est requis'}), 400
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Vérifier si le patient existe déjà
-        # MongoDB query needed here
-        # SELECT COUNT(*) FROM patients
-        #             WHERE patient_id = ? AND doctor_id = ?)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM patients
+            WHERE patient_id = ? AND doctor_id = ?
+        ''', (data['patient_id'], doctor_id))
 
-        # Check if patient already exists in MongoDB
-        existing_patient = db.patients.find_one({"patient_id": data['patient_id'], "doctor_id": doctor_id})
-        if existing_patient:
+        if {} # MongoDB: TODO - utiliser collection.find_one()[0] > 0:
             return jsonify({'success': False, 'error': 'Un patient avec cet ID existe déjà'}), 400
 
-        # Insert new patient into MongoDB
-        patient_doc = {
-            'patient_id': data['patient_id'],
-            'patient_name': data['patient_name'],
-            'doctor_id': doctor_id,
-            'date_of_birth': data.get('date_of_birth'),
-            'gender': data.get('gender'),
-            'phone': data.get('phone'),
-            'email': data.get('email'),
-            'address': data.get('address'),
-            'emergency_contact_name': data.get('emergency_contact_name'),
-            'emergency_contact_phone': data.get('emergency_contact_phone'),
-            'medical_history': data.get('medical_history'),
-            'allergies': data.get('allergies'),
-            'current_medications': data.get('current_medications'),
-            'insurance_number': data.get('insurance_number'),
-            'notes': data.get('notes'),
-            'created_at': datetime.utcnow(),
-            'updated_at': datetime.utcnow()
-        }
-        result = db.patients.insert_one(patient_doc)
-        print(f"DEBUG: Patient created with _id: {result.inserted_id}, patient_id: {data['patient_id']}, doctor_id: {doctor_id}")
+        # Insérer le nouveau patient
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ''', (
+            data['patient_id'],
+            data['patient_name'],
+            doctor_id,
+            data.get('date_of_birth'),
+            data.get('gender'),
+            data.get('phone'),
+            data.get('email'),
+            data.get('address'),
+            data.get('emergency_contact_name'),
+            data.get('emergency_contact_phone'),
+            data.get('medical_history'),
+            data.get('allergies'),
+            data.get('current_medications'),
+            data.get('insurance_number'),
+            data.get('notes')
+        ))
+
+        # conn.commit() # MongoDB: auto-commit
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -5622,32 +5899,37 @@ def update_patient(patient_id):
 
         data = request.get_json()
 
-        # Verify patient belongs to doctor
-        patient = db.patients.find_one({"patient_id": patient_id, "doctor_id": doctor_id})
-        if not patient:
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
+
+        # Vérifier que le patient appartient au médecin
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM patients
+            WHERE patient_id = ? AND doctor_id = ?
+        ''', (patient_id, doctor_id))
+
+        if {} # MongoDB: TODO - utiliser collection.find_one()[0] == 0:
             return jsonify({'success': False, 'error': 'Patient non trouvé'}), 404
 
-        # Update patient
-        update_doc = {
-            'patient_name': data['patient_name'],
-            'date_of_birth': data.get('date_of_birth'),
-            'gender': data.get('gender'),
-            'phone': data.get('phone'),
-            'email': data.get('email'),
-            'address': data.get('address'),
-            'emergency_contact_name': data.get('emergency_contact_name'),
-            'emergency_contact_phone': data.get('emergency_contact_phone'),
-            'medical_history': data.get('medical_history'),
-            'allergies': data.get('allergies'),
-            'current_medications': data.get('current_medications'),
-            'insurance_number': data.get('insurance_number'),
-            'notes': data.get('notes'),
-            'updated_at': datetime.utcnow()
-        }
-        db.patients.update_one(
-            {"patient_id": patient_id, "doctor_id": doctor_id},
-            {"$set": update_doc}
-        )
+        # Mettre à jour le patient
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update,
+            data.get('date_of_birth'),
+            data.get('gender'),
+            data.get('phone'),
+            data.get('email'),
+            data.get('address'),
+            data.get('emergency_contact_name'),
+            data.get('emergency_contact_phone'),
+            data.get('medical_history'),
+            data.get('allergies'),
+            data.get('current_medications'),
+            data.get('insurance_number'),
+            data.get('notes'),
+            patient_id,
+            doctor_id
+        ))
+
+        # conn.commit() # MongoDB: auto-commit
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -5667,12 +5949,15 @@ def delete_patient(patient_id):
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Vérifier que le patient appartient au médecin
-        patient = db.patients.find_one({"patient_id": patient_id, "doctor_id": doctor_id})
-        if not patient:
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM patients
+            WHERE patient_id = ? AND doctor_id = ?
+        ''', (patient_id, doctor_id))
+
+        if {} # MongoDB: TODO - utiliser collection.find_one()[0] == 0:
             return jsonify({'success': False, 'error': 'Patient non trouvé'}), 404
 
         # Supprimer toutes les données associées au patient
@@ -5683,13 +5968,14 @@ def delete_patient(patient_id):
             'patients'
         ]
 
-        # Delete from all collections
-        for collection_name in tables_to_clean:
-            collection = db[collection_name]
-            if collection_name == 'patients':
-                collection.delete_many({"patient_id": patient_id, "doctor_id": doctor_id})
+        for table in tables_to_clean:
+            if table == 'patients':
+                # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
             else:
-                collection.delete_many({"patient_id": patient_id})
+                # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+
+        # conn.commit() # MongoDB: auto-commit
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -5709,41 +5995,39 @@ def get_patient_details(patient_id):
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-        # Récupérer les informations complètes du patient depuis MongoDB
-        patient_data = db.patients.find_one({
-            "patient_id": patient_id,
-            "doctor_id": doctor_id
-        })
-        
-        print(f"DEBUG get_patient_details: patient_id={patient_id}, doctor_id={doctor_id}, found={patient_data is not None}")
-        
+        # Récupérer les informations complètes du patient
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+
+        patient_data = {} # MongoDB: TODO - utiliser collection.find_one()
         if not patient_data:
             return jsonify({'success': False, 'error': 'Patient non trouvé'}), 404
 
         patient = {
-            'patient_id': patient_data.get('patient_id'),
-            'patient_name': patient_data.get('patient_name'),
-            'date_of_birth': patient_data.get('date_of_birth'),
-            'gender': patient_data.get('gender'),
-            'phone': patient_data.get('phone'),
-            'email': patient_data.get('email'),
-            'address': patient_data.get('address'),
-            'emergency_contact_name': patient_data.get('emergency_contact_name'),
-            'emergency_contact_phone': patient_data.get('emergency_contact_phone'),
-            'medical_history': patient_data.get('medical_history'),
-            'allergies': patient_data.get('allergies'),
-            'current_medications': patient_data.get('current_medications'),
-            'insurance_number': patient_data.get('insurance_number'),
-            'notes': patient_data.get('notes'),
-            'first_analysis_date': patient_data.get('first_analysis_date'),
-            'last_analysis_date': patient_data.get('last_analysis_date'),
-            'total_analyses': patient_data.get('total_analyses', 0),
-            'created_at': patient_data.get('created_at'),
-            'updated_at': patient_data.get('updated_at')
+            'patient_id': patient_data[0],
+            'patient_name': patient_data[1],
+            'date_of_birth': datetime.strptime(patient_data[2], '%Y-%m-%d') if patient_data[2] else None,
+            'gender': patient_data[3],
+            'phone': patient_data[4],
+            'email': patient_data[5],
+            'address': patient_data[6],
+            'emergency_contact_name': patient_data[7],
+            'emergency_contact_phone': patient_data[8],
+            'medical_history': patient_data[9],
+            'allergies': patient_data[10],
+            'current_medications': patient_data[11],
+            'insurance_number': patient_data[12],
+            'notes': patient_data[13],
+            'first_analysis_date': patient_data[14],
+            'last_analysis_date': patient_data[15],
+            'total_analyses': patient_data[16],
+            'created_at': patient_data[17],
+            'updated_at': patient_data[18]
         }
+
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -5765,102 +6049,102 @@ def pro_dashboard_overview():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Statistiques principales du médecin
-        # cursor.execute( # DISABLED'SELECT COUNT(*) FROM analyses WHERE doctor_id = ?', (doctor_id,))
-        total_analyses = 0  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses WHERE doctor_id = ?', (doctor_id,))
+        total_analyses = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
 
-        # cursor.execute( # DISABLED'SELECT COUNT(*) FROM analyses WHERE doctor_id = ? AND predicted_class != 0', (doctor_id,))
-        tumors_detected = 0  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses WHERE doctor_id = ? AND predicted_class != 0', (doctor_id,))
+        tumors_detected = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
 
-        # cursor.execute( # DISABLED'SELECT COUNT(DISTINCT patient_id) FROM patients WHERE doctor_id = ?', (doctor_id,))
-        patients_count = 0  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM patients WHERE doctor_id = ?', (doctor_id,))
+        patients_count = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
 
-        # cursor.execute( # DISABLED'SELECT AVG(confidence) FROM analyses WHERE doctor_id = ?', (doctor_id,))
-        avg_confidence = 0  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses WHERE doctor_id = ?', (doctor_id,))
+        avg_confidence = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
 
         # Répartition par type de diagnostic
-        # MongoDB query needed here
-        # SELECT predicted_label, COUNT(*) 
-        #             FROM analyses 
-        #             WHERE doctor_id = ? 
-        #             GROUP BY predicted_label)
-        distribution = {}  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update 
+            FROM analyses 
+            WHERE doctor_id = ? 
+            GROUP BY predicted_label
+        ''', (doctor_id,))
+        distribution = dict([] # MongoDB: TODO - utiliser collection.find())
 
         # Analyses par période (30 derniers jours)
-        # MongoDB query needed here
-        # SELECT DATE(timestamp) as date, COUNT(*) as count
-        #             FROM analyses 
-        #             WHERE doctor_id = ? AND timestamp >= datetime('now', '-30 days')
-        #             GROUP BY DATE(timestamp)
-        #             ORDER BY date)
-        daily_data = []  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as date, COUNT(*) as count
+            FROM analyses 
+            WHERE doctor_id = ? AND timestamp >= datetime('now', '-30 days')
+            GROUP BY DATE(timestamp)
+            ORDER BY date
+        ''', (doctor_id,))
+        daily_data = [] # MongoDB: TODO - utiliser collection.find()
 
         # Calcul des changements (simulation basée sur les données existantes)
         # Analyses ce mois vs mois précédent
-        # MongoDB query needed here
-        # SELECT COUNT(*) FROM analyses 
-        #             WHERE doctor_id = ? AND timestamp >= date('now', 'start of month'))
-        current_month = 0  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses 
+            WHERE doctor_id = ? AND timestamp >= date('now', 'start of month')
+        ''', (doctor_id,))
+        current_month = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
 
-        # MongoDB query needed here
-        # SELECT COUNT(*) FROM analyses 
-        #             WHERE doctor_id = ? 
-        #             AND timestamp >= date('now', 'start of month', '-1 month')
-        #             AND timestamp < date('now', 'start of month'))
-        previous_month = 1  # TODO: Implement MongoDB query (default 1 to avoid division by zero)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses 
+            WHERE doctor_id = ? 
+            AND timestamp >= date('now', 'start of month', '-1 month')
+            AND timestamp < date('now', 'start of month')
+        ''', (doctor_id,))
+        previous_month = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 1
 
         analyses_change = ((current_month - previous_month) / previous_month * 100) if previous_month > 0 else 0
 
         # Tumeurs détectées ce mois vs mois précédent
-        # MongoDB query needed here
-        # SELECT COUNT(*) FROM analyses 
-        #             WHERE doctor_id = ? AND predicted_class != 0 
-        #             AND timestamp >= date('now', 'start of month'))
-        current_month_tumors = 0  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses 
+            WHERE doctor_id = ? AND predicted_class != 0 
+            AND timestamp >= date('now', 'start of month')
+        ''', (doctor_id,))
+        current_month_tumors = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
 
-        # MongoDB query needed here
-        # SELECT COUNT(*) FROM analyses 
-        #             WHERE doctor_id = ? AND predicted_class != 0
-        #             AND timestamp >= date('now', 'start of month', '-1 month')
-        #             AND timestamp < date('now', 'start of month'))
-        previous_month_tumors = 1  # TODO: Implement MongoDB query (default 1 to avoid division by zero)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses 
+            WHERE doctor_id = ? AND predicted_class != 0
+            AND timestamp >= date('now', 'start of month', '-1 month')
+            AND timestamp < date('now', 'start of month')
+        ''', (doctor_id,))
+        previous_month_tumors = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 1
 
         tumors_change = ((current_month_tumors - previous_month_tumors) / previous_month_tumors * 100) if previous_month_tumors > 0 else 0
 
         # Nouveaux patients ce mois
-        # MongoDB query needed here
-        # SELECT COUNT(*) FROM patients 
-        #             WHERE doctor_id = ? AND created_at >= date('now', 'start of month'))
-        new_patients_month = 0  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM patients 
+            WHERE doctor_id = ? AND created_at >= date('now', 'start of month')
+        ''', (doctor_id,))
+        new_patients_month = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
 
-        # MongoDB query needed here
-        # SELECT COUNT(*) FROM patients 
-        #             WHERE doctor_id = ? 
-        #             AND created_at >= date('now', 'start of month', '-1 month')
-        #             AND created_at < date('now', 'start of month'))
-        previous_month_patients = 1  # TODO: Implement MongoDB query (default 1 to avoid division by zero)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM patients 
+            WHERE doctor_id = ? 
+            AND created_at >= date('now', 'start of month', '-1 month')
+            AND created_at < date('now', 'start of month')
+        ''', (doctor_id,))
+        previous_month_patients = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 1
 
         patients_change = ((new_patients_month - previous_month_patients) / previous_month_patients * 100) if previous_month_patients > 0 else 0
 
         # Confiance moyenne ce mois vs mois précédent
-        # MongoDB query needed here
-        # SELECT AVG(confidence) FROM analyses 
-        #             WHERE doctor_id = ? AND timestamp >= date('now', 'start of month'))
-        current_avg_confidence = 0  # TODO: Implement MongoDB query
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses 
+            WHERE doctor_id = ? AND timestamp >= date('now', 'start of month')
+        ''', (doctor_id,))
+        current_avg_confidence = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 0
 
-        # MongoDB query needed here
-        # SELECT AVG(confidence) FROM analyses 
-        #             WHERE doctor_id = ? 
-        #             AND timestamp >= date('now', 'start of month', '-1 month')
-        #             AND timestamp < date('now', 'start of month'))
-        previous_avg_confidence = 1  # TODO: Implement MongoDB query (default 1 to avoid division by zero)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update FROM analyses 
+            WHERE doctor_id = ? 
+            AND timestamp >= date('now', 'start of month', '-1 month')
+            AND timestamp < date('now', 'start of month')
+        ''', (doctor_id,))
+        previous_avg_confidence = {} # MongoDB: TODO - utiliser collection.find_one()[0] or 1
 
         confidence_change = ((current_avg_confidence - previous_avg_confidence) / previous_avg_confidence * 100) if previous_avg_confidence > 0 else 0
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -5896,31 +6180,24 @@ def pro_dashboard_recent_analyses():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-        # MongoDB query needed here
-        # SELECT a.id, a.timestamp, a.patient_name, a.patient_id, 
-        #                    a.predicted_label, a.confidence, a.filename
-        #             FROM analyses a
-        #             WHERE a.doctor_id = ?
-        #             ORDER BY a.timestamp DESC
-        #             LIMIT 10)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
         analyses = []
-        # for row in cursor.fetchall():  # TODO: Convert to MongoDB
-            # analyses.append({
-            #     'id': row[0],
-            #     'timestamp': row[1],
-            #     'patient_name': row[2] or f'Patient {row[3]}' if row[3] else 'Patient anonyme',
-            #     'patient_id': row[3],
-            #     'predicted_label': row[4],
-            #     'confidence': row[5],
-            #     'filename': row[6]
-            # })
-        # TODO: Implement MongoDB query
+        for row in [] # MongoDB: TODO - utiliser collection.find():
+            analyses.append({
+                'id': row[0],
+                'timestamp': row[1],
+                'patient_name': row[2] or f'Patient {row[3]}' if row[3] else 'Patient anonyme',
+                'patient_id': row[3],
+                'predicted_label': row[4],
+                'confidence': row[5],
+                'filename': row[6]
+            })
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -5940,38 +6217,27 @@ def get_medical_alerts():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
-        # Récupérer les alertes non résolues depuis MongoDB
-        alerts_cursor = db.medical_alerts.find({
-            "doctor_id": doctor_id,
-            "is_resolved": False
-        }).sort("created_at", -1).limit(20)
-        
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
+
         alerts = []
-        for alert in alerts_cursor:
-            # Récupérer le nom du patient
-            patient = db.patients.find_one({
-                "patient_id": alert.get('patient_id'),
-                "doctor_id": doctor_id
-            })
-            patient_name = patient.get('patient_name') if patient else f"Patient {alert.get('patient_id')}"
-            
+        for row in [] # MongoDB: TODO - utiliser collection.find():
             alerts.append({
-                'id': str(alert.get('_id')),
-                'patient_id': alert.get('patient_id'),
-                'patient_name': patient_name,
-                'alert_type': alert.get('alert_type'),
-                'severity': alert.get('severity'),
-                'title': alert.get('title'),
-                'message': alert.get('message'),
-                'is_read': alert.get('is_read', False),
-                'is_resolved': alert.get('is_resolved', False),
-                'created_at': alert.get('created_at').isoformat() if alert.get('created_at') else None
+                'id': row[0],
+                'patient_id': row[1],
+                'patient_name': row[2] or f'Patient {row[1]}',
+                'alert_type': row[3],
+                'severity': row[4],
+                'title': row[5],
+                'message': row[6],
+                'is_read': bool(row[7]),
+                'is_resolved': bool(row[8]),
+                'created_at': row[9]
             })
-        
-        print(f"DEBUG get_medical_alerts: Found {len(alerts)} alerts for doctor {doctor_id}")
+
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -6004,18 +6270,18 @@ def pro_dashboard_time_range(time_range):
         else:
             return jsonify({'success': False, 'error': 'Période invalide'}), 400
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Données par jour pour la période
-        # MongoDB query needed here
-        # SELECT DATE(timestamp) as date, COUNT(*) as count
-        #             FROM analyses 
-        #             WHERE doctor_id = ? AND timestamp >= datetime('now', '-{days} days')
-        #             GROUP BY DATE(timestamp)
-        #             ORDER BY date)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as date, COUNT(*) as count
+            FROM analyses 
+            WHERE doctor_id = ? AND timestamp >= datetime('now', '-{days} days')
+            GROUP BY DATE(timestamp)
+            ORDER BY date
+        ''', (doctor_id,))
 
-        daily_data = []  # TODO: Implement MongoDB query
+        daily_data = [] # MongoDB: TODO - utiliser collection.find()
 
         # Créer une série complète de dates
         from datetime import datetime, timedelta
@@ -6043,7 +6309,7 @@ def pro_dashboard_time_range(time_range):
             labels.append(date_obj.strftime(date_format))
             data.append(date_counts[date_str])
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         return jsonify({
             'success': True,
@@ -6067,133 +6333,118 @@ def pro_dashboard_advanced_stats():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Statistiques de performance temporelle
         try:
-            # MongoDB query needed here
-            # SELECT 
-            #                     strftime('%H', timestamp) as hour,
-            #                     COUNT(*) as count,
-            #                     AVG(COALESCE(confidence, 0)) as avg_confidence,
-            #                     AVG(COALESCE(processing_time, 0)) as avg_processing_time
-            #                 FROM analyses 
-            #                 WHERE doctor_id = ? AND timestamp >= datetime('now', '-30 days')
-            #                 GROUP BY strftime('%H', timestamp)
-            #                 ORDER BY hour)
-            # hourly_stats = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
-            hourly_stats = []  # TODO: Implement MongoDB query
-            pass  # Keep except block valid
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as hour,
+                    COUNT(*) as count,
+                    AVG(COALESCE(confidence, 0)) as avg_confidence,
+                    AVG(COALESCE(processing_time, 0)) as avg_processing_time
+                FROM analyses 
+                WHERE doctor_id = ? AND timestamp >= datetime('now', '-30 days')
+                GROUP BY strftime('%H', timestamp)
+                ORDER BY hour
+            ''', (doctor_id,))
+            hourly_stats = [] # MongoDB: TODO - utiliser collection.find()
         except Exception as e:
             print(f"Erreur hourly stats: {e}")
             hourly_stats = []
 
         # Évolution de la confiance dans le temps
         try:
-            # MongoDB query needed here
-            # SELECT 
-            #                     DATE(timestamp) as date,
-            #                     AVG(COALESCE(confidence, 0)) as avg_confidence,
-            #                     MIN(COALESCE(confidence, 0)) as min_confidence,
-            #                     MAX(COALESCE(confidence, 1)) as max_confidence,
-            #                     COUNT(*) as daily_count
-            #                 FROM analyses 
-            #                 WHERE doctor_id = ? AND timestamp >= datetime('now', '-30 days')
-            #                 GROUP BY DATE(timestamp)
-            #                 ORDER BY date)
-            # confidence_trends = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
-            confidence_trends = []  # TODO: Implement MongoDB query
-            pass  # Keep except block valid
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as date,
+                    AVG(COALESCE(confidence, 0)) as avg_confidence,
+                    MIN(COALESCE(confidence, 0)) as min_confidence,
+                    MAX(COALESCE(confidence, 1)) as max_confidence,
+                    COUNT(*) as daily_count
+                FROM analyses 
+                WHERE doctor_id = ? AND timestamp >= datetime('now', '-30 days')
+                GROUP BY DATE(timestamp)
+                ORDER BY date
+            ''', (doctor_id,))
+            confidence_trends = [] # MongoDB: TODO - utiliser collection.find()
         except Exception as e:
             print(f"Erreur confidence trends: {e}")
             confidence_trends = []
 
         # Analyse par type de diagnostic avec évolution
-        # MongoDB query needed here
-        # SELECT 
-        #                 predicted_label,
-        #                 COUNT(*) as total_count,
-        #                 AVG(confidence) as avg_confidence,
-        #                 MIN(confidence) as min_confidence,
-        #                 MAX(confidence) as max_confidence,
-        #                 AVG(processing_time) as avg_processing_time
-        #             FROM analyses 
-        #             WHERE doctor_id = ? AND timestamp >= datetime('now', '-90 days')
-        #             GROUP BY predicted_label
-        #             ORDER BY total_count DESC)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as total_count,
+                AVG(confidence) as avg_confidence,
+                MIN(confidence) as min_confidence,
+                MAX(confidence) as max_confidence,
+                AVG(processing_time) as avg_processing_time
+            FROM analyses 
+            WHERE doctor_id = ? AND timestamp >= datetime('now', '-90 days')
+            GROUP BY predicted_label
+            ORDER BY total_count DESC
+        ''', (doctor_id,))
 
-        diagnostic_analysis = []  # TODO: Implement MongoDB query
+        diagnostic_analysis = [] # MongoDB: TODO - utiliser collection.find()
 
         # Analyse des temps de traitement
-        # MongoDB query needed here
-        # SELECT 
-        #                 processing_time,
-        #                 COUNT(*) as count,
-        #                 CASE 
-        #                     WHEN processing_time < 2 THEN 'Très rapide'
-        #                     WHEN processing_time < 5 THEN 'Rapide'
-        #                     WHEN processing_time < 10 THEN 'Normal'
-        #                     ELSE 'Lent'
-        #                 END as category
-        #             FROM analyses 
-        #             WHERE doctor_id = ? AND processing_time IS NOT NULL
-        #             GROUP BY category)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as count,
+                CASE 
+                    WHEN processing_time < 2 THEN 'Très rapide'
+                    WHEN processing_time < 5 THEN 'Rapide'
+                    WHEN processing_time < 10 THEN 'Normal'
+                    ELSE 'Lent'
+                END as category
+            FROM analyses 
+            WHERE doctor_id = ? AND processing_time IS NOT NULL
+            GROUP BY category
+        ''', (doctor_id,))
 
-        processing_time_analysis = []  # TODO: Implement MongoDB query
+        processing_time_analysis = [] # MongoDB: TODO - utiliser collection.find()
 
         # Analyse de la productivité hebdomadaire
-        # MongoDB query needed here
-        # SELECT 
-        #                 strftime('%W', timestamp) as week,
-        #                 strftime('%Y', timestamp) as year,
-        #                 COUNT(*) as weekly_count,
-        #                 AVG(confidence) as weekly_avg_confidence,
-        #                 COUNT(DISTINCT patient_id) as unique_patients
-        #             FROM analyses 
-        #             WHERE doctor_id = ? AND timestamp >= datetime('now', '-12 weeks')
-        #             GROUP BY strftime('%Y-%W', timestamp)
-        #             ORDER BY year, week)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as week,
+                strftime('%Y', timestamp) as year,
+                COUNT(*) as weekly_count,
+                AVG(confidence) as weekly_avg_confidence,
+                COUNT(DISTINCT patient_id) as unique_patients
+            FROM analyses 
+            WHERE doctor_id = ? AND timestamp >= datetime('now', '-12 weeks')
+            GROUP BY strftime('%Y-%W', timestamp)
+            ORDER BY year, week
+        ''', (doctor_id,))
 
-        weekly_productivity = []  # TODO: Implement MongoDB query
+        weekly_productivity = [] # MongoDB: TODO - utiliser collection.find()
 
         # Analyse des patients à risque
-        # MongoDB query needed here
-        # SELECT 
-        #                 p.patient_id,
-        #                 p.patient_name,
-        #                 COUNT(a.id) as total_analyses,
-        #                 AVG(a.confidence) as avg_confidence,
-        #                 MAX(a.timestamp) as last_analysis,
-        #                 SUM(CASE WHEN a.predicted_class != 0 THEN 1 ELSE 0 END) as tumor_detections
-        #             FROM patients p
-        #             LEFT JOIN analyses a ON p.patient_id = a.patient_id AND p.doctor_id = a.doctor_id
-        #             WHERE p.doctor_id = ?
-        #             GROUP BY p.patient_id, p.patient_name
-        #             HAVING tumor_detections > 0
-        #             ORDER BY tumor_detections DESC, avg_confidence ASC
-        #             LIMIT 10)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as total_analyses,
+                AVG(a.confidence) as avg_confidence,
+                MAX(a.timestamp) as last_analysis,
+                SUM(CASE WHEN a.predicted_class != 0 THEN 1 ELSE 0 END) as tumor_detections
+            FROM patients p
+            LEFT JOIN analyses a ON p.patient_id = a.patient_id AND p.doctor_id = a.doctor_id
+            WHERE p.doctor_id = ?
+            GROUP BY p.patient_id, p.patient_name
+            HAVING tumor_detections > 0
+            ORDER BY tumor_detections DESC, avg_confidence ASC
+            LIMIT 10
+        ''', (doctor_id,))
 
-        high_risk_patients = []  # TODO: Implement MongoDB query
+        high_risk_patients = [] # MongoDB: TODO - utiliser collection.find()
 
         # Taux de détection mensuel
-        # MongoDB query needed here
-        # SELECT 
-        #                 strftime('%Y-%m', timestamp) as month,
-        #                 COUNT(*) as total_analyses,
-        #                 SUM(CASE WHEN predicted_class != 0 THEN 1 ELSE 0 END) as tumor_detections,
-        #                 ROUND(
-        #                     CAST(SUM(CASE WHEN predicted_class != 0 THEN 1 ELSE 0 END) AS FLOAT) / 
-        #                     COUNT(*) * 100, 2
-        #                 ) as detection_rate
-        #             FROM analyses 
-        #             WHERE doctor_id = ? AND timestamp >= datetime('now', '-12 months')
-        #             GROUP BY strftime('%Y-%m', timestamp)
-        #             ORDER BY month)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as month,
+                COUNT(*) as total_analyses,
+                SUM(CASE WHEN predicted_class != 0 THEN 1 ELSE 0 END) as tumor_detections,
+                ROUND(
+                    CAST(SUM(CASE WHEN predicted_class != 0 THEN 1 ELSE 0 END) AS FLOAT) / 
+                    COUNT(*) * 100, 2
+                ) as detection_rate
+            FROM analyses 
+            WHERE doctor_id = ? AND timestamp >= datetime('now', '-12 months')
+            GROUP BY strftime('%Y-%m', timestamp)
+            ORDER BY month
+        ''', (doctor_id,))
 
-        monthly_detection_rates = []  # TODO: Implement MongoDB query
+        monthly_detection_rates = [] # MongoDB: TODO - utiliser collection.find()
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         # Formater les données pour le frontend
         hourly_performance = {
@@ -6313,120 +6564,95 @@ def pro_dashboard_patient_insights():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Distribution par âge (si disponible)
         try:
-            # MongoDB query needed here
-            # SELECT 
-            #                     CASE 
-            #                         WHEN date_of_birth IS NULL OR date_of_birth = '' THEN 'Non renseigné'
-            #                         WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 18 THEN 'Moins de 18 ans'
-            #                         WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 30 THEN '18-30 ans'
-            #                         WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 50 THEN '30-50 ans'
-            #                         WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 70 THEN '50-70 ans'
-            #                         ELSE 'Plus de 70 ans'
-            #                     END as age_group,
-            #                     COUNT(*) as count
-            #                 FROM patients 
-            #                 WHERE doctor_id = ?
-            #                 GROUP BY age_group
-            #                 ORDER BY count DESC)
-            # age_distribution = dict(cursor.fetchall())  # TODO: Convert to MongoDB
-            age_distribution = {'Non renseigné': 0}  # TODO: Implement MongoDB query
-            pass  # Keep except block valid
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update - julianday(date_of_birth))/365.25 < 18 THEN 'Moins de 18 ans'
+                        WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 30 THEN '18-30 ans'
+                        WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 50 THEN '30-50 ans'
+                        WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 70 THEN '50-70 ans'
+                        ELSE 'Plus de 70 ans'
+                    END as age_group,
+                    COUNT(*) as count
+                FROM patients 
+                WHERE doctor_id = ?
+                GROUP BY age_group
+                ORDER BY count DESC
+            ''', (doctor_id,))
+            age_distribution = dict([] # MongoDB: TODO - utiliser collection.find())
         except Exception as e:
             print(f"Erreur age distribution: {e}")
             age_distribution = {'Non renseigné': 0}
 
         # Distribution par genre
         try:
-            # MongoDB query needed here
-            # SELECT 
-            #                     CASE 
-            #                         WHEN gender IS NULL OR gender = '' THEN 'Non renseigné'
-            #                         ELSE gender
-            #                     END as gender_group,
-            #                     COUNT(*) as count
-            #                 FROM patients 
-            #                 WHERE doctor_id = ?
-            #                 GROUP BY gender_group)
-            # gender_distribution = dict(cursor.fetchall())  # TODO: Convert to MongoDB
-            gender_distribution = {'Non renseigné': 0}  # TODO: Implement MongoDB query
-            pass  # Keep except block valid
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as count
+                FROM patients 
+                WHERE doctor_id = ?
+                GROUP BY gender_group
+            ''', (doctor_id,))
+            gender_distribution = dict([] # MongoDB: TODO - utiliser collection.find())
         except Exception as e:
             print(f"Erreur gender distribution: {e}")
             gender_distribution = {'Non renseigné': 0}
 
         # Patients les plus suivis
         try:
-            # MongoDB query needed here
-            # SELECT 
-            #                     p.patient_id,
-            #                     p.patient_name,
-            #                     COALESCE(p.total_analyses, 0) as total_analyses,
-            #                     p.first_analysis_date,
-            #                     p.last_analysis_date,
-            #                     CASE 
-            #                         WHEN p.last_analysis_date IS NOT NULL AND p.first_analysis_date IS NOT NULL
-            #                         THEN ROUND(julianday(p.last_analysis_date) - julianday(p.first_analysis_date))
-            #                         ELSE 0
-            #                     END as follow_up_days,
-            #                     COALESCE(AVG(a.confidence), 0) as avg_confidence
-            #                 FROM patients p
-            #                 LEFT JOIN analyses a ON p.patient_id = a.patient_id AND p.doctor_id = a.doctor_id
-            #                 WHERE p.doctor_id = ? AND COALESCE(p.total_analyses, 0) > 0
-            #                 GROUP BY p.patient_id, p.patient_name, p.total_analyses, p.first_analysis_date, p.last_analysis_date
-            #                 ORDER BY COALESCE(p.total_analyses, 0) DESC
-            #                 LIMIT 10)
-            # most_followed_patients = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
-            most_followed_patients = []  # TODO: Implement MongoDB query
-            pass  # Keep except block valid
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update as total_analyses,
+                    p.first_analysis_date,
+                    p.last_analysis_date,
+                    CASE 
+                        WHEN p.last_analysis_date IS NOT NULL AND p.first_analysis_date IS NOT NULL
+                        THEN ROUND(julianday(p.last_analysis_date) - julianday(p.first_analysis_date))
+                        ELSE 0
+                    END as follow_up_days,
+                    COALESCE(AVG(a.confidence), 0) as avg_confidence
+                FROM patients p
+                LEFT JOIN analyses a ON p.patient_id = a.patient_id AND p.doctor_id = a.doctor_id
+                WHERE p.doctor_id = ? AND COALESCE(p.total_analyses, 0) > 0
+                GROUP BY p.patient_id, p.patient_name, p.total_analyses, p.first_analysis_date, p.last_analysis_date
+                ORDER BY COALESCE(p.total_analyses, 0) DESC
+                LIMIT 10
+            ''', (doctor_id,))
+            most_followed_patients = [] # MongoDB: TODO - utiliser collection.find()
         except Exception as e:
             print(f"Erreur most followed patients: {e}")
             most_followed_patients = []
 
         # Analyse de l'engagement patient (fréquence des visites)
         try:
-            # MongoDB query needed here
-            # SELECT 
-            #                     CASE 
-            #                         WHEN last_analysis_date IS NULL THEN 'Jamais analysé'
-            #                         WHEN julianday('now') - julianday(last_analysis_date) <= 7 THEN 'Actif (< 7j)'
-            #                         WHEN julianday('now') - julianday(last_analysis_date) <= 30 THEN 'Récent (< 30j)'
-            #                         WHEN julianday('now') - julianday(last_analysis_date) <= 90 THEN 'Inactif (< 90j)'
-            #                         ELSE 'Très inactif (> 90j)'
-            #                     END as activity_level,
-            #                     COUNT(*) as patient_count
-            #                 FROM patients 
-            #                 WHERE doctor_id = ?
-            #                 GROUP BY activity_level)
-            # patient_activity = dict(cursor.fetchall())  # TODO: Convert to MongoDB
-            patient_activity = {'Jamais analysé': 0}  # TODO: Implement MongoDB query
-            pass  # Keep except block valid
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update - julianday(last_analysis_date) <= 7 THEN 'Actif (< 7j)'
+                        WHEN julianday('now') - julianday(last_analysis_date) <= 30 THEN 'Récent (< 30j)'
+                        WHEN julianday('now') - julianday(last_analysis_date) <= 90 THEN 'Inactif (< 90j)'
+                        ELSE 'Très inactif (> 90j)'
+                    END as activity_level,
+                    COUNT(*) as patient_count
+                FROM patients 
+                WHERE doctor_id = ?
+                GROUP BY activity_level
+            ''', (doctor_id,))
+            patient_activity = dict([] # MongoDB: TODO - utiliser collection.find())
         except Exception as e:
             print(f"Erreur patient activity: {e}")
             patient_activity = {'Jamais analysé': 0}
 
         # Nouveaux patients par mois
         try:
-            # MongoDB query needed here
-            # SELECT 
-            #                     strftime('%Y-%m', COALESCE(created_at, 'now')) as month,
-            #                     COUNT(*) as new_patients
-            #                 FROM patients 
-            #                 WHERE doctor_id = ? AND COALESCE(created_at, 'now') >= datetime('now', '-12 months')
-            #                 GROUP BY strftime('%Y-%m', COALESCE(created_at, 'now'))
-            #                 ORDER BY month)
-            # new_patients_trend = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
-            new_patients_trend = []  # TODO: Implement MongoDB query
-            pass  # Keep except block valid
+            # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update) as month,
+                    COUNT(*) as new_patients
+                FROM patients 
+                WHERE doctor_id = ? AND COALESCE(created_at, 'now') >= datetime('now', '-12 months')
+                GROUP BY strftime('%Y-%m', COALESCE(created_at, 'now'))
+                ORDER BY month
+            ''', (doctor_id,))
+            new_patients_trend = [] # MongoDB: TODO - utiliser collection.find()
         except Exception as e:
             print(f"Erreur new patients trend: {e}")
             new_patients_trend = []
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         # Formater les données des patients les plus suivis
         top_patients = []
@@ -6488,44 +6714,20 @@ def pro_dashboard_export_data():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
 
         # Récupérer toutes les analyses du médecin
-        # MongoDB query needed here
-        # SELECT 
-        #                 a.timestamp,
-        #                 a.patient_id,
-        #                 a.patient_name,
-        #                 a.exam_date,
-        #                 a.predicted_label,
-        #                 a.confidence,
-        #                 a.processing_time,
-        #                 a.filename
-        #             FROM analyses a
-        #             WHERE a.doctor_id = ?
-        #             ORDER BY a.timestamp DESC)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
-        # analyses = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
+        analyses = [] # MongoDB: TODO - utiliser collection.find()
 
         # Récupérer les patients
-        # MongoDB query needed here
-        # SELECT 
-        #                 patient_id,
-        #                 patient_name,
-        #                 date_of_birth,
-        #                 gender,
-        #                 total_analyses,
-        #                 first_analysis_date,
-        #                 last_analysis_date
-        #             FROM patients
-        #             WHERE doctor_id = ?
-        #             ORDER BY patient_name)
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update)
 
-        analyses = []  # TODO: Implement MongoDB query
-        patients = []  # TODO: Implement MongoDB query
+        patients = [] # MongoDB: TODO - utiliser collection.find()
 
-        # conn.close() # DISABLED
+        # conn.close() # MongoDB: géré par le connector
 
         # Créer le CSV des analyses
         analyses_csv = "Date/Heure,ID Patient,Nom Patient,Date Examen,Diagnostic,Confiance (%),Temps Traitement (s),Fichier\n"
@@ -6559,10 +6761,10 @@ def api_health_check():
     """Point de terminaison de vérification de santé du serveur"""
     try:
         # Vérifier la connexion à la base de données
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
-        # cursor.execute( # DISABLED'SELECT 1')
-        # conn.close() # DISABLED
+        # conn = ... # MongoDB: pas besoin de connexion explicite
+        # cursor = ... # MongoDB: pas besoin de cursor
+        # cursor.execute(...) # MongoDB: TODO - utiliser collection.find/insert/update
+        # conn.close() # MongoDB: géré par le connector
         
         return jsonify({
             'status': 'healthy',

@@ -264,7 +264,7 @@ class AlertsManager {
 
         return `
             <div class="alert-card patient-card ${isUnread ? 'alert-unread' : ''} alert-${alert.severity}" 
-                 onclick="alertsManager.showDetails(${alert.id})"
+                 onclick="alertsManager.showDetails('${alert.id}')"
                  data-alert-id="${alert.id}">
                 <div class="flex items-start gap-4">
                     <!-- Indicateur de sévérité -->
@@ -328,20 +328,20 @@ class AlertsManager {
                         <div class="flex items-center gap-2">
                             ${isUnread ? `
                                 <button class="btn-dashboard secondary text-sm" 
-                                        onclick="event.stopPropagation(); alertsManager.markAsRead(${alert.id})"
+                                        onclick="event.stopPropagation(); alertsManager.markAsRead('${alert.id}')"
                                         title="Marquer comme lu">
                                     <i class="fas fa-check"></i>
                                     Marquer lu
                                 </button>
                             ` : ''}
                             <button class="btn-dashboard success text-sm" 
-                                    onclick="event.stopPropagation(); alertsManager.resolveAlert(${alert.id})"
+                                    onclick="event.stopPropagation(); alertsManager.resolveAlert('${alert.id}')"
                                     title="Résoudre l'alerte">
                                 <i class="fas fa-check-circle"></i>
                                 Résoudre
                             </button>
                             <button class="btn-dashboard primary text-sm" 
-                                    onclick="event.stopPropagation(); alertsManager.showDetails(${alert.id})"
+                                    onclick="event.stopPropagation(); alertsManager.showDetails('${alert.id}')"
                                     title="Voir les détails">
                                 <i class="fas fa-eye"></i>
                                 Détails

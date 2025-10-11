@@ -204,3 +204,7 @@ def get_mongodb():
 def get_collection(collection_name):
     """Fonction helper pour obtenir une collection"""
     return mongodb_connector.get_collection(collection_name)
+
+def init_mongodb_collections():
+    """Fonction helper pour initialiser les collections MongoDB"""
+    return mongodb_connector.init_collections()

@@ -4,7 +4,7 @@
    SECTION HERO WELCOME
    ======================================== */
 .welcome-hero {
-    background: linear-gradient(135deg, #ffffff 0%, #e1e3e9 50%, #c2c2c2 100%);
+    background: linear-gradient(135deg, #ffff 0%, #ffff 50%, #ffff 100%);
     border-radius: 24px;
     padding: 48px;
     color: white;
@@ -48,7 +48,7 @@
     font-size: 36px;
     font-weight: 800;
     margin: 0 0 12px 0;
-    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 2px 20px rgba(49, 48, 48, 0.758);
 }
 
 .hero-subtitle {

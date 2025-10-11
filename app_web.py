@@ -3904,17 +3904,22 @@ def get_monthly_trends():
         # cursor = conn.cursor() # DISABLED
 
         # Données mensuelles pour les 12 derniers mois
-        # MongoDB query needed here
-        # SELECT
-        #                 strftime('%Y-%m', timestamp) as month,
-        #                 COUNT(*) as count,
-        #                 AVG(confidence) as avg_confidence
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-12 months')
-        #             GROUP BY strftime('%Y-%m', timestamp)
-        #             ORDER BY month)
-
-        monthly_data = []  # TODO: Implement MongoDB query
+        from datetime import datetime, timedelta
+        
+        twelve_months_ago = datetime.now() - timedelta(days=365)
+        
+        monthly_pipeline = [
+            {"$match": {"timestamp": {"$gte": twelve_months_ago}}},
+            {"$group": {
+                "_id": {"$dateToString": {"format": "%Y-%m", "date": "$timestamp"}},
+                "count": {"$sum": 1},
+                "avg_confidence": {"$avg": "$confidence"}
+            }},
+            {"$sort": {"_id": 1}}
+        ]
+        
+        monthly_results = list(db.analyses.aggregate(monthly_pipeline))
+        monthly_data = [(r['_id'], r['count'], r['avg_confidence']) for r in monthly_results]
 
         if not monthly_data:
             return jsonify({
@@ -3986,35 +3991,50 @@ def get_ai_insights():
         # cursor = conn.cursor() # DISABLED
 
         # Calculer les métriques de base
-        # MongoDB query needed here
-        # SELECT 
-        #                 COUNT(*) as total,
-        #                 AVG(confidence) as avg_confidence,
-        #                 AVG(processing_time) as avg_time
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-30 days'))
+        from datetime import datetime, timedelta
         
-        base_metrics = (0, 0, 0)  # TODO: Implement MongoDB query (total, avg_confidence, avg_time)
-        total_analyses = base_metrics[0] if base_metrics[0] else 0
-        avg_confidence = base_metrics[1] if base_metrics[1] else 0
-        avg_time = base_metrics[2] if base_metrics[2] else 0
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        
+        base_pipeline = [
+            {"$match": {"timestamp": {"$gte": thirty_days_ago}}},
+            {"$group": {
+                "_id": None,
+                "total": {"$sum": 1},
+                "avg_confidence": {"$avg": "$confidence"},
+                "avg_time": {"$avg": "$processing_time"}
+            }}
+        ]
+        
+        base_result = list(db.analyses.aggregate(base_pipeline))
+        if base_result and base_result[0]:
+            total_analyses = base_result[0].get('total', 0)
+            avg_confidence = base_result[0].get('avg_confidence', 0)
+            avg_time = base_result[0].get('avg_time', 0)
+        else:
+            total_analyses = 0
+            avg_confidence = 0
+            avg_time = 0
 
         # Insights de performance
         performance_insights = []
         
         # Tendance de confiance
-        # MongoDB query needed here
-        # SELECT AVG(confidence) as conf_week1
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-7 days'))
-        week1_conf = None  # TODO: Implement MongoDB query
+        seven_days_ago = datetime.now() - timedelta(days=7)
+        fourteen_days_ago = datetime.now() - timedelta(days=14)
         
-        # MongoDB query needed here
-        # SELECT AVG(confidence) as conf_week2
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-14 days')
-        #             AND DATE(timestamp) < DATE('now', '-7 days'))
-        week2_conf = None  # TODO: Implement MongoDB query
+        week1_pipeline = [
+            {"$match": {"timestamp": {"$gte": seven_days_ago}}},
+            {"$group": {"_id": None, "avg": {"$avg": "$confidence"}}}
+        ]
+        week1_result = list(db.analyses.aggregate(week1_pipeline))
+        week1_conf = week1_result[0]['avg'] if week1_result and week1_result[0].get('avg') else None
+        
+        week2_pipeline = [
+            {"$match": {"timestamp": {"$gte": fourteen_days_ago, "$lt": seven_days_ago}}},
+            {"$group": {"_id": None, "avg": {"$avg": "$confidence"}}}
+        ]
+        week2_result = list(db.analyses.aggregate(week2_pipeline))
+        week2_conf = week2_result[0]['avg'] if week2_result and week2_result[0].get('avg') else None
 
         if week1_conf and week2_conf:
             conf_change = ((week1_conf - week2_conf) / week2_conf) * 100
@@ -4033,13 +4053,16 @@ def get_ai_insights():
         quality_insights = []
         
         # Distribution des diagnostics
-        # MongoDB query needed here
-        # SELECT predicted_label, COUNT(*) as count
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-30 days')
-        #             GROUP BY predicted_label
-        #             ORDER BY count DESC)
-        diagnostic_dist = []  # TODO: Implement MongoDB query
+        diagnostic_pipeline = [
+            {"$match": {"timestamp": {"$gte": thirty_days_ago}}},
+            {"$group": {
+                "_id": "$predicted_label",
+                "count": {"$sum": 1}
+            }},
+            {"$sort": {"count": -1}}
+        ]
+        diagnostic_results = list(db.analyses.aggregate(diagnostic_pipeline))
+        diagnostic_dist = [(r['_id'], r['count']) for r in diagnostic_results]
         
         if diagnostic_dist:
             most_common = diagnostic_dist[0]
@@ -4049,12 +4072,10 @@ def get_ai_insights():
             })
 
         # Analyses à faible confiance
-        # MongoDB query needed here
-        # SELECT COUNT(*) as low_conf_count
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-7 days')
-        #             AND confidence < 0.7)
-        low_conf_count = 0  # TODO: Implement MongoDB query
+        low_conf_count = db.analyses.count_documents({
+            "timestamp": {"$gte": seven_days_ago},
+            "confidence": {"$lt": 0.7}
+        })
         
         if low_conf_count > 0:
             quality_insights.append({
@@ -4121,52 +4142,54 @@ def get_advanced_metrics():
         # cursor = conn.cursor() # DISABLED
 
         # Calcul des métriques de débit (analyses par jour)
-        # MongoDB query needed here
-        # SELECT COUNT(*) as daily_avg
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-30 days'))
-        total_last_30_days = 0  # TODO: Implement MongoDB query
+        from datetime import datetime, timedelta
+        
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        total_last_30_days = db.analyses.count_documents({"timestamp": {"$gte": thirty_days_ago}})
         throughput_rate = round(total_last_30_days / 30, 1)
 
         # Calcul du changement de débit par rapport au mois précédent
-        # MongoDB query needed here
-        # SELECT COUNT(*) as prev_month
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-60 days')
-        #             AND DATE(timestamp) < DATE('now', '-30 days'))
-        prev_month_total = 0  # TODO: Implement MongoDB query
+        sixty_days_ago = datetime.now() - timedelta(days=60)
+        prev_month_total = db.analyses.count_documents({
+            "timestamp": {"$gte": sixty_days_ago, "$lt": thirty_days_ago}
+        })
         prev_throughput = prev_month_total / 30 if prev_month_total > 0 else 0
         throughput_change = round(((throughput_rate - prev_throughput) / prev_throughput) * 100, 1) if prev_throughput > 0 else 0
 
         # Taux de précision basé sur la confiance moyenne
-        # MongoDB query needed here
-        # SELECT AVG(confidence) as avg_accuracy
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-30 days'))
-        accuracy_rate = 0  # TODO: Implement MongoDB query
+        accuracy_pipeline = [
+            {"$match": {"timestamp": {"$gte": thirty_days_ago}}},
+            {"$group": {"_id": None, "avg": {"$avg": "$confidence"}}}
+        ]
+        accuracy_result = list(db.analyses.aggregate(accuracy_pipeline))
+        accuracy_rate = accuracy_result[0]['avg'] if accuracy_result and accuracy_result[0].get('avg') else 0
         accuracy_percentage = round(accuracy_rate * 100, 1)
 
         # Temps de réponse moyen
-        # MongoDB query needed here
-        # SELECT AVG(processing_time) as avg_time
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-30 days'))
-        avg_response_time = 0  # TODO: Implement MongoDB query
+        response_pipeline = [
+            {"$match": {"timestamp": {"$gte": thirty_days_ago}}},
+            {"$group": {"_id": None, "avg": {"$avg": "$processing_time"}}}
+        ]
+        response_result = list(db.analyses.aggregate(response_pipeline))
+        avg_response_time = response_result[0]['avg'] if response_result and response_result[0].get('avg') else 0
 
         # Simulation de la disponibilité système (99.9% par défaut, peut être calculé selon les besoins)
         system_uptime = 99.9
 
         # Métriques pour la comparaison annuelle
-        # MongoDB query needed here
-        # SELECT 
-        #                 strftime('%Y-%m', timestamp) as month,
-        #                 COUNT(*) as count
-        #             FROM analyses
-        #             WHERE DATE(timestamp) >= DATE('now', '-12 months')
-        #             GROUP BY strftime('%Y-%m', timestamp)
-        #             ORDER BY month)
+        twelve_months_ago = datetime.now() - timedelta(days=365)
         
-        yearly_data = []  # TODO: Implement MongoDB query
+        yearly_pipeline = [
+            {"$match": {"timestamp": {"$gte": twelve_months_ago}}},
+            {"$group": {
+                "_id": {"$dateToString": {"format": "%Y-%m", "date": "$timestamp"}},
+                "count": {"$sum": 1}
+            }},
+            {"$sort": {"_id": 1}}
+        ]
+        
+        yearly_results = list(db.analyses.aggregate(yearly_pipeline))
+        yearly_data = [(r['_id'], r['count']) for r in yearly_results]
         
         # Calculer la croissance annuelle
         if len(yearly_data) >= 2:
@@ -6073,126 +6096,224 @@ def pro_dashboard_advanced_stats():
 
         # Statistiques de performance temporelle
         try:
-            # MongoDB query needed here
-            # SELECT 
-            #                     strftime('%H', timestamp) as hour,
-            #                     COUNT(*) as count,
-            #                     AVG(COALESCE(confidence, 0)) as avg_confidence,
-            #                     AVG(COALESCE(processing_time, 0)) as avg_processing_time
-            #                 FROM analyses 
-            #                 WHERE doctor_id = ? AND timestamp >= datetime('now', '-30 days')
-            #                 GROUP BY strftime('%H', timestamp)
-            #                 ORDER BY hour)
-            # hourly_stats = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
-            hourly_stats = []  # TODO: Implement MongoDB query
-            pass  # Keep except block valid
+            from datetime import datetime, timedelta
+            
+            thirty_days_ago = datetime.now() - timedelta(days=30)
+            
+            hourly_pipeline = [
+                {"$match": {
+                    "doctor_id": doctor_id,
+                    "timestamp": {"$gte": thirty_days_ago}
+                }},
+                {"$project": {
+                    "hour": {"$hour": "$timestamp"},
+                    "confidence": {"$ifNull": ["$confidence", 0]},
+                    "processing_time": {"$ifNull": ["$processing_time", 0]}
+                }},
+                {"$group": {
+                    "_id": "$hour",
+                    "count": {"$sum": 1},
+                    "avg_confidence": {"$avg": "$confidence"},
+                    "avg_processing_time": {"$avg": "$processing_time"}
+                }},
+                {"$sort": {"_id": 1}}
+            ]
+            
+            hourly_results = list(db.analyses.aggregate(hourly_pipeline))
+            hourly_stats = [(r['_id'], r['count'], r['avg_confidence'], r['avg_processing_time']) for r in hourly_results]
         except Exception as e:
             print(f"Erreur hourly stats: {e}")
+            import traceback
+            traceback.print_exc()
             hourly_stats = []
 
         # Évolution de la confiance dans le temps
         try:
-            # MongoDB query needed here
-            # SELECT 
-            #                     DATE(timestamp) as date,
-            #                     AVG(COALESCE(confidence, 0)) as avg_confidence,
-            #                     MIN(COALESCE(confidence, 0)) as min_confidence,
-            #                     MAX(COALESCE(confidence, 1)) as max_confidence,
-            #                     COUNT(*) as daily_count
-            #                 FROM analyses 
-            #                 WHERE doctor_id = ? AND timestamp >= datetime('now', '-30 days')
-            #                 GROUP BY DATE(timestamp)
-            #                 ORDER BY date)
-            # confidence_trends = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
-            confidence_trends = []  # TODO: Implement MongoDB query
-            pass  # Keep except block valid
+            confidence_pipeline = [
+                {"$match": {
+                    "doctor_id": doctor_id,
+                    "timestamp": {"$gte": thirty_days_ago}
+                }},
+                {"$group": {
+                    "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$timestamp"}},
+                    "avg_confidence": {"$avg": {"$ifNull": ["$confidence", 0]}},
+                    "min_confidence": {"$min": {"$ifNull": ["$confidence", 0]}},
+                    "max_confidence": {"$max": {"$ifNull": ["$confidence", 1]}},
+                    "count": {"$sum": 1}
+                }},
+                {"$sort": {"_id": 1}}
+            ]
+            
+            confidence_results = list(db.analyses.aggregate(confidence_pipeline))
+            confidence_trends = [(r['_id'], r['avg_confidence'], r['min_confidence'], r['max_confidence'], r['count']) for r in confidence_results]
         except Exception as e:
             print(f"Erreur confidence trends: {e}")
+            import traceback
+            traceback.print_exc()
             confidence_trends = []
 
         # Analyse par type de diagnostic avec évolution
-        # MongoDB query needed here
-        # SELECT 
-        #                 predicted_label,
-        #                 COUNT(*) as total_count,
-        #                 AVG(confidence) as avg_confidence,
-        #                 MIN(confidence) as min_confidence,
-        #                 MAX(confidence) as max_confidence,
-        #                 AVG(processing_time) as avg_processing_time
-        #             FROM analyses 
-        #             WHERE doctor_id = ? AND timestamp >= datetime('now', '-90 days')
-        #             GROUP BY predicted_label
-        #             ORDER BY total_count DESC)
-
-        diagnostic_analysis = []  # TODO: Implement MongoDB query
+        ninety_days_ago = datetime.now() - timedelta(days=90)
+        
+        diagnostic_pipeline = [
+            {"$match": {
+                "doctor_id": doctor_id,
+                "timestamp": {"$gte": ninety_days_ago}
+            }},
+            {"$group": {
+                "_id": "$predicted_label",
+                "total_count": {"$sum": 1},
+                "avg_confidence": {"$avg": "$confidence"},
+                "min_confidence": {"$min": "$confidence"},
+                "max_confidence": {"$max": "$confidence"},
+                "avg_processing_time": {"$avg": "$processing_time"}
+            }},
+            {"$sort": {"total_count": -1}}
+        ]
+        
+        diagnostic_results = list(db.analyses.aggregate(diagnostic_pipeline))
+        diagnostic_analysis = [(r['_id'], r['total_count'], r['avg_confidence'], r['min_confidence'], r['max_confidence'], r['avg_processing_time']) for r in diagnostic_results]
 
         # Analyse des temps de traitement
-        # MongoDB query needed here
-        # SELECT 
-        #                 processing_time,
-        #                 COUNT(*) as count,
-        #                 CASE 
-        #                     WHEN processing_time < 2 THEN 'Très rapide'
-        #                     WHEN processing_time < 5 THEN 'Rapide'
-        #                     WHEN processing_time < 10 THEN 'Normal'
-        #                     ELSE 'Lent'
-        #                 END as category
-        #             FROM analyses 
-        #             WHERE doctor_id = ? AND processing_time IS NOT NULL
-        #             GROUP BY category)
-
-        processing_time_analysis = []  # TODO: Implement MongoDB query
+        processing_pipeline = [
+            {"$match": {
+                "doctor_id": doctor_id,
+                "processing_time": {"$exists": True, "$ne": None}
+            }},
+            {"$project": {
+                "processing_time": 1,
+                "category": {
+                    "$switch": {
+                        "branches": [
+                            {"case": {"$lt": ["$processing_time", 2]}, "then": "Très rapide"},
+                            {"case": {"$lt": ["$processing_time", 5]}, "then": "Rapide"},
+                            {"case": {"$lt": ["$processing_time", 10]}, "then": "Normal"}
+                        ],
+                        "default": "Lent"
+                    }
+                }
+            }},
+            {"$group": {
+                "_id": "$category",
+                "count": {"$sum": 1}
+            }}
+        ]
+        
+        processing_results = list(db.analyses.aggregate(processing_pipeline))
+        processing_time_analysis = [(r.get('processing_time'), r['count'], r['_id']) for r in processing_results]
 
         # Analyse de la productivité hebdomadaire
-        # MongoDB query needed here
-        # SELECT 
-        #                 strftime('%W', timestamp) as week,
-        #                 strftime('%Y', timestamp) as year,
-        #                 COUNT(*) as weekly_count,
-        #                 AVG(confidence) as weekly_avg_confidence,
-        #                 COUNT(DISTINCT patient_id) as unique_patients
-        #             FROM analyses 
-        #             WHERE doctor_id = ? AND timestamp >= datetime('now', '-12 weeks')
-        #             GROUP BY strftime('%Y-%W', timestamp)
-        #             ORDER BY year, week)
-
-        weekly_productivity = []  # TODO: Implement MongoDB query
+        twelve_weeks_ago = datetime.now() - timedelta(weeks=12)
+        
+        weekly_pipeline = [
+            {"$match": {
+                "doctor_id": doctor_id,
+                "timestamp": {"$gte": twelve_weeks_ago}
+            }},
+            {"$project": {
+                "week": {"$week": "$timestamp"},
+                "year": {"$year": "$timestamp"},
+                "confidence": 1,
+                "patient_id": 1
+            }},
+            {"$group": {
+                "_id": {"year": "$year", "week": "$week"},
+                "count": {"$sum": 1},
+                "avg_confidence": {"$avg": "$confidence"},
+                "unique_patients": {"$addToSet": "$patient_id"}
+            }},
+            {"$project": {
+                "year": "$_id.year",
+                "week": "$_id.week",
+                "count": 1,
+                "avg_confidence": 1,
+                "unique_patients": {"$size": "$unique_patients"}
+            }},
+            {"$sort": {"year": 1, "week": 1}}
+        ]
+        
+        weekly_results = list(db.analyses.aggregate(weekly_pipeline))
+        weekly_productivity = [(r['week'], r['year'], r['count'], r['avg_confidence'], r['unique_patients']) for r in weekly_results]
 
         # Analyse des patients à risque
-        # MongoDB query needed here
-        # SELECT 
-        #                 p.patient_id,
-        #                 p.patient_name,
-        #                 COUNT(a.id) as total_analyses,
-        #                 AVG(a.confidence) as avg_confidence,
-        #                 MAX(a.timestamp) as last_analysis,
-        #                 SUM(CASE WHEN a.predicted_class != 0 THEN 1 ELSE 0 END) as tumor_detections
-        #             FROM patients p
-        #             LEFT JOIN analyses a ON p.patient_id = a.patient_id AND p.doctor_id = a.doctor_id
-        #             WHERE p.doctor_id = ?
-        #             GROUP BY p.patient_id, p.patient_name
-        #             HAVING tumor_detections > 0
-        #             ORDER BY tumor_detections DESC, avg_confidence ASC
-        #             LIMIT 10)
-
-        high_risk_patients = []  # TODO: Implement MongoDB query
+        # Récupérer tous les patients du médecin
+        patients = list(db.patients.find({"doctor_id": doctor_id}))
+        
+        high_risk_patients = []
+        for patient in patients:
+            patient_id = str(patient['_id'])
+            patient_name = patient.get('first_name', '') + ' ' + patient.get('last_name', '')
+            
+            # Compter les analyses de ce patient
+            analyses_cursor = db.analyses.find({
+                "patient_id": patient_id,
+                "doctor_id": doctor_id
+            })
+            analyses_list = list(analyses_cursor)
+            
+            if not analyses_list:
+                continue
+            
+            total_analyses = len(analyses_list)
+            
+            # Calculer confiance moyenne
+            confidences = [a.get('confidence', 0) for a in analyses_list]
+            avg_confidence = sum(confidences) / len(confidences) if confidences else 0
+            
+            # Dernière analyse
+            timestamps = [a.get('timestamp') for a in analyses_list if a.get('timestamp')]
+            last_analysis = max(timestamps).strftime('%Y-%m-%d') if timestamps else ''
+            
+            # Compter les détections de tumeur (predicted_class != 0)
+            tumor_detections = sum(1 for a in analyses_list if a.get('predicted_class', 0) != 0)
+            
+            if tumor_detections > 0:
+                high_risk_patients.append((
+                    patient_id,
+                    patient_name,
+                    total_analyses,
+                    avg_confidence,
+                    last_analysis,
+                    tumor_detections
+                ))
+        
+        # Trier par nombre de détections DESC, puis confiance ASC
+        high_risk_patients.sort(key=lambda x: (-x[5], x[3]))
+        high_risk_patients = high_risk_patients[:10]
 
         # Taux de détection mensuel
-        # MongoDB query needed here
-        # SELECT 
-        #                 strftime('%Y-%m', timestamp) as month,
-        #                 COUNT(*) as total_analyses,
-        #                 SUM(CASE WHEN predicted_class != 0 THEN 1 ELSE 0 END) as tumor_detections,
-        #                 ROUND(
-        #                     CAST(SUM(CASE WHEN predicted_class != 0 THEN 1 ELSE 0 END) AS FLOAT) / 
-        #                     COUNT(*) * 100, 2
-        #                 ) as detection_rate
-        #             FROM analyses 
-        #             WHERE doctor_id = ? AND timestamp >= datetime('now', '-12 months')
-        #             GROUP BY strftime('%Y-%m', timestamp)
-        #             ORDER BY month)
-
-        monthly_detection_rates = []  # TODO: Implement MongoDB query
+        twelve_months_ago = datetime.now() - timedelta(days=365)
+        
+        detection_pipeline = [
+            {"$match": {
+                "doctor_id": doctor_id,
+                "timestamp": {"$gte": twelve_months_ago}
+            }},
+            {"$group": {
+                "_id": {"$dateToString": {"format": "%Y-%m", "date": "$timestamp"}},
+                "total_analyses": {"$sum": 1},
+                "tumor_detections": {
+                    "$sum": {
+                        "$cond": [{"$ne": ["$predicted_class", 0]}, 1, 0]
+                    }
+                }
+            }},
+            {"$project": {
+                "month": "$_id",
+                "total_analyses": 1,
+                "tumor_detections": 1,
+                "detection_rate": {
+                    "$multiply": [
+                        {"$divide": ["$tumor_detections", "$total_analyses"]},
+                        100
+                    ]
+                }
+            }},
+            {"$sort": {"month": 1}}
+        ]
+        
+        detection_results = list(db.analyses.aggregate(detection_pipeline))
+        monthly_detection_rates = [(r['month'], r['total_analyses'], r['tumor_detections'], round(r['detection_rate'], 2)) for r in detection_results]
 
         # conn.close() # DISABLED
 
@@ -6319,110 +6440,195 @@ def pro_dashboard_patient_insights():
 
         # Distribution par âge (si disponible)
         try:
-            # MongoDB query needed here
-            # SELECT 
-            #                     CASE 
-            #                         WHEN date_of_birth IS NULL OR date_of_birth = '' THEN 'Non renseigné'
-            #                         WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 18 THEN 'Moins de 18 ans'
-            #                         WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 30 THEN '18-30 ans'
-            #                         WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 50 THEN '30-50 ans'
-            #                         WHEN (julianday('now') - julianday(date_of_birth))/365.25 < 70 THEN '50-70 ans'
-            #                         ELSE 'Plus de 70 ans'
-            #                     END as age_group,
-            #                     COUNT(*) as count
-            #                 FROM patients 
-            #                 WHERE doctor_id = ?
-            #                 GROUP BY age_group
-            #                 ORDER BY count DESC)
-            # age_distribution = dict(cursor.fetchall())  # TODO: Convert to MongoDB
-            age_distribution = {'Non renseigné': 0}  # TODO: Implement MongoDB query
-            pass  # Keep except block valid
+            from datetime import datetime
+            
+            # Récupérer tous les patients du médecin
+            patients = list(db.patients.find({"doctor_id": doctor_id}))
+            
+            age_distribution = {}
+            for patient in patients:
+                dob = patient.get('date_of_birth')
+                if not dob or dob == '':
+                    age_group = 'Non renseigné'
+                else:
+                    # Convertir la date de naissance en datetime si nécessaire
+                    if isinstance(dob, str):
+                        try:
+                            dob = datetime.strptime(dob, '%Y-%m-%d')
+                        except:
+                            age_group = 'Non renseigné'
+                            age_distribution[age_group] = age_distribution.get(age_group, 0) + 1
+                            continue
+                    
+                    # Calculer l'âge
+                    age = (datetime.now() - dob).days / 365.25
+                    
+                    if age < 18:
+                        age_group = 'Moins de 18 ans'
+                    elif age < 30:
+                        age_group = '18-30 ans'
+                    elif age < 50:
+                        age_group = '30-50 ans'
+                    elif age < 70:
+                        age_group = '50-70 ans'
+                    else:
+                        age_group = 'Plus de 70 ans'
+                
+                age_distribution[age_group] = age_distribution.get(age_group, 0) + 1
+            
+            if not age_distribution:
+                age_distribution = {'Non renseigné': 0}
         except Exception as e:
             print(f"Erreur age distribution: {e}")
             age_distribution = {'Non renseigné': 0}
 
         # Distribution par genre
         try:
-            # MongoDB query needed here
-            # SELECT 
-            #                     CASE 
-            #                         WHEN gender IS NULL OR gender = '' THEN 'Non renseigné'
-            #                         ELSE gender
-            #                     END as gender_group,
-            #                     COUNT(*) as count
-            #                 FROM patients 
-            #                 WHERE doctor_id = ?
-            #                 GROUP BY gender_group)
-            # gender_distribution = dict(cursor.fetchall())  # TODO: Convert to MongoDB
-            gender_distribution = {'Non renseigné': 0}  # TODO: Implement MongoDB query
-            pass  # Keep except block valid
+            gender_pipeline = [
+                {"$match": {"doctor_id": doctor_id}},
+                {"$group": {
+                    "_id": {
+                        "$cond": [
+                            {"$or": [
+                                {"$eq": ["$gender", None]},
+                                {"$eq": ["$gender", ""]}
+                            ]},
+                            "Non renseigné",
+                            "$gender"
+                        ]
+                    },
+                    "count": {"$sum": 1}
+                }}
+            ]
+            
+            gender_results = list(db.patients.aggregate(gender_pipeline))
+            gender_distribution = {r['_id']: r['count'] for r in gender_results}
+            
+            if not gender_distribution:
+                gender_distribution = {'Non renseigné': 0}
         except Exception as e:
             print(f"Erreur gender distribution: {e}")
             gender_distribution = {'Non renseigné': 0}
 
         # Patients les plus suivis
         try:
-            # MongoDB query needed here
-            # SELECT 
-            #                     p.patient_id,
-            #                     p.patient_name,
-            #                     COALESCE(p.total_analyses, 0) as total_analyses,
-            #                     p.first_analysis_date,
-            #                     p.last_analysis_date,
-            #                     CASE 
-            #                         WHEN p.last_analysis_date IS NOT NULL AND p.first_analysis_date IS NOT NULL
-            #                         THEN ROUND(julianday(p.last_analysis_date) - julianday(p.first_analysis_date))
-            #                         ELSE 0
-            #                     END as follow_up_days,
-            #                     COALESCE(AVG(a.confidence), 0) as avg_confidence
-            #                 FROM patients p
-            #                 LEFT JOIN analyses a ON p.patient_id = a.patient_id AND p.doctor_id = a.doctor_id
-            #                 WHERE p.doctor_id = ? AND COALESCE(p.total_analyses, 0) > 0
-            #                 GROUP BY p.patient_id, p.patient_name, p.total_analyses, p.first_analysis_date, p.last_analysis_date
-            #                 ORDER BY COALESCE(p.total_analyses, 0) DESC
-            #                 LIMIT 10)
-            # most_followed_patients = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
-            most_followed_patients = []  # TODO: Implement MongoDB query
-            pass  # Keep except block valid
+            from bson import ObjectId
+            
+            # Récupérer les patients avec analyses
+            patients_with_analyses = list(db.patients.find({
+                "doctor_id": doctor_id,
+                "total_analyses": {"$gt": 0}
+            }))
+            
+            most_followed_patients = []
+            for patient in patients_with_analyses:
+                patient_id = str(patient['_id'])
+                
+                # Calculer la confiance moyenne depuis analyses
+                avg_pipeline = [
+                    {"$match": {
+                        "patient_id": patient_id,
+                        "doctor_id": doctor_id
+                    }},
+                    {"$group": {
+                        "_id": None,
+                        "avg": {"$avg": "$confidence"}
+                    }}
+                ]
+                avg_result = list(db.analyses.aggregate(avg_pipeline))
+                avg_confidence = avg_result[0]['avg'] if avg_result and avg_result[0].get('avg') else 0
+                
+                # Calculer les jours de suivi
+                first_date = patient.get('first_analysis_date')
+                last_date = patient.get('last_analysis_date')
+                follow_up_days = 0
+                
+                if first_date and last_date:
+                    if isinstance(first_date, str):
+                        first_date = datetime.strptime(first_date, '%Y-%m-%d')
+                    if isinstance(last_date, str):
+                        last_date = datetime.strptime(last_date, '%Y-%m-%d')
+                    follow_up_days = (last_date - first_date).days
+                
+                most_followed_patients.append((
+                    patient_id,
+                    patient.get('first_name', '') + ' ' + patient.get('last_name', ''),
+                    patient.get('total_analyses', 0),
+                    patient.get('first_analysis_date', ''),
+                    patient.get('last_analysis_date', ''),
+                    follow_up_days,
+                    avg_confidence
+                ))
+            
+            # Trier par nombre d'analyses et limiter à 10
+            most_followed_patients.sort(key=lambda x: x[2], reverse=True)
+            most_followed_patients = most_followed_patients[:10]
         except Exception as e:
             print(f"Erreur most followed patients: {e}")
+            import traceback
+            traceback.print_exc()
             most_followed_patients = []
 
         # Analyse de l'engagement patient (fréquence des visites)
         try:
-            # MongoDB query needed here
-            # SELECT 
-            #                     CASE 
-            #                         WHEN last_analysis_date IS NULL THEN 'Jamais analysé'
-            #                         WHEN julianday('now') - julianday(last_analysis_date) <= 7 THEN 'Actif (< 7j)'
-            #                         WHEN julianday('now') - julianday(last_analysis_date) <= 30 THEN 'Récent (< 30j)'
-            #                         WHEN julianday('now') - julianday(last_analysis_date) <= 90 THEN 'Inactif (< 90j)'
-            #                         ELSE 'Très inactif (> 90j)'
-            #                     END as activity_level,
-            #                     COUNT(*) as patient_count
-            #                 FROM patients 
-            #                 WHERE doctor_id = ?
-            #                 GROUP BY activity_level)
-            # patient_activity = dict(cursor.fetchall())  # TODO: Convert to MongoDB
-            patient_activity = {'Jamais analysé': 0}  # TODO: Implement MongoDB query
-            pass  # Keep except block valid
+            from datetime import timedelta
+            
+            now = datetime.now()
+            patients_all = list(db.patients.find({"doctor_id": doctor_id}))
+            
+            patient_activity = {}
+            for patient in patients_all:
+                last_analysis = patient.get('last_analysis_date')
+                
+                if not last_analysis:
+                    activity_level = 'Jamais analysé'
+                else:
+                    # Convertir en datetime si c'est une string
+                    if isinstance(last_analysis, str):
+                        try:
+                            last_analysis = datetime.strptime(last_analysis, '%Y-%m-%d')
+                        except:
+                            activity_level = 'Jamais analysé'
+                            patient_activity[activity_level] = patient_activity.get(activity_level, 0) + 1
+                            continue
+                    
+                    days_since = (now - last_analysis).days
+                    
+                    if days_since <= 7:
+                        activity_level = 'Actif (< 7j)'
+                    elif days_since <= 30:
+                        activity_level = 'Récent (< 30j)'
+                    elif days_since <= 90:
+                        activity_level = 'Inactif (< 90j)'
+                    else:
+                        activity_level = 'Très inactif (> 90j)'
+                
+                patient_activity[activity_level] = patient_activity.get(activity_level, 0) + 1
+            
+            if not patient_activity:
+                patient_activity = {'Jamais analysé': 0}
         except Exception as e:
             print(f"Erreur patient activity: {e}")
             patient_activity = {'Jamais analysé': 0}
 
         # Nouveaux patients par mois
         try:
-            # MongoDB query needed here
-            # SELECT 
-            #                     strftime('%Y-%m', COALESCE(created_at, 'now')) as month,
-            #                     COUNT(*) as new_patients
-            #                 FROM patients 
-            #                 WHERE doctor_id = ? AND COALESCE(created_at, 'now') >= datetime('now', '-12 months')
-            #                 GROUP BY strftime('%Y-%m', COALESCE(created_at, 'now'))
-            #                 ORDER BY month)
-            # new_patients_trend = []  # cursor.fetchall() # DISABLED  # TODO: Convert to MongoDB
-            new_patients_trend = []  # TODO: Implement MongoDB query
-            pass  # Keep except block valid
+            twelve_months_ago = datetime.now() - timedelta(days=365)
+            
+            new_patients_pipeline = [
+                {"$match": {
+                    "doctor_id": doctor_id,
+                    "created_at": {"$gte": twelve_months_ago}
+                }},
+                {"$group": {
+                    "_id": {"$dateToString": {"format": "%Y-%m", "date": "$created_at"}},
+                    "count": {"$sum": 1}
+                }},
+                {"$sort": {"_id": 1}}
+            ]
+            
+            new_patients_results = list(db.patients.aggregate(new_patients_pipeline))
+            new_patients_trend = [(r['_id'], r['count']) for r in new_patients_results]
         except Exception as e:
             print(f"Erreur new patients trend: {e}")
             new_patients_trend = []

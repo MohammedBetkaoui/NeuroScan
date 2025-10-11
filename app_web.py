@@ -3793,13 +3793,13 @@ def get_confidence_distribution():
         # cursor = conn.cursor() # DISABLED
 
         # Distribution par intervalles de confiance
-        # MongoDB query needed here
-        # SELECT confidence
-        #             FROM analyses
-        #             WHERE confidence IS NOT NULL
-        #             ORDER BY confidence)
-
-        confidences = []  # TODO: Implement MongoDB query
+        confidence_pipeline = [
+            {"$match": {"confidence": {"$exists": True, "$ne": None}}},
+            {"$project": {"confidence": 1}}
+        ]
+        
+        confidence_results = list(db.analyses.aggregate(confidence_pipeline))
+        confidences = [r['confidence'] * 100 for r in confidence_results]  # Convertir en pourcentage
 
         # Compter par intervalles
         very_high = len([c for c in confidences if c >= 90])
@@ -3840,13 +3840,14 @@ def get_processing_time_analysis():
         # cursor = conn.cursor() # DISABLED
 
         # Récupérer tous les temps de traitement
-        # MongoDB query needed here
-        # SELECT processing_time
-        #             FROM analyses
-        #             WHERE processing_time IS NOT NULL
-        #             ORDER BY processing_time)
-
-        times = []  # TODO: Implement MongoDB query
+        times_pipeline = [
+            {"$match": {"processing_time": {"$exists": True, "$ne": None}}},
+            {"$project": {"processing_time": 1}},
+            {"$sort": {"processing_time": 1}}
+        ]
+        
+        times_results = list(db.analyses.aggregate(times_pipeline))
+        times = [r['processing_time'] for r in times_results]
 
         if not times:
             return jsonify({

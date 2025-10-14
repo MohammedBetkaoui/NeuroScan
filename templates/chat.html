@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Médical - NeuroScan</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        secondary: {
+                            50: '#fdf4ff',
+                            100: '#fae8ff',
+                            200: '#f5d0fe',
+                            300: '#f0abfc',
+                            400: '#e879f9',
+                            500: '#d946ef',
+                            600: '#c026d3',
+                            700: '#a21caf',
+                            800: '#86198f',
+                            900: '#701a75',
+                        },
+                        medical: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            300: '#6ee7b7',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/animejs/lib/anime.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden font-sans">
+    <!-- Sidebar for chat session management -->
+    <div id="sidebar" class="sidebar-transition w-72 bg-white border-r border-gray-200 flex flex-col h-full md:static fixed z-20 md:translate-x-0 sidebar-hidden">
+        <div class="p-4 border-b border-gray-200 bg-primary-50">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-primary-600 text-white rounded-lg flex items-center justify-center">
+                        <i class="fas fa-stethoscope text-sm"></i>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl font-semibold text-primary-800">NeuroScan Chat</h1>
+                        <div id="connectionStatus" class="flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span>En ligne</span>
+                        </div>
+                    </div>
+                </div>
+                <button id="closeSidebar" class="md:hidden text-gray-500 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-4">
+            <button id="newChatBtn" class="w-full flex items-center justify-center gap-3 bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg">
+                <i class="fas fa-comment-medical text-sm"></i>
+                <span class="font-medium">Nouvelle consultation</span>
+            </button>
+        </div>
+        
+        <!-- Barre de recherche -->
+        <div class="px-4 pb-3">
+            <div class="relative">
+                <input
+                    type="text"
+                    id="conversationSearch"
+                    placeholder="Rechercher une consultation..."
+                    class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors text-sm"
+                />
+                <i data-feather="search" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>
+                <button id="clearSearch" class="hidden w-4 h-4 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2 hover:text-gray-600">
+                    <i data-feather="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-3">
+            <div class="text-xs font-medium text-gray-500 px-2 py-2 uppercase tracking-wider flex items-center gap-2">
+                <i data-feather="clock" class="w-4 h-4"></i>
+                Consultations récentes
+            </div>
+            <div id="conversationsList" class="space-y-2">
+                <!-- Les conversations seront chargées ici -->
+            </div>
+        </div>
+        
+        <div class="relative overflow-hidden border-t border-gray-200/50">
+            <!-- Fond dégradé sophistiqué -->
+            <div class="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-medical-50 opacity-80"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-gray-100/30 to-transparent"></div>
+            
+            <!-- Conteneur principal -->
+            <div class="relative p-5">
+                <!-- Carte profil médecin -->
+                <div class="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:transform hover:scale-[1.02]">
+                    <!-- En-tête profil -->
+                    <div class="flex items-start gap-4 mb-4">
+                        <!-- Avatar professionnel -->
+                        <div class="relative">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center shadow-lg">
+                                <i data-feather="user-check" class="w-7 h-7"></i>
+                            </div>
+                            <!-- Indicateur de statut en ligne -->
+                            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-medical-500 border-2 border-white rounded-full flex items-center justify-center">
+                                <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Informations médecin -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-semibold text-gray-900 text-lg">Dr. {{ doctor.last_name if doctor else 'Mohammed' }}</h3>
+                                <div class="px-2 py-0.5 bg-medical-100 text-medical-700 text-xs rounded-full font-medium">
+                                    PRO
+                                </div>
+                            </div>
+                            
+                            <!-- Spécialité et certification -->
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2 text-sm text-gray-600">
+                                    <i data-feather="cpu" class="w-4 h-4 text-primary-500"></i>
+                                    <span class="font-medium">Neurologie • IA Médicale</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-xs text-gray-500">
+                                    <i data-feather="shield" class="w-3 h-3 text-medical-500"></i>
+                                    <span>Assistant IA Certifié</span>
+                                    <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
+                                    <span>En ligne</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Statistiques rapides -->
+                    <div class="flex items-center justify-between mb-4 p-3 bg-gray-50/70 rounded-xl">
+                        <div class="text-center flex-1">
+                            <div class="text-lg font-bold text-primary-600" id="dailyConsultations">12</div>
+                            <div class="text-xs text-gray-500">Consultations</div>
+                        </div>
+                        <div class="w-px h-8 bg-gray-200"></div>
+                        <div class="text-center flex-1">
+                            <div class="text-lg font-bold text-medical-600">98%</div>
+                            <div class="text-xs text-gray-500">Précision IA</div>
+                        </div>
+                        <div class="w-px h-8 bg-gray-200"></div>
+                        <div class="text-center flex-1">
+                            <div class="text-lg font-bold text-gray-700">24/7</div>
+                            <div class="text-xs text-gray-500">Disponible</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions et contrôles -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <!-- Toggle thème moderne -->
+                            <button id="themeToggle" class="theme-toggle" title="Basculer le mode sombre">
+                                <i class="theme-icon sun-icon fas fa-sun"></i>
+                                <i class="theme-icon moon-icon fas fa-moon"></i>
+                            </button>
+                            
+                            <!-- Indicateur de statut -->
+                            <div class="flex items-center gap-1.5 px-2.5 py-1.5 bg-medical-50 text-medical-700 rounded-lg">
+                                <div class="w-2 h-2 bg-medical-500 rounded-full animate-pulse"></div>
+                                <span class="text-xs font-medium">Actif</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-1">
+                            <a href="{{ url_for('chat_help') }}" 
+                               class="p-2.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 group" 
+                               title="Aide et Support">
+                                <i data-feather="help-circle" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+                            </a>
+                            <a href="{{ url_for('dashboard') }}" 
+                               class="p-2.5 text-gray-500 hover:text-medical-600 hover:bg-medical-50 rounded-lg transition-all duration-200 group" 
+                               title="Tableau de bord">
+                                <i data-feather="settings" class="w-4 h-4 group-hover:rotate-90 transition-transform duration-300"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Citation inspirante -->
+                <div class="mt-3 text-center">
+                    <p class="text-xs text-gray-500 italic">"L'intelligence artificielle au service de la médecine"</p>
+                </div>
+                
+                <!-- Raccourcis clavier -->
+                <div class="mt-4 p-3 bg-gray-50/70 rounded-lg">
+                    <h4 class="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <i data-feather="type" class="w-3 h-3"></i>
+                        Raccourcis
+                    </h4>
+                    <div class="space-y-1 text-xs text-gray-600">
+                        <div class="flex justify-between">
+                            <span>Rechercher</span>
+                            <kbd class="px-1.5 py-0.5 bg-white rounded text-xs font-mono">Ctrl+K</kbd>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Nouvelle conv.</span>
+                            <kbd class="px-1.5 py-0.5 bg-white rounded text-xs font-mono">Ctrl+/</kbd>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Envoyer</span>
+                            <kbd class="px-1.5 py-0.5 bg-white rounded text-xs font-mono">Ctrl+Enter</kbd>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile header -->
+    <div class="md:hidden p-4 border-b border-gray-200 bg-white flex items-center justify-between fixed top-0 left-0 right-0 z-30">
+        <div class="flex items-center">
+            <button id="openSidebar" class="text-gray-500 mr-4">
+                <i data-feather="menu" class="w-5 h-5"></i>
+            </button>
+            <h2 class="text-lg font-semibold text-primary-700">NeuroScan Chat</h2>
+        </div>
+        <div class="flex items-center gap-2">
+            <button id="themeToggleMobile" class="theme-toggle" title="Basculer le mode sombre">
+                <i class="theme-icon sun-icon fas fa-sun"></i>
+                <i class="theme-icon moon-icon fas fa-moon"></i>
+            </button>
+            <a href="{{ url_for('chat_help') }}" class="text-gray-500 hover:text-primary-600 p-2 rounded-lg hover:bg-gray-100 transition-colors" title="Aide et Support">
+                <i data-feather="help-circle" class="w-5 h-5"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Overlay pour mobile -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- Layout principal -->
+    <div class="flex-1 flex flex-col h-full">
+        <!-- Chat messages container -->
+        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-6 bg-white">
+            <div class="max-w-3xl mx-auto w-full">
+                <!-- Messages d'accueil -->
+                <div id="welcomeMessages" class="space-y-4">
+                    <div class="flex items-center justify-center py-12">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-feather="activity" class="w-8 h-8"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-gray-800 mb-2">Assistant NeuroScan</h2>
+                            <p class="text-gray-500 max-w-md mx-auto">Je suis votre assistant médical spécialisé en neurologie. Comment puis-je vous aider aujourd'hui ?</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                        <div class="p-4 bg-primary-50 rounded-lg border border-primary-100 hover:shadow-md transition-shadow cursor-pointer">
+                            <div class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center mb-3">
+                                <i data-feather="cpu" class="w-4 h-4"></i>
+                            </div>
+                            <h3 class="font-medium text-primary-800 mb-1">Analyse d'imagerie</h3>
+                            <p class="text-sm text-primary-600">Interprétation d'IRM, scanner et autres examens neurologiques</p>
+                        </div>
+                        
+                        <div class="p-4 bg-medical-50 rounded-lg border border-medical-100 hover:shadow-md transition-shadow cursor-pointer">
+                            <div class="w-8 h-8 bg-medical-100 text-medical-600 rounded-full flex items-center justify-center mb-3">
+                                <i data-feather="user-check" class="w-4 h-4"></i>
+                            </div>
+                            <h3 class="font-medium text-medical-800 mb-1">Diagnostic différentiel</h3>
+                            <p class="text-sm text-medical-600">Aide au diagnostic et recommandations cliniques</p>
+                        </div>
+                        
+                        <div class="p-4 bg-primary-50 rounded-lg border border-primary-100 hover:shadow-md transition-shadow cursor-pointer">
+                            <div class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center mb-3">
+                                <i data-feather="file-text" class="w-4 h-4"></i>
+                            </div>
+                            <h3 class="font-medium text-primary-800 mb-1">Rédaction médicale</h3>
+                            <p class="text-sm text-primary-600">Comptes-rendus et correspondances médicales</p>
+                        </div>
+                        
+                        <div class="p-4 bg-medical-50 rounded-lg border border-medical-100 hover:shadow-md transition-shadow cursor-pointer">
+                            <div class="w-8 h-8 bg-medical-100 text-medical-600 rounded-full flex items-center justify-center mb-3">
+                                <i data-feather="book-open" class="w-4 h-4"></i>
+                            </div>
+                            <h3 class="font-medium text-medical-800 mb-1">Formation continue</h3>
+                            <p class="text-sm text-medical-600">Mise à jour des connaissances et recommandations</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Lien d'aide -->
+                    <div class="mt-6 text-center">
+                        <a href="{{ url_for('chat_help') }}" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary-600 transition-colors">
+                            <i data-feather="help-circle" class="w-4 h-4"></i>
+                            <span>Besoin d'aide ? Consultez notre guide d'utilisation</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- En-tête de conversation (affiché quand une conversation est sélectionnée) -->
+                <div id="conversationHeader" class="hidden px-4 py-3 border-b border-gray-200 bg-primary-50 rounded-lg mb-6">
+                    <div class="flex items-center justify-between">
+                        <div id="currentConversationInfo" class="flex items-center space-x-3 min-w-0 flex-1">
+                            <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-brain text-primary-600"></i>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h2 class="text-lg font-semibold text-primary-800 truncate" id="conversationTitle">
+                                    Sélectionnez une conversation
+                                </h2>
+                                <p class="text-sm text-primary-600 truncate" id="conversationSubtitle">
+                                    Commencez une nouvelle consultation
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2 flex-shrink-0">
+                            <button id="assignPatientBtn" class="hidden px-3 py-2 text-primary-600 hover:bg-primary-100 rounded-lg transition-colors flex items-center gap-2">
+                                <i data-feather="user-plus" class="w-4 h-4"></i>
+                                <span class="hidden sm:inline">Assigner patient</span>
+                            </button>
+                            <a href="{{ url_for('chat_help') }}" class="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2" title="Aide et Support">
+                                <i data-feather="help-circle" class="w-4 h-4"></i>
+                                <span class="hidden sm:inline">Aide</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages area -->
+                <div id="messagesContainer" class="space-y-4">
+                    <!-- Les messages apparaîtront ici -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Zone de saisie moderne style messagerie -->
+        <div id="inputSection" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20">
+            <div class="chat-input-container p-4">
+                <!-- Indicateur de frappe amélioré -->
+                <div id="typingIndicatorModern" class="typing-indicator-modern hidden">
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    <span class="text-sm text-blue-600 font-medium">NeuroScan analyse votre message...</span>
+                </div>
+                
+        <!-- Zone de chat active -->
+                <div id="chatInputArea" class="hidden">
+                    <!-- Indicateur de frappe amélioré -->
+                    <div id="typingIndicatorModern" class="typing-indicator-modern hidden">
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></div>
+                                <div class="w-2 h-2 bg-primary-500 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                                <div class="w-2 h-2 bg-primary-500 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+                            </div>
+                            <span class="text-sm text-primary-700 font-medium">NeuroScan analyse votre message...</span>
+                        </div>
+                        <div class="text-xs text-primary-600 mt-1">Cela peut prendre quelques secondes</div>
+                    </div>
+                    
+                    <form id="messageForm">
+                        <div class="input-wrapper relative">
+                            <textarea
+                                id="messageInput"
+                                placeholder="Décrivez vos symptômes ou posez votre question médicale..."
+                                class="w-full resize-none outline-none"
+                                maxlength="2000"
+                                rows="1"
+                            ></textarea>
+                            
+                            <button
+                                type="submit"
+                                id="sendButton"
+                                class="send-button"
+                                disabled
+                                title="Envoyer le message"
+                            >
+                                <i data-feather="send" class="w-4 h-4" id="sendIcon"></i>
+                            </button>
+                        </div>
+
+                        
+
+                        <!-- Actions rapides -->
+                        <div class="quick-actions">
+                            <button id="templateBtn" class="quick-action-btn" title="Templates de messages">
+                                <i data-feather="file-text" class="w-4 h-4"></i>
+                            </button>
+                            <button id="emojiBtn" class="quick-action-btn" title="Émojis médicaux">
+                                <i data-feather="smile" class="w-4 h-4"></i>
+                            </button>
+                            <button id="attachmentBtn" class="quick-action-btn" title="Pièces jointes">
+                                <i data-feather="paperclip" class="w-4 h-4"></i>
+                            </button>
+                            <button id="voiceBtn" class="quick-action-btn" title="Dictée vocale">
+                                <i data-feather="mic" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Templates de messages médicaux -->
+                        <div id="messageTemplates" class="message-templates hidden">
+                            <div class="templates-header">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                    <i data-feather="file-text" class="w-4 h-4"></i>
+                                    Templates médicaux
+                                </h4>
+                                <button id="closeTemplates" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100">
+                                    <i data-feather="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            <div class="templates-grid">
+                                <button class="template-btn" data-template="Bonjour Docteur, je consulte pour des maux de tête fréquents depuis 3 semaines. Pouvez-vous m'aider à comprendre les causes possibles ?">
+                                    <div class="template-icon">🩺</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Céphalées</div>
+                                        <div class="template-desc">Consultation pour maux de tête</div>
+                                    </div>
+                                </button>
+                                
+                                <button class="template-btn" data-template="J'ai des douleurs thoraciques depuis hier soir. Elles sont localisées au milieu du thorax et irradient dans le bras gauche. Dois-je m'inquiéter ?">
+                                    <div class="template-icon">❤️</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Douleurs thoraciques</div>
+                                        <div class="template-desc">Évaluation cardiovasculaire</div>
+                                    </div>
+                                </button>
+                                
+                                <button class="template-btn" data-template="Pouvez-vous analyser cette IRM cérébrale et me donner votre interprétation médicale ? Je joins l'image à ce message.">
+                                    <div class="template-icon">🧠</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Analyse d'imagerie</div>
+                                        <div class="template-desc">Interprétation IRM/scanner</div>
+                                    </div>
+                                </button>
+                                
+                                <button class="template-btn" data-template="Mon patient présente des symptômes neurologiques : confusion mentale, difficultés d'élocution et faiblesse du côté droit. Diagnostic différentiel ?">
+                                    <div class="template-icon">🩻</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Diagnostic différentiel</div>
+                                        <div class="template-desc">Neurologie d'urgence</div>
+                                    </div>
+                                </button>
+                                
+                                <button class="template-btn" data-template="Quelles sont les dernières recommandations pour le traitement de l'hypertension artérielle selon les guidelines 2024 ?">
+                                    <div class="template-icon">📋</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Mise à jour thérapeutique</div>
+                                        <div class="template-desc">Recommandations actuelles</div>
+                                    </div>
+                                </button>
+                                
+                                <button class="template-btn" data-template="Pouvez-vous rédiger un compte-rendu médical pour cette consultation ? Patient: [nom], Diagnostic: [diagnostic], Traitement: [traitement]">
+                                    <div class="template-icon">📝</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Rédaction médicale</div>
+                                        <div class="template-desc">Comptes-rendus et courriers</div>
+                                    </div>
+                                </button>
+                                
+                                <button class="template-btn" data-template="Formation continue : pouvez-vous me faire un résumé des avancées récentes en matière de thrombolyse dans l'AVC ischémique ?">
+                                    <div class="template-icon">🎓</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Formation médicale</div>
+                                        <div class="template-desc">Mise à jour des connaissances</div>
+                                    </div>
+                                </button>
+                                
+                                <button class="template-btn" data-template="Cas clinique complexe : patient de 65 ans avec antécédents cardiovasculaires, présente une dyspnée d'effort croissante. Investigations recommandées ?">
+                                    <div class="template-icon">🔍</div>
+                                    <div class="template-content">
+                                        <div class="template-title">Cas complexe</div>
+                                        <div class="template-desc">Discussion multidisciplinaire</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Zone d'accueil -->
+                <div id="welcomeInput">
+                    <form id="welcomeForm">
+                        <div class="input-wrapper relative">
+                            <input
+                                type="text"
+                                id="welcomeMessageInput"
+                                placeholder="🩺 Commencez votre consultation médicale..."
+                                class="w-full border-none outline-none bg-transparent px-5 py-4 text-gray-900 placeholder-blue-600/70"
+                                maxlength="500"
+                            />
+                            <button
+                                type="submit"
+                                class="send-button"
+                                title="Démarrer la consultation"
+                            >
+                                <i data-feather="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        
+                       
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modales -->
+    <!-- Modale d'assignation de patient -->
+    <div id="assignPatientModal" class="modal fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-100">
+            <!-- En-tête de la modal -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center">
+                        <i data-feather="user-plus" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Assigner un patient</h3>
+                        <p class="text-sm text-gray-500">Sélectionnez un patient pour cette consultation</p>
+                    </div>
+                </div>
+                <button id="closePatientModal" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i data-feather="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <!-- Sélection du patient -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">Patient à assigner</label>
+                <div class="relative">
+                    <select id="patientSelect" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors appearance-none bg-white">
+                        <option value="">Choisir un patient...</option>
+                        <!-- Les patients seront chargés ici -->
+                    </select>
+                    <i data-feather="chevron-down" class="w-5 h-5 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none"></i>
+                </div>
+            </div>
+            
+            <!-- Information sur le patient sélectionné (optionnel) -->
+            <div id="patientInfo" class="hidden mb-6 p-4 bg-primary-50 border border-primary-200 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i data-feather="user" class="w-4 h-4"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm font-medium text-primary-800" id="selectedPatientName">-</p>
+                        <p class="text-xs text-primary-600" id="selectedPatientInfo">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="flex gap-3">
+                <button id="assignPatientCancel" class="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">
+                    <i data-feather="x" class="w-4 h-4 inline mr-2"></i>
+                    Annuler
+                </button>
+                <button id="assignPatientConfirm" class="flex-1 px-4 py-3 bg-primary-600 text-white hover:bg-primary-700 rounded-lg font-medium transition-colors shadow-md hover:shadow-lg">
+                    <i data-feather="check" class="w-4 h-4 inline mr-2"></i>
+                    Assigner
+                </button>
+            </div>
+            
+            <!-- Note informative -->
+            <div class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <div class="flex items-start gap-2">
+                    <i data-feather="info" class="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5"></i>
+                    <p class="text-xs text-gray-600">
+                        L'assignation d'un patient permettra de contextualiser les réponses de l'IA et d'organiser l'historique médical.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale de confirmation de suppression -->
+    <div id="deleteConversationModal" class="modal fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border border-gray-100">
+            <!-- En-tête de la modal -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
+                        <i data-feather="trash-2" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Supprimer la conversation</h3>
+                        <p class="text-sm text-gray-500">Cette action est irréversible</p>
+                    </div>
+                </div>
+                <button id="closeDeleteModal" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                    <i data-feather="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <!-- Contenu de confirmation -->
+            <div class="mb-6">
+                <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 bg-red-100 text-red-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i data-feather="alert-triangle" class="w-4 h-4"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-sm font-medium text-red-800 mb-1">Attention !</h4>
+                            <p class="text-sm text-red-700">
+                                Vous êtes sur le point de supprimer définitivement cette conversation et tout son historique médical. 
+                                Cette action ne peut pas être annulée.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Détails de la conversation -->
+                <div id="conversationDetails" class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i data-feather="message-circle" class="w-4 h-4 text-gray-500"></i>
+                        <span class="text-sm font-medium text-gray-700">Conversation sélectionnée:</span>
+                    </div>
+                    <p id="conversationTitle" class="text-sm text-gray-600 mb-1">-</p>
+                    <p id="conversationDate" class="text-xs text-gray-500">-</p>
+                    <p id="conversationMessages" class="text-xs text-gray-500">-</p>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="flex gap-3">
+                <button id="cancelDeleteConversation" class="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">
+                    <i data-feather="x" class="w-4 h-4 inline mr-2"></i>
+                    Annuler
+                </button>
+                <button id="confirmDeleteConversation" class="flex-1 px-4 py-3 bg-red-600 text-white hover:bg-red-700 rounded-lg font-medium transition-colors shadow-md hover:shadow-lg">
+                    <i data-feather="trash-2" class="w-4 h-4 inline mr-2"></i>
+                    Supprimer définitivement
+                </button>
+            </div>
+            
+            <!-- Note informative -->
+            <div class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <div class="flex items-start gap-2">
+                    <i data-feather="info" class="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5"></i>
+                    <p class="text-xs text-gray-600">
+                        Une fois supprimée, cette conversation et tout son contenu médical seront perdus à jamais. 
+                        Assurez-vous d'avoir sauvegardé toute information importante.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+  
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>

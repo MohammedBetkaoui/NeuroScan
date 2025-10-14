@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=NeuroScan AI
+Comment=Application de diagnostic médical par IA pour tumeurs cérébrales
+Exec=/home/mohammed/Bureau/ai scan/dist/NeuroScan_AI
+Icon=/home/mohammed/Bureau/ai scan/static/images/logo.png
+Terminal=false
+Categories=Medical;Science;Education;
+Keywords=medical;AI;brain;tumor;diagnosis;
+StartupNotify=true

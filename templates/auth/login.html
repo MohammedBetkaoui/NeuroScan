@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - NeuroScan Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.build.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body>
+    <!-- Arrière-plan simple -->
+    <div class="simple-bg"></div>
+
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="login-card rounded-2xl">
+            <!-- Logo et titre -->
+            <div class="text-center mb-8">
+                <div class="logo-container inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-6 mx-auto">
+                    <i class="fas fa-brain text-3xl"></i>
+                </div>
+                <h1 class="text-4xl font-black title-simple mb-3">
+                    NeuroScan Pro
+                </h1>
+                <p class="text-secondary text-lg font-medium">Connexion Professionnelle</p>
+                <div class="status-indicators">
+                    <div class="status-dot"></div>
+                    <div class="status-dot"></div>
+                    <div class="status-dot"></div>
+                </div>
+            </div>
+
+            <!-- Messages flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message mb-6 p-4 rounded-xl border-l-4 shadow-lg relative overflow-hidden
+                            {% if category == 'error' %}border-red-500 bg-red-50 text-red-800
+                            {% elif category == 'success' %}border-green-500 bg-green-50 text-green-800
+                            {% else %}border-blue-500 bg-blue-50 text-blue-800{% endif %}">
+                            <div class="flex items-start space-x-3 relative z-10">
+                                <div class="flex-shrink-0 mt-0.5">
+                                    <i class="fas {% if category == 'error' %}fa-exclamation-circle text-red-500
+                                                  {% elif category == 'success' %}fa-check-circle text-green-500
+                                                  {% else %}fa-info-circle text-blue-500{% endif %} text-lg"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-sm leading-relaxed">{{ message }}</p>
+                                </div>
+                                <button onclick="this.parentElement.parentElement.remove()" class="flex-shrink-0 ml-4 hover:bg-black/10 rounded-full p-1 transition-colors duration-200">
+                                    <i class="fas fa-times text-sm"></i>
+                                </button>
+                            </div>
+                            <div class="absolute top-0 right-0 w-20 h-20 opacity-10">
+                                <i class="fas {% if category == 'error' %}fa-exclamation-triangle
+                                              {% elif category == 'success' %}fa-check
+                                              {% else %}fa-info{% endif %} text-4xl absolute top-2 right-2"></i>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Formulaire de connexion -->
+            <form method="POST" class="space-y-6" id="loginForm">
+                <div class="form-field">
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope field-icon"></i>
+                        <input type="email" id="email" name="email" required
+                               class="input-field"
+                               placeholder="dr.dupont@hopital.fr">
+                    </div>
+                    <label for="email" class="block text-sm font-semibold text-secondary mt-2 ml-1">
+                        <i class="fas fa-envelope mr-2 text-blue-500"></i>Email professionnel *
+                        <span class="help-tooltip" role="tooltip" aria-describedby="email-help">
+                            <i class="fas fa-question-circle help-icon" tabindex="0" aria-label="Aide pour le champ email"></i>
+                            <div class="help-content" id="email-help">Adresse email institutionnelle pour la sécurité</div>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="form-field">
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock field-icon"></i>
+                        <input type="password" id="password" name="password" required
+                               class="input-field"
+                               placeholder="••••••••">
+                        <button type="button" class="password-toggle" id="password-toggle" aria-label="Afficher/masquer le mot de passe">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <label for="password" class="block text-sm font-semibold text-secondary mt-2 ml-1">
+                        <i class="fas fa-lock mr-2 text-green-500"></i>Mot de passe *
+                        <span class="help-tooltip" role="tooltip" aria-describedby="password-help">
+                            <i class="fas fa-question-circle help-icon" tabindex="0" aria-label="Aide pour le mot de passe"></i>
+                            <div class="help-content" id="password-help">Mot de passe sécurisé requis</div>
+                        </span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-primary w-full py-4 rounded-xl font-semibold text-white text-sm uppercase tracking-wide relative overflow-hidden">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Se connecter
+                </button>
+            </form>
+
+            <!-- Liens -->
+            <div class="mt-8 text-center space-y-4">
+                <div class="flex items-center justify-center space-x-2">
+                    <span class="text-secondary">Pas encore de compte ?</span>
+                    <a href="{{ url_for('register') }}" class="link-primary">
+                        Créer un compte
+                    </a>
+                </div>
+                <div class="flex items-center justify-center space-x-2">
+                    <a href="{{ url_for('index') }}" class="link-primary text-sm">
+                        <i class="fas fa-arrow-left mr-1"></i>Retour à l'accueil
+                    </a>
+                </div>
+            </div>
+
+            <!-- Informations légales -->
+            <div class="security-card mt-8 p-6 rounded-2xl">
+                <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0 mt-1">
+                        <div class="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+                            <i class="fas fa-shield-alt text-white text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-primary font-bold text-sm mb-2">Sécurité & Confidentialité</h4>
+                        <p class="text-secondary text-xs leading-relaxed">
+                            En vous connectant, vous acceptez nos conditions d'utilisation et notre politique de confidentialité.
+                            Toutes les données sont chiffrées et traitées selon les normes RGPD et les standards de sécurité médicale (HDS).
+                            Accès réservé aux professionnels de santé autorisés.
+                        </p>
+                        <div class="mt-4 flex flex-wrap items-center gap-2">
+                            <div class="security-indicator">
+                                <i class="fas fa-lock"></i>
+                                <span class="text-primary">SSL</span>
+                            </div>
+                            <div class="security-indicator">
+                                <i class="fas fa-user-shield"></i>
+                                <span class="text-primary">RGPD</span>
+                            </div>
+                            <div class="security-indicator">
+                                <i class="fas fa-certificate"></i>
+                                <span class="text-primary">HDS</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+</body>
+</html>

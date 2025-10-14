@@ -1,0 +1,39 @@
+# Core Flask dependencies
+Flask>=2.0.0
+Werkzeug>=2.0.0
+
+# HTTP requests
+requests>=2.31.0
+
+# Machine Learning
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.20.0
+Pillow>=9.0.0
+
+# Computer Vision
+opencv-python>=4.5.0
+
+# Database
+SQLAlchemy>=2.0.0
+pymongo>=4.5.0
+dnspython>=2.4.0  # Required for MongoDB srv connection
+
+# Production server
+gunicorn>=21.0.0
+
+# PDF Generation
+reportlab>=4.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+
+# Desktop Application
+pywebview>=4.0.0
+PyGObject>=3.42.0
+
+# Packaging
+pyinstaller>=6.0.0
+
+# Google Gemini API
+google-generativeai>=0.3.0

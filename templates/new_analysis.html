@@ -1,0 +1,246 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Nouvelle Analyse - NeuroScan{% endblock %}
+{% block page_title %}Analyse IA NeuroScan{% endblock %}
+{% block page_subtitle %}Interface épurée et performante{% endblock %}
+{% block page_description %}Téléversez une imagerie et obtenez un diagnostic IA fiable en quelques secondes.{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-neutral-50 -mt-6 pt-6">
+  <div class="max-w-7xl mx-auto p-6">
+
+    <!-- Bandeau -->
+    <section class="rounded-2xl p-6 bg-white border border-neutral-200 shadow-sm mb-6">
+      <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow">
+            <i class="fas fa-brain"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-neutral-900">NeuroScan • Nouvelle Analyse</h1>
+            <p class="text-neutral-500 text-sm">Sélectionnez un patient, importez une image IRM, lancez l'analyse.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 text-sm text-neutral-600">
+          <i class="fas fa-shield-alt text-emerald-600"></i>
+          <span>Données chiffrées</span>
+          <span class="w-1 h-1 rounded-full bg-neutral-300"></span>
+          <i class="fas fa-check-circle text-blue-600"></i>
+          <span>Modèle validé</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Grille principale: Patient | Upload | Statut -->
+    <section class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <!-- Patient (2) -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="rounded-2xl p-6 bg-white border border-neutral-200 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+              <i class="fas fa-user-md"></i>
+            </div>
+            <h2 class="font-semibold text-neutral-900">Patient</h2>
+          </div>
+          <label class="block text-sm font-medium text-neutral-700 mb-2">Sélectionnez un patient</label>
+          <select id="patientSelect" class="w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-neutral-800 shadow-inner focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400">
+            <option value="">— Choisir —</option>
+            {% for patient in patients %}
+            <option value="{{ patient.patient_id }}" 
+              data-name="{{ patient.patient_name }}" 
+              data-age="{{ patient.age }}"
+              data-gender="{{ patient.gender }}"
+              data-dob="{{ patient.date_of_birth }}">
+              {{ patient.patient_name }} — {{ patient.age }} ans ({{ patient.gender }})
+            </option>
+            {% endfor %}
+          </select>
+
+          <div id="patientInfo" class="hidden mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+              <div class="text-xs text-neutral-500">Nom</div>
+              <div id="patientName" class="font-semibold text-neutral-800">—</div>
+            </div>
+            <div class="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+              <div class="text-xs text-neutral-500">Âge</div>
+              <div id="patientAge" class="font-semibold text-neutral-800">—</div>
+            </div>
+            <div class="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+              <div class="text-xs text-neutral-500">Sexe</div>
+              <div id="patientGender" class="font-semibold text-neutral-800">—</div>
+            </div>
+            <div class="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+              <div class="text-xs text-neutral-500">Date de naissance</div>
+              <div id="patientDob" class="font-semibold text-neutral-800">—</div>
+            </div>
+          </div>
+
+          <!-- Date d'examen -->
+          <div class="mt-5">
+            <label for="nsExamDate" class="block text-sm font-medium text-neutral-700 mb-2">Date d'examen</label>
+            <input id="nsExamDate" type="date" class="w-full sm:w-auto rounded-xl border border-neutral-300 bg-white px-4 py-2 text-neutral-800 shadow-inner focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-400" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload (2) -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="rounded-2xl p-6 bg-white border border-neutral-200 shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
+              <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <h2 class="font-semibold text-neutral-900">Téléversement</h2>
+          </div>
+
+          <div id="nsDropZone" class="rounded-2xl border-2 border-dashed border-neutral-300 bg-neutral-50 hover:bg-neutral-100 transition p-10 text-center cursor-pointer">
+            <div class="mx-auto w-16 h-16 rounded-full bg-neutral-200 text-neutral-600 flex items-center justify-center mb-4">
+              <i class="fas fa-file-medical"></i>
+            </div>
+            <p class="font-semibold text-neutral-800">Déposez votre image IRM ici</p>
+            <p class="text-sm text-neutral-500">ou cliquez pour parcourir • JPG, PNG, DICOM (max 50MB)</p>
+            <input id="nsFileInput" type="file" class="hidden" accept=".jpg,.jpeg,.png,.dcm,.dicom,.nii">
+          </div>
+
+          <div id="nsFileInfo" class="hidden mt-5 rounded-xl bg-neutral-50 border border-neutral-200 p-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                  <i class="fas fa-check"></i>
+                </div>
+                <div>
+                  <div id="nsFileName" class="font-semibold text-neutral-900"></div>
+                  <div id="nsFileSize" class="text-sm text-neutral-500"></div>
+                </div>
+              </div>
+              <div class="w-48 h-2 rounded-full bg-neutral-200 overflow-hidden">
+                <div id="nsUploadProgress" class="h-2 bg-gradient-to-r from-emerald-500 to-teal-600" style="width:0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <button id="nsAnalyzeBtn" class="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-4 shadow-sm hover:shadow focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            Lancer l'analyse IA
+          </button>
+        </div>
+      </div>
+
+      <!-- Statut (1) -->
+      <div class="lg:col-span-1 space-y-6">
+        <div id="nsProgressCard" class="rounded-2xl p-6 bg-white border border-neutral-200 shadow-sm hidden">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-neutral-100 text-neutral-700 flex items-center justify-center">
+              <i class="fas fa-cogs"></i>
+            </div>
+            <h2 class="font-semibold text-neutral-900">Analyse en cours</h2>
+          </div>
+          <div class="text-sm text-neutral-600 mb-2" id="nsStatusText">En attente du fichier...</div>
+          <div class="w-full h-2 rounded-full bg-neutral-200 overflow-hidden">
+            <div id="nsAnalysisProgress" class="h-2 bg-gradient-to-r from-blue-600 to-indigo-600" style="width:0%"></div>
+          </div>
+          <div class="mt-2 text-right text-sm font-semibold text-neutral-700" id="nsProgressPct">0%</div>
+        </div>
+
+        <div id="nsResultsCard" class="rounded-2xl p-6 bg-emerald-50 border border-emerald-200 text-emerald-800 shadow-sm hidden cursor-pointer hover:shadow-md transition" onclick="openResultsModal()">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+              <i class="fas fa-check text-lg"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <div class="font-semibold">Analyse terminée</div>
+                <span id="nsResultMiniBadge" class="px-2 py-1 rounded-md bg-blue-600 text-white text-xs font-semibold">—</span>
+              </div>
+              <div id="nsResultMiniSummary" class="text-sm opacity-90 truncate">Cliquez pour voir le rapport détaillé</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Modal résultats -->
+<div id="resultsModal" class="fixed inset-0 hidden items-start justify-center bg-black/50 overflow-y-hidden p-4 md:p-6" aria-modal="true" role="dialog">
+  <div class="modal-content w-full mx-0 md:mx-4 rounded-2xl shadow-2xl bg-white" style="width: min(80vw, 1200px);" onclick="event.stopPropagation()">
+    <div class="p-6 border-b border-neutral-200 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+          <i class="fas fa-file-medical"></i>
+        </div>
+        <div>
+          <div class="text-xl font-bold text-neutral-900">Rapport de Diagnostic IA</div>
+          <div class="text-sm text-neutral-500">Généré automatiquement • <span id="modalAnalysisId" class="font-medium text-neutral-700"></span></div>
+        </div>
+      </div>
+      <button id="closeModal" class="rounded-lg px-3 py-2 text-neutral-600 hover:bg-neutral-100">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="p-6 overflow-y-auto max-h-[80vh]">
+      <!-- En-tête patient -->
+      <div class="rounded-xl border border-neutral-200 p-4 mb-6 bg-neutral-50">
+        <div class="flex flex-wrap items-center gap-3 text-sm">
+          <div class="flex items-center gap-2 px-3 py-1 rounded-lg bg-white border border-neutral-200"><i class="fas fa-user text-neutral-600"></i><span id="hdrPatientName" class="font-semibold text-neutral-900">—</span></div>
+          <div class="flex items-center gap-2 px-3 py-1 rounded-lg bg-white border border-neutral-200"><i class="fas fa-birthday-cake text-neutral-600"></i><span id="hdrPatientAge">—</span></div>
+          <div class="flex items-center gap-2 px-3 py-1 rounded-lg bg-white border border-neutral-200"><i class="fas fa-venus-mars text-neutral-600"></i><span id="hdrPatientGender">—</span></div>
+          <div class="flex items-center gap-2 px-3 py-1 rounded-lg bg-white border border-neutral-200"><i class="fas fa-calendar-day text-neutral-600"></i><span id="hdrExamDate">—</span></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Image IRM -->
+        <div class="lg:col-span-5">
+          <div class="rounded-xl border border-neutral-200 overflow-hidden bg-black/5 flex items-center justify-center">
+            <img id="modalResultImg" class="w-full h-96 object-contain" alt="IRM" />
+          </div>
+        </div>
+        <!-- Informations diagnostic -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="flex flex-wrap items-center gap-3">
+            <span id="modalDiagBadge" class="px-3 py-1 rounded-lg bg-blue-600 text-white text-sm font-semibold">—</span>
+            <div class="text-sm text-neutral-500">Temps d'analyse: <span id="modalProcTime" class="font-semibold text-neutral-800">—</span></div>
+          </div>
+          <div id="modalPrediction" class="text-3xl font-bold text-neutral-900">—</div>
+          <!-- Confiance visuelle -->
+          <div>
+            <div class="flex items-center justify-between text-sm text-neutral-600 mb-1">
+              <span>Niveau de confiance</span>
+              <span id="modalConfidence" class="font-semibold text-neutral-900">—</span>
+            </div>
+            <div class="w-full h-3 rounded-full bg-neutral-200 overflow-hidden">
+              <div id="modalConfidenceBar" class="h-3 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600" style="width:0%"></div>
+            </div>
+          </div>
+          <!-- Résumé patient -->
+          <div id="modalPatientSummary" class="text-neutral-700">—</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
+        <div class="rounded-xl border border-neutral-200 p-4">
+          <div class="font-semibold text-neutral-900 mb-3">Scores et Répartition</div>
+          <div class="relative h-80 mt-2">
+            <canvas id="modalProbChart" class="absolute inset-0 w-full h-full"></canvas>
+          </div>
+          <div id="modalProbs" class="mt-4 space-y-2"></div>
+        </div>
+        <div class="rounded-xl border border-neutral-200 p-4">
+          <div class="font-semibold text-neutral-900 mb-3">Recommandations</div>
+          <ul id="modalRecs" class="space-y-2 text-neutral-700 text-sm"></ul>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-end gap-3 mt-6">
+        <button class="rounded-xl px-4 py-2 bg-neutral-100 text-neutral-800 hover:bg-neutral-200">Historique</button>
+        <button id="shareBtn" class="rounded-xl px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700">Partager</button>
+        <button id="reportBtn" class="rounded-xl px-4 py-2 bg-blue-600 text-white hover:bg-blue-700">Télécharger PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+     <script src="/static/js/new_analyse.js"></script>
+{% endblock %}

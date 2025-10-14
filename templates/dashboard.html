@@ -1,0 +1,450 @@
+{# Jinja2 Template - VS Code: Disable JS validation #}
+{% extends "base_dashboard.html" %}
+
+{% block title %}Dashboard - NeuroScan{% endblock %}
+
+{% block page_subtitle %}Dashboard Médecin{% endblock %}
+
+
+
+{% block content %}
+
+<!-- Section Hero/Welcome -->
+<div class="welcome-hero mb-8">
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1 class="hero-title">Bienvenue, Dr. {{ doctor.first_name }} {{ doctor.last_name }}</h1>
+            <p class="hero-subtitle">Votre plateforme d'analyse intelligente pour l'imagerie cérébrale</p>
+            <div class="hero-stats-inline">
+                <span class="hero-stat-item">
+                    <i class="fas fa-brain text-blue-500"></i>
+                    <strong>Intelligence Artificielle</strong> avec précision de 99.7%
+                </span>
+                <span class="hero-stat-item">
+                    <i class="fas fa-shield-alt text-emerald-500"></i>
+                    <strong>Sécurisé</strong> et conforme RGPD
+                </span>
+            </div>
+        </div>
+        <div class="hero-actions">
+            <button onclick="navigateTo('new_analysis')" class="btn-hero primary">
+                <i class="fas fa-microscope"></i>
+                <span>Nouvelle Analyse</span>
+            </button>
+            <button onclick="navigateTo('chat')" class="btn-hero secondary">
+                <i class="fas fa-comments"></i>
+                <span>Assistant IA</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Section Statistiques Rapides -->
+<div class="stats-overview mb-8">
+    <h2 class="section-title">
+        <i class="fas fa-chart-line text-blue-600"></i>
+        Vue d'ensemble
+    </h2>
+    <div class="stats-grid-modern">
+        <div class="stat-card-modern primary">
+            <div class="stat-icon">
+                <i class="fas fa-clipboard-check"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ total_analyses or 0 }}</div>
+                <div class="stat-label">Analyses réalisées</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> +12% ce mois
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card-modern success">
+            <div class="stat-icon">
+                <i class="fas fa-user-injured"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">{{ total_patients or 0 }}</div>
+                <div class="stat-label">Patients suivis</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> +5 nouveaux
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card-modern warning">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">99.7%</div>
+                <div class="stat-label">Précision IA</div>
+                <div class="stat-change neutral">
+                    <i class="fas fa-check"></i> Optimal
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card-modern purple">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value">< 3s</div>
+                <div class="stat-label">Temps d'analyse</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-bolt"></i> Ultra rapide
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section Actions Principales -->
+<div class="main-actions mb-8">
+    <h2 class="section-title">
+        <i class="fas fa-rocket text-purple-600"></i>
+        Actions principales
+    </h2>
+    <div class="actions-grid">
+        <!-- Chat médical avec Gemini -->
+        <div class="action-card featured clickable" onclick="navigateTo('chat')">
+            <div class="action-card-badge">
+                <i class="fab fa-google"></i>
+                Gemini Pro
+            </div>
+            <div class="action-card-icon emerald">
+                <i class="fas fa-comments"></i>
+                <div class="icon-glow"></div>
+            </div>
+            <div class="action-card-content">
+                <h3 class="action-card-title">Assistant Médical IA</h3>
+                <p class="action-card-description">
+                    Posez vos questions neurologiques et obtenez des recommandations cliniques instantanées avec l'IA Gemini Pro.
+                </p>
+                <div class="action-card-features">
+                    <span class="feature-tag">
+                        <i class="fas fa-brain"></i>
+                        Neurologie
+                    </span>
+                    <span class="feature-tag">
+                        <i class="fas fa-database"></i>
+                        Historique
+                    </span>
+                    <span class="feature-tag">
+                        <i class="fas fa-shield-alt"></i>
+                        Sécurisé
+                    </span>
+                </div>
+            </div>
+            <div class="action-card-footer">
+                <span class="action-link">
+                    Accéder au chat <i class="fas fa-arrow-right"></i>
+                </span>
+            </div>
+        </div>
+
+        <!-- Analyse CNN -->
+        <div class="action-card clickable" onclick="navigateTo('new_analysis')">
+            <div class="action-card-icon blue">
+                <i class="fas fa-brain"></i>
+                <div class="icon-pulse-ring"></div>
+            </div>
+            <div class="action-card-content">
+                <h3 class="action-card-title">Analyse CNN Avancée</h3>
+                <p class="action-card-description">
+                    Analysez des IRM cérébrales avec notre modèle CNN de précision 99.7% en moins de 3 secondes.
+                </p>
+                <div class="action-card-features">
+                    <span class="feature-tag">
+                        <i class="fas fa-microscope"></i>
+                        Deep Learning
+                    </span>
+                    <span class="feature-tag">
+                        <i class="fas fa-bolt"></i>
+                        Ultra rapide
+                    </span>
+                </div>
+            </div>
+            <div class="action-card-footer">
+                <span class="action-link">
+                    Nouvelle analyse <i class="fas fa-arrow-right"></i>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section Gestion & Suivi -->
+<div class="management-section mb-8">
+    <h2 class="section-title">
+        <i class="fas fa-clipboard-list text-green-600"></i>
+        Gestion & Suivi
+    </h2>
+    <div class="dashboard-grid cols-4">
+        <!-- Mes Patients -->
+        <div class="dashboard-card clickable p-6" onclick="navigateTo('patients_list')">
+            <div class="dashboard-card-header">
+                <div class="dashboard-card-icon purple">
+                    <i class="fas fa-user-injured"></i>
+                </div>
+                <div>
+                    <h3 class="dashboard-card-title">Mes Patients</h3>
+                    <p class="dashboard-card-subtitle">{{ total_patients or 0 }} patients actifs</p>
+                </div>
+            </div>
+            <div class="dashboard-card-content">
+                <p class="text-gray-600 text-sm">
+                    Accédez aux dossiers médicaux complets avec historique d'analyses et évolution clinique.
+                </p>
+            </div>
+        </div>
+
+        <!-- Gestion Patients -->
+        <div class="dashboard-card clickable p-6" onclick="navigateTo('manage_patients_page')">
+            <div class="dashboard-card-header">
+                <div class="dashboard-card-icon success">
+                    <i class="fas fa-user-cog"></i>
+                </div>
+                <div>
+                    <h3 class="dashboard-card-title">Gestion Patients</h3>
+                    <p class="dashboard-card-subtitle">CRUD complet</p>
+                </div>
+            </div>
+            <div class="dashboard-card-content">
+                <p class="text-gray-600 text-sm">
+                    Créer, modifier, archiver et gérer efficacement toutes les informations de vos patients.
+                </p>
+            </div>
+        </div>
+
+        <!-- Statistiques Pro -->
+        <div class="dashboard-card clickable p-6" onclick="navigateTo('pro_dashboard')">
+            <div class="dashboard-card-header">
+                <div class="dashboard-card-icon success">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div>
+                    <h3 class="dashboard-card-title">Statistiques</h3>
+                    <p class="dashboard-card-subtitle">Analyses détaillées</p>
+                </div>
+            </div>
+            <div class="dashboard-card-content">
+                <p class="text-gray-600 text-sm">
+                    Visualisez les tendances diagnostiques et les performances de vos analyses.
+                </p>
+            </div>
+        </div>
+
+        <!-- Stats Plateforme -->
+        <div class="dashboard-card clickable p-6" onclick="navigateTo('platform_stats')">
+            <div class="dashboard-card-header">
+                <div class="dashboard-card-icon indigo">
+                    <i class="fas fa-globe-americas"></i>
+                </div>
+                <div>
+                    <h3 class="dashboard-card-title">Vue Globale</h3>
+                    <p class="dashboard-card-subtitle">Statistiques plateforme</p>
+                </div>
+            </div>
+            <div class="dashboard-card-content">
+                <p class="text-gray-600 text-sm">
+                    Consultez les statistiques générales de la plateforme NeuroScan.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section Profil -->
+<div class="profile-section mb-8">
+    <h2 class="section-title">
+        <i class="fas fa-user-md text-indigo-600"></i>
+        Profil professionnel
+    </h2>
+    <div class="dashboard-card p-0 overflow-hidden">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <div class="profile-info">
+                <h3 class="profile-name">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</h3>
+                <p class="profile-specialty">{{ doctor.specialty or 'Médecin généraliste' }}</p>
+                <div class="profile-badges">
+                    <span class="profile-badge verified">
+                        <i class="fas fa-check-circle"></i>
+                        Compte Vérifié
+                    </span>
+                    <span class="profile-badge active">
+                        <i class="fas fa-circle"></i>
+                        Actif
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="profile-details">
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-icon email">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="detail-content">
+                        <span class="detail-label">Email</span>
+                        <span class="detail-value">{{ doctor.email }}</span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon hospital">
+                        <i class="fas fa-hospital"></i>
+                    </div>
+                    <div class="detail-content">
+                        <span class="detail-label">Établissement</span>
+                        <span class="detail-value">{{ doctor.hospital or 'Non renseigné' }}</span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon license">
+                        <i class="fas fa-id-card"></i>
+                    </div>
+                    <div class="detail-content">
+                        <span class="detail-label">N° RPPS/ADELI</span>
+                        <span class="detail-value">{{ doctor.license_number or 'Non renseigné' }}</span>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon specialty">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                    <div class="detail-content">
+                        <span class="detail-label">Spécialité</span>
+                        <span class="detail-value">{{ doctor.specialty or 'Non spécifiée' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section Support -->
+<div class="support-section">
+    <h2 class="section-title">
+        <i class="fas fa-life-ring text-blue-600"></i>
+        Support & Assistance
+    </h2>
+    <div class="support-grid">
+        <div class="support-card" onclick="openUserGuideModal()">
+            <div class="support-icon guide">
+                <i class="fas fa-book-open"></i>
+            </div>
+            <h3 class="support-title">Guide d'utilisation</h3>
+            <p class="support-description">Documentation complète pour maîtriser la plateforme</p>
+            <button class="support-btn">
+                Consulter <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <div class="support-card" onclick="openSupportModal()">
+            <div class="support-icon support">
+                <i class="fas fa-headset"></i>
+            </div>
+            <h3 class="support-title">Support technique</h3>
+            <p class="support-description">Assistance rapide pour résoudre vos problèmes</p>
+            <button class="support-btn">
+                Contacter <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <div class="support-card">
+            <div class="support-icon phone">
+                <i class="fas fa-phone"></i>
+            </div>
+            <h3 class="support-title">Urgence</h3>
+            <p class="support-description">Assistance téléphonique disponible 24/7</p>
+                        <a href="tel:+213783962348" class="support-btn">
+                Appeler <i class="fas fa-phone-alt"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Modales spécifiques -->
+
+<!-- Modal Guide d'utilisation -->
+        </div>
+    </div>
+</div>
+
+<!-- Modales spécifiques -->
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Navigation helper function
+    function navigateTo(routeName) {
+        const routes = {
+            'pro_dashboard': '{{ url_for("pro_dashboard") }}',
+            'patients_list': '{{ url_for("patients_list") }}',
+            'manage_patients_page': '{{ url_for("manage_patients_page") }}',
+            'platform_stats': '{{ url_for("platform_stats") }}',
+            'new_analysis': '{{ url_for("new_analysis_page") }}',
+            'chat': '{{ url_for("chat_page") }}',
+            'medical_alerts': '{{ url_for("alerts_page") }}'
+        };
+        
+        if (routes[routeName]) {
+            // Naviguer vers la page dans le même onglet
+            window.location.href = routes[routeName];
+        }
+    }
+
+    // Fonctions spécifiques au dashboard
+
+    function openUserGuideModal() {
+        document.getElementById('userGuideModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeUserGuideModal() {
+        document.getElementById('userGuideModal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    function openSupportModal() {
+        document.getElementById('supportModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSupportModal() {
+        document.getElementById('supportModal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    function sendSupportMessage() {
+        const form = document.getElementById('supportForm');
+        const subject = form.querySelector('select').value;
+        const message = form.querySelector('textarea').value;
+
+        if (!message.trim()) {
+            showNotification('Veuillez saisir votre message', 'warning');
+            return;
+        }
+
+        // Créer le lien mailto avec les informations
+        const emailBody = `Sujet: ${subject}\n\nMessage:\n${message}\n\n---\nEnvoyé depuis NeuroScan Dashboard\nMédecin: Dr. ${currentDoctor.name}\nEmail: ${currentDoctor.email}`;
+        const mailtoLink = `mailto:mohammed.betkaoui@univ-bba.dz?subject=Support NeuroScan - ${subject}&body=${encodeURIComponent(emailBody)}`;
+
+        // Ouvrir le client email
+        window.location.href = mailtoLink;
+
+        // Fermer le modal après un court délai
+        setTimeout(() => {
+            closeSupportModal();
+            // Réinitialiser le formulaire
+            form.querySelector('textarea').value = '';
+            showNotification('Email de support ouvert dans votre client de messagerie', 'success');
+        }, 1000);
+    }
+</script>
+{% endblock %}

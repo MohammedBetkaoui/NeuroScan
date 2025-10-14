@@ -1,0 +1,2081 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Tableau de Bord Pro - NeuroScan{% endblock %}
+
+{% block page_subtitle %}Analyse & Statistiques{% endblock %}
+
+{% block page_title %}Tableau de Bord Professionnel{% endblock %}
+
+{% block page_description %}Analyses détaillées, statistiques avancées et tendances de vos diagnostics{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Stat cards avec gradients modernes */
+    .stat-card-gradient {
+        position: relative;
+        overflow: hidden;
+        border-radius: var(--radius-xl);
+        transition: var(--transition-normal);
+        color: white;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .stat-card-gradient::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        z-index: 1;
+    }
+
+    .stat-card-gradient > * {
+        position: relative;
+        z-index: 2;
+    }
+
+    .stat-card-gradient:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: var(--shadow-2xl);
+    }
+
+    .stat-card-gradient.blue {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .stat-card-gradient.green {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    .stat-card-gradient.purple {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+
+    .stat-card-gradient.orange {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    }
+
+    /* Icônes améliorées avec animations */
+    .enhanced-icon-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .enhanced-icon-container .primary-icon {
+        position: relative;
+        z-index: 2;
+        transition: all 0.3s ease;
+    }
+
+    .enhanced-icon-container .icon-background {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        opacity: 0.1;
+        transition: all 0.3s ease;
+    }
+
+    .enhanced-icon-container .icon-pulse {
+        position: absolute;
+        inset: -4px;
+        border-radius: inherit;
+        background: rgba(255, 255, 255, 0.2);
+        opacity: 0;
+        animation: iconPulse 2s infinite;
+    }
+
+    .enhanced-icon-container .secondary-icon {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 20px;
+        height: 20px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: currentColor;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        z-index: 3;
+    }
+
+    .stat-card-gradient:hover .enhanced-icon-container .primary-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .stat-card-gradient:hover .enhanced-icon-container .icon-background {
+        opacity: 0.2;
+        transform: scale(1.1);
+    }
+
+    .stat-card-gradient:hover .enhanced-icon-container .icon-pulse {
+        opacity: 1;
+        animation-duration: 1s;
+    }
+
+    /* Animations pour icônes spécialisées */
+    .brain-analysis-icon {
+        animation: brainThinking 3s ease-in-out infinite;
+    }
+
+    .tumor-detection-icon {
+        animation: tumorAlert 2s ease-in-out infinite;
+    }
+
+    .patients-monitoring-icon {
+        animation: heartbeat 2s ease-in-out infinite;
+    }
+
+    .precision-target-icon {
+        animation: targetFocus 2.5s ease-in-out infinite;
+    }
+
+    @keyframes iconPulse {
+        0%, 100% { 
+            opacity: 0;
+            transform: scale(1);
+        }
+        50% { 
+            opacity: 0.4;
+            transform: scale(1.1);
+        }
+    }
+
+    @keyframes brainThinking {
+        0%, 100% { transform: scale(1); }
+        25% { transform: scale(1.05) rotate(2deg); }
+        75% { transform: scale(1.05) rotate(-2deg); }
+    }
+
+    @keyframes tumorAlert {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    @keyframes heartbeat {
+        0%, 100% { transform: scale(1); }
+        14% { transform: scale(1.1); }
+        28% { transform: scale(1); }
+        42% { transform: scale(1.1); }
+        70% { transform: scale(1); }
+    }
+
+    @keyframes targetFocus {
+        0%, 100% { 
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+        }
+        50% { 
+            transform: scale(1.05);
+            box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+        }
+    }
+
+    /* Dashboard card icons améliorées */
+    .dashboard-card-icon-enhanced {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-lg);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .dashboard-card-icon-enhanced::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        border-radius: inherit;
+        z-index: 1;
+    }
+
+    .dashboard-card-icon-enhanced > i {
+        position: relative;
+        z-index: 2;
+        transition: all 0.3s ease;
+    }
+
+    .dashboard-card:hover .dashboard-card-icon-enhanced > i {
+        transform: scale(1.1);
+    }
+
+    /* Navigation améliorée avec icônes */
+    .dashboard-nav-item {
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        text-decoration: none;
+        border-radius: var(--radius-lg);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .dashboard-nav-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .dashboard-nav-item:hover::before {
+        left: 100%;
+    }
+
+    .dashboard-nav-item i {
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 2;
+    }
+
+    .dashboard-nav-item:hover i {
+        transform: scale(1.1);
+        color: #3b82f6;
+        text-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Boutons avec icônes améliorées */
+    .btn-dashboard {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .btn-dashboard i {
+        transition: all 0.3s ease;
+    }
+
+    .btn-dashboard:hover i {
+        transform: scale(1.1);
+    }
+
+    .btn-dashboard.primary:hover {
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .btn-dashboard.success:hover {
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .btn-dashboard.warning:hover {
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .btn-dashboard.danger:hover {
+        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        transform: translateY(-2px);
+    }
+
+    /* Amélioration des icônes de status */
+    .status-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        font-size: 12px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    .status-icon.success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .status-icon.warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+
+    .status-icon.danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+
+    .status-icon:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Mobile enhancements pour les icônes */
+    @media (max-width: 768px) {
+        .enhanced-icon-container {
+            width: 2rem !important;
+            height: 2rem !important;
+        }
+
+        .enhanced-icon-container .secondary-icon {
+            width: 14px;
+            height: 14px;
+            font-size: 8px;
+        }
+
+        .dashboard-card-icon-enhanced {
+            width: 2rem !important;
+            height: 2rem !important;
+        }
+
+        .dashboard-card-icon-enhanced > i {
+            font-size: 1rem !important;
+        }
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+        .enhanced-icon-container:active .primary-icon,
+        .dashboard-card:active .dashboard-card-icon-enhanced > i {
+            transform: scale(1.1);
+        }
+
+        .btn-dashboard:active {
+            transform: scale(0.95);
+        }
+    }
+
+    .dashboard-card-icon-enhanced.primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .dashboard-card-icon-enhanced.success {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .dashboard-card-icon-enhanced.warning {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .dashboard-card-icon-enhanced.danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+
+    .dashboard-card-icon-enhanced.purple {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+
+    .dashboard-card-icon-enhanced.indigo {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .dashboard-card-icon-enhanced.info {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        background: var(--surface-primary);
+        border-radius: var(--radius-xl);
+        padding: 24px;
+        box-shadow: var(--shadow-medium);
+        border: 1px solid rgba(229, 231, 235, 0.3);
+    }
+
+    /* Cartes patients expandables */
+    .patient-analysis-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        align-items: stretch;
+    }
+
+    .expandable-card {
+        display: flex;
+        flex-direction: column;
+        min-height: 400px;
+        max-height: 600px;
+    }
+
+    .expandable-card .dashboard-card-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .scrollable-content {
+        flex: 1;
+        overflow-y: auto;
+        max-height: 400px;
+        padding-right: 8px;
+    }
+
+    .scrollable-content::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .scrollable-content::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+    }
+
+    .scrollable-content::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+
+    .scrollable-content::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+
+    .chart-responsive {
+        position: relative;
+        min-height: 200px;
+        max-height: 300px;
+    }
+
+    /* Navigation responsive */
+    .dashboard-nav {
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .dashboard-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .dashboard-nav-item {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* Tables responsives */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: var(--radius-xl);
+    }
+
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    /* Action buttons responsive */
+    .page-actions-responsive {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    /* Mobile-first stats grid */
+    .stats-grid-mobile {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    /* Chart controls responsive */
+    .chart-controls {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    /* Mobile cards adjustments */
+    .mobile-card {
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-soft);
+    }
+
+    /* Advanced grid responsive */
+    .advanced-grid-mobile {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    /* Responsive */
+    @media (min-width: 480px) {
+        .stats-grid-mobile {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+    }
+
+    @media (min-width: 768px) {
+        .stats-grid-mobile {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        
+        .advanced-grid-mobile {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .chart-container {
+            height: 280px;
+            padding: 20px;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .stats-grid-mobile {
+            grid-template-columns: repeat(4, 1fr);
+        }
+        
+        .advanced-grid-mobile {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        
+        .patient-analysis-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        .chart-container {
+            height: 300px;
+            padding: 24px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stat-card-gradient:hover {
+            transform: none;
+            box-shadow: var(--shadow-medium);
+        }
+        
+        .chart-container {
+            height: 250px;
+            padding: 16px;
+        }
+        
+        .patient-analysis-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .expandable-card {
+            min-height: 300px;
+            max-height: 500px;
+        }
+        
+        .dashboard-nav {
+            margin: 0 -16px;
+            padding: 0 16px;
+        }
+        
+        .page-actions-responsive {
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .page-actions-responsive .btn-dashboard {
+            flex: 1;
+            min-width: 120px;
+            max-width: 150px;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stat-card-gradient {
+            padding: 20px !important;
+        }
+        
+        .stat-card-gradient .text-3xl {
+            font-size: 1.875rem;
+        }
+        
+        .dashboard-card {
+            padding: 16px !important;
+        }
+        
+        .dashboard-card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .dashboard-card-header .flex-1 {
+            width: 100%;
+        }
+        
+        .chart-controls {
+            justify-content: stretch;
+        }
+        
+        .chart-controls .btn-dashboard {
+            flex: 1;
+            justify-content: center;
+            min-width: 0;
+        }
+        
+        .dashboard-card-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+        }
+        
+        .table-responsive {
+            margin: 0 -16px;
+            border-radius: 0;
+        }
+        
+        .dashboard-table th,
+        .dashboard-table td {
+            padding: 12px 8px;
+            font-size: 14px;
+        }
+        
+        .badge {
+            font-size: 10px;
+            padding: 2px 8px;
+        }
+        
+        .btn-dashboard.text-xs {
+            font-size: 10px;
+            padding: 6px 8px;
+        }
+    }
+
+    /* Skeleton loading responsive */
+    @media (max-width: 768px) {
+        .skeleton {
+            border-radius: var(--radius-md);
+        }
+    }
+
+    /* Touch-friendly improvements */
+    @media (max-width: 768px) {
+        .btn-dashboard {
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+        
+        .dashboard-nav-item {
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+        }
+        
+        .dashboard-card.clickable {
+            touch-action: manipulation;
+        }
+        
+        .touch-target {
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+
+    /* Improved contrast for mobile */
+    @media (max-width: 768px) {
+        .dashboard-card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .dashboard-card-subtitle {
+            font-size: 13px;
+            margin-top: 2px;
+        }
+        
+        .text-xs {
+            font-size: 11px;
+        }
+        
+        .text-sm {
+            font-size: 13px;
+        }
+        
+        /* Ensure readable text in badges on mobile */
+        .badge {
+            min-width: fit-content;
+            white-space: nowrap;
+        }
+        
+        /* Better spacing for mobile */
+        .space-y-3 > * + * {
+            margin-top: 0.75rem;
+        }
+        
+        .space-x-3 > * + * {
+            margin-left: 0.75rem;
+        }
+        
+        /* Improve button visibility on touch */
+        .btn-dashboard:active {
+            transform: scale(0.95);
+        }
+        
+        /* Better scrollbar for mobile */
+        .scrollable-content {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+        
+        /* Truncate long text appropriately */
+        .truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .max-w-32 {
+            max-width: 8rem;
+        }
+        
+        /* Improve table row heights for touch */
+        .dashboard-table td {
+            padding: 16px 8px;
+            vertical-align: middle;
+        }
+        
+        .dashboard-table th {
+            padding: 12px 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    }
+
+    /* Accessibility improvements */
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    /* Focus states for better keyboard navigation */
+    .btn-dashboard:focus,
+    .dashboard-nav-item:focus {
+        outline: 2px solid #3b82f6;
+        outline-offset: 2px;
+    }
+
+    /* Loading states */
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .loading .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+
+    /* Chart containers responsive behavior */
+    @media (max-width: 480px) {
+        .chart-container {
+            height: 200px;
+            padding: 12px;
+        }
+        
+        .chart-container canvas {
+            max-height: 180px;
+        }
+    }
+
+    /* Notification improvements for mobile */
+    @media (max-width: 768px) {
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 16px;
+            right: 16px;
+            transform: translateY(-100px);
+            z-index: 1000;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block secondary_nav %}
+<div class="dashboard-nav mb-8">
+    <a href="{{ url_for('dashboard') }}" class="dashboard-nav-item">
+        <i class="fas fa-home mr-2"></i>Accueil
+    </a>
+    <a href="{{ url_for('pro_dashboard') }}" class="dashboard-nav-item active">
+        <i class="fas fa-chart-line mr-2"></i>Statistiques
+    </a>
+    <a href="{{ url_for('patients_list') }}" class="dashboard-nav-item">
+        <i class="fas fa-user-injured mr-2"></i>Patients
+    </a>
+    <a href="{{ url_for('platform_stats') }}" class="dashboard-nav-item">
+        <i class="fas fa-network-wired mr-2"></i>Plateforme
+    </a>
+</div>
+{% endblock %}
+
+{% block page_actions %}
+<div class="page-actions-responsive">
+    <button onclick="exportData()" class="btn-dashboard secondary">
+        <i class="fas fa-download"></i>
+        <span class="hidden sm:inline">Exporter</span>
+    </button>
+    <button onclick="refreshData()" class="btn-dashboard primary" id="refreshBtn">
+        <i class="fas fa-sync-alt"></i>
+        <span class="hidden sm:inline">Actualiser</span>
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistiques rapides -->
+<div class="stats-grid-mobile mb-8">
+    <div class="stat-card-gradient blue p-6 text-white mobile-card">
+        <div class="flex items-center justify-between">
+            <div class="flex-1 min-w-0">
+                <p class="text-blue-100 text-sm font-medium truncate">Analyses Totales</p>
+                <p class="text-2xl sm:text-3xl font-bold" id="totalAnalyses">-</p>
+            </div>
+            <div class="enhanced-icon-container w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-lg flex-shrink-0 ml-3">
+                <div class="icon-background bg-white"></div>
+                <div class="icon-pulse"></div>
+                <i class="fas fa-brain primary-icon text-lg sm:text-2xl brain-analysis-icon"></i>
+                <div class="secondary-icon">
+                    <i class="fas fa-search text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 sm:mt-4 flex items-center flex-wrap gap-2">
+            <span class="text-green-200 text-sm">
+                <i class="fas fa-arrow-up mr-1"></i>
+                <span id="totalAnalysesChange">+0%</span>
+            </span>
+            <span class="text-blue-100 text-xs sm:text-sm">vs mois dernier</span>
+        </div>
+    </div>
+
+    <div class="stat-card-gradient green p-6 text-white mobile-card">
+        <div class="flex items-center justify-between">
+            <div class="flex-1 min-w-0">
+                <p class="text-green-100 text-sm font-medium truncate">Tumeurs Détectées</p>
+                <p class="text-2xl sm:text-3xl font-bold" id="tumorsDetected">-</p>
+            </div>
+            <div class="enhanced-icon-container w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-lg flex-shrink-0 ml-3">
+                <div class="icon-background bg-white"></div>
+                <div class="icon-pulse"></div>
+                <i class="fas fa-exclamation-triangle primary-icon text-lg sm:text-2xl tumor-detection-icon"></i>
+                <div class="secondary-icon">
+                    <i class="fas fa-crosshairs text-red-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 sm:mt-4 flex items-center flex-wrap gap-2">
+            <span class="text-red-200 text-sm">
+                <i class="fas fa-arrow-up mr-1"></i>
+                <span id="tumorsDetectedChange">+0%</span>
+            </span>
+            <span class="text-green-100 text-xs sm:text-sm">vs mois dernier</span>
+        </div>
+    </div>
+
+    <div class="stat-card-gradient purple p-6 text-white mobile-card">
+        <div class="flex items-center justify-between">
+            <div class="flex-1 min-w-0">
+                <p class="text-purple-100 text-sm font-medium truncate">Patients Suivis</p>
+                <p class="text-2xl sm:text-3xl font-bold" id="patientsCount">-</p>
+            </div>
+            <div class="enhanced-icon-container w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-lg flex-shrink-0 ml-3">
+                <div class="icon-background bg-white"></div>
+                <div class="icon-pulse"></div>
+                <i class="fas fa-user-injured primary-icon text-lg sm:text-2xl patients-monitoring-icon"></i>
+                <div class="secondary-icon">
+                    <i class="fas fa-heartbeat text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 sm:mt-4 flex items-center flex-wrap gap-2">
+            <span class="text-yellow-200 text-sm">
+                <i class="fas fa-arrow-up mr-1"></i>
+                <span id="patientsChange">+0%</span>
+            </span>
+            <span class="text-purple-100 text-xs sm:text-sm">vs mois dernier</span>
+        </div>
+    </div>
+
+    <div class="stat-card-gradient orange p-6 text-white mobile-card">
+        <div class="flex items-center justify-between">
+            <div class="flex-1 min-w-0">
+                <p class="text-orange-100 text-sm font-medium truncate">Précision Moyenne</p>
+                <p class="text-2xl sm:text-3xl font-bold" id="avgConfidence">-</p>
+            </div>
+            <div class="enhanced-icon-container w-10 h-10 sm:w-12 sm:h-12 bg-white bg-opacity-20 rounded-lg flex-shrink-0 ml-3">
+                <div class="icon-background bg-white"></div>
+                <div class="icon-pulse"></div>
+                <i class="fas fa-bullseye primary-icon text-lg sm:text-2xl precision-target-icon"></i>
+                <div class="secondary-icon">
+                    <i class="fas fa-chart-line text-orange-600"></i>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 sm:mt-4 flex items-center flex-wrap gap-2">
+            <span class="text-yellow-200 text-sm">
+                <i class="fas fa-arrow-up mr-1"></i>
+                <span id="avgConfidenceChange">+0%</span>
+            </span>
+            <span class="text-orange-100 text-xs sm:text-sm">vs mois dernier</span>
+        </div>
+    </div>
+</div>
+
+<!-- Graphiques principaux -->
+<div class="dashboard-grid cols-1 lg:cols-2 mb-8">
+    <!-- Graphique des analyses par période -->
+    <div class="dashboard-card p-4 sm:p-6 mobile-card">
+        <div class="dashboard-card-header mb-4 sm:mb-6">
+            <div class="dashboard-card-icon-enhanced primary">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h3 class="dashboard-card-title">Évolution des Analyses</h3>
+                <p class="dashboard-card-subtitle">Analyses par période</p>
+            </div>
+        </div>
+        <div class="chart-controls mb-4">
+            <button onclick="changeTimeRange('7d')" class="btn-dashboard secondary text-xs" id="btn-7d">7j</button>
+            <button onclick="changeTimeRange('30d')" class="btn-dashboard primary text-xs" id="btn-30d">30j</button>
+            <button onclick="changeTimeRange('90d')" class="btn-dashboard secondary text-xs" id="btn-90d">90j</button>
+        </div>
+        <div class="chart-container">
+            <canvas id="analysisChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Graphique de répartition des diagnostics -->
+    <div class="dashboard-card p-4 sm:p-6 mobile-card">
+        <div class="dashboard-card-header mb-4 sm:mb-6">
+            <div class="dashboard-card-icon-enhanced success">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <div class="min-w-0">
+                <h3 class="dashboard-card-title">Répartition des Diagnostics</h3>
+                <p class="dashboard-card-subtitle">Distribution par type</p>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="diagnosticChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Tableaux de données -->
+<div class="dashboard-grid cols-1 mb-8">
+    <!-- Analyses récentes -->
+    <div class="dashboard-card p-0 overflow-hidden mobile-card">
+        <div class="p-4 sm:p-6 border-b border-gray-200">
+            <div class="dashboard-card-header">
+                <div class="dashboard-card-icon-enhanced indigo">
+                    <i class="fas fa-history"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="dashboard-card-title">Analyses Récentes</h3>
+                    <p class="dashboard-card-subtitle">Dernières analyses</p>
+                </div>
+                <a href="{{ url_for('pro_dashboard_advanced') }}" class="btn-dashboard secondary text-xs sm:text-sm">
+                    <i class="fas fa-external-link-alt"></i>
+                    <span class="hidden sm:inline">Voir tout</span>
+                </a>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Patient</th>
+                        <th class="hidden sm:table-cell">Diagnostic</th>
+                        <th>Confiance</th>
+                        <th class="hidden md:table-cell">Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="recentAnalysesTable">
+                    <!-- Données chargées dynamiquement -->
+                    <tr>
+                        <td colspan="6" class="text-center py-8">
+                            <div class="skeleton h-6 w-full mb-2"></div>
+                            <div class="skeleton h-6 w-3/4 mx-auto"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Nouvelles analyses avancées -->
+<div class="advanced-grid-mobile mb-8">
+    <!-- Performance par heure -->
+    <div class="dashboard-card p-4 sm:p-6 mobile-card">
+        <div class="dashboard-card-header mb-4">
+            <div class="dashboard-card-icon purple">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="min-w-0">
+                <h3 class="dashboard-card-title">Performance Horaire</h3>
+                <p class="dashboard-card-subtitle">Activité par heure</p>
+            </div>
+        </div>
+        <div class="chart-container h-40 sm:h-48">
+            <canvas id="hourlyPerformanceChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Évolution de la confiance -->
+    <div class="dashboard-card p-4 sm:p-6 mobile-card">
+        <div class="dashboard-card-header mb-4">
+            <div class="dashboard-card-icon success">
+                <i class="fas fa-trending-up"></i>
+            </div>
+            <div class="min-w-0">
+                <h3 class="dashboard-card-title">Évolution Confiance</h3>
+                <p class="dashboard-card-subtitle">Tendance 30 jours</p>
+            </div>
+        </div>
+        <div class="chart-container h-40 sm:h-48">
+            <canvas id="confidenceEvolutionChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Taux de détection -->
+    <div class="dashboard-card p-4 sm:p-6 mobile-card">
+        <div class="dashboard-card-header mb-4">
+            <div class="dashboard-card-icon-enhanced danger">
+                <i class="fas fa-search-plus"></i>
+            </div>
+            <div class="min-w-0">
+                <h3 class="dashboard-card-title">Taux de Détection</h3>
+                <p class="dashboard-card-subtitle">Évolution mensuelle</p>
+            </div>
+        </div>
+        <div class="chart-container h-40 sm:h-48">
+            <canvas id="detectionRateChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Analyse des patients -->
+<div class="patient-analysis-grid mb-8">
+    <!-- Patients à risque -->
+    <div class="dashboard-card expandable-card p-4 sm:p-6 mobile-card">
+        <div class="dashboard-card-header mb-4 sm:mb-6">
+            <div class="dashboard-card-icon-enhanced warning">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h3 class="dashboard-card-title">Patients à Risque</h3>
+                <p class="dashboard-card-subtitle">Attention particulière</p>
+            </div>
+            <button onclick="viewAllPatients()" class="btn-dashboard secondary text-xs sm:text-sm">
+                <i class="fas fa-users"></i>
+                <span class="hidden sm:inline">Voir tout</span>
+            </button>
+        </div>
+        <div class="dashboard-card-content">
+            <div id="highRiskPatients" class="scrollable-content space-y-3">
+                <!-- Données chargées dynamiquement -->
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg animate-pulse">
+                    <div class="skeleton h-4 w-1/2"></div>
+                    <div class="skeleton h-4 w-16"></div>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg animate-pulse">
+                    <div class="skeleton h-4 w-2/3"></div>
+                    <div class="skeleton h-4 w-20"></div>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg animate-pulse">
+                    <div class="skeleton h-4 w-1/3"></div>
+                    <div class="skeleton h-4 w-24"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights patients -->
+    <div class="dashboard-card expandable-card p-4 sm:p-6 mobile-card">
+        <div class="dashboard-card-header mb-4 sm:mb-6">
+            <div class="dashboard-card-icon-enhanced info">
+                <i class="fas fa-users-cog"></i>
+            </div>
+            <div class="min-w-0">
+                <h3 class="dashboard-card-title">Répartition Patients</h3>
+                <p class="dashboard-card-subtitle">Age et genre</p>
+            </div>
+        </div>
+        <div class="dashboard-card-content">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
+                <div class="flex flex-col">
+                    <h4 class="text-sm font-medium text-gray-700 mb-4">Par âge</h4>
+                    <div class="chart-responsive flex-1" style="min-height: 150px;">
+                        <canvas id="ageDistributionChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+                <div class="flex flex-col">
+                    <h4 class="text-sm font-medium text-gray-700 mb-4">Par genre</h4>
+                    <div class="chart-responsive flex-1" style="min-height: 150px;">
+                        <canvas id="genderDistributionChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques détaillées par diagnostic -->
+<div class="dashboard-grid cols-1 mb-8">
+    <div class="dashboard-card p-4 sm:p-6 mobile-card">
+        <div class="dashboard-card-header mb-4 sm:mb-6">
+            <div class="dashboard-card-icon-enhanced primary">
+                <i class="fas fa-microscope"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h3 class="dashboard-card-title">Analyse Détaillée par Diagnostic</h3>
+                <p class="dashboard-card-subtitle">Performance par type</p>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Total</th>
+                        <th class="hidden sm:table-cell">Confiance Moy.</th>
+                        <th class="hidden md:table-cell">Min/Max</th>
+                        <th class="hidden lg:table-cell">Temps Moy.</th>
+                        <th class="hidden sm:table-cell">Tendance</th>
+                    </tr>
+                </thead>
+                <tbody id="diagnosticStatsTable">
+                    <tr>
+                        <td colspan="6" class="text-center py-8">
+                            <div class="skeleton h-6 w-full mb-2"></div>
+                            <div class="skeleton h-6 w-3/4 mx-auto"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Alertes et notifications -->
+<div class="dashboard-grid cols-1">
+    <div class="dashboard-card p-4 sm:p-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 mobile-card">
+        <div class="dashboard-card-header">
+            <div class="dashboard-card-icon-enhanced warning">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h3 class="dashboard-card-title text-amber-900">Alertes Médicales Actives</h3>
+                <p class="dashboard-card-subtitle text-amber-700">Attention requise</p>
+            </div>
+            <a href="{{ url_for('medical_alerts_page') }}" class="btn-dashboard warning text-xs sm:text-sm">
+                <i class="fas fa-eye"></i>
+                <span class="hidden sm:inline">Consulter</span>
+            </a>
+        </div>
+        <div class="dashboard-card-content">
+            <div id="activeAlerts" class="space-y-3">
+                <!-- Alertes chargées dynamiquement -->
+                <div class="flex items-center justify-between p-3 bg-white rounded-lg">
+                    <div class="skeleton h-4 w-1/3"></div>
+                    <div class="skeleton h-4 w-24"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Variables pour les graphiques
+    let analysisChart;
+    let diagnosticChart;
+    let hourlyPerformanceChart;
+    let confidenceEvolutionChart;
+    let detectionRateChart;
+    let ageDistributionChart;
+    let genderDistributionChart;
+    let currentTimeRange = '30d';
+    let isMobile = window.innerWidth <= 768;
+
+    // Détection mobile et redimensionnement
+    window.addEventListener('resize', function() {
+        const wasMobile = isMobile;
+        isMobile = window.innerWidth <= 768;
+        
+        // Si on change de mobile à desktop ou vice versa, réinitialiser les graphiques
+        if (wasMobile !== isMobile) {
+            setTimeout(() => {
+                resizeCharts();
+            }, 300);
+        }
+    });
+
+    // Fonction pour redimensionner les graphiques
+    function resizeCharts() {
+        if (analysisChart) analysisChart.resize();
+        if (diagnosticChart) diagnosticChart.resize();
+        if (hourlyPerformanceChart) hourlyPerformanceChart.resize();
+        if (confidenceEvolutionChart) confidenceEvolutionChart.resize();
+        if (detectionRateChart) detectionRateChart.resize();
+        if (ageDistributionChart) ageDistributionChart.resize();
+        if (genderDistributionChart) genderDistributionChart.resize();
+    }
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCharts();
+        loadStatistics();
+        loadRecentAnalyses();
+        loadActiveAlerts();
+        loadAdvancedStats();
+        loadPatientInsights();
+        
+        // Actualisation automatique toutes les 5 minutes
+        setInterval(refreshData, 300000);
+    });
+
+    // Initialisation des graphiques
+    function initializeCharts() {
+        // Graphique d'évolution des analyses
+        const analysisCtx = document.getElementById('analysisChart').getContext('2d');
+        analysisChart = new Chart(analysisCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Analyses',
+                    data: [],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: !isMobile,
+                        position: isMobile ? 'bottom' : 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            font: {
+                                size: isMobile ? 10 : 12
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            font: {
+                                size: isMobile ? 10 : 12
+                            },
+                            maxRotation: isMobile ? 45 : 0
+                        }
+                    }
+                }
+            }
+        });
+
+        // Graphique de répartition des diagnostics
+        const diagnosticCtx = document.getElementById('diagnosticChart').getContext('2d');
+        diagnosticChart = new Chart(diagnosticCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Normal', 'Gliome', 'Méningiome', 'Tumeur pituitaire'],
+                datasets: [{
+                    data: [],
+                    backgroundColor: [
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(245, 158, 11, 0.8)'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: isMobile ? 'bottom' : 'bottom',
+                        labels: {
+                            padding: isMobile ? 10 : 20,
+                            usePointStyle: true,
+                            font: {
+                                size: isMobile ? 10 : 12
+                            }
+                        }
+                    }
+                },
+                layout: {
+                    padding: isMobile ? 10 : 0
+                }
+            }
+        });
+
+        // Graphique de performance horaire
+        const hourlyCtx = document.getElementById('hourlyPerformanceChart').getContext('2d');
+        hourlyPerformanceChart = new Chart(hourlyCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Analyses',
+                    data: [],
+                    backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                    borderColor: 'rgba(139, 92, 246, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Graphique d'évolution de la confiance
+        const confidenceCtx = document.getElementById('confidenceEvolutionChart').getContext('2d');
+        confidenceEvolutionChart = new Chart(confidenceCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Confiance moyenne',
+                    data: [],
+                    borderColor: 'rgba(34, 197, 94, 1)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Graphique du taux de détection
+        const detectionCtx = document.getElementById('detectionRateChart').getContext('2d');
+        detectionRateChart = new Chart(detectionCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Taux de détection (%)',
+                    data: [],
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Graphiques de distribution des patients
+        const ageCtx = document.getElementById('ageDistributionChart').getContext('2d');
+        ageDistributionChart = new Chart(ageCtx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(139, 92, 246, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        const genderCtx = document.getElementById('genderDistributionChart').getContext('2d');
+        genderDistributionChart = new Chart(genderCtx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(236, 72, 153, 0.8)',
+                        'rgba(156, 163, 175, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+
+    // Chargement des statistiques
+    async function loadStatistics() {
+        try {
+            const response = await fetch('/api/pro-dashboard/overview');
+            const data = await response.json();
+
+            if (data.success) {
+                updateStatistics(data.data);
+            } else {
+                console.error('Erreur API:', data.error);
+                showNotification('Erreur lors du chargement des statistiques', 'error');
+            }
+        } catch (error) {
+            console.error('Erreur lors du chargement des statistiques:', error);
+            showNotification('Erreur de connexion', 'error');
+        }
+    }
+
+    // Mise à jour des statistiques
+    function updateStatistics(stats) {
+        document.getElementById('totalAnalyses').textContent = stats.total_analyses || 0;
+        document.getElementById('tumorsDetected').textContent = stats.tumors_detected || 0;
+        document.getElementById('patientsCount').textContent = stats.patients_count || 0;
+        document.getElementById('avgConfidence').textContent = ((stats.avg_confidence || 0) * 100).toFixed(1) + '%';
+
+        // Mise à jour des changements avec données réelles
+        const changes = stats.changes || {};
+        document.getElementById('totalAnalysesChange').textContent = formatChange(changes.analyses_change || 0);
+        document.getElementById('tumorsDetectedChange').textContent = formatChange(changes.tumors_change || 0);
+        document.getElementById('patientsChange').textContent = formatChange(changes.patients_change || 0);
+        document.getElementById('avgConfidenceChange').textContent = formatChange(changes.confidence_change || 0);
+
+        // Mise à jour des graphiques
+        updateCharts(stats);
+    }
+
+    // Fonction pour formater les changements avec signe et couleur
+    function formatChange(value) {
+        const sign = value >= 0 ? '+' : '';
+        return sign + value.toFixed(1) + '%';
+    }
+
+    // Mise à jour des graphiques
+    function updateCharts(stats) {
+        // Utiliser les données réelles pour le graphique d'évolution
+        if (stats.daily_analyses && stats.daily_analyses.length > 0) {
+            const labels = [];
+            const data = [];
+            
+            stats.daily_analyses.forEach(item => {
+                const date = new Date(item[0]);
+                labels.push(date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }));
+                data.push(item[1]);
+            });
+
+            analysisChart.data.labels = labels;
+            analysisChart.data.datasets[0].data = data;
+        } else {
+            // Fallback avec données par défaut si pas de données
+            analysisChart.data.labels = ['Aucune donnée'];
+            analysisChart.data.datasets[0].data = [0];
+        }
+        analysisChart.update();
+
+        // Données réelles pour le graphique de répartition
+        diagnosticChart.data.datasets[0].data = [
+            stats.normal_count || 0,
+            stats.glioma_count || 0,
+            stats.meningioma_count || 0,
+            stats.pituitary_count || 0
+        ];
+        diagnosticChart.update();
+    }
+
+    // Chargement des analyses récentes
+    async function loadRecentAnalyses() {
+        try {
+            const response = await fetch('/api/pro-dashboard/recent-analyses');
+            const data = await response.json();
+
+            if (data.success && data.data.length > 0) {
+                const tableBody = document.getElementById('recentAnalysesTable');
+                tableBody.innerHTML = data.data.map(analysis => `
+                    <tr class="hover:bg-gray-50 transition-colors duration-200">
+                        <td class="font-medium">${formatDateMobile(analysis.timestamp)}</td>
+                        <td class="truncate max-w-32">${analysis.patient_name}</td>
+                        <td class="hidden sm:table-cell">
+                            <span class="badge ${getBadgeClass(analysis.predicted_label)}">
+                                ${analysis.predicted_label}
+                            </span>
+                        </td>
+                        <td class="font-mono text-sm">${(analysis.confidence * 100).toFixed(1)}%</td>
+                        <td class="hidden md:table-cell">
+                            <span class="badge ${analysis.confidence > 0.9 ? 'success' : analysis.confidence > 0.7 ? 'warning' : 'danger'}">
+                                ${analysis.confidence > 0.9 ? 'Fiable' : analysis.confidence > 0.7 ? 'Modéré' : 'Incertain'}
+                            </span>
+                        </td>
+                        <td>
+                            <button onclick="viewAnalysis(${analysis.id})" class="btn-dashboard secondary text-xs touch-target">
+                                <i class="fas fa-eye"></i>
+                                <span class="sr-only">Voir l'analyse</span>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                document.getElementById('recentAnalysesTable').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-8 text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-4 opacity-50"></i>
+                            <p>Aucune analyse récente</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        } catch (error) {
+            console.error('Erreur lors du chargement des analyses récentes:', error);
+            showNotification('Erreur lors du chargement des analyses', 'error');
+        }
+    }
+
+    // Chargement des alertes actives
+    async function loadActiveAlerts() {
+        try {
+            const response = await fetch('/api/alerts');
+            const data = await response.json();
+
+            if (data.success && data.data.length > 0) {
+                const alertsContainer = document.getElementById('activeAlerts');
+                alertsContainer.innerHTML = data.data.slice(0, 3).map(alert => `
+                    <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-amber-200">
+                        <div class="flex items-center space-x-3 flex-1 min-w-0">
+                            <i class="fas fa-${getSeverityIcon(alert.severity)} text-${getSeverityColor(alert.severity)} flex-shrink-0"></i>
+                            <div class="min-w-0 flex-1">
+                                <p class="font-medium text-gray-900 text-sm truncate">${alert.title}</p>
+                                <p class="text-gray-600 text-xs truncate">${alert.patient_name} - ${formatDateMobile(alert.created_at)}</p>
+                            </div>
+                        </div>
+                        <button onclick="viewAlert(${alert.id})" class="btn-dashboard secondary text-xs touch-target flex-shrink-0 ml-2">
+                            <i class="fas fa-arrow-right"></i>
+                            <span class="sr-only">Voir l'alerte</span>
+                        </button>
+                    </div>
+                `).join('');
+            } else {
+                document.getElementById('activeAlerts').innerHTML = `
+                    <div class="text-center py-8 text-amber-700">
+                        <i class="fas fa-check-circle text-4xl mb-4"></i>
+                        <p>Aucune alerte active</p>
+                        <p class="text-sm">Tous vos patients sont sous surveillance normale</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Erreur lors du chargement des alertes:', error);
+        }
+    }
+
+    // Fonctions utilitaires
+    function getBadgeClass(label) {
+        switch (label) {
+            case 'Normal': return 'success';
+            case 'Gliome': return 'danger';
+            case 'Méningiome': return 'info';
+            case 'Tumeur pituitaire': return 'warning';
+            default: return 'secondary';
+        }
+    }
+
+    function getSeverityIcon(severity) {
+        switch (severity) {
+            case 'high': return 'exclamation-triangle';
+            case 'medium': return 'exclamation-circle';
+            case 'low': return 'info-circle';
+            default: return 'bell';
+        }
+    }
+
+    function getSeverityColor(severity) {
+        switch (severity) {
+            case 'high': return 'red-500';
+            case 'medium': return 'amber-500';
+            case 'low': return 'blue-500';
+            default: return 'gray-500';
+        }
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    // Version mobile du formatage de date (plus compacte)
+    function formatDateMobile(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        // Si c'est récent (moins de 7 jours), afficher en format relatif
+        if (diffDays <= 7) {
+            if (diffDays === 0) return 'Aujourd\'hui';
+            if (diffDays === 1) return 'Hier';
+            return `Il y a ${diffDays}j`;
+        }
+        
+        // Sinon format court
+        return date.toLocaleDateString('fr-FR', { 
+            day: '2-digit', 
+            month: '2-digit'
+        });
+    }
+
+    // Actions
+    async function changeTimeRange(range) {
+        currentTimeRange = range;
+        
+        // Mise à jour des boutons
+        document.querySelectorAll('[id^="btn-"]').forEach(btn => {
+            btn.className = 'btn-dashboard secondary text-xs';
+        });
+        document.getElementById('btn-' + range).className = 'btn-dashboard primary text-xs';
+        
+        // Charger les données pour la période sélectionnée
+        try {
+            const response = await fetch(`/api/pro-dashboard/time-range/${range}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                // Mettre à jour le graphique avec les nouvelles données
+                analysisChart.data.labels = data.data.labels;
+                analysisChart.data.datasets[0].data = data.data.data;
+                analysisChart.update();
+            }
+        } catch (error) {
+            console.error('Erreur lors du changement de période:', error);
+            // Fallback: recharger les statistiques générales
+            loadStatistics();
+        }
+    }
+
+    function refreshData() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        const icon = refreshBtn.querySelector('i');
+        
+        // Animation de rotation
+        icon.classList.add('animate-spin');
+        
+        // Recharger toutes les données
+        Promise.all([
+            loadStatistics(),
+            loadRecentAnalyses(),
+            loadActiveAlerts(),
+            loadAdvancedStats(),
+            loadPatientInsights()
+        ]).finally(() => {
+            icon.classList.remove('animate-spin');
+            showNotification('Toutes les données actualisées', 'success');
+        });
+    }
+
+    function viewAllPatients() {
+        window.location.href = '/patients';
+    }
+
+    function viewPatient(patientId) {
+        window.location.href = `/patient/${patientId}`;
+    }
+
+    // Chargement des statistiques avancées
+    async function loadAdvancedStats() {
+        try {
+            const response = await fetch('/api/pro-dashboard/advanced-stats');
+            const data = await response.json();
+
+            if (data.success) {
+                updateAdvancedCharts(data.data);
+                updateDiagnosticStatsTable(data.data.diagnostic_stats);
+                updateHighRiskPatients(data.data.high_risk_patients);
+            }
+        } catch (error) {
+            console.error('Erreur lors du chargement des stats avancées:', error);
+        }
+    }
+
+    // Chargement des insights patients
+    async function loadPatientInsights() {
+        try {
+            const response = await fetch('/api/pro-dashboard/patient-insights');
+            const data = await response.json();
+
+            if (data.success) {
+                updatePatientDistributionCharts(data.data);
+            }
+        } catch (error) {
+            console.error('Erreur lors du chargement des insights patients:', error);
+        }
+    }
+
+    // Mise à jour des graphiques avancés
+    function updateAdvancedCharts(data) {
+        // Performance horaire
+        if (data.hourly_performance) {
+            hourlyPerformanceChart.data.labels = data.hourly_performance.labels;
+            hourlyPerformanceChart.data.datasets[0].data = data.hourly_performance.analyses_count;
+            hourlyPerformanceChart.update();
+        }
+
+        // Évolution de la confiance
+        if (data.confidence_evolution) {
+            confidenceEvolutionChart.data.labels = data.confidence_evolution.labels;
+            confidenceEvolutionChart.data.datasets[0].data = data.confidence_evolution.avg_confidence;
+            confidenceEvolutionChart.update();
+        }
+
+        // Taux de détection
+        if (data.detection_trends) {
+            detectionRateChart.data.labels = data.detection_trends.labels;
+            detectionRateChart.data.datasets[0].data = data.detection_trends.detection_rates;
+            detectionRateChart.update();
+        }
+    }
+
+    // Mise à jour des graphiques de distribution des patients
+    function updatePatientDistributionCharts(data) {
+        // Distribution par âge
+        if (data.age_distribution) {
+            const ageLabels = Object.keys(data.age_distribution);
+            const ageData = Object.values(data.age_distribution);
+            
+            ageDistributionChart.data.labels = ageLabels;
+            ageDistributionChart.data.datasets[0].data = ageData;
+            ageDistributionChart.update();
+        }
+
+        // Distribution par genre
+        if (data.gender_distribution) {
+            const genderLabels = Object.keys(data.gender_distribution);
+            const genderData = Object.values(data.gender_distribution);
+            
+            genderDistributionChart.data.labels = genderLabels;
+            genderDistributionChart.data.datasets[0].data = genderData;
+            genderDistributionChart.update();
+        }
+    }
+
+    // Mise à jour du tableau des statistiques par diagnostic
+    function updateDiagnosticStatsTable(diagnosticStats) {
+        const tableBody = document.getElementById('diagnosticStatsTable');
+        
+        if (Object.keys(diagnosticStats).length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-8 text-gray-500">
+                        <i class="fas fa-chart-bar text-4xl mb-4 opacity-50"></i>
+                        <p>Aucune donnée statistique disponible</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tableBody.innerHTML = Object.entries(diagnosticStats).map(([type, stats]) => `
+            <tr class="hover:bg-gray-50 transition-colors duration-200">
+                <td class="font-medium">
+                    <span class="badge ${getBadgeClass(type)} text-xs">${type}</span>
+                </td>
+                <td class="font-mono">${stats.total_count}</td>
+                <td class="font-mono hidden sm:table-cell">${stats.avg_confidence.toFixed(1)}%</td>
+                <td class="font-mono text-sm hidden md:table-cell">
+                    ${stats.min_confidence.toFixed(1)}% - ${stats.max_confidence.toFixed(1)}%
+                </td>
+                <td class="font-mono text-sm hidden lg:table-cell">${stats.avg_processing_time.toFixed(2)}s</td>
+                <td class="hidden sm:table-cell">
+                    <div class="flex items-center">
+                        ${getTrendIcon(stats.avg_confidence)}
+                        <span class="ml-1 text-xs ${getTrendColor(stats.avg_confidence)}">
+                            ${getTrendText(stats.avg_confidence)}
+                        </span>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // Mise à jour des patients à risque
+    function updateHighRiskPatients(riskPatients) {
+        const container = document.getElementById('highRiskPatients');
+        
+        if (riskPatients.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-shield-alt text-4xl mb-4 text-green-500"></i>
+                    <p>Aucun patient à risque élevé</p>
+                    <p class="text-sm">Tous vos patients sont sous surveillance normale</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = riskPatients.map(patient => `
+            <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                <div class="flex items-center space-x-3 flex-1 min-w-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${getRiskLevelColor(patient.risk_level)} flex-shrink-0">
+                        <i class="fas fa-user text-white text-sm"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-medium text-gray-900 text-sm truncate">${patient.patient_name}</p>
+                        <p class="text-xs text-gray-600 truncate">
+                            ${patient.tumor_detections} détections - ${patient.avg_confidence}% confiance
+                        </p>
+                    </div>
+                </div>
+                <div class="text-right flex-shrink-0 ml-2">
+                    <span class="badge ${getRiskLevelBadge(patient.risk_level)} text-xs block mb-1">${patient.risk_level}</span>
+                    <button onclick="viewPatient('${patient.patient_id}')" class="btn-dashboard secondary text-xs touch-target">
+                        <i class="fas fa-eye"></i>
+                        <span class="sr-only">Voir le patient</span>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Fonctions utilitaires pour les tendances
+    function getTrendIcon(confidence) {
+        if (confidence >= 90) return '<i class="fas fa-arrow-up text-green-500"></i>';
+        if (confidence >= 70) return '<i class="fas fa-minus text-yellow-500"></i>';
+        return '<i class="fas fa-arrow-down text-red-500"></i>';
+    }
+
+    function getTrendColor(confidence) {
+        if (confidence >= 90) return 'text-green-600';
+        if (confidence >= 70) return 'text-yellow-600';
+        return 'text-red-600';
+    }
+
+    function getTrendText(confidence) {
+        if (confidence >= 90) return 'Excellent';
+        if (confidence >= 70) return 'Stable';
+        return 'À surveiller';
+    }
+
+    function getRiskLevelColor(level) {
+        switch (level) {
+            case 'Critique': return 'bg-red-500';
+            case 'Élevé': return 'bg-orange-500';
+            case 'Modéré': return 'bg-yellow-500';
+            default: return 'bg-green-500';
+        }
+    }
+
+    function getRiskLevelBadge(level) {
+        switch (level) {
+            case 'Critique': return 'danger';
+            case 'Élevé': return 'warning';
+            case 'Modéré': return 'info';
+            default: return 'success';
+        }
+    }
+
+    function exportData() {
+        showNotification('Export en cours...', 'info');
+        
+        fetch('/api/pro-dashboard/export-data')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Créer et télécharger le fichier des analyses
+                    downloadCSV(data.data.analyses_csv, 'analyses_' + new Date().toISOString().split('T')[0] + '.csv');
+                    
+                    // Créer et télécharger le fichier des patients
+                    setTimeout(() => {
+                        downloadCSV(data.data.patients_csv, 'patients_' + new Date().toISOString().split('T')[0] + '.csv');
+                    }, 1000);
+                    
+                    showNotification(`Export terminé: ${data.data.total_analyses} analyses, ${data.data.total_patients} patients`, 'success');
+                } else {
+                    showNotification('Erreur lors de l\'export', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur export:', error);
+                showNotification('Erreur lors de l\'export', 'error');
+            });
+    }
+
+    function downloadCSV(csvContent, filename) {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function viewAnalysis(id) {
+        showNotification('Redirection vers l\'analyse...', 'info');
+        // Redirection vers la page de détail de l'analyse
+        window.location.href = `/analysis/${id}`;
+    }
+
+    function viewAlert(id) {
+        window.location.href = '/medical-alerts#alert-' + id;
+    }
+
+    // Fonction pour afficher les notifications
+    function showNotification(message, type = 'info') {
+        // Créer l'élément de notification
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium transform translate-x-full transition-transform duration-300 ${getNotificationClass(type)}`;
+        notification.textContent = message;
+
+        // Ajouter au DOM
+        document.body.appendChild(notification);
+
+        // Animer l'entrée
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+
+        // Supprimer après 4 secondes
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 4000);
+    }
+
+    function getNotificationClass(type) {
+        switch (type) {
+            case 'success': return 'bg-green-500';
+            case 'error': return 'bg-red-500';
+            case 'warning': return 'bg-amber-500';
+            case 'info':
+            default: return 'bg-blue-500';
+        }
+    }
+</script>
+{% endblock %}

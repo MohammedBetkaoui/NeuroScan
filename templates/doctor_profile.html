@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Profile Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .profile-card {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.15);
+        }
+        
+        .tab-active {
+            border-bottom: 3px solid #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        
+        .input-field:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        .danger-zone {
+            border-left: 4px solid #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-800">Doctor<span class="text-blue-500">Pro</span></h1>
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        <i data-feather="bell"></i>
+                    </button>
+                    <div class="relative">
+                        <button class="flex items-center space-x-2 focus:outline-none">
+                            <img src="https://static.photos/medical/200x200/1" alt="Profile" class="w-10 h-10 rounded-full object-cover">
+                            <span class="text-gray-700 font-medium">Dr. Smith</span>
+                            <i data-feather="chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row gap-8">
+                <!-- Sidebar -->
+                <aside class="w-full md:w-1/4">
+                    <div class="profile-card bg-white rounded-xl p-6 mb-6">
+                        <div class="flex flex-col items-center">
+                            <div class="relative mb-4">
+                                <img src="https://static.photos/medical/200x200/1" alt="Profile" class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md">
+                                <button class="absolute bottom-0 right-0 bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600">
+                                    <i data-feather="camera" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-800">Dr. John Smith</h2>
+                            <p class="text-gray-600 mb-2">Cardiologist</p>
+                            <div class="flex items-center text-yellow-400 mb-4">
+                                <i data-feather="star" class="w-4 h-4 fill-current"></i>
+                                <i data-feather="star" class="w-4 h-4 fill-current"></i>
+                                <i data-feather="star" class="w-4 h-4 fill-current"></i>
+                                <i data-feather="star" class="w-4 h-4 fill-current"></i>
+                                <i data-feather="star" class="w-4 h-4 fill-current"></i>
+                                <span class="ml-1 text-gray-600">(124)</span>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-200 pt-4">
+                            <ul class="space-y-2">
+                                <li>
+                                    <a href="#" class="flex items-center text-gray-700 hover:text-blue-500 p-2 rounded-lg hover:bg-blue-50">
+                                        <i data-feather="user" class="w-5 h-5 mr-3"></i>
+                                        Profile Information
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="flex items-center text-gray-700 hover:text-blue-500 p-2 rounded-lg hover:bg-blue-50">
+                                        <i data-feather="lock" class="w-5 h-5 mr-3"></i>
+                                        Password & Security
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="flex items-center text-gray-700 hover:text-blue-500 p-2 rounded-lg hover:bg-blue-50">
+                                        <i data-feather="settings" class="w-5 h-5 mr-3"></i>
+                                        Account Settings
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="flex items-center text-gray-700 hover:text-blue-500 p-2 rounded-lg hover:bg-blue-50">
+                                        <i data-feather="calendar" class="w-5 h-5 mr-3"></i>
+                                        Appointments
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Main Content Area -->
+                <div class="w-full md:w-3/4">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <!-- Tabs -->
+                        <div class="border-b border-gray-200">
+                            <nav class="-mb-px flex space-x-8">
+                                <button class="tab-active py-4 px-1 inline-flex items-center text-sm font-medium">
+                                    <i data-feather="user" class="w-4 h-4 mr-2"></i>
+                                    Personal Information
+                                </button>
+                                <button class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 inline-flex items-center text-sm font-medium">
+                                    <i data-feather="lock" class="w-4 h-4 mr-2"></i>
+                                    Password
+                                </button>
+                                <button class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 inline-flex items-center text-sm font-medium">
+                                    <i data-feather="shield" class="w-4 h-4 mr-2"></i>
+                                    Security
+                                </button>
+                            </nav>
+                        </div>
+
+                        <!-- Personal Information Form -->
+                        <div class="mt-8">
+                            <h3 class="text-lg font-medium text-gray-900 mb-6">Personal Information</h3>
+                            <form class="space-y-6">
+                                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                    <div>
+                                        <label for="first-name" class="block text-sm font-medium text-gray-700">First name</label>
+                                        <input type="text" name="first-name" id="first-name" autocomplete="given-name" class="mt-1 input-field block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 border">
+                                    </div>
+
+                                    <div>
+                                        <label for="last-name" class="block text-sm font-medium text-gray-700">Last name</label>
+                                        <input type="text" name="last-name" id="last-name" autocomplete="family-name" class="mt-1 input-field block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 border">
+                                    </div>
+
+                                    <div>
+                                        <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
+                                        <input type="email" name="email" id="email" autocomplete="email" class="mt-1 input-field block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 border">
+                                    </div>
+
+                                    <div>
+                                        <label for="phone" class="block text-sm font-medium text-gray-700">Phone number</label>
+                                        <input type="text" name="phone" id="phone" autocomplete="tel" class="mt-1 input-field block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 border">
+                                    </div>
+
+                                    <div>
+                                        <label for="specialty" class="block text-sm font-medium text-gray-700">Specialty</label>
+                                        <select id="specialty" name="specialty" class="mt-1 input-field block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 border">
+                                            <option>Cardiology</option>
+                                            <option>Neurology</option>
+                                            <option>Pediatrics</option>
+                                            <option>Dermatology</option>
+                                            <option>Orthopedics</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label for="license" class="block text-sm font-medium text-gray-700">Medical License</label>
+                                        <input type="text" name="license" id="license" class="mt-1 input-field block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 border">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="bio" class="block text-sm font-medium text-gray-700">Bio</label>
+                                    <div class="mt-1">
+                                        <textarea id="bio" name="bio" rows="4" class="input-field block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3 border"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-end">
+                                    <button type="button" class="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" class="ml-3 inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Danger Zone -->
+                        <div class="mt-16 danger-zone border-l-4 border-red-500 bg-red-50 p-6 rounded-lg">
+                            <h3 class="text-lg font-medium text-red-800">Danger Zone</h3>
+                            <p class="mt-2 text-sm text-red-600">These actions are irreversible. Please proceed with caution.</p>
+                            
+                            <div class="mt-6 space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="text-sm font-medium text-red-800">Delete Account</h4>
+                                        <p class="text-sm text-red-600">Permanently delete your account and all associated data.</p>
+                                    </div>
+                                    <button type="button" class="rounded-md border border-red-500 bg-white py-2 px-4 text-sm font-medium text-red-600 shadow-sm hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                        Delete Account
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        feather.replace();
+        
+        // Tab switching functionality
+        const tabs = document.querySelectorAll('nav button');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('tab-active'));
+                tab.classList.add('tab-active');
+            });
+        });
+    </script>
+</body>
+</html>

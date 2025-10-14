@@ -1,0 +1,1735 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}Profil Patient | NeuroScan PRO{% endblock %}
+{% block page_subtitle %}Espace Pro{% endblock %}
+{% block page_title %}Profil de {{ patient.patient_name }}{% endblock %}
+{% block page_description %}Vue unifiée et professionnelle du patient{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Professional Medical Design System */
+  :root {
+    --primary: #4f46e5;
+    --primary-light: #6366f1;
+    --primary-dark: #4338ca;
+    --background: #f7f9fc;
+    --surface: #ffffff;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --radius: 20px;
+    --radius-lg: 24px;
+  }
+
+  body { 
+    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; 
+    background: var(--background);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* Professional Header */
+  .medical-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+
+  .medical-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--primary);
+  }
+
+  .medical-logo i {
+    font-size: 32px;
+  }
+
+  .doctor-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--background);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+
+  .doctor-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  /* Main Layout */
+  .medical-layout {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 32px;
+    display: grid;
+    gap: 32px;
+    grid-template-columns: 1fr;
+  }
+
+  @media (min-width: 1024px) {
+    .medical-layout {
+      grid-template-columns: 400px 1fr;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .medical-layout {
+      grid-template-columns: 420px 1fr;
+    }
+  }
+
+  /* Expanded mode: full width for content */
+  .medical-layout.expanded {
+    grid-template-columns: 1fr;
+  }
+  .medical-layout.expanded .left-column {
+    display: none;
+  }
+
+  /* Professional Cards */
+  .medical-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: all 0.2s ease;
+  }
+
+  .medical-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  .medical-card-header {
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.02), rgba(99, 102, 241, 0.02));
+  }
+
+  .medical-card-header h3 {
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--text);
+    margin: 0;
+  }
+
+  .medical-card-header i {
+    color: var(--primary);
+    font-size: 20px;
+  }
+
+  .medical-card-body {
+    padding: 28px;
+  }
+
+  /* Patient Avatar & Info */
+  .patient-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 800;
+    font-size: 28px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .patient-info {
+    display: grid;
+    gap: 20px;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .info-item {
+    padding: 16px;
+    background: var(--background);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+  }
+
+  .info-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+
+  .info-value {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text);
+  }
+
+  /* Risk Badge */
+  .risk-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--background);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  /* Quick Stats KPIs */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  @media (min-width: 768px) {
+    .kpi-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  .kpi-card {
+    background: var(--primary);
+    color: white;
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+    pointer-events: none;
+  }
+
+  .kpi-label {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  /* Medical Alerts */
+  .alert-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .medical-alert {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px;
+    border-left: 4px solid var(--border);
+    box-shadow: var(--shadow);
+    position: relative;
+    transition: all 0.2s ease;
+  }
+
+  .medical-alert:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .medical-alert.critical {
+    border-left-color: #ef4444;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.02), rgba(239, 68, 68, 0));
+  }
+
+  .medical-alert.medium {
+    border-left-color: #f59e0b;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.02), rgba(245, 158, 11, 0));
+  }
+
+  .medical-alert.improvement {
+    border-left-color: #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.02), rgba(16, 185, 129, 0));
+  }
+
+  .alert-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .alert-badge.critical {
+    background: #ef4444;
+    color: white;
+  }
+
+  .alert-badge.medium {
+    background: #f59e0b;
+    color: white;
+  }
+
+  .alert-badge.improvement {
+    background: #10b981;
+    color: white;
+  }
+
+  .alert-title {
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .alert-description {
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .alert-timestamp {
+    font-size: 12px;
+    color: var(--text-muted);
+    opacity: 0.7;
+  }
+
+  /* Tabs */
+  .medical-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    background: var(--background);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+
+  .medical-tab {
+    padding: 12px 20px;
+    border-radius: 14px;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .medical-tab.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: var(--shadow);
+  }
+
+  .medical-tab:hover:not(.active) {
+    background: rgba(79, 70, 229, 0.1);
+    color: var(--primary);
+  }
+
+  /* Charts & Analytics */
+  .analytics-grid {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: 1fr;
+    margin-top: 24px;
+  }
+
+  @media (min-width: 1024px) {
+    .analytics-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .analytics-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    padding: 24px;
+  }
+
+  .chart-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .chart-title i {
+    color: var(--primary);
+    font-size: 18px;
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  @media (min-width: 1024px) {
+    .stats-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+
+  .stat-label {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-weight: 900;
+    font-size: 24px;
+    color: var(--text);
+  }
+
+  /* Actions */
+  .action-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .medical-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .medical-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .medical-btn:hover::before {
+    left: 100%;
+  }
+
+  .medical-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .medical-btn.primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-color: var(--primary);
+    color: white;
+    box-shadow: var(--shadow);
+  }
+
+  .medical-btn.primary:hover {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Styles spécifiques pour les boutons dans les cartes */
+  .analysis-card-footer .medical-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+
+  .analysis-card-footer .medical-btn i {
+    font-size: 12px;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .medical-layout {
+      padding: 16px;
+      gap: 24px;
+    }
+    
+    .medical-card-body {
+      padding: 20px;
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .kpi-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* Legacy compatibility styles */
+  .pro-grid { display: contents; }
+  .pro-card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--border); }
+  .pro-card .hd { padding: 24px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  .pro-card .bd { padding: 28px; }
+  .table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+  .table th { text-align: left; padding: 16px 12px; color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; font-weight: 700; background: var(--background); }
+  .table td { background: var(--surface); padding: 16px 12px; border: 1px solid var(--border); font-weight: 500; }
+  .table tr:hover td { background: linear-gradient(135deg, rgba(79, 70, 229, 0.02), rgba(99, 102, 241, 0.02)); }
+  .table tr td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+  .table tr td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+  .table td a { color: var(--primary); text-decoration: none; font-weight: 600; }
+  .table td a:hover { text-decoration: underline; }
+  .filters { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  .input, .select { border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; background: var(--surface); font-size: 14px; font-weight: 500; }
+  .input:focus, .select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+  .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); display: none; align-items: center; justify-content: center; z-index: 50; backdrop-filter: blur(4px); }
+  .modal.open { display: flex; }
+  .modal .panel { background: var(--surface); border-radius: var(--radius-lg); width: min(920px, 96vw); max-height: 86vh; overflow: auto; box-shadow: var(--shadow-lg); }
+  canvas { max-width: 100%; }
+  .hidden { display: none !important; }
+  
+  /* Analysis cards styling */
+  .analysis-cards { 
+    display: grid; 
+    gap: 20px; 
+    grid-template-columns: 1fr; 
+    margin-top: 20px;
+  }
+  @media (min-width: 768px) { .analysis-cards { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1280px) { .analysis-cards { grid-template-columns: repeat(3, 1fr); } }
+  
+  .analysis-card { 
+    border: 1px solid var(--border); 
+    border-radius: var(--radius-lg); 
+    padding: 24px; 
+    background: var(--surface); 
+    display: flex; 
+    flex-direction: column; 
+    gap: 20px; 
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .analysis-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  }
+  
+  .analysis-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+    border-color: var(--primary);
+  }
+  
+  .analysis-card .row { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    gap: 12px; 
+  }
+  
+  .analysis-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  
+  .analysis-card-date {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .analysis-card-date i {
+    opacity: 0.7;
+  }
+  
+  .analysis-card-content {
+    flex: 1;
+  }
+  
+  .analysis-card-footer {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  
+  .muted { 
+    color: var(--text-muted); 
+    font-size: 12px; 
+    font-weight: 600; 
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  
+  .pill { 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 8px; 
+    padding: 8px 16px; 
+    border-radius: 999px; 
+    font-size: 13px; 
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    box-shadow: var(--shadow);
+    border: 2px solid transparent;
+  }
+  
+  .pill.normal {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+  }
+  
+  .pill.gliome {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+  }
+  
+  .pill.meningiome {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+  }
+  
+  .pill.tumeur-pituitaire {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+  }
+  
+  .pill:not(.normal):not(.gliome):not(.meningiome):not(.tumeur-pituitaire) {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+  }
+  
+  .confidence-section {
+    background: var(--background);
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  
+  .confidence-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  
+  .confidence-value {
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--primary);
+  }
+  
+  .progress { 
+    height: 12px; 
+    background: rgba(226, 232, 240, 0.3); 
+    border-radius: 999px; 
+    overflow: hidden; 
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .progress > span { 
+    display: block; 
+    height: 100%; 
+    background: linear-gradient(90deg, var(--primary), var(--primary-light)); 
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+  }
+  
+  .progress > span::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: shimmer 2s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* Animation d'apparition des cartes */
+  .analysis-card {
+    animation: fadeInUp 0.6s ease forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .analysis-card:nth-child(1) { animation-delay: 0.1s; }
+  .analysis-card:nth-child(2) { animation-delay: 0.2s; }
+  .analysis-card:nth-child(3) { animation-delay: 0.3s; }
+  .analysis-card:nth-child(4) { animation-delay: 0.4s; }
+  .analysis-card:nth-child(5) { animation-delay: 0.5s; }
+  .analysis-card:nth-child(6) { animation-delay: 0.6s; }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Effet de pulse sur les icônes de confiance */
+  .analysis-card-header i[title] {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  /* Hover effect pour le pill */
+  .pill:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  }
+</style>
+{% endblock %}
+
+{% block page_actions %}
+<div class="action-bar" style="position: fixed; top: 20px; right: 32px; z-index: 50;">
+  <button class="medical-btn" id="btn-export">
+    <i class="fas fa-download"></i>
+    Exporter
+  </button>
+  <a class="medical-btn" href="{{ url_for('manage_patients_page') }}">
+    <i class="fas fa-list"></i>
+    Mes patients
+  </a>
+  <a class="medical-btn" href="{{ url_for('edit_patient_page', patient_id=patient.patient_id) }}">
+    <i class="fas fa-pen"></i>
+    Modifier
+  </a>
+  <button class="medical-btn primary" id="btn-new-analysis">
+    <i class="fas fa-plus"></i>
+    Nouvelle analyse
+  </button>
+  <button class="medical-btn" id="toggleExpand">
+    <i class="fas fa-expand-arrows-alt"></i>
+    Étendre
+  </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Professional Medical Header -->
+<div class="medical-header">
+  <div class="medical-logo">
+    <i class="fas fa-brain"></i>
+    <span>NeuroScan</span>
+  </div>
+  <div class="doctor-profile">
+    <div class="doctor-avatar">Dr</div>
+    <div>
+      <div style="font-weight: 600; font-size: 14px;">Dr. Médecin</div>
+      <div style="font-size: 12px; color: var(--text-muted);">Neurologue</div>
+    </div>
+  </div>
+</div>
+
+<div class="medical-layout">
+  <!-- Colonne gauche: Patient + Stats rapides -->
+  <div class="left-column">
+    <!-- Carte Patient -->
+    <div class="medical-card">
+      <div class="medical-card-header">
+        <i class="fas fa-user-injured"></i>
+        <h3>Informations Patient</h3>
+        <div style="margin-left: auto;">
+          <span class="risk-badge">
+            <i class="fas fa-shield-heart"></i>
+            Risque: {{ patient.risk_level or 'N/A' }}
+          </span>
+        </div>
+      </div>
+      <div class="medical-card-body">
+        <div class="patient-avatar">{{ patient.patient_name[:2] if patient.patient_name else 'PT' }}</div>
+        
+        <div class="patient-info">
+          <div>
+            <h2 style="font-size: 24px; font-weight: 800; margin: 0 0 8px 0; color: var(--text);">{{ patient.patient_name }}</h2>
+            <p style="color: var(--text-muted); margin: 0;">ID: {{ patient.patient_id }}</p>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Naissance</div>
+              <div class="info-value">{{ patient.date_of_birth.strftime('%d/%m/%Y') if patient.date_of_birth else '—' }} <span style="color: var(--text-muted); font-weight: 500;" id="ageValue"></span></div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Sexe</div>
+              <div class="info-value">{{ patient.gender or '—' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Téléphone</div>
+              <div class="info-value">{{ patient.phone or '—' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Email</div>
+              <div class="info-value" style="font-size: 14px;">{{ patient.email or '—' }}</div>
+            </div>
+          </div>
+
+          <div class="info-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+            <div class="info-item">
+              <div class="info-label">1ère analyse</div>
+              <div class="info-value" style="font-size: 14px;">{{ patient.first_analysis_date.strftime('%d/%m/%Y') if patient.first_analysis_date else '—' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Dernière</div>
+              <div class="info-value" style="font-size: 14px;">{{ patient.last_analysis_date.strftime('%d/%m/%Y') if patient.last_analysis_date else '—' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Total</div>
+              <div class="info-value">{{ patient.total_analyses or analyses|length }}</div>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <div class="info-label">Adresse</div>
+            <div class="info-value" style="font-size: 14px;">{{ patient.address or '—' }}</div>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Contact d'urgence</div>
+              <div class="info-value" style="font-size: 14px;">{{ patient.emergency_contact_name or '—' }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Tél. urgence</div>
+              <div class="info-value" style="font-size: 14px;">{{ patient.emergency_contact_phone or '—' }}</div>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <div class="info-label">Numéro assurance</div>
+            <div class="info-value" style="font-size: 14px;">{{ patient.insurance_number or '—' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div class="medical-card" style="margin-top: 24px;">
+      <div class="medical-card-header">
+        <i class="fas fa-chart-line"></i>
+        <h3>Statistiques rapides</h3>
+      </div>
+      <div class="medical-card-body">
+        <div class="kpi-grid" style="grid-template-columns: repeat(2, 1fr);">
+          <div class="kpi-card">
+            <div class="kpi-label">Analyses</div>
+            <div class="kpi-value">{{ analyses|length }}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Normal</div>
+            <div class="kpi-value">{{ normal_count }}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Anormal</div>
+            <div class="kpi-value">{{ abnormal_count }}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Confiance moy.</div>
+            <div class="kpi-value" style="font-size: 20px;">{{ ('%.1f' % (analyses|map(attribute='confidence')|sum / (analyses|length if analyses|length>0 else 1) * 100)) if analyses|length>0 else '—' }}%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Colonne droite: Alertes + Contenu principal -->
+  <div>
+    <!-- Alertes médicales -->
+    {% if alerts and alerts|length > 0 %}
+    <div class="medical-card" style="margin-bottom: 32px;">
+      <div class="medical-card-header">
+        <i class="fas fa-bell"></i>
+        <h3>Alertes médicales</h3>
+        <div style="margin-left: auto;">
+          <span style="background: var(--primary); color: white; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;">{{ alerts|length }} active{{ 's' if alerts|length > 1 else '' }}</span>
+        </div>
+      </div>
+      <div class="medical-card-body">
+        <div class="alert-list">
+          {% for al in alerts[:5] %}
+          <div class="medical-alert {{ al.severity|lower if al.severity|lower in ['critical', 'medium', 'improvement'] else 'medium' }}">
+            <div class="alert-badge {{ al.severity|lower if al.severity|lower in ['critical', 'medium', 'improvement'] else 'medium' }}">
+              {{ al.severity|capitalize }}
+            </div>
+            <div class="alert-title">{{ al.title }}</div>
+            <div class="alert-description">{{ al.message }}</div>
+            <div class="alert-timestamp">{{ al.created_at }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Section principale avec onglets -->
+    <div class="medical-card">
+      <div class="medical-card-header">
+        <div class="medical-tabs">
+          <button class="medical-tab active" data-tab="evolution">
+            <i class="fas fa-chart-line"></i> Évolution
+          </button>
+          <button class="medical-tab" data-tab="insights">
+            <i class="fas fa-lightbulb"></i> Insights
+          </button>
+          <button class="medical-tab" data-tab="analyses">
+            <i class="fas fa-microscope"></i> Analyses
+          </button>
+          <button class="medical-tab" data-tab="notes">
+            <i class="fas fa-notes-medical"></i> Notes
+          </button>
+        </div>
+        <div style="margin-left: auto; display: flex; align-items: center; gap: 12px;">
+          <span style="background: var(--background); padding: 6px 12px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); color: var(--text-muted);">
+            Dernière mise à jour: {{ current_date.strftime('%d/%m/%Y') }}
+          </span>
+        </div>
+      </div>
+      <div class="medical-card-body">
+        <!-- Tab Evolution -->
+        <div id="tab-evolution">
+          <div class="chart-card" style="margin: 0; padding: 20px; background: linear-gradient(135deg, rgba(79, 70, 229, 0.02), rgba(99, 102, 241, 0.02));">
+            <div class="chart-title">
+              <i class="fas fa-chart-area"></i>
+              <span>Évolution de la confiance diagnostique</span>
+            </div>
+            <canvas id="evolutionChart" height="120"></canvas>
+          </div>
+        </div>
+
+        <!-- Tab Insights -->
+        <div id="tab-insights" class="hidden">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Analyses totales</div>
+              <div class="stat-value" id="stTotal">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Suivi (mois)</div>
+              <div class="stat-value" id="stFollow">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Confiance moy.</div>
+              <div class="stat-value" id="stAvgConf">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Dominant</div>
+              <div class="stat-value" id="stTopDiag" style="font-size: 16px;">—</div>
+            </div>
+          </div>
+          
+          <div class="analytics-grid">
+            <div class="chart-card">
+              <div class="chart-title">
+                <i class="fas fa-chart-pie"></i>
+                <span>Répartition diagnostics</span>
+              </div>
+              <canvas id="diagPie" height="160"></canvas>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Examens par mois</span>
+              </div>
+              <canvas id="monthBar" height="160"></canvas>
+            </div>
+            <div class="chart-card" id="sizeCard" style="display:none">
+              <div class="chart-title">
+                <i class="fas fa-ruler-combined"></i>
+                <span>Évolution taille tumeur</span>
+              </div>
+              <canvas id="sizeLine" height="160"></canvas>
+            </div>
+          </div>
+        </div>
+        <!-- Tab Analyses -->
+        <div id="tab-analyses" class="hidden">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="background: var(--background); padding: 6px 12px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); color: var(--text-muted);">Vue:</span>
+              <button id="viewTable" class="medical-btn" style="padding: 8px 16px;">
+                <i class="fas fa-table"></i> Tableau
+              </button>
+              <button id="viewCards" class="medical-btn" style="padding: 8px 16px;">
+                <i class="fas fa-grip"></i> Cartes
+              </button>
+            </div>
+          </div>
+          
+          <div class="filters" style="background: var(--background); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 24px;">
+            <select id="f-diagnosis" class="input">
+              <option value="">Tous les diagnostics</option>
+              <option>Normal</option>
+              <option>Gliome</option>
+              <option>Méningiome</option>
+              <option>Tumeur pituitaire</option>
+            </select>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label style="font-size: 14px; color: var(--text-muted); font-weight: 600;">Min confiance</label>
+              <input id="f-minconf" class="input" type="number" min="0" max="100" step="1" value="0" style="width:90px">
+              <span style="color: var(--text-muted);">%</span>
+            </div>
+            <input id="f-date" class="input" type="date">
+            <input id="f-search" class="input" type="text" placeholder="Rechercher…">
+            <button id="f-reset" class="medical-btn">
+              <i class="fas fa-rotate"></i> Réinitialiser
+            </button>
+          </div>
+          <table class="table" id="analysesTable">
+            <thead>
+              <tr>
+                <th data-sort="date">Date</th>
+                <th data-sort="label">Diagnostic</th>
+                <th data-sort="confidence">Confiance</th>
+                <th>Image</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in analyses %}
+              <tr>
+                <td>{{ a.exam_date or a.date_uploaded.strftime('%Y-%m-%d') }}</td>
+                <td>{{ a.predicted_label }}</td>
+                <td>{{ '%.1f' % (a.confidence*100) }}%</td>
+                <td><a class="text-blue-600 hover:underline" href="{{ a.image_path }}" target="_blank">Voir</a></td>
+                <td>
+                  <div style="display: flex; gap: 8px;">
+                    <button class="medical-btn open-modal" style="padding: 8px 12px;"
+                      data-id="{{ a.id }}"
+                      data-date="{{ a.exam_date or a.date_uploaded.strftime('%Y-%m-%d') }}"
+                      data-label="{{ a.predicted_label }}"
+                      data-confidence="{{ '%.1f' % (a.confidence*100) }}"
+                      data-img="{{ a.image_path }}"
+                      data-desc="{{ (a.description or '')|e }}">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <a class="medical-btn primary" style="padding: 8px 12px;" href="{{ url_for('analysis_detail', analysis_id=a.id) }}" title="Détails">
+                      <i class="fas fa-arrow-right"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+      <div id="analysesCards" class="analysis-cards" style="display:none">
+            {% for a in analyses %}
+            <div class="analysis-card" data-date="{{ a.exam_date or a.date_uploaded.strftime('%Y-%m-%d') }}" data-label="{{ a.predicted_label }}" data-confidence="{{ '%.1f' % (a.confidence*100) }}">
+              
+              <!-- Header avec date -->
+              <div class="analysis-card-header">
+                <div class="analysis-card-date">
+                  <i class="fas fa-calendar-alt"></i>
+                  {{ a.exam_date or a.date_uploaded.strftime('%d/%m/%Y') }}
+                </div>
+                {% set confidence_val = (a.confidence*100) %}
+                {% if confidence_val >= 90 %}
+                  <i class="fas fa-check-circle" style="color: #10b981; font-size: 16px;" title="Confiance élevée"></i>
+                {% elif confidence_val >= 70 %}
+                  <i class="fas fa-exclamation-circle" style="color: #f59e0b; font-size: 16px;" title="Confiance modérée"></i>
+                {% else %}
+                  <i class="fas fa-question-circle" style="color: #ef4444; font-size: 16px;" title="Confiance faible"></i>
+                {% endif %}
+              </div>
+
+              <!-- Contenu principal -->
+              <div class="analysis-card-content">
+                <!-- Diagnostic avec badge coloré -->
+                <div style="margin-bottom: 20px;">
+                  {% set label_class = a.predicted_label|lower|replace(' ', '-')|replace('é', 'e')|replace('è', 'e') %}
+                  <div class="pill {{ label_class }}">
+                    {% if a.predicted_label == 'Normal' %}
+                      <i class="fas fa-heart"></i>
+                    {% elif 'gliome' in a.predicted_label|lower %}
+                      <i class="fas fa-exclamation-triangle"></i>
+                    {% elif 'méningiome' in a.predicted_label|lower %}
+                      <i class="fas fa-dot-circle"></i>
+                    {% elif 'pituitaire' in a.predicted_label|lower %}
+                      <i class="fas fa-circle"></i>
+                    {% else %}
+                      <i class="fas fa-microscope"></i>
+                    {% endif %}
+                    {{ a.predicted_label }}
+                  </div>
+                </div>
+
+                <!-- Section confiance améliorée -->
+                <div class="confidence-section">
+                  <div class="confidence-label">
+                    <span class="muted">Niveau de confiance</span>
+                    <span class="confidence-value">{{ '%.1f' % (a.confidence*100) }}%</span>
+                  </div>
+                  <div class="progress">
+                    <span data-width="{{ '%.0f' % (a.confidence*100) }}"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer avec actions -->
+              <div class="analysis-card-footer">
+                <button class="medical-btn open-modal" style="flex: 1; justify-content: center;"
+                   data-id="{{ a.id }}"
+                   data-date="{{ a.exam_date or a.date_uploaded.strftime('%Y-%m-%d') }}"
+                   data-label="{{ a.predicted_label }}"
+                   data-confidence="{{ '%.1f' % (a.confidence*100) }}"
+                   data-img="{{ a.image_path }}"
+                   data-desc="{{ (a.description or '')|e }}">
+                   <i class="fas fa-eye"></i>
+                   Aperçu
+                </button>
+                <a class="medical-btn primary" style="flex: 1; justify-content: center;" href="{{ url_for('analysis_detail', analysis_id=a.id) }}">
+                  <i class="fas fa-arrow-right"></i>
+                  Détails
+                </a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <!-- Tab Notes -->
+        <div id="tab-notes" class="hidden">
+          <div style="display: grid; gap: 24px; grid-template-columns: 1fr; margin-top: 20px;">
+            <div class="medical-card">
+              <div class="medical-card-header">
+                <i class="fas fa-clipboard-list"></i>
+                <h3>Recommandations médicales</h3>
+              </div>
+              <div class="medical-card-body">
+                {% set latest = analyses[0] if analyses|length>0 else none %}
+                {% for r in (latest.recommendations if latest and latest.recommendations else []) %}
+                <div style="display: flex; align-items: start; gap: 12px; padding: 16px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.02)); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; margin-bottom: 12px;">
+                  <i class="fas fa-check-circle" style="color: #10b981; margin-top: 2px;"></i>
+                  <span style="color: var(--text); line-height: 1.5;">{{ r }}</span>
+                </div>
+                {% else %}
+                <div style="text-align: center; color: var(--text-muted); padding: 40px;">
+                  <i class="fas fa-clipboard" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px;"></i>
+                  <p>Aucune recommandation disponible.</p>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            
+            <div class="medical-card">
+              <div class="medical-card-header">
+                <i class="fas fa-notes-medical"></i>
+                <h3>Notes médicales</h3>
+              </div>
+              <div class="medical-card-body">
+                {% if latest and latest.description %}
+                <div style="background: var(--background); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
+                  <p style="color: var(--text); line-height: 1.6; margin: 0;">{{ latest.description }}</p>
+                </div>
+                {% else %}
+                <div style="text-align: center; color: var(--text-muted); padding: 40px;">
+                  <i class="fas fa-file-medical" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px;"></i>
+                  <p>Aucune note médicale disponible.</p>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Données pour JS -->
+<script id="analyses-data" type="application/json">{{ analyses_json|safe }}</script>
+<div class="modal" id="analysisModal" aria-hidden="true">
+  <div class="medical-card" style="width: min(920px, 96vw); max-height: 86vh; overflow: auto; box-shadow: var(--shadow-lg); margin: 0;">
+    <div class="medical-card-header" style="position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <i class="fas fa-file-medical"></i>
+        <h3>Détails de l'analyse</h3>
+      </div>
+      <button class="medical-btn" id="modalClose">
+        <i class="fas fa-xmark"></i>
+        Fermer
+      </button>
+    </div>
+    <div class="medical-card-body">
+      <div style="display: grid; gap: 24px; grid-template-columns: 1fr; margin-top: 0;">
+        <div style="display: grid; gap: 24px; grid-template-columns: 1fr 1fr;">
+          <div>
+            <img id="mImage" src="" alt="IRM" style="width: 100%; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow);" />
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="info-item">
+              <div class="info-label">Date d'examen</div>
+              <div class="info-value" id="mDate">—</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Diagnostic</div>
+              <div class="info-value" id="mLabel">—</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Confiance</div>
+              <div class="info-value" id="mConf">—</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Notes médicales</div>
+              <div style="color: var(--text); line-height: 1.5; font-size: 14px;" id="mDesc">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sr-only" aria-live="polite">Fenêtre modale ouverte</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const tabs = document.querySelectorAll('.medical-tab');
+  tabs.forEach(btn => btn.addEventListener('click', () => {
+    tabs.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-evolution').classList.toggle('hidden', btn.dataset.tab !== 'evolution');
+    document.getElementById('tab-insights').classList.toggle('hidden', btn.dataset.tab !== 'insights');
+    document.getElementById('tab-analyses').classList.toggle('hidden', btn.dataset.tab !== 'analyses');
+    document.getElementById('tab-notes').classList.toggle('hidden', btn.dataset.tab !== 'notes');
+  }));
+
+  const raw = document.getElementById('analyses-data')?.textContent || '[]';
+  let data = [];
+  try { data = JSON.parse(raw); } catch(e) { data = []; }
+  
+  const ctx = document.getElementById('evolutionChart');
+  if (ctx && window.Chart) {
+    const labels = data.map(d => new Date(d.date_uploaded).toLocaleDateString('fr-FR'));
+    const series = data.map(d => Math.round(d.confidence * 1000) / 10);
+    new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets: [{
+        label: 'Confiance (%)',
+        data: series,
+        borderColor: '#4f46e5',
+        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+        tension: 0.4, 
+        fill: true, 
+        pointRadius: 4,
+        pointBackgroundColor: '#4f46e5',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        borderWidth: 3
+      }]},
+      options: {
+        responsive: true,
+        plugins: { 
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(79, 70, 229, 0.9)',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            borderColor: '#4f46e5',
+            borderWidth: 1
+          }
+        },
+        scales: { 
+          y: { 
+            beginAtZero: true, 
+            suggestedMax: 100,
+            grid: { color: 'rgba(226, 232, 240, 0.5)' },
+            ticks: { color: '#64748b' }
+          },
+          x: {
+            grid: { color: 'rgba(226, 232, 240, 0.5)' },
+            ticks: { color: '#64748b' }
+          }
+        }
+      }
+    });
+  }
+
+  // Insights: fetch detailed history and render charts
+  ;(async function loadInsights(){
+    try {
+      const pid = "{{ patient.patient_id }}";
+      const r = await fetch(`/api/patients/${encodeURIComponent(pid)}/detailed-history`);
+      const j = await r.json();
+      if (!j.success) return;
+      const analyses = j.data.analyses || [];
+      const evo = j.data.evolution_details || [];
+      // Stats
+      document.getElementById('stTotal').textContent = analyses.length;
+      // follow up months
+      let followM = 0;
+      if (analyses.length>1) {
+        const first = new Date(analyses[0].exam_date || analyses[0].timestamp);
+        const last = new Date(analyses[analyses.length-1].exam_date || analyses[analyses.length-1].timestamp);
+        if (!isNaN(first) && !isNaN(last)) {
+          const days = (last-first)/(1000*60*60*24);
+          followM = Math.round(days/30.44*10)/10;
+        }
+      }
+      document.getElementById('stFollow').textContent = followM || 0;
+      // avg confidence
+      const confs = analyses.map(a => a.confidence || 0);
+      const avgc = confs.length? Math.round((confs.reduce((s,v)=>s+v,0)/confs.length)*10)/10 : 0;
+      document.getElementById('stAvgConf').textContent = avgc + ' %';
+      // top diagnosis
+      const counts = {};
+      analyses.forEach(a => { const l=(a.predicted_label||'Inconnu'); counts[l]=(counts[l]||0)+1; });
+      let top = '—', topc = 0; Object.entries(counts).forEach(([k,v])=>{ if(v>topc){ top=k; topc=v; }});
+      document.getElementById('stTopDiag').textContent = top;
+
+      // Charts if Chart available
+      if (!window.Chart) return;
+      
+      // Medical color palette
+      const medicalColors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16'];
+      
+      // Diagnosis pie
+      const pieCtx = document.getElementById('diagPie');
+      if (pieCtx) {
+        const labels = Object.keys(counts);
+        const dataVals = Object.values(counts);
+        new Chart(pieCtx, { 
+          type: 'doughnut', 
+          data: { 
+            labels, 
+            datasets: [{ 
+              data: dataVals, 
+              backgroundColor: medicalColors,
+              borderColor: '#ffffff',
+              borderWidth: 3
+            }]
+          }, 
+          options: { 
+            responsive: true,
+            plugins: { 
+              legend: { 
+                position: 'bottom',
+                labels: {
+                  padding: 15,
+                  usePointStyle: true,
+                  font: { size: 12, weight: '600' },
+                  color: '#1e293b'
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(79, 70, 229, 0.9)',
+                titleColor: '#ffffff',
+                bodyColor: '#ffffff'
+              }
+            },
+            cutout: '65%'
+          } 
+        });
+      }
+      
+      // Exams per month (last 12 months)
+      const barCtx = document.getElementById('monthBar');
+      if (barCtx) {
+        const map = new Map();
+        analyses.forEach(a => {
+          const d = new Date(a.exam_date || a.timestamp);
+          if (isNaN(d)) return;
+          const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+          map.set(key, (map.get(key)||0)+1);
+        });
+        // last 12 months range
+        const now = new Date();
+        const labels = [];
+        const values = [];
+        for (let i=11;i>=0;i--) {
+          const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+          const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+          labels.push(d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }));
+          values.push(map.get(key)||0);
+        }
+        new Chart(barCtx, { 
+          type: 'bar', 
+          data: { 
+            labels, 
+            datasets: [{ 
+              data: values, 
+              backgroundColor: 'rgba(79, 70, 229, 0.8)', 
+              borderColor: '#4f46e5',
+              borderWidth: 1,
+              borderRadius: 6
+            }] 
+          }, 
+          options: { 
+            responsive: true,
+            plugins: { 
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: 'rgba(79, 70, 229, 0.9)',
+                titleColor: '#ffffff',
+                bodyColor: '#ffffff'
+              }
+            }, 
+            scales: { 
+              y: { 
+                beginAtZero: true, 
+                precision: 0,
+                grid: { color: 'rgba(226, 232, 240, 0.5)' },
+                ticks: { color: '#64748b' }
+              },
+              x: {
+                grid: { display: false },
+                ticks: { color: '#64748b' }
+              }
+            } 
+          } 
+        });
+      }
+      
+      // Graphique de taille de tumeur désactivé (nécessite un modèle de segmentation réel)
+      // Cette fonctionnalité a été désactivée car elle utilisait des valeurs simulées non fiables
+      /*
+      const sizes = analyses.map(a => a.tumor_size_estimate).filter(v => v!=null);
+      if (sizes.length>0) {
+        document.getElementById('sizeCard').style.display = '';
+        const lineCtx = document.getElementById('sizeLine');
+        const pts = analyses.filter(a => a.tumor_size_estimate!=null).map(a => ({ x: new Date(a.exam_date || a.timestamp), y: a.tumor_size_estimate }));
+        pts.sort((a,b)=>a.x-b.x);
+        new Chart(lineCtx, { 
+          type: 'line', 
+          data: { 
+            datasets: [{ 
+              data: pts, 
+              parsing: false, 
+              borderColor: '#10b981', 
+              backgroundColor: 'rgba(16, 185, 129, 0.1)', 
+              tension: 0.4, 
+              fill: true,
+              pointRadius: 4,
+              pointBackgroundColor: '#10b981',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2,
+              borderWidth: 3
+            }] 
+          }, 
+          options: { 
+            responsive: true,
+            plugins: { 
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: 'rgba(16, 185, 129, 0.9)',
+                titleColor: '#ffffff',
+                bodyColor: '#ffffff'
+              }
+            }, 
+            scales: { 
+              x: { 
+                type: 'time', 
+                time: { unit: 'month' },
+                grid: { color: 'rgba(226, 232, 240, 0.5)' },
+                ticks: { color: '#64748b' }
+              }, 
+              y: { 
+                beginAtZero: true,
+                grid: { color: 'rgba(226, 232, 240, 0.5)' },
+                ticks: { color: '#64748b' }
+              }
+            } 
+          } 
+        });
+      }
+      */
+    } catch (e) { console.error(e); }
+  })();
+
+  document.getElementById('btn-export')?.addEventListener('click', () => {
+    const exportData = {
+      patient: {
+        id: '{{ patient.patient_id }}',
+        name: '{{ patient.patient_name }}',
+        risk: '{{ patient.risk_level }}'
+      },
+      analyses: data
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `rapport_{{ patient.patient_id }}.json`; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('btn-new-analysis')?.addEventListener('click', () => {
+    window.location.href = "{{ url_for('new_analysis_page') }}?patient_id={{ patient.patient_id }}";
+  });
+
+  // Calcul d'âge
+  (function(){
+    const span = document.getElementById('ageValue');
+  const dobStr = "{{ patient.date_of_birth.strftime('%Y-%m-%d') if patient.date_of_birth else '' }}";
+    if (!span || !dobStr) return;
+    const dob = new Date(dobStr);
+    if (isNaN(dob.getTime())) return;
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    span.textContent = `(${age} ans)`;
+  })();
+
+  // Filtres
+  const table = document.getElementById('analysesTable');
+  const rows = Array.from(table.querySelectorAll('tbody tr'));
+  const cardsWrap = document.getElementById('analysesCards');
+  const cards = Array.from(cardsWrap.querySelectorAll('.analysis-card'));
+  const fDiag = document.getElementById('f-diagnosis');
+  const fMin = document.getElementById('f-minconf');
+  const fDate = document.getElementById('f-date');
+  const fSearch = document.getElementById('f-search');
+  const fReset = document.getElementById('f-reset');
+  function applyFilters(){
+    const diag = (fDiag.value || '').toLowerCase();
+    const minc = parseFloat(fMin.value || '0');
+    const datef = fDate.value || '';
+    const q = (fSearch.value || '').toLowerCase();
+    rows.forEach(tr => {
+      const tds = tr.querySelectorAll('td');
+      const date = (tds[0]?.textContent || '').trim();
+      const label = (tds[1]?.textContent || '').trim().toLowerCase();
+      const conf = parseFloat(((tds[2]?.textContent || '0').replace('%','')).trim()) || 0;
+      let ok = true;
+      if (diag && label !== diag) ok = false;
+      if (conf < minc) ok = false;
+      if (datef && date !== datef) ok = false;
+      if (q && !(date+label).includes(q)) ok = false;
+      tr.style.display = ok ? '' : 'none';
+    });
+    cards.forEach(card => {
+      const date = (card.dataset.date || '').trim();
+      const label = (card.dataset.label || '').trim().toLowerCase();
+      const conf = parseFloat(card.dataset.confidence || '0') || 0;
+      let ok = true;
+      if (diag && label !== diag) ok = false;
+      if (conf < minc) ok = false;
+      if (datef && date !== datef) ok = false;
+      if (q && !(date+label).includes(q)) ok = false;
+      card.style.display = ok ? '' : 'none';
+    });
+  }
+  [fDiag, fMin, fDate, fSearch].forEach(el => el?.addEventListener('input', applyFilters));
+  fReset?.addEventListener('click', () => { fDiag.value=''; fMin.value=0; fDate.value=''; fSearch.value=''; applyFilters(); });
+
+  // Tri
+  const heads = table.querySelectorAll('th[data-sort]');
+  heads.forEach(th => th.addEventListener('click', () => {
+    const key = th.dataset.sort;
+    const tbody = table.querySelector('tbody');
+    const sorted = rows.slice().sort((a,b) => {
+      const ta = a.querySelectorAll('td');
+      const tb = b.querySelectorAll('td');
+      if (key==='date') return (ta[0].textContent>tb[0].textContent)?1:-1;
+      if (key==='label') return (ta[1].textContent>tb[1].textContent)?1:-1;
+      if (key==='confidence') return (parseFloat(ta[2].textContent) - parseFloat(tb[2].textContent));
+      return 0;
+    });
+    tbody.innerHTML = '';
+    sorted.forEach(tr => tbody.appendChild(tr));
+  }));
+
+  // View toggle + progress widths
+  const viewTableBtn = document.getElementById('viewTable');
+  const viewCardsBtn = document.getElementById('viewCards');
+  function syncProgress(){
+    cardsWrap.querySelectorAll('.analysis-card .progress > span').forEach(el => {
+      const w = parseFloat(el.getAttribute('data-width') || '0');
+      // Animation progressive de la barre
+      el.style.width = '0%';
+      setTimeout(() => {
+        el.style.width = (isFinite(w) ? w : 0) + '%';
+      }, 100);
+    });
+  }
+  function updateViewButtons() {
+    document.querySelectorAll('#viewTable, #viewCards').forEach(btn => {
+      btn.classList.remove('primary');
+      btn.style.background = 'var(--surface)';
+      btn.style.color = 'var(--text)';
+    });
+  }
+  viewTableBtn?.addEventListener('click', () => {
+    document.getElementById('analysesTable').style.display = '';
+    cardsWrap.style.display = 'none';
+    updateViewButtons();
+    viewTableBtn.classList.add('primary');
+    viewTableBtn.style.background = 'var(--primary)';
+    viewTableBtn.style.color = 'white';
+  });
+  viewCardsBtn?.addEventListener('click', () => {
+    document.getElementById('analysesTable').style.display = 'none';
+    cardsWrap.style.display = '';
+    
+    // Réinitialiser et relancer les animations
+    cardsWrap.querySelectorAll('.analysis-card').forEach((card, index) => {
+      card.style.animation = 'none';
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      
+      setTimeout(() => {
+        card.style.animation = `fadeInUp 0.6s ease forwards`;
+        card.style.animationDelay = `${index * 0.1}s`;
+      }, 50);
+    });
+    
+    syncProgress();
+    updateViewButtons();
+    viewCardsBtn.classList.add('primary');
+    viewCardsBtn.style.background = 'var(--primary)';
+    viewCardsBtn.style.color = 'white';
+  });
+  // Initialize table view as default
+  if (viewTableBtn) {
+    viewTableBtn.classList.add('primary');
+    viewTableBtn.style.background = 'var(--primary)';
+    viewTableBtn.style.color = 'white';
+  }
+  syncProgress();
+
+  // Modal
+  const modal = document.getElementById('analysisModal');
+  const mClose = document.getElementById('modalClose');
+  function openModal(d){
+    document.getElementById('mImage').src = d.img || '';
+    document.getElementById('mDate').textContent = d.date || '—';
+    document.getElementById('mLabel').textContent = d.label || '—';
+    document.getElementById('mConf').textContent = (d.confidence? d.confidence+'%':'—');
+    document.getElementById('mDesc').textContent = d.desc || '—';
+    modal.classList.add('open');
+  }
+  function closeModal(){ modal.classList.remove('open'); }
+  mClose?.addEventListener('click', closeModal);
+  modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  document.querySelectorAll('.open-modal').forEach(btn => {
+    btn.addEventListener('click', () => openModal({
+      id: btn.dataset.id,
+      date: btn.dataset.date,
+      label: btn.dataset.label,
+      confidence: btn.dataset.confidence,
+      img: btn.dataset.img,
+      desc: btn.dataset.desc
+    }));
+  });
+
+  // Expand/Collapse right column to be wider
+  const expandBtn = document.getElementById('toggleExpand');
+  const layout = document.querySelector('.medical-layout');
+  expandBtn?.addEventListener('click', () => {
+    const expanded = layout.classList.toggle('expanded');
+    expandBtn.innerHTML = expanded
+      ? '<i class="fas fa-compress-arrows-alt"></i> Réduire'
+      : '<i class="fas fa-expand-arrows-alt"></i> Étendre';
+  });
+</script>
+{% endblock %}

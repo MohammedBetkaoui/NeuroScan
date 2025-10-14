@@ -1,0 +1,361 @@
+<!-- Template de base unifié pour tous les dashboards NeuroScan -->
+<!DOCTYPE html>
+<html lang="fr" class="force-light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NeuroScan{% endblock %}</title>
+    <!-- Force light color scheme for all UA components -->
+    <meta name="color-scheme" content="light">
+    
+    <!-- CSS Framework et Fonts (Tailwind compiled locally) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.build.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- CSS Unified Dashboard -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-unified.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-modern.css') }}">
+    <!-- Forced Light Theme Overrides (prevents prefers-color-scheme: dark from altering dashboard) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-force-light.css') }}">
+    
+    <!-- CSS spécifiques aux pages -->
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Configuration Tailwind (migrated to tailwind.config.cjs in build) -->
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 antialiased">
+    <!-- Header unifié -->
+    <header class="dashboard-header">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo et navigation -->
+                <div class="flex items-center space-x-4 sm:space-x-8">
+                    <!-- Logo -->
+                    <div class="logo-container">
+                        <div class="logo-icon">
+                            <i class="fas fa-brain text-white text-lg"></i>
+                        </div>
+                        <div class="hidden sm:block">
+                            <h1 class="text-xl font-bold text-gray-900">NeuroScan</h1>
+                            <p class="text-xs text-gray-500">{% block page_subtitle %}Plateforme IA Médicale{% endblock %}</p>
+                        </div>
+                        <div class="block sm:hidden">
+                            <h1 class="text-lg font-bold text-gray-900">NeuroScan</h1>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation principale desktop (optionnelle) -->
+                    <div class="hidden lg:block">
+                        {% block main_nav %}{% endblock %}
+                    </div>
+                </div>
+
+
+
+                <!-- Menu utilisateur desktop -->
+                <div class="user-menu hidden md:flex">
+                    <!-- Notifications et alertes -->
+                    <div class="relative">
+                        <button id="alertsButton" class="notifications-btn">
+                            <i class="fas fa-bell text-lg"></i>
+                            <span id="alertsBadge" class="notifications-badge hidden">0</span>
+                        </button>
+                        
+                        <!-- Dropdown des alertes -->
+                        <div id="alertsDropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 hidden z-50">
+                            <div class="p-4 border-b border-gray-100">
+                                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                                    <i class="fas fa-exclamation-triangle text-amber-500 mr-2"></i>
+                                    Alertes Médicales
+                                </h3>
+                            </div>
+                            <div id="alertsList" class="max-h-96 overflow-y-auto">
+                                <!-- Alertes chargées dynamiquement -->
+                            </div>
+                            <div class="p-3 border-t border-gray-100 text-center">
+                                <a href="{{ url_for('medical_alerts_page') }}" class="text-neuroscan-600 hover:text-neuroscan-800 text-sm font-medium">
+                                    Voir toutes les alertes →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informations utilisateur -->
+                    <div class="text-right hidden lg:block">
+                        <p class="text-sm font-medium text-gray-900">
+                            Dr. {{ doctor.first_name }} {{ doctor.last_name }}
+                        </p>
+                        <p class="text-xs text-gray-500">{{ doctor.specialty or 'Médecin' }}</p>
+                    </div>
+                    
+                    <!-- Avatar et menu -->
+                    <div class="relative">
+                        <button id="userMenuButton" class="flex items-center space-x-2 text-gray-700 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-neuroscan-500 rounded-lg p-1">
+                            <div class="w-8 h-8 bg-gradient-to-r from-neuroscan-400 to-neuroscan-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user-md text-white text-sm"></i>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs hidden lg:block"></i>
+                        </button>
+                        
+                        <!-- Dropdown menu utilisateur -->
+                        <div id="userMenuDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden z-50">
+                            <div class="p-2">
+                                <a href="{{ url_for('dashboard') }}" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+                                    <i class="fas fa-home mr-3"></i>Tableau de bord
+                                </a>
+                                <a href="{{ url_for('pro_dashboard') }}" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+                                    <i class="fas fa-chart-line mr-3"></i>Statistiques
+                                </a>
+                                <a href="{{ url_for('patients_list') }}" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+                                    <i class="fas fa-users mr-3"></i>Mes Patients
+                                </a>
+                                <hr class="my-2 border-gray-100">
+                                <a href="#" onclick="openProfileModal()" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+                                    <i class="fas fa-user-cog mr-3"></i>Mon Profil
+                                </a>
+                                <a href="#" onclick="openSettingsModal()" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+                                    <i class="fas fa-cog mr-3"></i>Paramètres
+                                </a>
+                                <hr class="my-2 border-gray-100">
+                                <a href="{{ url_for('logout') }}" class="flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md">
+                                    <i class="fas fa-sign-out-alt mr-3"></i>Déconnexion
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </header>
+
+    <!-- Messages flash unifiés -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div id="flashMessages" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                {% for category, message in messages %}
+                    <div class="alert {% if category == 'error' %}danger{% else %}{{ category }}{% endif %} animate-fade-in">
+                        <i class="fas {% if category == 'error' %}fa-exclamation-circle{% elif category == 'success' %}fa-check-circle{% elif category == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %}"></i>
+                        <div>
+                            <p class="font-medium">{{ message }}</p>
+                        </div>
+                        <button onclick="this.parentElement.remove()" class="ml-auto text-current hover:opacity-70">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Contenu principal -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- En-tête de page -->
+        <div class="mb-8 animate-fade-in">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                        {% block page_title %}Tableau de bord{% endblock %}
+                    </h1>
+                    <p class="text-gray-600">
+                        {% block page_description %}Bienvenue dans votre espace de travail NeuroScan{% endblock %}
+                    </p>
+                </div>
+                <div class="mt-4 sm:mt-0">
+                    {% block page_actions %}{% endblock %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation secondaire (optionnelle) -->
+        {% block secondary_nav %}{% endblock %}
+
+        <!-- Contenu de la page -->
+        <div class="animate-fade-in" style="animation-delay: 0.1s;">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer (optionnel) -->
+    {% block footer %}{% endblock %}
+
+    <!-- Modales communes -->
+    
+    <!-- Modal Profil Utilisateur -->
+    <div id="profileModal" class="modal-overlay hidden">
+        <div class="modal-content" style="--modal-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-user-cog text-neuroscan-600"></i>
+                    Mon Profil
+                </h2>
+                <button onclick="closeProfileModal()" class="modal-close">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="space-y-6">
+                    <!-- Informations personnelles -->
+                    <div class="dashboard-card p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Informations Personnelles</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label class="form-label">Prénom</label>
+                                <input type="text" class="form-input" value="{{ doctor.first_name }}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nom</label>
+                                <input type="text" class="form-input" value="{{ doctor.last_name }}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" value="{{ doctor.email }}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Téléphone</label>
+                                <input type="text" class="form-input" value="{{ doctor.phone or 'Non renseigné' }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Informations professionnelles -->
+                    <div class="dashboard-card p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Informations Professionnelles</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-group">
+                                <label class="form-label">Spécialité</label>
+                                <input type="text" class="form-input" value="{{ doctor.specialty or 'Non spécifiée' }}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Établissement</label>
+                                <input type="text" class="form-input" value="{{ doctor.hospital or 'Non spécifié' }}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Numéro RPPS/ADELI</label>
+                                <input type="text" class="form-input" value="{{ doctor.license_number or 'Non renseigné' }}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Statut</label>
+                                <div class="flex items-center mt-2">
+                                    <span class="badge success">
+                                        <i class="fas fa-check-circle"></i>
+                                        Actif
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <p class="text-sm text-gray-600">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Pour modifier vos informations, contactez l'administrateur
+                </p>
+                <button onclick="closeProfileModal()" class="btn-dashboard secondary">
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Paramètres -->
+    <div id="settingsModal" class="modal-overlay hidden">
+        <div class="modal-content" style="--modal-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-cog text-gray-600"></i>
+                    Paramètres
+                </h2>
+                <button onclick="closeSettingsModal()" class="modal-close">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="space-y-6">
+                    <!-- Préférences d'affichage -->
+                    <div class="dashboard-card p-4">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Préférences d'Affichage</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="font-medium text-gray-700">Thème sombre</label>
+                                    <p class="text-sm text-gray-500">Activer le mode sombre de l'interface</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer" id="darkModeToggle">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-neuroscan-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-neuroscan-600"></div>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="font-medium text-gray-700">Notifications</label>
+                                    <p class="text-sm text-gray-500">Recevoir les alertes médicales en temps réel</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer" id="notificationsToggle" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-neuroscan-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-neuroscan-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sécurité -->
+                    <div class="dashboard-card p-4">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Sécurité</h3>
+                        <div class="space-y-3">
+                            <button class="btn-dashboard secondary w-full justify-center" onclick="showPasswordChangeForm()">
+                                <i class="fas fa-key"></i>
+                                Changer le mot de passe
+                            </button>
+                            <button class="btn-dashboard secondary w-full justify-center" onclick="showSessionManagement()">
+                                <i class="fas fa-shield-alt"></i>
+                                Gérer les sessions
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <p class="text-sm text-gray-600">
+                    <i class="fas fa-save mr-1"></i>
+                    Les modifications sont sauvegardées automatiquement
+                </p>
+                <button onclick="closeSettingsModal()" class="btn-dashboard primary">
+                    Terminé
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de base -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Adaptateur de dates pour Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+    <!-- Données utilisateur (JSON) pour éviter le JS cassé si doctor est nul) -->
+    <script id="doctor-data" type="application/json">
+        {{ ({
+            'id': doctor.id,
+            'name': (doctor.first_name ~ ' ' ~ doctor.last_name),
+            'email': doctor.email
+        } if doctor else {}) | tojson }}
+    </script>
+
+    <!-- Scripts unifiés -->
+     <script src="{{ url_for('static', filename='js/base_dashboard.js') }}"></script>
+    
+    <!-- Scripts spécifiques aux pages -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

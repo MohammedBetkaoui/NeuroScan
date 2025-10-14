@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alertes Médicales | NeuroScan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% extends "base_dashboard.html" %}
+
+    {% block title %}Alertes Médicales - NeuroScan{% endblock %}
+    {% block page_subtitle %}Surveillance & Sécurité{% endblock %}
+    {% block page_title %}Alertes Médicales{% endblock %}
+    {% block page_description %}Surveillez, priorisez et résolvez les alertes générées automatiquement par l’IA{% endblock %}
+
+    {% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/alert.css') }}">
+    {% endblock %}
+
+    {% block secondary_nav %}
+    <div class="dashboard-nav mb-8">
+            <a href="{{ url_for('dashboard') }}" class="dashboard-nav-item">
+                    <i class="fas fa-home mr-2"></i>Accueil
+            </a>
+            <a href="{{ url_for('patients_list') }}" class="dashboard-nav-item">
+                    <i class="fas fa-users mr-2"></i>Mes Patients
+            </a>
+            <a href="{{ url_for('medical_alerts_page') }}" class="dashboard-nav-item active">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Alertes
+            </a>
+    </div>
+    {% endblock %}
+
+    {% block page_actions %}
+    <div class="flex space-x-3">
+            <button onclick="alertsPage_markAllAsRead()" class="btn-dashboard secondary">
+                    <i class="fas fa-check-double"></i> Tout marquer comme lu
+            </button>
+            <button onclick="alertsPage_export()" class="btn-dashboard success">
+                    <i class="fas fa-download"></i> Exporter
+            </button>
+            <button onclick="alertsPage_refresh()" class="btn-dashboard primary">
+                    <i class="fas fa-sync-alt"></i> Actualiser
+            </button>
+            </div>
+    {% endblock %}
+
+    {% block content %}
+    <!-- Statistiques rapides -->
+    <div class="stats-grid mb-8">
+            <div class="stat-card">
+                    <div class="flex items-center justify-between">
+                            <div>
+                                    <p class="stat-label">Critiques</p>
+                                    <p class="stat-value text-red-600" id="criticalCount">-</p>
+                            </div>
+                            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                            </div>
+                    </div>
+            </div>
+            <div class="stat-card">
+                    <div class="flex items-center justify-between">
+                            <div>
+                                    <p class="stat-label">Moyennes</p>
+                                    <p class="stat-value text-amber-600" id="mediumCount">-</p>
+                            </div>
+                            <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-exclamation-circle text-amber-600 text-xl"></i>
+                            </div>
+                    </div>
+            </div>
+            <div class="stat-card">
+                    <div class="flex items-center justify-between">
+                            <div>
+                                    <p class="stat-label">Faibles</p>
+                                    <p class="stat-value text-blue-600" id="lowCount">-</p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-info-circle text-blue-600 text-xl"></i>
+                            </div>
+                    </div>
+            </div>
+            <div class="stat-card">
+                    <div class="flex items-center justify-between">
+                            <div>
+                                    <p class="stat-label">Non lues</p>
+                                    <p class="stat-value text-gray-700" id="unreadCount">-</p>
+                            </div>
+                            <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-envelope-open text-gray-600 text-xl"></i>
+                            </div>
+                    </div>
+            </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="alerts-filters mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                            <label class="form-label"><i class="fas fa-exclamation-triangle mr-2"></i>Sévérité</label>
+                            <select id="severityFilter" class="form-select">
+                                    <option value="">Toutes les sévérités</option>
+                                    <option value="high">Critiques</option>
+                                    <option value="medium">Moyennes</option>
+                                    <option value="low">Faibles</option>
+                            </select>
+                    </div>
+                    <div>
+                            <label class="form-label"><i class="fas fa-tags mr-2"></i>Type</label>
+                            <select id="typeFilter" class="form-select">
+                                    <option value="">Tous les types</option>
+                                    <option value="new_tumor_detected">Nouvelle tumeur</option>
+                                    <option value="diagnosis_change">Changement diagnostic</option>
+                                    <option value="rapid_growth">Croissance rapide</option>
+                                    <option value="confidence_drop">Baisse confiance</option>
+                            </select>
+                    </div>
+                    <div>
+                            <label class="form-label"><i class="fas fa-eye mr-2"></i>Statut</label>
+                            <select id="statusFilter" class="form-select">
+                                    <option value="">Tous les statuts</option>
+                                    <option value="unread">Non lues</option>
+                                    <option value="read">Lues</option>
+                            </select>
+                    </div>
+                    <div>
+                            <label class="form-label"><i class="fas fa-search mr-2"></i>Recherche</label>
+                            <input id="searchInput" type="text" class="form-input" placeholder="Rechercher (titre, message, patient)">
+                    </div>
+            </div>
+    </div>
+
+    <!-- Liste des alertes modernisée -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden" style="height: calc(100vh - 280px); display: flex; flex-direction: column;">
+            <!-- En-tête amélioré -->
+            <div class="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-b border-gray-200">
+                    <div class="flex items-center justify-between p-6">
+                            <!-- Titre avec icône et badge -->
+                            <div class="flex items-center gap-4">
+                                    <div class="relative">
+                                            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-all duration-300">
+                                                    <i class="fas fa-bell text-white text-xl animate-pulse"></i>
+                                            </div>
+                                            <div class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                                                    <span id="unreadBadgeMini" class="text-white text-xs font-bold">0</span>
+                                            </div>
+                                    </div>
+                                    <div>
+                                            <h3 class="text-2xl font-black text-gray-900 flex items-center gap-3">
+                                                    Alertes Actives
+                                                    <span id="totalAlertsCount" class="inline-flex items-center px-3 py-1 bg-white rounded-xl text-blue-600 text-sm font-bold shadow-sm border border-blue-200">
+                                                            <i class="fas fa-list-ul mr-1.5 text-xs"></i>
+                                                            0
+                                                    </span>
+                                            </h3>
+                                            <p class="text-sm text-gray-600 mt-1 font-medium">
+                                                    <i class="fas fa-clock mr-1"></i>
+                                                    Mise à jour en temps réel
+                                            </p>
+                                    </div>
+                            </div>
+
+                            <!-- Actions rapides -->
+                            <div class="flex items-center gap-3">
+                                    <!-- Bouton Actualiser -->
+                                    <button class="group relative overflow-hidden px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md" 
+                                            onclick="alertsPage_refresh()"
+                                            title="Actualiser les alertes">
+                                            <div class="flex items-center gap-2">
+                                                    <i class="fas fa-sync-alt text-gray-700 group-hover:rotate-180 transition-transform duration-500"></i>
+                                                    <span class="hidden sm:inline font-semibold text-gray-700">Actualiser</span>
+                                            </div>
+                                    </button>
+
+                                    <!-- Bouton Exporter -->
+                                    <button class="group relative overflow-hidden px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl transition-all duration-300 shadow-md hover:shadow-lg" 
+                                            onclick="alertsPage_export()"
+                                            title="Exporter en CSV">
+                                            <div class="flex items-center gap-2">
+                                                    <i class="fas fa-download group-hover:-translate-y-1 transition-transform duration-300"></i>
+                                                    <span class="hidden sm:inline font-semibold">Exporter</span>
+                                            </div>
+                                    </button>
+
+                                    <!-- Bouton Paramètres -->
+                                    <button class="group relative overflow-hidden px-3 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md" 
+                                            onclick="toggleAlertsSettings()"
+                                            title="Paramètres d'affichage">
+                                            <i class="fas fa-cog text-gray-700 group-hover:rotate-90 transition-transform duration-300"></i>
+                                    </button>
+                            </div>
+                    </div>
+
+                    <!-- Barre de statut -->
+                    <div class="px-6 pb-4">
+                            <div class="flex flex-wrap items-center gap-3 text-xs">
+                                    <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg shadow-sm border border-gray-200">
+                                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                            <span class="font-semibold text-gray-700">En ligne</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg shadow-sm border border-gray-200">
+                                            <i class="fas fa-sync text-blue-500"></i>
+                                            <span class="text-gray-600">Auto-refresh: <span class="font-semibold text-gray-900">2 min</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg shadow-sm border border-gray-200">
+                                            <i class="fas fa-filter text-purple-500"></i>
+                                            <span class="text-gray-600">Filtres actifs: <span id="activeFiltersCount" class="font-semibold text-gray-900">0</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg shadow-sm border border-gray-200">
+                                            <i class="fas fa-eye text-amber-500"></i>
+                                            <span class="text-gray-600">Non lues: <span id="unreadCountStatus" class="font-semibold text-amber-600">0</span></span>
+                                    </div>
+                            </div>
+                    </div>
+            </div>
+
+            <!-- Zone de liste avec scroll personnalisé -->
+            <div id="alertsPageList" class="alerts-list-container flex-1 overflow-y-auto px-6 py-4 space-y-3" style="min-height: 0; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
+                    <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                            <p>Chargement des alertes...</p>
+                    </div>
+            </div>
+
+            <!-- Pied de page avec pagination -->
+            <div class="bg-gradient-to-r from-gray-50 to-blue-50 border-t border-gray-200 p-4" style="flex: 0 0 auto">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <!-- Informations de pagination -->
+                            <div class="flex items-center gap-2 text-sm text-gray-600">
+                                    <i class="fas fa-info-circle text-blue-500"></i>
+                                    <span>Affichage des alertes actives</span>
+                                    <span class="hidden md:inline text-gray-400">•</span>
+                                    <span class="hidden md:inline text-gray-500" id="paginationInfo">Page 1</span>
+                            </div>
+
+                            <!-- Contrôles de pagination -->
+                            <div id="paginationContainer" class="flex items-center gap-2"></div>
+
+                            <!-- Actions supplémentaires -->
+                            <div class="flex items-center gap-2">
+                                    <select id="pageSizeSelector" class="text-sm px-3 py-1.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" onchange="changePageSize(this.value)">
+                                            <option value="10">10 par page</option>
+                                            <option value="20">20 par page</option>
+                                            <option value="50">50 par page</option>
+                                    </select>
+                            </div>
+                    </div>
+            </div>
+    </div>
+
+    <!-- Modal Détails Alerte -->
+    <div id="alertDetailsModal" class="modal-overlay hidden">
+        <div class="modal-content" style="--modal-width: 720px;">
+            <div class="modal-header">
+                <h2 class="modal-title"><i class="fas fa-bell text-neuroscan-600"></i> Détails de l'alerte</h2>
+                <button onclick="alertsPage_closeDetails()" class="modal-close"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="alertDetailsBody" class="space-y-4"></div>
+            </div>
+            <div class="modal-footer">
+                <div class="flex space-x-2">
+                    <button id="alertDetailsResolveBtn" class="btn-dashboard success"><i class="fas fa-check"></i> Résoudre</button>
+                    <button id="alertDetailsViewBtn" class="btn-dashboard primary"><i class="fas fa-user"></i> Voir le patient</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+    {% block extra_js %}
+    <script src="{{ url_for('static', filename='js/alerts_manager.js') }}"></script>
+    <script>
+    // Fonctions globales pour compatibilité avec les boutons onclick
+    function alertsPage_markAllAsRead() {
+        if (window.alertsManager) alertsManager.markAllAsRead();
+    }
+
+    function alertsPage_export() {
+        if (window.alertsManager) alertsManager.exportAlerts();
+    }
+
+    function alertsPage_refresh() {
+        if (window.alertsManager) alertsManager.refresh();
+    }
+
+    function alertsPage_closeDetails() {
+        if (window.alertsManager) alertsManager.closeDetails();
+    }
+    </script>
+    {% endblock %}
+                <div class="toast show" role="alert" style="
+                    background: rgba(255, 255, 255, 0.95);
+                    backdrop-filter: blur(20px);
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                    border-radius: 16px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+                ">
+                    <div class="toast-header" style="background: transparent; border-bottom: 1px solid rgba(0, 0, 0, 0.1);">
+                        <i class="fas fa-${iconMap[type]} me-2"></i>
+                        <strong class="me-auto">NeuroScan</strong>
+                        <button type="button" class="btn-close" onclick="this.closest('.toast').parentElement.remove()"></button>
+                    </div>
+                    <div class="toast-body" style="font-weight: 500;">
+                        ${message}
+                    </div>
+                </div>
+            ;
+    
+            document.body.appendChild(toastContainer);
+
+            setTimeout(() => {
+                if (toastContainer.parentNode) {
+                    toastContainer.style.animation = 'slideOutRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+                    setTimeout(() => toastContainer.remove(), 400);
+                }
+            }, 4000);
+        }
+
+        // Ajouter les animations CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+            @keyframes pulse {
+                0%, 100% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.7; transform: scale(1.1); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

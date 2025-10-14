@@ -1,0 +1,946 @@
+/* =====================================================
+   STYLE SIMPLIFIÉ - MODAL DE SUPPRESSION
+   ===================================================== */
+
+/* Overlay du modal */
+.delete-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    animation: fadeIn 0.2s ease forwards;
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+/* Container principal - Simplifié */
+.delete-modal-container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 480px;
+    width: 100%;
+    overflow: hidden;
+    transform: scale(0.95);
+    opacity: 0;
+    animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s forwards;
+}
+
+@keyframes zoomIn {
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Corps de la modal - Simplifié */
+.delete-modal-body {
+    padding: 2rem;
+}
+
+/* En-tête simple avec icône */
+.simple-delete-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.simple-delete-icon {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes successPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.simple-delete-icon i {
+    font-size: 2rem;
+    color: white;
+}
+
+.simple-delete-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #1f2937;
+    margin: 0;
+}
+
+/* Carte patient - Compacte */
+.simple-patient-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.simple-patient-avatar {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.simple-patient-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.simple-patient-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.simple-patient-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.8125rem;
+    color: #6b7280;
+}
+
+.simple-patient-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.simple-patient-meta i {
+    font-size: 0.75rem;
+}
+
+/* Avertissement simple */
+.simple-warning {
+    display: flex;
+    align-items: start;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+    color: #78350f;
+    line-height: 1.5;
+}
+
+.simple-warning i {
+    color: #f59e0b;
+    font-size: 1rem;
+    margin-top: 0.125rem;
+    flex-shrink: 0;
+}
+
+.simple-warning strong {
+    color: #92400e;
+    font-weight: 700;
+}
+
+/* Section code de confirmation - Focus principal */
+.simple-code-section {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.simple-code-label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #1e40af;
+    margin-bottom: 0.75rem;
+}
+
+.simple-code-display {
+    display: inline-block;
+    background: white;
+    border: 3px dashed #3b82f6;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #ef4444;
+    letter-spacing: 0.25em;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.simple-code-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 1.125rem;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-align: center;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.simple-code-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.simple-code-input.valid {
+    border-color: #10b981;
+    background: #ecfdf5;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.simple-code-input.invalid {
+    border-color: #ef4444;
+    background: #fef2f2;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+}
+
+.simple-code-hint {
+    font-size: 0.75rem;
+    color: #1e40af;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+}
+
+.simple-code-hint i {
+    font-size: 0.6875rem;
+}
+
+/* Pied de la modal - Simplifié */
+.simple-modal-footer {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1.25rem 2rem 2rem;
+    background: white;
+}
+
+.simple-btn {
+    flex: 1;
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.simple-btn:active {
+    transform: scale(0.98);
+}
+
+.simple-btn-cancel {
+    background: #f3f4f6;
+    color: #4b5563;
+    border: 2px solid #e5e7eb;
+}
+
+.simple-btn-cancel:hover {
+    background: #e5e7eb;
+    border-color: #d1d5db;
+}
+
+.simple-btn-delete {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    position: relative;
+}
+
+.simple-btn-delete:hover:not(:disabled) {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+    transform: translateY(-1px);
+}
+
+.simple-btn-delete:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.simple-btn-spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.simple-btn-delete.loading .simple-btn-spinner {
+    display: block;
+}
+
+.simple-btn-delete.loading .simple-btn-text {
+    display: none;
+}
+
+/* Animation de fermeture */
+.delete-modal-overlay.closing {
+    animation: fadeOut 0.2s ease forwards;
+}
+
+.delete-modal-overlay.closing .delete-modal-container {
+    animation: zoomOut 0.2s ease forwards;
+}
+
+@keyframes fadeOut {
+    to { opacity: 0; }
+}
+
+@keyframes zoomOut {
+    to {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 640px) {
+    .delete-modal-container {
+        max-width: 100%;
+        margin: 0 0.5rem;
+    }
+    
+    .delete-modal-body {
+        padding: 1.5rem;
+    }
+    
+    .simple-delete-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .simple-delete-icon i {
+        font-size: 1.75rem;
+    }
+    
+    .simple-delete-title {
+        font-size: 1.5rem;
+    }
+    
+    .simple-patient-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .simple-patient-avatar {
+        margin: 0 auto;
+    }
+    
+    .simple-patient-name {
+        white-space: normal;
+    }
+    
+    .simple-patient-meta {
+        justify-content: center;
+    }
+    
+    .simple-code-display {
+        font-size: 1.5rem;
+        padding: 0.625rem 1.25rem;
+    }
+    
+    .simple-modal-footer {
+        flex-direction: column-reverse;
+        padding: 1rem 1.5rem 1.5rem;
+    }
+    
+    .simple-btn {
+        width: 100%;
+    }
+}
+
+/* Accessibilité */
+.simple-btn:focus-visible {
+    outline: 3px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* En-tête du modal avec icône d'avertissement */
+.delete-modal-header {
+    position: relative;
+    padding: 2.5rem 2rem 1.5rem;
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border-bottom: 1px solid #fecaca;
+    text-align: center;
+}
+
+.delete-modal-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+    animation: pulseWarning 2s infinite;
+}
+
+@keyframes pulseWarning {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 12px 32px rgba(239, 68, 68, 0.6);
+    }
+}
+
+.delete-modal-icon i {
+    font-size: 2.5rem;
+    color: white;
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.delete-modal-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #991b1b;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.02em;
+}
+
+.delete-modal-subtitle {
+    font-size: 1rem;
+    color: #b91c1c;
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Corps du modal */
+.delete-modal-body {
+    padding: 2rem;
+}
+
+/* Informations du patient */
+.delete-patient-info {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border: 2px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.delete-patient-info-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.delete-patient-avatar {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.delete-patient-details {
+    flex: 1;
+}
+
+.delete-patient-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 0.25rem;
+}
+
+.delete-patient-id {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.delete-patient-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.delete-patient-stat {
+    text-align: center;
+}
+
+.delete-patient-stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1f2937;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.delete-patient-stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Avertissement */
+.delete-warning-box {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #fbbf24;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: start;
+    gap: 0.75rem;
+}
+
+.delete-warning-icon {
+    width: 24px;
+    height: 24px;
+    background: #f59e0b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.delete-warning-icon i {
+    font-size: 0.875rem;
+    color: white;
+}
+
+.delete-warning-content {
+    flex: 1;
+}
+
+.delete-warning-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #92400e;
+    margin: 0 0 0.25rem;
+}
+
+.delete-warning-text {
+    font-size: 0.8125rem;
+    color: #78350f;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Liste des conséquences */
+.delete-consequences {
+    margin-bottom: 1.5rem;
+}
+
+.delete-consequences-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #374151;
+    margin: 0 0 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.delete-consequences-title i {
+    color: #ef4444;
+}
+
+.delete-consequences-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.delete-consequence-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #fef2f2;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.delete-consequence-item:hover {
+    background: #fee2e2;
+    transform: translateX(4px);
+}
+
+.delete-consequence-icon {
+    width: 20px;
+    height: 20px;
+    background: #ef4444;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.delete-consequence-icon i {
+    font-size: 0.625rem;
+    color: white;
+}
+
+.delete-consequence-text {
+    flex: 1;
+    font-size: 0.875rem;
+    color: #7f1d1d;
+    font-weight: 500;
+}
+
+/* Confirmation typée */
+.delete-confirmation-input-wrapper {
+    margin-bottom: 1.5rem;
+}
+
+.delete-confirmation-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.delete-confirmation-code {
+    display: inline-block;
+    background: #f3f4f6;
+    border: 2px dashed #9ca3af;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    color: #ef4444;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+}
+
+.delete-confirmation-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+
+.delete-confirmation-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.delete-confirmation-input.invalid {
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+.delete-confirmation-input.valid {
+    border-color: #10b981;
+    background: #ecfdf5;
+}
+
+.delete-confirmation-helper {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.delete-confirmation-helper i {
+    font-size: 0.625rem;
+}
+
+/* Pied du modal avec boutons d'action */
+.delete-modal-footer {
+    padding: 1.5rem 2rem;
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 0.75rem;
+    flex-direction: column-reverse;
+}
+
+@media (min-width: 640px) {
+    .delete-modal-footer {
+        flex-direction: row;
+        justify-content: flex-end;
+    }
+}
+
+.delete-modal-button {
+    flex: 1;
+    padding: 0.875rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.9375rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+@media (min-width: 640px) {
+    .delete-modal-button {
+        flex: 0 1 auto;
+        min-width: 140px;
+    }
+}
+
+.delete-modal-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.delete-modal-button:hover::before {
+    left: 100%;
+}
+
+.delete-modal-button-cancel {
+    background: white;
+    color: #374151;
+    border: 2px solid #e5e7eb;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.delete-modal-button-cancel:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.delete-modal-button-delete {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.delete-modal-button-delete:hover:not(:disabled) {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.5);
+}
+
+.delete-modal-button-delete:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.delete-modal-button-delete.loading {
+    pointer-events: none;
+}
+
+.delete-modal-button-delete .spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.delete-modal-button-delete.loading .spinner {
+    display: block;
+}
+
+.delete-modal-button-delete.loading .button-text {
+    display: none;
+}
+
+/* Animation de sortie */
+.delete-modal-overlay.closing {
+    animation: fadeOut 0.3s ease forwards;
+}
+
+.delete-modal-overlay.closing .delete-modal-container {
+    animation: slideDown 0.3s ease forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes slideDown {
+    to {
+        transform: scale(0.9) translateY(20px);
+        opacity: 0;
+    }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .delete-modal-container {
+        border-radius: 20px;
+    }
+    
+    .delete-modal-header {
+        padding: 2rem 1.5rem 1.25rem;
+    }
+    
+    .delete-modal-icon {
+        width: 70px;
+        height: 70px;
+        margin-bottom: 1.25rem;
+    }
+    
+    .delete-modal-icon i {
+        font-size: 2rem;
+    }
+    
+    .delete-modal-title {
+        font-size: 1.5rem;
+    }
+    
+    .delete-modal-body {
+        padding: 1.5rem;
+    }
+    
+    .delete-patient-stats {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .delete-patient-stat {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        text-align: left;
+    }
+    
+    .delete-modal-footer {
+        padding: 1.25rem 1.5rem;
+    }
+}
+
+/* Accessibilité */
+.delete-modal-button:focus-visible {
+    outline: 3px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Animation de succès (optionnel) */
+@keyframes successPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.delete-success-icon {
+    animation: successPulse 0.5s ease;
+}

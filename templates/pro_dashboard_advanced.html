@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroScan Pro - Tableau de Bord Avancé</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.build.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --blue-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --green-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --purple-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --orange-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-heavy: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            --border-radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        /* Cards modernes */
+        .modern-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .modern-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        /* Stat cards avec gradients modernes */
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            z-index: 1;
+        }
+
+        .stat-card > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .stat-card.blue {
+            background: var(--blue-gradient);
+        }
+
+        .stat-card.green {
+            background: var(--green-gradient);
+        }
+
+        .stat-card.purple {
+            background: var(--purple-gradient);
+        }
+
+        .stat-card.orange {
+            background: var(--orange-gradient);
+        }
+
+        /* Header moderne */
+        .modern-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .chart-container canvas {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: calc(100% - 40px) !important;
+            height: calc(100% - 40px) !important;
+        }
+
+        /* Alerts modernes */
+        .alert-warning {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        }
+        .alert-info {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+        .alert-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        /* Panel de filtres moderne */
+        .filter-panel {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Cartes de filtres modernes */
+        .filter-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .filter-card:hover {
+            box-shadow: var(--shadow-medium);
+            transform: translateY(-4px);
+        }
+
+        .filter-input {
+            transition: var(--transition);
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .filter-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            transform: translateY(-2px);
+            background: white;
+        }
+
+        .filter-badge {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .filter-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .filter-active {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        /* Range sliders modernes */
+        .range-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #e5e7eb 0%, #e5e7eb 100%);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .range-slider:hover {
+            background: linear-gradient(to right, #d1d5db 0%, #d1d5db 100%);
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+            transition: var(--transition);
+        }
+
+        .range-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .range-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+            transition: var(--transition);
+        }
+
+        .range-slider::-moz-range-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Boutons modernes */
+        .modern-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            color: white;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--shadow-light);
+        }
+
+        .modern-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .modern-btn.secondary {
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+        }
+
+        .modern-btn.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .modern-btn.outline {
+            background: transparent;
+            border: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        .modern-btn.outline:hover {
+            background: #3b82f6;
+            color: white;
+        }
+
+        /* Active view button */
+        .heatmap-view-btn.active-view {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            border-color: transparent;
+        }
+
+        .heatmap-view-btn.active-view:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        /* Quick buttons */
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .quick-btn:hover {
+            background: #3b82f6;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Table moderne */
+        .modern-table {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+        }
+
+        .modern-table thead {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+        }
+
+        .modern-table tbody tr {
+            transition: var(--transition);
+        }
+
+        .modern-table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+            transform: scale(1.01);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 280px;
+                padding: 10px;
+            }
+
+            .stat-card {
+                margin-bottom: 1rem;
+            }
+
+            .filter-card {
+                margin-bottom: 1rem;
+            }
+        }
+
+        /* Period buttons */
+        .comparison-period-btn, .trend-period-btn {
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-weight: 500;
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .comparison-period-btn.active, .trend-period-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: var(--shadow-light);
+        }
+
+        .comparison-period-btn:not(.active), .trend-period-btn:not(.active) {
+            background: rgba(255, 255, 255, 0.8);
+            color: #6b7280;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .comparison-period-btn:not(.active):hover, .trend-period-btn:not(.active):hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-1px);
+        }
+
+        /* Scrollbar personnalisée */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        }
+        /* Header unifié pour correspondre aux autres pages */
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-light);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-light);
+            margin-right: 0.75rem;
+        }
+
+        .notifications-btn {
+            position: relative;
+            padding: 0.5rem;
+            color: #6b7280;
+            border-radius: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .notifications-btn:hover {
+            color: #4f46e5;
+            background-color: rgba(79, 70, 229, 0.1);
+        }
+
+        .notifications-badge {
+            position: absolute;
+            top: -0.25rem;
+            right: -0.25rem;
+            background-color: #ef4444;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 9999px;
+            width: 1.25rem;
+            height: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-light);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Navigation principale */
+        nav a {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            transition: var(--transition);
+        }
+
+        nav a:hover {
+            background-color: rgba(107, 114, 128, 0.1);
+            color: #374151;
+        }
+
+        nav a.active {
+            background-color: rgba(79, 70, 229, 0.1);
+            color: #4f46e5;
+        }
+
+        /* Dropdowns uniformes */
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            margin-top: 0.5rem;
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow-heavy);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            z-index: 50;
+            overflow: hidden;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            color: #374151;
+            transition: var(--transition);
+        }
+
+        .dropdown-item:hover {
+            background-color: #f9fafb;
+        }
+
+        .dropdown-item.danger {
+            color: #dc2626;
+        }
+
+        .dropdown-item.danger:hover {
+            background-color: #fef2f2;
+        }
+
+        /* Animation pour les dropdowns */
+        .dropdown-menu.hidden {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+            pointer-events: none;
+        }
+
+        .dropdown-menu {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Responsive navbar */
+        @media (max-width: 768px) {
+            .logo-container h1 {
+                font-size: 1.125rem;
+            }
+            
+            .logo-container p {
+                display: none;
+            }
+            
+            nav {
+                display: none;
+            }
+            
+            .user-menu > div:not(:last-child) {
+                display: none;
+            }
+        }
+
+        /* Badge d'alerte avec animation */
+        .notifications-badge {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+
+        /* Marges personnalisées pour les icônes des sections */
+        .ml-13 {
+            margin-left: 3.25rem;
+        }
+
+        /* Animation des icônes de section au hover */
+        .modern-card h3 > div {
+            transition: transform 0.3s ease;
+        }
+
+        .modern-card:hover h3 > div {
+            transform: scale(1.1) rotate(5deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 antialiased">
+    <!-- Header unifié -->
+    <header class="dashboard-header sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo et navigation -->
+                <div class="flex items-center space-x-8">
+                    <!-- Logo -->
+                    <div class="logo-container">
+                        <div class="logo-icon">
+                            <i class="fas fa-brain text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">NeuroScan</h1>
+                            <p class="text-xs text-gray-500">Tableau de bord avancé</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation principale -->
+                    <nav class="hidden md:flex space-x-4">
+                        <a href="/dashboard" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors">
+                            <i class="fas fa-home mr-2"></i>Accueil
+                        </a>
+                        <a href="/pro-dashboard" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors">
+                            <i class="fas fa-chart-line mr-2"></i>Statistiques
+                        </a>
+                        <a href="/pro-dashboard-advanced" class="px-3 py-2 text-sm font-medium text-indigo-600 bg-indigo-100 rounded-md">
+                            <i class="fas fa-analytics mr-2"></i>Avancé
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Menu utilisateur -->
+                <div class="user-menu">
+                    <!-- Filters Toggle -->
+                    <button id="toggleFilters" class="modern-btn secondary relative">
+                        <i class="fas fa-filter mr-2"></i>
+                        <span class="hidden sm:inline">Filtres</span>
+                        <span id="activeFiltersCount" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg">0</span>
+                    </button>
+
+                    <!-- Export Dropdown -->
+                    <div class="relative">
+                        <button id="exportBtn" class="modern-btn">
+                            <i class="fas fa-download mr-2"></i>
+                            <span class="hidden sm:inline">Export</span>
+                            <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                        </button>
+                        <div id="exportMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-20 overflow-hidden">
+                            <div class="py-2">
+                                <a href="/api/analytics/export/csv" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-file-csv text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Exporter CSV</div>
+                                        <div class="text-xs text-gray-500">Données tabulaires</div>
+                                    </div>
+                                </a>
+                                <a href="/api/analytics/export/json" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-file-code text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Exporter JSON</div>
+                                        <div class="text-xs text-gray-500">Format structuré</div>
+                                    </div>
+                                </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <button onclick="exportToPDF()" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-file-pdf text-red-600"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Rapport PDF</div>
+                                        <div class="text-xs text-gray-500">Rapport complet</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications et alertes -->
+                    <div class="relative">
+                        <button id="alertsButton" class="notifications-btn">
+                            <i class="fas fa-bell text-lg"></i>
+                            <span id="alertsBadge" class="notifications-badge hidden">0</span>
+                        </button>
+                        
+                        <!-- Dropdown des alertes -->
+                        <div id="alertsDropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 hidden z-50">
+                            <div class="p-4 border-b border-gray-100">
+                                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                                    <i class="fas fa-exclamation-triangle text-amber-500 mr-2"></i>
+                                    Alertes Système
+                                </h3>
+                            </div>
+                            <div id="alertsList" class="max-h-96 overflow-y-auto">
+                                <!-- Alertes chargées dynamiquement -->
+                            </div>
+                            <div class="p-3 border-t border-gray-100 text-center">
+                                <button onclick="clearAllAlerts()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                                    Marquer tout comme lu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informations utilisateur -->
+                    <div class="hidden md:block text-right">
+                        <p class="text-sm font-medium text-gray-900">Tableau de bord</p>
+                        <p class="text-xs text-gray-500">Analytics avancées</p>
+                    </div>
+                    
+                    <!-- Avatar et menu -->
+                    <div class="relative">
+                        <button id="userMenuButton" class="flex items-center space-x-2 text-gray-700 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg p-1">
+                            <div class="w-8 h-8 bg-gradient-to-r from-indigo-400 to-indigo-600 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user-md text-white text-sm"></i>
+                            </div>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+                        
+                        <!-- Dropdown menu utilisateur -->
+                        <div id="userMenuDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden z-50">
+                            <div class="p-2">
+                                <a href="/dashboard" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+                                    <i class="fas fa-home mr-3"></i>Tableau de bord
+                                </a>
+                                <a href="/pro-dashboard" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+                                    <i class="fas fa-chart-line mr-3"></i>Statistiques
+                                </a>
+                                <a href="/patients" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+                                    <i class="fas fa-users mr-3"></i>Mes Patients
+                                </a>
+                                <hr class="my-2 border-gray-100">
+                                <a href="#" onclick="openProfileModal()" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+                                    <i class="fas fa-user-cog mr-3"></i>Mon Profil
+                                </a>
+                                <a href="#" onclick="openSettingsModal()" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
+                                    <i class="fas fa-cog mr-3"></i>Paramètres
+                                </a>
+                                <hr class="my-2 border-gray-100">
+                                <a href="/logout" class="flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md">
+                                    <i class="fas fa-sign-out-alt mr-3"></i>Déconnexion
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Advanced Filters Panel -->
+    <div id="filtersPanel" class="hidden filter-panel">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Filter Header -->
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 space-y-4 sm:space-y-0">
+                <div class="fade-in-up">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">
+                        <i class="fas fa-sliders-h mr-3 text-blue-600"></i>
+                        Filtres Avancés
+                    </h3>
+                    <p class="text-gray-600">Affinez vos recherches avec des critères précis et obtenez des insights détaillés</p>
+                </div>
+                <div class="flex items-center space-x-3 slide-in-right">
+                    <button id="resetFilters" class="modern-btn outline text-red-600 border-red-600 hover:bg-red-600 hover:text-white">
+                        <i class="fas fa-undo mr-2"></i>Réinitialiser
+                    </button>
+                    <button id="saveFilters" class="modern-btn success">
+                        <i class="fas fa-bookmark mr-2"></i>Sauvegarder
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Filters Display -->
+            <div id="activeFilters" class="mb-6 hidden fade-in-up">
+                <div class="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="text-sm font-semibold text-gray-700 flex items-center">
+                            <i class="fas fa-filter mr-2 text-blue-600"></i>
+                            Filtres actifs:
+                        </span>
+                        <div id="activeFiltersList" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+                <!-- Date Range Filter -->
+                <div class="filter-card p-6 fade-in-up" style="animation-delay: 0.1s;">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mr-3">
+                            <i class="fas fa-calendar-alt text-blue-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Période</h4>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Date de début</label>
+                            <input type="date" id="startDate" class="filter-input w-full px-4 py-3 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Date de fin</label>
+                            <input type="date" id="endDate" class="filter-input w-full px-4 py-3 text-sm">
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="quick-btn quick-date-btn" data-days="7">7 jours</button>
+                            <button class="quick-btn quick-date-btn" data-days="30">30 jours</button>
+                            <button class="quick-btn quick-date-btn" data-days="90">90 jours</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diagnostic Type Filter -->
+                <div class="filter-card p-6 fade-in-up" style="animation-delay: 0.2s;">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mr-3">
+                            <i class="fas fa-brain text-green-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Diagnostics</h4>
+                    </div>
+                    <div class="space-y-3">
+                        <label class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                            <input type="checkbox" class="diagnostic-checkbox mr-3 w-4 h-4 text-blue-600 rounded" value="Normal">
+                            <div class="flex-1">
+                                <span class="text-sm font-medium text-gray-900">Normal</span>
+                            </div>
+                            <span class="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full" id="count-Normal">0</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                            <input type="checkbox" class="diagnostic-checkbox mr-3 w-4 h-4 text-blue-600 rounded" value="Gliome">
+                            <div class="flex-1">
+                                <span class="text-sm font-medium text-gray-900">Gliome</span>
+                            </div>
+                            <span class="text-xs font-semibold text-red-600 bg-red-100 px-2 py-1 rounded-full" id="count-Gliome">0</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                            <input type="checkbox" class="diagnostic-checkbox mr-3 w-4 h-4 text-blue-600 rounded" value="Méningiome">
+                            <div class="flex-1">
+                                <span class="text-sm font-medium text-gray-900">Méningiome</span>
+                            </div>
+                            <span class="text-xs font-semibold text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full" id="count-Méningiome">0</span>
+                        </label>
+                        <label class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                            <input type="checkbox" class="diagnostic-checkbox mr-3 w-4 h-4 text-blue-600 rounded" value="Tumeur pituitaire">
+                            <div class="flex-1">
+                                <span class="text-sm font-medium text-gray-900">Tumeur pituitaire</span>
+                            </div>
+                            <span class="text-xs font-semibold text-purple-600 bg-purple-100 px-2 py-1 rounded-full" id="count-Tumeur pituitaire">0</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Confidence Range Filter -->
+                <div class="filter-card p-6 fade-in-up" style="animation-delay: 0.3s;">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center mr-3">
+                            <i class="fas fa-chart-line text-purple-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Confiance</h4>
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                Confiance minimale: <span id="minConfidenceValue" class="text-purple-600 font-bold text-lg">0%</span>
+                            </label>
+                            <input type="range" id="minConfidence" min="0" max="100" value="0"
+                                   class="range-slider w-full">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>0%</span>
+                                <span>50%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                Confiance maximale: <span id="maxConfidenceValue" class="text-purple-600 font-bold text-lg">100%</span>
+                            </label>
+                            <input type="range" id="maxConfidence" min="0" max="100" value="100"
+                                   class="range-slider w-full">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>0%</span>
+                                <span>50%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Processing Time Filter -->
+                <div class="filter-card p-6 fade-in-up" style="animation-delay: 0.4s;">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center mr-3">
+                            <i class="fas fa-clock text-orange-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Temps de traitement</h4>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">
+                                Temps maximum: <span id="maxTimeValue" class="text-orange-600 font-bold text-lg">10s</span>
+                            </label>
+                            <input type="range" id="maxProcessingTime" min="0" max="10" value="10" step="0.1"
+                                   class="range-slider w-full">
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>0s</span>
+                                <span>5s</span>
+                                <span>10s</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="quick-btn quick-time-btn" data-time="1">< 1s</button>
+                            <button class="quick-btn quick-time-btn" data-time="3">< 3s</button>
+                            <button class="quick-btn quick-time-btn" data-time="5">< 5s</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-8 pt-6 border-t border-gray-200 space-y-4 sm:space-y-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span id="filterResultsPreview" class="text-sm text-gray-600 font-medium">
+                        Configurez vos filtres et cliquez sur "Appliquer" pour voir les résultats
+                    </span>
+                </div>
+                <div class="flex space-x-3">
+                    <button id="previewFilters" class="modern-btn outline">
+                        <i class="fas fa-eye mr-2"></i>Aperçu
+                    </button>
+                    <button id="applyFilters" class="modern-btn">
+                        <i class="fas fa-search mr-2"></i>Appliquer les filtres
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Alerts Section -->
+        <div id="alertsSection" class="mb-8">
+            <!-- Alerts will be loaded here -->
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Analyses -->
+            <div class="stat-card blue text-white p-6 fade-in-up" style="animation-delay: 0.1s;">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-chart-line text-lg mr-2 opacity-80"></i>
+                            <p class="text-blue-100 text-sm font-medium uppercase tracking-wide">Total Analyses</p>
+                        </div>
+                        <p id="totalAnalyses" class="text-4xl font-bold mb-1">-</p>
+                        <div class="flex items-center text-blue-200 text-xs">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span id="totalChange">+0%</span>
+                            <span class="ml-1">ce mois</span>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-2xl">
+                        <i class="fas fa-brain text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confiance Moyenne -->
+            <div class="stat-card green text-white p-6 fade-in-up" style="animation-delay: 0.2s;">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-check-circle text-lg mr-2 opacity-80"></i>
+                            <p class="text-green-100 text-sm font-medium uppercase tracking-wide">Confiance Moyenne</p>
+                        </div>
+                        <p id="avgConfidence" class="text-4xl font-bold mb-1">-%</p>
+                        <div class="flex items-center text-green-200 text-xs">
+                            <i class="fas fa-shield-alt mr-1"></i>
+                            <span id="confidenceChange">Fiabilité élevée</span>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-2xl">
+                        <i class="fas fa-award text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analyses Aujourd'hui -->
+            <div class="stat-card purple text-white p-6 fade-in-up" style="animation-delay: 0.3s;">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-calendar-day text-lg mr-2 opacity-80"></i>
+                            <p class="text-purple-100 text-sm font-medium uppercase tracking-wide">Aujourd'hui</p>
+                        </div>
+                        <p id="todayAnalyses" class="text-4xl font-bold mb-1">-</p>
+                        <div class="flex items-center text-purple-200 text-xs">
+                            <i class="fas fa-clock mr-1"></i>
+                            <span id="todayChange">Activité du jour</span>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-2xl">
+                        <i class="fas fa-calendar-check text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Temps Moyen -->
+            <div class="stat-card orange text-white p-6 fade-in-up" style="animation-delay: 0.4s;">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-clock text-lg mr-2 opacity-80"></i>
+                            <p class="text-orange-100 text-sm font-medium uppercase tracking-wide">Temps Moyen</p>
+                        </div>
+                        <p id="avgProcessingTime" class="text-4xl font-bold mb-1">-s</p>
+                        <div class="flex items-center text-orange-200 text-xs">
+                            <i class="fas fa-tachometer-alt mr-1"></i>
+                            <span id="timeChange">Performance optimale</span>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-2xl">
+                        <i class="fas fa-stopwatch text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+            <!-- Comparison Chart -->
+            <div class="xl:col-span-2 modern-card p-6 fade-in-up" style="animation-delay: 0.5s;">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                                <i class="fas fa-chart-bar text-white text-lg"></i>
+                            </div>
+                            Comparaison Temporelle
+                        </h3>
+                        <p class="text-gray-600 text-sm ml-13">Analyse comparative des performances</p>
+                    </div>
+                    <div class="flex space-x-2 bg-gray-100 p-1 rounded-xl">
+                        <button class="comparison-period-btn text-sm px-3 py-2 rounded-lg transition-all" data-period="day">
+                            <i class="fas fa-clock mr-1"></i>Jour
+                        </button>
+                        <button class="comparison-period-btn text-sm px-3 py-2 rounded-lg transition-all" data-period="week">
+                            <i class="fas fa-calendar-week mr-1"></i>Semaine
+                        </button>
+                        <button class="comparison-period-btn active text-sm px-3 py-2 rounded-lg transition-all" data-period="month">
+                            <i class="fas fa-calendar mr-1"></i>Mois
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container relative">
+                    <canvas id="comparisonChart"></canvas>
+                    <div id="comparisonChartLoader" class="absolute inset-0 flex items-center justify-center hidden">
+                        <div class="bg-white rounded-lg p-4 shadow-lg">
+                            <i class="fas fa-spinner fa-spin text-indigo-600 mr-2"></i>
+                            <span class="text-gray-700">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Trends -->
+            <div class="modern-card p-6 fade-in-up" style="animation-delay: 0.6s;">
+                <div class="mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                            <i class="fas fa-tachometer-alt text-white text-lg"></i>
+                        </div>
+                        Performance
+                    </h3>
+                    <p class="text-gray-600 text-sm ml-13">Tendances de performance</p>
+                </div>
+                <div class="chart-container relative">
+                    <canvas id="performanceChart"></canvas>
+                    <div id="performanceChartLoader" class="absolute inset-0 flex items-center justify-center hidden">
+                        <div class="bg-white rounded-lg p-4 shadow-lg">
+                            <i class="fas fa-spinner fa-spin text-indigo-600 mr-2"></i>
+                            <span class="text-gray-700">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Métriques de performance -->
+                <div id="performanceMetrics" class="mt-4 space-y-3">
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-700">Temps moyen</span>
+                        <span class="text-sm font-bold text-blue-600" id="avgTime">-</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-700">Pic de performance</span>
+                        <span class="text-sm font-bold text-green-600" id="peakTime">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Diagnostic Distribution -->
+            <div class="modern-card p-6 fade-in-up" style="animation-delay: 0.7s;">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                                <i class="fas fa-brain text-white text-lg"></i>
+                            </div>
+                            Distribution des Diagnostics
+                        </h3>
+                        <p class="text-gray-600 text-sm ml-13">Répartition par type de diagnostic</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="modern-btn outline text-sm" onclick="exportDiagnosticData()">
+                            <i class="fas fa-download mr-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container relative">
+                    <canvas id="diagnosticDistributionChart"></canvas>
+                </div>
+                <!-- Legend avec statistiques -->
+                <div id="diagnosticLegend" class="mt-4 grid grid-cols-2 gap-3">
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                            <span class="text-sm font-medium text-gray-700">Normal</span>
+                        </div>
+                        <span class="text-sm font-bold text-gray-900" id="normalCount">-</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg border-l-4 border-red-500">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                            <span class="text-sm font-medium text-gray-700">Gliome</span>
+                        </div>
+                        <span class="text-sm font-bold text-gray-900" id="gliomeCount">-</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                            <span class="text-sm font-medium text-gray-700">Méningiome</span>
+                        </div>
+                        <span class="text-sm font-bold text-gray-900" id="meningiomeCount">-</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg border-l-4 border-purple-500">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+                            <span class="text-sm font-medium text-gray-700">Tumeur pituitaire</span>
+                        </div>
+                        <span class="text-sm font-bold text-gray-900" id="pituitaireCount">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hourly Activity Heatmap -->
+            <div class="modern-card p-6 fade-in-up" style="animation-delay: 0.8s;">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                                <i class="fas fa-clock text-white text-lg"></i>
+                            </div>
+                            Activité par Heure
+                        </h3>
+                        <p class="text-gray-600 text-sm ml-13">Heatmap d'activité sur 24h</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="modern-btn outline text-sm heatmap-view-btn" onclick="changeHeatmapView('today')">
+                            <i class="fas fa-calendar-day mr-1"></i>Aujourd'hui
+                        </button>
+                        <button class="modern-btn outline text-sm heatmap-view-btn active-view" onclick="changeHeatmapView('week')">
+                            <i class="fas fa-calendar-week mr-1"></i>7 jours
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container relative">
+                    <canvas id="hourlyHeatmapChart"></canvas>
+                </div>
+                <!-- Peak Hours -->
+                <div class="mt-4 grid grid-cols-3 gap-3">
+                    <div class="text-center p-3 bg-blue-50 rounded-lg">
+                        <div class="text-sm text-gray-600">Heure de pointe</div>
+                        <div class="text-lg font-bold text-blue-600" id="peakHour">-</div>
+                    </div>
+                    <div class="text-center p-3 bg-green-50 rounded-lg">
+                        <div class="text-sm text-gray-600">Max analyses/h</div>
+                        <div class="text-lg font-bold text-green-600" id="maxHourlyAnalyses">-</div>
+                    </div>
+                    <div class="text-center p-3 bg-purple-50 rounded-lg">
+                        <div class="text-sm text-gray-600">Heure calme</div>
+                        <div class="text-lg font-bold text-purple-600" id="quietHour">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quality & Confidence Analysis -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+            <!-- Confidence Distribution -->
+            <div class="modern-card p-6 fade-in-up" style="animation-delay: 0.9s;">
+                <div class="mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                            <i class="fas fa-chart-pie text-white text-lg"></i>
+                        </div>
+                        Distribution Confiance
+                    </h3>
+                    <p class="text-gray-600 text-sm ml-13">Répartition des niveaux de confiance</p>
+                </div>
+                <div class="chart-container relative">
+                    <canvas id="confidenceHistogramChart"></canvas>
+                </div>
+                <!-- Confidence Stats -->
+                <div class="mt-4 space-y-2">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">Très haute (90-100%)</span>
+                        <span class="font-bold text-green-600" id="veryHighConf">-</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">Haute (80-89%)</span>
+                        <span class="font-bold text-blue-600" id="highConf">-</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">Moyenne (70-79%)</span>
+                        <span class="font-bold text-yellow-600" id="mediumConf">-</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">Faible (<70%)</span>
+                        <span class="font-bold text-red-600" id="lowConf">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processing Time Analysis -->
+            <div class="modern-card p-6 fade-in-up" style="animation-delay: 1.0s;">
+                <div class="mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                            <i class="fas fa-stopwatch text-white text-lg"></i>
+                        </div>
+                        Temps de Traitement
+                    </h3>
+                    <p class="text-gray-600 text-sm ml-13">Analyse des temps de réponse</p>
+                </div>
+                <div class="chart-container relative">
+                    <canvas id="processingTimeChart"></canvas>
+                </div>
+                <!-- Time Stats -->
+                <div class="mt-4 grid grid-cols-2 gap-3">
+                    <div class="text-center p-3 bg-green-50 rounded-lg">
+                        <div class="text-sm text-gray-600">Rapide (<2s)</div>
+                        <div class="text-lg font-bold text-green-600" id="fastProcessing">-</div>
+                    </div>
+                    <div class="text-center p-3 bg-yellow-50 rounded-lg">
+                        <div class="text-sm text-gray-600">Normal (2-5s)</div>
+                        <div class="text-lg font-bold text-yellow-600" id="normalProcessing">-</div>
+                    </div>
+                    <div class="text-center p-3 bg-red-50 rounded-lg">
+                        <div class="text-sm text-gray-600">Lent (>5s)</div>
+                        <div class="text-lg font-bold text-red-600" id="slowProcessing">-</div>
+                    </div>
+                    <div class="text-center p-3 bg-blue-50 rounded-lg">
+                        <div class="text-sm text-gray-600">Médiane</div>
+                        <div class="text-lg font-bold text-blue-600" id="medianTime">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Trends -->
+            <div class="modern-card p-6 fade-in-up" style="animation-delay: 1.1s;">
+                <div class="mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                            <i class="fas fa-chart-line text-white text-lg"></i>
+                        </div>
+                        Tendances Mensuelles
+                    </h3>
+                    <p class="text-gray-600 text-sm ml-13">Évolution sur 12 mois</p>
+                </div>
+                <div class="chart-container relative">
+                    <canvas id="monthlyTrendsChart"></canvas>
+                </div>
+                <!-- Trend Insights -->
+                <div class="mt-4 space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-700">Croissance mensuelle</span>
+                        <span class="text-sm font-bold text-blue-600" id="monthlyGrowth">-</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-700">Mois le plus actif</span>
+                        <span class="text-sm font-bold text-green-600" id="mostActiveMonth">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights & Recommendations -->
+        <div class="modern-card p-6 mb-8 fade-in-up" style="animation-delay: 1.2s;">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-1">
+                        <i class="fas fa-brain text-indigo-600 mr-3"></i>
+                        Insights & Recommandations IA
+                    </h3>
+                    <p class="text-gray-600 text-sm">Analyses intelligentes et suggestions d'amélioration</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="modern-btn outline text-sm" onclick="refreshInsights()">
+                        <i class="fas fa-sync-alt mr-1"></i>Actualiser
+                    </button>
+                    <button class="modern-btn text-sm" onclick="exportInsights()">
+                        <i class="fas fa-file-pdf mr-1"></i>Rapport
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Performance Insights -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-xl border border-blue-200">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-chart-line text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Performance</h4>
+                            <p class="text-sm text-gray-600">Analyse des tendances</p>
+                        </div>
+                    </div>
+                    <div id="performanceInsights" class="space-y-3">
+                        <div class="bg-white bg-opacity-60 p-3 rounded-lg">
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-circle text-blue-500 text-xs mr-2"></i>
+                                <span class="text-gray-700">Chargement des insights...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quality Insights -->
+                <div class="bg-gradient-to-br from-green-50 to-emerald-100 p-6 rounded-xl border border-green-200">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-award text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Qualité</h4>
+                            <p class="text-sm text-gray-600">Évaluation de la précision</p>
+                        </div>
+                    </div>
+                    <div id="qualityInsights" class="space-y-3">
+                        <div class="bg-white bg-opacity-60 p-3 rounded-lg">
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-circle text-green-500 text-xs mr-2"></i>
+                                <span class="text-gray-700">Chargement des insights...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="bg-gradient-to-br from-purple-50 to-violet-100 p-6 rounded-xl border border-purple-200">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-lightbulb text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Recommandations</h4>
+                            <p class="text-sm text-gray-600">Suggestions d'amélioration</p>
+                        </div>
+                    </div>
+                    <div id="recommendationsInsights" class="space-y-3">
+                        <div class="bg-white bg-opacity-60 p-3 rounded-lg">
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-circle text-purple-500 text-xs mr-2"></i>
+                                <span class="text-gray-700">Chargement des insights...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Metrics Summary -->
+            <div class="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="text-center p-4 bg-gray-50 rounded-xl">
+                    <div class="text-2xl font-bold text-blue-600" id="accuracyScore">-</div>
+                    <div class="text-sm text-gray-600">Score de Précision</div>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-xl">
+                    <div class="text-2xl font-bold text-green-600" id="efficiencyScore">-</div>
+                    <div class="text-sm text-gray-600">Efficacité</div>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-xl">
+                    <div class="text-2xl font-bold text-orange-600" id="reliabilityScore">-</div>
+                    <div class="text-sm text-gray-600">Fiabilité</div>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-xl">
+                    <div class="text-2xl font-bold text-purple-600" id="overallScore">-</div>
+                    <div class="text-sm text-gray-600">Score Global</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtered Results Table -->
+        <div id="filteredResults" class="modern-card fade-in-up" style="animation-delay: 1.3s;">
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                                <i class="fas fa-table text-white text-lg"></i>
+                            </div>
+                            Analyses Filtrées
+                        </h3>
+                        <p class="text-gray-600 text-sm ml-13">Résultats correspondant à vos critères de recherche</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span id="filteredCount" class="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-full">0 résultats</span>
+                        <div class="flex space-x-2">
+                            <button onclick="exportFilteredResults()" class="modern-btn outline text-sm">
+                                <i class="fas fa-download mr-2"></i>Exporter
+                            </button>
+                            <button onclick="refreshFilteredResults()" class="modern-btn success text-sm">
+                                <i class="fas fa-sync-alt mr-2"></i>Actualiser
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full modern-table">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-clock mr-2"></i>Date/Heure
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-file-medical mr-2"></i>Fichier
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-stethoscope mr-2"></i>Diagnostic
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-percentage mr-2"></i>Confiance
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-stopwatch mr-2"></i>Temps
+                            </th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
+                                <i class="fas fa-info-circle mr-2"></i>Description
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="filteredAnalysesTable" class="bg-white divide-y divide-gray-100">
+                        <!-- État initial -->
+                        <tr id="initialState">
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center space-y-4">
+                                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-filter text-blue-600 text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-medium text-gray-900 mb-1">Aucun filtre appliqué</h3>
+                                        <p class="text-gray-500">Configurez vos filtres et cliquez sur "Appliquer" pour voir les résultats</p>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+<br>
+        <!-- Advanced Comparison & Predictions -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+            <!-- Year-over-Year Comparison -->
+            <div class="modern-card p-6 fade-in-up" style="animation-delay: 1.4s;">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                                <i class="fas fa-calendar-alt text-white text-lg"></i>
+                            </div>
+                            Comparaison Annuelle
+                        </h3>
+                        <p class="text-gray-600 text-sm ml-13">Évolution sur les 12 derniers mois</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="modern-btn outline text-sm" onclick="toggleYearComparison()">
+                            <i class="fas fa-exchange-alt mr-1"></i>Comparer
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container relative">
+                    <canvas id="yearComparisonChart"></canvas>
+                </div>
+                <div class="mt-4 grid grid-cols-3 gap-3">
+                    <div class="text-center p-3 bg-blue-50 rounded-lg">
+                        <div class="text-sm text-gray-600">Croissance</div>
+                        <div class="text-lg font-bold text-blue-600" id="yearGrowth">-</div>
+                    </div>
+                    <div class="text-center p-3 bg-green-50 rounded-lg">
+                        <div class="text-sm text-gray-600">Prédiction</div>
+                        <div class="text-lg font-bold text-green-600" id="nextMonthPrediction">-</div>
+                    </div>
+                    <div class="text-center p-3 bg-purple-50 rounded-lg">
+                        <div class="text-sm text-gray-600">Tendance</div>
+                        <div class="text-lg font-bold text-purple-600" id="trendDirection">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Metrics Dashboard -->
+            <div class="modern-card p-6 fade-in-up" style="animation-delay: 1.5s;">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1 flex items-center">
+                            <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                                <i class="fas fa-chart-area text-white text-lg"></i>
+                            </div>
+                            Métriques Avancées
+                        </h3>
+                        <p class="text-gray-600 text-sm ml-13">Indicateurs de performance clés</p>
+                    </div>
+                    <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-md">
+                        <i class="fas fa-analytics text-white text-xl"></i>
+                    </div>
+                </div>
+                
+                <!-- KPI Grid -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-2xl font-bold text-blue-600" id="throughputRate">-</div>
+                                <div class="text-sm text-blue-700">Analyses/jour</div>
+                            </div>
+                            <i class="fas fa-tachometer-alt text-blue-500 text-2xl"></i>
+                        </div>
+                        <div class="mt-2 flex items-center text-xs">
+                            <i class="fas fa-arrow-up text-green-500 mr-1"></i>
+                            <span class="text-green-600 font-medium" id="throughputChange">+0%</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-2xl font-bold text-green-600" id="accuracyRate">-</div>
+                                <div class="text-sm text-green-700">Précision</div>
+                            </div>
+                            <i class="fas fa-bullseye text-green-500 text-2xl"></i>
+                        </div>
+                        <div class="mt-2 flex items-center text-xs">
+                            <i class="fas fa-shield-alt text-blue-500 mr-1"></i>
+                            <span class="text-gray-600">Fiabilité élevée</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-xl border border-orange-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-2xl font-bold text-orange-600" id="avgResponseTime">-</div>
+                                <div class="text-sm text-orange-700">Temps moyen</div>
+                            </div>
+                            <i class="fas fa-stopwatch text-orange-500 text-2xl"></i>
+                        </div>
+                        <div class="mt-2 flex items-center text-xs">
+                            <i class="fas fa-clock text-orange-500 mr-1"></i>
+                            <span class="text-orange-600 font-medium" id="responseTimeStatus">Optimal</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-2xl font-bold text-purple-600" id="systemUptime">-</div>
+                                <div class="text-sm text-purple-700">Disponibilité</div>
+                            </div>
+                            <i class="fas fa-server text-purple-500 text-2xl"></i>
+                        </div>
+                        <div class="mt-2 flex items-center text-xs">
+                            <i class="fas fa-check-circle text-green-500 mr-1"></i>
+                            <span class="text-green-600 font-medium">Système stable</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Indicators -->
+                <div class="mt-6 space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-700">Charge système</span>
+                        <div class="flex items-center">
+                            <div class="w-20 bg-gray-200 rounded-full h-2 mr-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: 35%" id="systemLoadBar"></div>
+                            </div>
+                            <span class="text-sm font-bold text-gray-900" id="systemLoad">35%</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-700">Utilisation modèle</span>
+                        <div class="flex items-center">
+                            <div class="w-20 bg-gray-200 rounded-full h-2 mr-2">
+                                <div class="bg-blue-500 h-2 rounded-full" style="width: 78%" id="modelUsageBar"></div>
+                            </div>
+                            <span class="text-sm font-bold text-gray-900" id="modelUsage">78%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Script JavaScript principal externe pour meilleure organisation -->
+    <script src="{{ url_for('static', filename='js/pro_dashboard_advanced.js') }}"></script>
+</body>
+</html>

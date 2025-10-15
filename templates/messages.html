@@ -6,7 +6,7 @@
     <title>Messagerie Professionnelle - NeuroScan AI</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/messages.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/messages_pro.css') }}">
 </head>
 <body>
     <!-- Navigation Bar -->
@@ -76,91 +76,11 @@
 
             <!-- Conversations List -->
             <div class="conversations-list" id="conversationsList">
-                <!-- Conversation Item 1 -->
-                <div class="conversation-item active" data-id="1">
-                    <div class="conversation-avatar">
-                        <img src="https://i.pravatar.cc/150?img=1" alt="Dr. Sarah Martin">
-                        <span class="status-indicator online"></span>
-                    </div>
-                    <div class="conversation-content">
-                        <div class="conversation-header">
-                            <h4>Dr. Sarah Martin</h4>
-                            <span class="conversation-time">10:30</span>
-                        </div>
-                        <div class="conversation-preview">
-                            <p>Bonjour, j'ai examiné le scanner du patient...</p>
-                            <span class="unread-badge">2</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Conversation Item 2 -->
-                <div class="conversation-item" data-id="2">
-                    <div class="conversation-avatar">
-                        <img src="https://i.pravatar.cc/150?img=2" alt="Dr. Ahmed Benali">
-                        <span class="status-indicator away"></span>
-                    </div>
-                    <div class="conversation-content">
-                        <div class="conversation-header">
-                            <h4>Dr. Ahmed Benali</h4>
-                            <span class="conversation-time">Hier</span>
-                        </div>
-                        <div class="conversation-preview">
-                            <p>Merci pour votre avis sur le cas complexe...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Conversation Item 3 -->
-                <div class="conversation-item" data-id="3">
-                    <div class="conversation-avatar">
-                        <img src="https://i.pravatar.cc/150?img=3" alt="Dr. Marie Dubois">
-                        <span class="status-indicator offline"></span>
-                    </div>
-                    <div class="conversation-content">
-                        <div class="conversation-header">
-                            <h4>Dr. Marie Dubois</h4>
-                            <span class="conversation-time">15 Jan</span>
-                        </div>
-                        <div class="conversation-preview">
-                            <p>Pouvez-vous consulter cette IRM urgente?</p>
-                            <span class="unread-badge">1</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Conversation Item 4 -->
-                <div class="conversation-item" data-id="4">
-                    <div class="conversation-avatar">
-                        <img src="https://i.pravatar.cc/150?img=4" alt="Dr. Jean Dupont">
-                        <span class="status-indicator online"></span>
-                    </div>
-                    <div class="conversation-content">
-                        <div class="conversation-header">
-                            <h4>Dr. Jean Dupont</h4>
-                            <span class="conversation-time">14 Jan</span>
-                        </div>
-                        <div class="conversation-preview">
-                            <p>Les résultats sont très encourageants...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Conversation Item 5 -->
-                <div class="conversation-item" data-id="5">
-                    <div class="conversation-avatar">
-                        <img src="https://i.pravatar.cc/150?img=5" alt="Dr. Fatima El Amrani">
-                        <span class="status-indicator online"></span>
-                    </div>
-                    <div class="conversation-content">
-                        <div class="conversation-header">
-                            <h4>Dr. Fatima El Amrani</h4>
-                            <span class="conversation-time">13 Jan</span>
-                        </div>
-                        <div class="conversation-preview">
-                            <p>Réunion prévue pour demain à 14h...</p>
-                        </div>
-                    </div>
+                <!-- Les conversations seront chargées dynamiquement par JavaScript -->
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                    <h3>Chargement...</h3>
+                    <p>Chargement des conversations</p>
                 </div>
             </div>
         </aside>
@@ -169,122 +89,36 @@
         <main class="chat-area">
             <!-- Chat Header -->
             <div class="chat-header">
-                <div class="chat-user-info">
-                    <div class="chat-avatar">
-                        <img src="https://i.pravatar.cc/150?img=1" alt="Dr. Sarah Martin">
-                        <span class="status-indicator online"></span>
-                    </div>
-                    <div class="chat-user-details">
-                        <h3>Dr. Sarah Martin</h3>
-                        <p class="user-status">En ligne</p>
-                    </div>
-                </div>
-                <div class="chat-actions">
-                    <button class="btn-icon" title="Rechercher">
-                        <i class="fas fa-search"></i>
-                    </button>
-                    <button class="btn-icon" title="Appel vidéo">
-                        <i class="fas fa-video"></i>
-                    </button>
-                    <button class="btn-icon" title="Plus d'options">
-                        <i class="fas fa-ellipsis-v"></i>
-                    </button>
+                <div class="empty-state">
+                    <i class="fas fa-comments fa-2x"></i>
+                    <h3>Sélectionnez une conversation</h3>
+                    <p>Choisissez une conversation pour commencer</p>
                 </div>
             </div>
 
             <!-- Messages Container -->
             <div class="messages-area" id="messagesArea">
-                <!-- Date Divider -->
-                <div class="date-divider">
-                    <span>Aujourd'hui</span>
-                </div>
-
-                <!-- Received Message -->
-                <div class="message-wrapper received">
-                    <div class="message-avatar">
-                        <img src="https://i.pravatar.cc/150?img=1" alt="Dr. Sarah Martin">
-                    </div>
-                    <div class="message-content">
-                        <div class="message-bubble">
-                            <p>Bonjour, j'ai examiné le scanner du patient référé. Les résultats montrent une masse suspecte dans le lobe frontal gauche.</p>
-                        </div>
-                        <span class="message-time">10:25</span>
-                    </div>
-                </div>
-
-                <!-- Sent Message -->
-                <div class="message-wrapper sent">
-                    <div class="message-content">
-                        <div class="message-bubble">
-                            <p>Merci pour votre retour rapide. Avez-vous pu analyser les séquences T1 et T2?</p>
-                        </div>
-                        <span class="message-time">10:27 <i class="fas fa-check-double read"></i></span>
-                    </div>
-                </div>
-
-                <!-- Received Message with Image -->
-                <div class="message-wrapper received">
-                    <div class="message-avatar">
-                        <img src="https://i.pravatar.cc/150?img=1" alt="Dr. Sarah Martin">
-                    </div>
-                    <div class="message-content">
-                        <div class="message-bubble">
-                            <p>Oui, j'ai joint les images les plus pertinentes. Voici la séquence T1 avec contraste:</p>
-                            <div class="message-attachment">
-                                <i class="fas fa-image"></i>
-                                <div class="attachment-info">
-                                    <span class="attachment-name">scan_t1_contrast.jpg</span>
-                                    <span class="attachment-size">2.4 MB</span>
-                                </div>
-                                <button class="btn-download">
-                                    <i class="fas fa-download"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <span class="message-time">10:30</span>
-                    </div>
-                </div>
-
-                <!-- Sent Message -->
-                <div class="message-wrapper sent">
-                    <div class="message-content">
-                        <div class="message-bubble">
-                            <p>Parfait, je vais analyser cela. Je pense qu'une biopsie sera nécessaire.</p>
-                        </div>
-                        <span class="message-time">10:32 <i class="fas fa-check"></i></span>
-                    </div>
-                </div>
-
-                <!-- Typing Indicator -->
-                <div class="message-wrapper received typing-indicator" id="typingIndicator" style="display: none;">
-                    <div class="message-avatar">
-                        <img src="https://i.pravatar.cc/150?img=1" alt="Dr. Sarah Martin">
-                    </div>
-                    <div class="message-content">
-                        <div class="message-bubble">
-                            <div class="typing-dots">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="empty-messages">
+                    <i class="fas fa-comment-dots fa-3x"></i>
+                    <h3>Aucune conversation sélectionnée</h3>
+                    <p>Commencez une nouvelle conversation ou sélectionnez-en une existante</p>
                 </div>
             </div>
 
             <!-- Message Input -->
             <div class="message-input-container">
+                <button class="btn-icon" onclick="shareAnalysisModal()" title="Partager une analyse">
+                    <i class="fas fa-share-alt"></i>
+                </button>
                 <button class="btn-icon" title="Joindre un fichier">
                     <i class="fas fa-paperclip"></i>
-                </button>
-                <button class="btn-icon" title="Insérer une image">
-                    <i class="fas fa-image"></i>
                 </button>
                 <div class="message-input-wrapper">
                     <textarea 
                         id="messageInput" 
                         placeholder="Écrivez votre message..." 
-                        rows="1"></textarea>
+                        rows="1"
+                        disabled></textarea>
                     <button class="btn-emoji" title="Émojis">
                         <i class="fas fa-smile"></i>
                     </button>
@@ -294,125 +128,8 @@
                 </button>
             </div>
         </main>
-
-        <!-- Right Sidebar - Info Panel -->
-        <aside class="info-panel" id="infoPanel">
-            <div class="info-header">
-                <h3>Informations</h3>
-                <button class="btn-close-panel" id="btnClosePanel">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <div class="info-content">
-                <!-- User Profile -->
-                <div class="info-section">
-                    <div class="profile-card">
-                        <div class="profile-avatar">
-                            <img src="https://i.pravatar.cc/150?img=1" alt="Dr. Sarah Martin">
-                        </div>
-                        <h3>Dr. Sarah Martin</h3>
-                        <p class="profile-specialty">Neurochirurgie</p>
-                        <div class="profile-stats">
-                            <div class="stat">
-                                <i class="fas fa-hospital"></i>
-                                <span>CHU Mohammed VI</span>
-                            </div>
-                            <div class="stat">
-                                <i class="fas fa-envelope"></i>
-                                <span>s.martin@chu.ma</span>
-                            </div>
-                            <div class="stat">
-                                <i class="fas fa-phone"></i>
-                                <span>+212 5XX-XXXXXX</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="info-section">
-                    <h4>Actions rapides</h4>
-                    <div class="quick-actions">
-                        <button class="action-btn">
-                            <i class="fas fa-video"></i>
-                            <span>Appel vidéo</span>
-                        </button>
-                        <button class="action-btn">
-                            <i class="fas fa-user-plus"></i>
-                            <span>Ajouter au groupe</span>
-                        </button>
-                        <button class="action-btn">
-                            <i class="fas fa-star"></i>
-                            <span>Marquer important</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Shared Files -->
-                <div class="info-section">
-                    <h4>Fichiers partagés</h4>
-                    <div class="shared-files">
-                        <div class="file-item">
-                            <i class="fas fa-file-image"></i>
-                            <div class="file-details">
-                                <span class="file-name">scan_t1_contrast.jpg</span>
-                                <span class="file-date">Aujourd'hui</span>
-                            </div>
-                        </div>
-                        <div class="file-item">
-                            <i class="fas fa-file-pdf"></i>
-                            <div class="file-details">
-                                <span class="file-name">rapport_medical.pdf</span>
-                                <span class="file-date">Hier</span>
-                            </div>
-                        </div>
-                        <div class="file-item">
-                            <i class="fas fa-file-image"></i>
-                            <div class="file-details">
-                                <span class="file-name">irm_sequence_t2.jpg</span>
-                                <span class="file-date">15 Jan</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notifications -->
-                <div class="info-section">
-                    <h4>Notifications</h4>
-                    <div class="notification-toggle">
-                        <span>Notifications actives</span>
-                        <label class="switch">
-                            <input type="checkbox" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </aside>
     </div>
 
-    <!-- New Message Modal -->
-    <div class="modal" id="newMessageModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Nouveau message</h3>
-                <button class="btn-close-modal" id="btnCloseModal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Destinataire</label>
-                    <input type="text" placeholder="Rechercher un médecin..." id="searchDoctor">
-                    <div class="doctors-list" id="doctorsList">
-                        <!-- Doctor suggestions will appear here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="{{ url_for('static', filename='js/messages.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/messages_pro.js') }}"></script>
 </body>
 </html>

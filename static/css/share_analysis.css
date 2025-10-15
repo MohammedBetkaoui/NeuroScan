@@ -1,0 +1,517 @@
+/* ========================================
+   NeuroScan AI - Partage d'Analyses
+   Styles pour le module de partage
+   ======================================== */
+
+/* Bouton de partage */
+.btn-share-analysis {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    background: linear-gradient(135deg, #4F46E5, #6366F1);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+}
+
+.btn-share-analysis:hover {
+    background: linear-gradient(135deg, #4338CA, #4F46E5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+}
+
+.btn-share-analysis:active {
+    transform: translateY(0);
+}
+
+.btn-share-analysis i {
+    font-size: 1rem;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 1rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal de partage */
+.share-modal {
+    background: white;
+    border-radius: 16px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.share-modal-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #F9FAFB, #FFFFFF);
+}
+
+.share-modal-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0;
+}
+
+.share-modal-header h3 i {
+    color: #4F46E5;
+    font-size: 1.5rem;
+}
+
+.btn-close-share-modal {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: #6B7280;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.btn-close-share-modal:hover {
+    background: #F3F4F6;
+    color: #111827;
+}
+
+.share-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+}
+
+/* Info de l'analyse */
+.analysis-info-share {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #EEF2FF, #F9FAFB);
+    border-radius: 12px;
+    border-left: 4px solid #4F46E5;
+    margin-bottom: 1.5rem;
+}
+
+.analysis-info-share i {
+    font-size: 2rem;
+    color: #4F46E5;
+}
+
+.analysis-info-share strong {
+    display: block;
+    font-size: 0.875rem;
+    color: #6B7280;
+    margin-bottom: 0.25rem;
+}
+
+.analysis-info-share p {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* Formulaire */
+.form-group-share {
+    margin-bottom: 1.5rem;
+}
+
+.form-group-share label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.form-group-share label i {
+    color: #4F46E5;
+}
+
+.form-control-share {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #E5E7EB;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    color: #111827;
+    background: #F9FAFB;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.form-control-share:focus {
+    outline: none;
+    border-color: #4F46E5;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-control-share::placeholder {
+    color: #9CA3AF;
+}
+
+textarea.form-control-share {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Liste des médecins */
+.doctors-list-share {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
+    background: white;
+    margin-bottom: 1.5rem;
+}
+
+.doctor-item-share {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.doctor-item-share:last-child {
+    border-bottom: none;
+}
+
+.doctor-item-share:hover {
+    background: #F9FAFB;
+}
+
+.doctor-item-share.selected {
+    background: linear-gradient(135deg, #EEF2FF, #F3F4F6);
+    border-color: #4F46E5;
+}
+
+.doctor-avatar-share {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4F46E5, #6366F1);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.doctor-info-share {
+    flex: 1;
+}
+
+.doctor-info-share h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 0.25rem 0;
+}
+
+.doctor-info-share p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #6B7280;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.doctor-info-share p i {
+    color: #4F46E5;
+    font-size: 0.875rem;
+}
+
+.doctor-info-share .separator {
+    color: #D1D5DB;
+}
+
+.doctor-select-icon {
+    color: #9CA3AF;
+    font-size: 1.25rem;
+    transition: all 0.2s;
+}
+
+.doctor-item-share:hover .doctor-select-icon {
+    color: #4F46E5;
+    transform: translateX(4px);
+}
+
+.empty-doctors-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    color: #9CA3AF;
+    text-align: center;
+}
+
+.empty-doctors-list i {
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-doctors-list p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* Footer du modal */
+.share-modal-footer {
+    padding: 1.25rem 2rem;
+    border-top: 1px solid #E5E7EB;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    background: #F9FAFB;
+}
+
+.btn-cancel-share {
+    padding: 0.75rem 1.5rem;
+    background: white;
+    color: #6B7280;
+    border: 2px solid #E5E7EB;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cancel-share:hover {
+    background: #F3F4F6;
+    border-color: #D1D5DB;
+    color: #374151;
+}
+
+.btn-share-submit {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #4F46E5, #6366F1);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+}
+
+.btn-share-submit:hover:not(:disabled) {
+    background: linear-gradient(135deg, #4338CA, #4F46E5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+}
+
+.btn-share-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-share-submit i {
+    font-size: 1rem;
+}
+
+/* Toast de notification */
+.share-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    z-index: 10000;
+    max-width: 400px;
+    border-left: 4px solid #4F46E5;
+}
+
+.share-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.share-toast i {
+    font-size: 1.5rem;
+}
+
+.share-toast-success {
+    border-left-color: #10B981;
+}
+
+.share-toast-success i {
+    color: #10B981;
+}
+
+.share-toast-error {
+    border-left-color: #EF4444;
+}
+
+.share-toast-error i {
+    color: #EF4444;
+}
+
+.share-toast-warning {
+    border-left-color: #F59E0B;
+}
+
+.share-toast-warning i {
+    color: #F59E0B;
+}
+
+.share-toast-info {
+    border-left-color: #3B82F6;
+}
+
+.share-toast-info i {
+    color: #3B82F6;
+}
+
+.share-toast span {
+    flex: 1;
+    font-size: 0.95rem;
+    color: #111827;
+    font-weight: 500;
+}
+
+/* Scrollbar personnalisé */
+.doctors-list-share::-webkit-scrollbar,
+.share-modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.doctors-list-share::-webkit-scrollbar-track,
+.share-modal-body::-webkit-scrollbar-track {
+    background: #F3F4F6;
+}
+
+.doctors-list-share::-webkit-scrollbar-thumb,
+.share-modal-body::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 4px;
+}
+
+.doctors-list-share::-webkit-scrollbar-thumb:hover,
+.share-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .share-modal {
+        max-width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+    
+    .share-modal-header,
+    .share-modal-body,
+    .share-modal-footer {
+        padding: 1.25rem;
+    }
+    
+    .btn-share-analysis span {
+        display: none;
+    }
+    
+    .btn-share-analysis {
+        padding: 0.625rem 1rem;
+    }
+    
+    .share-toast {
+        left: 1rem;
+        right: 1rem;
+        max-width: none;
+    }
+}
+
+/* Animation de chargement */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}

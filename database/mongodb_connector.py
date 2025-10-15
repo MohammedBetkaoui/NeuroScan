@@ -151,6 +151,42 @@ class MongoDBConnector:
             
             chat_messages = self._db.chat_messages
             chat_messages.create_index([('conversation_id', ASCENDING)])
+            chat_messages.create_index([('created_at', DESCENDING)])
+            
+            # ========================================
+            # MESSAGERIE ENTRE MÉDECINS - Collections
+            # ========================================
+            
+            # Collection doctor_conversations (conversations entre médecins)
+            if 'doctor_conversations' not in self._db.list_collection_names():
+                self._db.create_collection('doctor_conversations')
+            
+            doctor_conversations = self._db.doctor_conversations
+            doctor_conversations.create_index([('participants', ASCENDING)])
+            doctor_conversations.create_index([('updated_at', DESCENDING)])
+            # Index composé pour éviter les doublons de conversations
+            doctor_conversations.create_index([('participants', ASCENDING)], unique=False)
+            
+            # Collection doctor_messages (messages entre médecins)
+            if 'doctor_messages' not in self._db.list_collection_names():
+                self._db.create_collection('doctor_messages')
+            
+            doctor_messages = self._db.doctor_messages
+            doctor_messages.create_index([('conversation_id', ASCENDING)])
+            doctor_messages.create_index([('sender_id', ASCENDING)])
+            doctor_messages.create_index([('created_at', DESCENDING)])
+            doctor_messages.create_index([('message_type', ASCENDING)])
+            doctor_messages.create_index([('is_read', ASCENDING)])
+            # Index pour les analyses partagées
+            doctor_messages.create_index([('analysis_id', ASCENDING)])
+            
+            print("✅ Collections MongoDB initialisées avec index")
+            
+        except Exception as e:
+            print(f"❌ Erreur lors de l'initialisation des collections: {e}")
+            
+            chat_messages = self._db.chat_messages
+            chat_messages.create_index([('conversation_id', ASCENDING)])
             chat_messages.create_index([('timestamp', ASCENDING)])
             
             # Collection chat_attachments

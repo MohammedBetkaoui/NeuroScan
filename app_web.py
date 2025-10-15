@@ -456,6 +456,676 @@ def messages():
     
     return render_template('messages.html', doctor=doctor)
 
+# ========================================
+# MESSAGERIE ENTRE MÉDECINS - API Routes
+# ========================================
+
+@app.route('/api/messages/doctors')
+@login_required
+def get_doctors_list():
+    """Récupérer la liste des médecins pour la messagerie"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        # Récupérer tous les médecins sauf le médecin connecté
+        doctors = list(db.doctors.find(
+            {'_id': {'$ne': ObjectId(doctor['id'])}},
+            {'password': 0}  # Exclure le mot de passe
+        ).sort('last_name', 1))
+        
+        # Formater les données
+        doctors_list = []
+        for doc in doctors:
+            first_name = doc.get('first_name', '')
+            last_name = doc.get('last_name', '')
+            full_name = f"{first_name} {last_name}".strip() or doc.get('full_name', 'Médecin')
+            
+            doctors_list.append({
+                'id': str(doc['_id']),
+                'first_name': first_name,
+                'last_name': last_name,
+                'full_name': full_name,
+                'email': doc.get('email', ''),
+                'specialty': doc.get('specialty', 'Médecin'),
+                'hospital': doc.get('hospital', ''),
+                'is_online': False  # À implémenter avec WebSocket si nécessaire
+            })
+        
+        return jsonify({'success': True, 'doctors': doctors_list})
+    
+    except Exception as e:
+        print(f"Erreur récupération liste médecins: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/messages/conversations')
+@login_required
+def get_message_conversations():
+    """Récupérer les conversations de messagerie du médecin"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        doctor_id = doctor['id']
+        
+        # Récupérer toutes les conversations où le médecin est participant
+        conversations = list(db.doctor_conversations.aggregate([
+            {
+                '$match': {
+                    'participants': ObjectId(doctor_id)
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'doctor_messages',
+                    'localField': '_id',
+                    'foreignField': 'conversation_id',
+                    'as': 'messages'
+                }
+            },
+            {
+                '$addFields': {
+                    'last_message': {'$arrayElemAt': ['$messages', -1]},
+                    'unread_count': {
+                        '$size': {
+                            '$filter': {
+                                'input': '$messages',
+                                'as': 'msg',
+                                'cond': {
+                                    '$and': [
+                                        {'$ne': ['$$msg.sender_id', ObjectId(doctor_id)]},
+                                        {'$eq': ['$$msg.is_read', False]}
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                '$sort': {'last_message.created_at': -1}
+            }
+        ]))
+        
+        # Formater les données avec les informations des autres participants
+        formatted_conversations = []
+        for conv in conversations:
+            # Trouver l'autre participant
+            other_participant_id = None
+            for participant_id in conv.get('participants', []):
+                if str(participant_id) != doctor_id:
+                    other_participant_id = participant_id
+                    break
+            
+            if other_participant_id:
+                other_doctor = db.doctors.find_one(
+                    {'_id': other_participant_id},
+                    {'password': 0}
+                )
+                
+                if other_doctor:
+                    first_name = other_doctor.get('first_name', '')
+                    last_name = other_doctor.get('last_name', '')
+                    full_name = f"{first_name} {last_name}".strip() or other_doctor.get('full_name', 'Médecin')
+                    
+                    last_msg = conv.get('last_message', {})
+                    formatted_conversations.append({
+                        'id': str(conv['_id']),
+                        'other_doctor': {
+                            'id': str(other_doctor['_id']),
+                            'first_name': first_name,
+                            'last_name': last_name,
+                            'full_name': full_name,
+                            'specialty': other_doctor.get('specialty', 'Médecin'),
+                            'hospital': other_doctor.get('hospital', '')
+                        },
+                        'last_message': {
+                            'content': last_msg.get('content', ''),
+                            'created_at': last_msg.get('created_at').isoformat() if last_msg.get('created_at') else None,
+                            'is_from_me': str(last_msg.get('sender_id', '')) == doctor_id
+                        } if last_msg else None,
+                        'unread_count': conv.get('unread_count', 0),
+                        'created_at': conv.get('created_at').isoformat() if conv.get('created_at') else None
+                    })
+        
+        return jsonify({'success': True, 'conversations': formatted_conversations})
+    
+    except Exception as e:
+        print(f"Erreur récupération conversations: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/messages/conversations', methods=['POST'])
+@login_required
+def create_message_conversation():
+    """Créer une nouvelle conversation avec un médecin"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        data = request.get_json()
+        recipient_id = data.get('recipient_id')
+        
+        if not recipient_id:
+            return jsonify({'success': False, 'error': 'ID du destinataire requis'}), 400
+        
+        doctor_id = doctor['id']
+        
+        # Vérifier si une conversation existe déjà
+        existing_conv = db.doctor_conversations.find_one({
+            'participants': {
+                '$all': [ObjectId(doctor_id), ObjectId(recipient_id)]
+            }
+        })
+        
+        if existing_conv:
+            return jsonify({
+                'success': True,
+                'conversation_id': str(existing_conv['_id']),
+                'exists': True
+            })
+        
+        # Créer une nouvelle conversation
+        conversation_doc = {
+            'participants': [ObjectId(doctor_id), ObjectId(recipient_id)],
+            'created_at': datetime.now(),
+            'updated_at': datetime.now()
+        }
+        
+        result = db.doctor_conversations.insert_one(conversation_doc)
+        
+        return jsonify({
+            'success': True,
+            'conversation_id': str(result.inserted_id),
+            'exists': False
+        })
+    
+    except Exception as e:
+        print(f"Erreur création conversation: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/messages/conversations/<conversation_id>/messages')
+@login_required
+def get_conversation_messages(conversation_id):
+    """Récupérer les messages d'une conversation"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        doctor_id = doctor['id']
+        
+        # Vérifier que le médecin fait partie de la conversation
+        conversation = db.doctor_conversations.find_one({
+            '_id': ObjectId(conversation_id),
+            'participants': ObjectId(doctor_id)
+        })
+        
+        if not conversation:
+            return jsonify({'success': False, 'error': 'Conversation non trouvée'}), 404
+        
+        # Récupérer les messages
+        messages = list(db.doctor_messages.find(
+            {'conversation_id': ObjectId(conversation_id)}
+        ).sort('created_at', 1))
+        
+        # Formater les messages
+        formatted_messages = []
+        for msg in messages:
+            sender = db.doctors.find_one(
+                {'_id': msg['sender_id']},
+                {'password': 0}
+            )
+            
+            first_name = sender.get('first_name', '') if sender else ''
+            last_name = sender.get('last_name', '') if sender else ''
+            full_name = f"{first_name} {last_name}".strip() if sender else ''
+            if not full_name and sender:
+                full_name = sender.get('full_name', 'Médecin')
+            elif not full_name:
+                full_name = 'Médecin'
+            
+            message_data = {
+                'id': str(msg['_id']),
+                'content': msg.get('content', ''),
+                'message_type': msg.get('message_type', 'text'),
+                'is_from_me': str(msg['sender_id']) == doctor_id,
+                'sender': {
+                    'id': str(sender['_id']) if sender else None,
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'full_name': full_name,
+                    'specialty': sender.get('specialty', '') if sender else ''
+                },
+                'is_read': msg.get('is_read', False),
+                'created_at': msg.get('created_at').isoformat() if msg.get('created_at') else None
+            }
+            
+            # Ajouter les données spécifiques selon le type
+            if msg.get('message_type') == 'analysis_share':
+                message_data['analysis_id'] = str(msg.get('analysis_id', ''))
+                message_data['analysis_data'] = msg.get('analysis_data', {})
+            
+            formatted_messages.append(message_data)
+        
+        # Marquer les messages comme lus
+        db.doctor_messages.update_many(
+            {
+                'conversation_id': ObjectId(conversation_id),
+                'sender_id': {'$ne': ObjectId(doctor_id)},
+                'is_read': False
+            },
+            {'$set': {'is_read': True, 'read_at': datetime.now()}}
+        )
+        
+        return jsonify({'success': True, 'messages': formatted_messages})
+    
+    except Exception as e:
+        print(f"Erreur récupération messages: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/messages/send', methods=['POST'])
+@login_required
+def send_message():
+    """Envoyer un message texte"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        data = request.get_json()
+        conversation_id = data.get('conversation_id')
+        content = data.get('content', '').strip()
+        
+        if not conversation_id or not content:
+            return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+        
+        doctor_id = doctor['id']
+        
+        # Vérifier que le médecin fait partie de la conversation
+        conversation = db.doctor_conversations.find_one({
+            '_id': ObjectId(conversation_id),
+            'participants': ObjectId(doctor_id)
+        })
+        
+        if not conversation:
+            return jsonify({'success': False, 'error': 'Conversation non trouvée'}), 404
+        
+        # Créer le message
+        message_doc = {
+            'conversation_id': ObjectId(conversation_id),
+            'sender_id': ObjectId(doctor_id),
+            'content': content,
+            'message_type': 'text',
+            'is_read': False,
+            'created_at': datetime.now()
+        }
+        
+        result = db.doctor_messages.insert_one(message_doc)
+        
+        # Mettre à jour la conversation
+        db.doctor_conversations.update_one(
+            {'_id': ObjectId(conversation_id)},
+            {'$set': {'updated_at': datetime.now()}}
+        )
+        
+        return jsonify({
+            'success': True,
+            'message_id': str(result.inserted_id),
+            'created_at': message_doc['created_at'].isoformat()
+        })
+    
+    except Exception as e:
+        print(f"Erreur envoi message: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/messages/share-analysis', methods=['POST'])
+@login_required
+def share_analysis_with_doctor():
+    """Partager une analyse avec un autre médecin"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        data = request.get_json()
+        conversation_id = data.get('conversation_id')
+        analysis_id = data.get('analysis_id')
+        message_content = data.get('message', '').strip()
+        
+        if not conversation_id or not analysis_id:
+            return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+        
+        doctor_id = doctor['id']
+        
+        # Vérifier que le médecin fait partie de la conversation
+        conversation = db.doctor_conversations.find_one({
+            '_id': ObjectId(conversation_id),
+            'participants': ObjectId(doctor_id)
+        })
+        
+        if not conversation:
+            return jsonify({'success': False, 'error': 'Conversation non trouvée'}), 404
+        
+        # Récupérer l'analyse
+        analysis = db.analyses.find_one({'_id': ObjectId(analysis_id)})
+        
+        if not analysis:
+            return jsonify({'success': False, 'error': 'Analyse non trouvée'}), 404
+        
+        # Vérifier que l'analyse appartient au médecin
+        if str(analysis.get('doctor_id', '')) != doctor_id:
+            return jsonify({'success': False, 'error': 'Vous ne pouvez partager que vos propres analyses'}), 403
+        
+        # Préparer les données de l'analyse à partager
+        analysis_data = {
+            'patient_name': analysis.get('patient_name', 'Patient inconnu'),
+            'exam_date': analysis.get('exam_date', ''),
+            'predicted_label': analysis.get('predicted_label', ''),
+            'confidence': analysis.get('confidence', 0),
+            'probabilities': analysis.get('probabilities', {}),
+            'recommendations': analysis.get('recommendations', []),
+            'image_filename': analysis.get('image_filename', '')
+        }
+        
+        # Créer le message de partage
+        content = message_content or f"Partage d'analyse pour {analysis_data['patient_name']}"
+        
+        message_doc = {
+            'conversation_id': ObjectId(conversation_id),
+            'sender_id': ObjectId(doctor_id),
+            'content': content,
+            'message_type': 'analysis_share',
+            'analysis_id': ObjectId(analysis_id),
+            'analysis_data': analysis_data,
+            'is_read': False,
+            'created_at': datetime.now()
+        }
+        
+        result = db.doctor_messages.insert_one(message_doc)
+        
+        # Mettre à jour la conversation
+        db.doctor_conversations.update_one(
+            {'_id': ObjectId(conversation_id)},
+            {'$set': {'updated_at': datetime.now()}}
+        )
+        
+        # Créer une notification pour le destinataire
+        recipient_id = None
+        for participant_id in conversation.get('participants', []):
+            if str(participant_id) != doctor_id:
+                recipient_id = participant_id
+                break
+        
+        if recipient_id:
+            notification_doc = {
+                'doctor_id': recipient_id,
+                'type': 'analysis_shared',
+                'title': 'Nouvelle analyse partagée',
+                'message': f"Dr. {doctor.get('full_name', 'Un médecin')} a partagé une analyse avec vous",
+                'analysis_id': ObjectId(analysis_id),
+                'sender_id': ObjectId(doctor_id),
+                'is_read': False,
+                'created_at': datetime.now()
+            }
+            db.notifications.insert_one(notification_doc)
+        
+        return jsonify({
+            'success': True,
+            'message_id': str(result.inserted_id),
+            'created_at': message_doc['created_at'].isoformat()
+        })
+    
+    except Exception as e:
+        print(f"Erreur partage analyse: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/messages/shared-analyses')
+@login_required
+def get_shared_analyses():
+    """Récupérer toutes les analyses partagées avec le médecin"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        doctor_id = doctor['id']
+        
+        # Récupérer toutes les conversations du médecin
+        conversations = list(db.doctor_conversations.find({
+            'participants': ObjectId(doctor_id)
+        }))
+        
+        conversation_ids = [conv['_id'] for conv in conversations]
+        
+        # Récupérer tous les messages de type analysis_share reçus
+        shared_analyses = list(db.doctor_messages.aggregate([
+            {
+                '$match': {
+                    'conversation_id': {'$in': conversation_ids},
+                    'message_type': 'analysis_share',
+                    'sender_id': {'$ne': ObjectId(doctor_id)}
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'doctors',
+                    'localField': 'sender_id',
+                    'foreignField': '_id',
+                    'as': 'sender'
+                }
+            },
+            {
+                '$unwind': '$sender'
+            },
+            {
+                '$sort': {'created_at': -1}
+            }
+        ]))
+        
+        # Formater les données
+        formatted_analyses = []
+        for item in shared_analyses:
+            sender = item['sender']
+            first_name = sender.get('first_name', '')
+            last_name = sender.get('last_name', '')
+            full_name = f"{first_name} {last_name}".strip() or sender.get('full_name', 'Médecin')
+            
+            formatted_analyses.append({
+                'message_id': str(item['_id']),
+                'analysis_id': str(item.get('analysis_id', '')),
+                'analysis_data': item.get('analysis_data', {}),
+                'message': item.get('content', ''),
+                'sender': {
+                    'id': str(sender['_id']),
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'full_name': full_name,
+                    'specialty': sender.get('specialty', ''),
+                    'hospital': sender.get('hospital', '')
+                },
+                'is_read': item.get('is_read', False),
+                'shared_at': item.get('created_at').isoformat() if item.get('created_at') else None
+            })
+        
+        return jsonify({'success': True, 'shared_analyses': formatted_analyses})
+    
+    except Exception as e:
+        print(f"Erreur récupération analyses partagées: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/messages/analysis/<analysis_id>')
+@login_required
+def get_shared_analysis_details(analysis_id):
+    """Obtenir les détails complets d'une analyse partagée"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        # Récupérer l'analyse
+        analysis = db.analyses.find_one({'_id': ObjectId(analysis_id)})
+        
+        if not analysis:
+            return jsonify({'success': False, 'error': 'Analyse non trouvée'}), 404
+        
+        # Formater les données complètes
+        analysis_details = {
+            'id': str(analysis['_id']),
+            'patient_name': analysis.get('patient_name', ''),
+            'patient_id': analysis.get('patient_id', ''),
+            'exam_date': analysis.get('exam_date', ''),
+            'predicted_label': analysis.get('predicted_label', ''),
+            'confidence': analysis.get('confidence', 0),
+            'probabilities': analysis.get('probabilities', {}),
+            'recommendations': analysis.get('recommendations', []),
+            'description': analysis.get('description', ''),
+            'image_filename': analysis.get('image_filename', ''),
+            'processing_time': analysis.get('processing_time', 0),
+            'created_at': analysis.get('timestamp', ''),
+            'doctor_id': str(analysis.get('doctor_id', ''))
+        }
+        
+        # Récupérer les infos du médecin qui a créé l'analyse
+        if analysis.get('doctor_id'):
+            owner_doctor = db.doctors.find_one(
+                {'_id': analysis.get('doctor_id')},
+                {'password': 0}
+            )
+            if owner_doctor:
+                first_name = owner_doctor.get('first_name', '')
+                last_name = owner_doctor.get('last_name', '')
+                full_name = f"{first_name} {last_name}".strip() or owner_doctor.get('full_name', 'Médecin')
+                
+                analysis_details['owner_doctor'] = {
+                    'id': str(owner_doctor['_id']),
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'full_name': full_name,
+                    'specialty': owner_doctor.get('specialty', ''),
+                    'hospital': owner_doctor.get('hospital', '')
+                }
+        
+        return jsonify({'success': True, 'analysis': analysis_details})
+    
+    except Exception as e:
+        print(f"Erreur récupération détails analyse: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ========================================
+# FIN MESSAGERIE ENTRE MÉDECINS
+# ========================================
+
+@app.route('/api/messages/quick-share-analysis', methods=['POST'])
+@login_required
+def quick_share_analysis():
+    """Partager rapidement une analyse avec un médecin (crée la conversation si nécessaire)"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        data = request.get_json()
+        recipient_id = data.get('recipient_id')
+        analysis_id = data.get('analysis_id')
+        message_content = data.get('message', '').strip()
+        
+        if not recipient_id or not analysis_id:
+            return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+        
+        doctor_id = doctor['id']
+        
+        # Vérifier que l'analyse existe et appartient au médecin
+        analysis = db.analyses.find_one({'_id': ObjectId(analysis_id)})
+        
+        if not analysis:
+            return jsonify({'success': False, 'error': 'Analyse non trouvée'}), 404
+        
+        if str(analysis.get('doctor_id', '')) != doctor_id:
+            return jsonify({'success': False, 'error': 'Vous ne pouvez partager que vos propres analyses'}), 403
+        
+        # Trouver ou créer la conversation
+        conversation = db.doctor_conversations.find_one({
+            'participants': {
+                '$all': [ObjectId(doctor_id), ObjectId(recipient_id)]
+            }
+        })
+        
+        if not conversation:
+            # Créer une nouvelle conversation
+            conversation_doc = {
+                'participants': [ObjectId(doctor_id), ObjectId(recipient_id)],
+                'created_at': datetime.now(),
+                'updated_at': datetime.now()
+            }
+            result = db.doctor_conversations.insert_one(conversation_doc)
+            conversation_id = result.inserted_id
+        else:
+            conversation_id = conversation['_id']
+        
+        # Préparer les données de l'analyse à partager
+        analysis_data = {
+            'patient_name': analysis.get('patient_name', 'Patient inconnu'),
+            'exam_date': analysis.get('exam_date', ''),
+            'predicted_label': analysis.get('predicted_label', ''),
+            'confidence': analysis.get('confidence', 0),
+            'probabilities': analysis.get('probabilities', {}),
+            'recommendations': analysis.get('recommendations', []),
+            'image_filename': analysis.get('image_filename', '')
+        }
+        
+        # Créer le message de partage
+        content = message_content or f"Partage d'analyse pour {analysis_data['patient_name']}"
+        
+        message_doc = {
+            'conversation_id': ObjectId(conversation_id),
+            'sender_id': ObjectId(doctor_id),
+            'content': content,
+            'message_type': 'analysis_share',
+            'analysis_id': ObjectId(analysis_id),
+            'analysis_data': analysis_data,
+            'is_read': False,
+            'created_at': datetime.now()
+        }
+        
+        message_result = db.doctor_messages.insert_one(message_doc)
+        
+        # Mettre à jour la conversation
+        db.doctor_conversations.update_one(
+            {'_id': ObjectId(conversation_id)},
+            {'$set': {'updated_at': datetime.now()}}
+        )
+        
+        # Créer une notification pour le destinataire
+        recipient = db.doctors.find_one({'_id': ObjectId(recipient_id)})
+        
+        notification_doc = {
+            'doctor_id': ObjectId(recipient_id),
+            'type': 'analysis_shared',
+            'title': 'Nouvelle analyse partagée',
+            'message': f"Dr. {doctor.get('first_name', '')} {doctor.get('last_name', '')} a partagé une analyse avec vous",
+            'analysis_id': ObjectId(analysis_id),
+            'sender_id': ObjectId(doctor_id),
+            'conversation_id': ObjectId(conversation_id),
+            'is_read': False,
+            'created_at': datetime.now()
+        }
+        db.notifications.insert_one(notification_doc)
+        
+        return jsonify({
+            'success': True,
+            'message_id': str(message_result.inserted_id),
+            'conversation_id': str(conversation_id),
+            'recipient_name': f"{recipient.get('first_name', '')} {recipient.get('last_name', '')}".strip() if recipient else 'Médecin',
+            'created_at': message_doc['created_at'].isoformat()
+        })
+    
+    except Exception as e:
+        print(f"Erreur partage rapide analyse: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/doctor/stats')
 @login_required
 def get_doctor_stats_api():

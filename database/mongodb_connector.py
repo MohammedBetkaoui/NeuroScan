@@ -210,7 +210,7 @@ class MongoDBConnector:
     def get_collection(self, collection_name):
         """Obtenir une collection spécifique"""
         db = self.get_db()
-        return db[collection_name] if db else None
+        return db[collection_name] if db is not None else None
     
     def close(self):
         """Fermer la connexion MongoDB"""

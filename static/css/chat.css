@@ -1067,13 +1067,8 @@
             --bg-secondary: #1e293b;
             --bg-tertiary: #334155;
             --text-primary: #f1f5f9;
-<<<<<<< HEAD
-            --text-secondary: #cbd5e1;
-            --text-tertiary: #94a3b8;
-=======
             --text-secondary: #ffffff;
             --text-tertiary: #ffffff;
->>>>>>> origin/main
             --border-primary: #334155;
             --border-secondary: #475569;
             --accent-medical: #10b981;
@@ -1082,12 +1077,9 @@
             --shadow-medium: rgba(0, 0, 0, 0.3);
             --shadow-dark: rgba(0, 0, 0, 0.6);
         }
-<<<<<<< HEAD
-=======
         .h3{
             color:#111827;
         }
->>>>>>> origin/main
 
         /* Application des variables CSS */
         body {
@@ -1649,35 +1641,6 @@
 
         /* ===== SECTION PROFIL MÉDECIN PROFESSIONNELLE ===== */
         
-<<<<<<< HEAD
-        /* Styles pour la nouvelle section profil en mode sombre */
-        [data-theme="dark"] .sidebar .relative.overflow-hidden {
-            border-color: var(--border-primary);
-        }
-
-        [data-theme="dark"] .sidebar .bg-gradient-to-br.from-primary-50 {
-            background: linear-gradient(135deg, rgba(14, 165, 233, 0.05), var(--bg-secondary), rgba(16, 185, 129, 0.05)) !important;
-        }
-
-        [data-theme="dark"] .sidebar .bg-gradient-to-t.from-gray-100\/30 {
-            background: linear-gradient(to top, rgba(51, 65, 85, 0.3), transparent) !important;
-        }
-
-        [data-theme="dark"] .sidebar .bg-white\/90 {
-            background: rgba(30, 41, 59, 0.95) !important;
-            border-color: var(--border-primary) !important;
-            backdrop-filter: blur(10px);
-        }
-
-        [data-theme="dark"] .sidebar .bg-gradient-to-br.from-primary-500 {
-            background: linear-gradient(135deg, var(--accent-primary), #0284c7) !important;
-        }
-
-        [data-theme="dark"] .sidebar .bg-medical-500 {
-            background-color: var(--accent-medical) !important;
-        }
-
-=======
         /* Styles pour la nouvelle section profil en mode sombre - VERSION SIMPLIFIÉE */
         
         /* Arrière-plan de la section profil */
@@ -1755,7 +1718,6 @@
         }
 
         /* Styles génériques pour éviter les conflits */
->>>>>>> origin/main
         [data-theme="dark"] .sidebar .text-gray-900 {
             color: var(--text-primary) !important;
         }
@@ -1768,13 +1730,6 @@
             color: var(--accent-medical) !important;
         }
 
-<<<<<<< HEAD
-        [data-theme="dark"] .sidebar .text-gray-600 {
-            color: var(--text-secondary) !important;
-        }
-
-=======
->>>>>>> origin/main
         [data-theme="dark"] .sidebar .text-primary-500 {
             color: var(--accent-primary) !important;
         }
@@ -1807,22 +1762,6 @@
             background-color: rgba(16, 185, 129, 0.1) !important;
         }
 
-<<<<<<< HEAD
-        [data-theme="dark"] .sidebar .hover\:bg-primary-50:hover {
-            background-color: rgba(14, 165, 233, 0.1) !important;
-        }
-
-        [data-theme="dark"] .sidebar .hover\:text-primary-600:hover {
-            color: var(--accent-primary) !important;
-        }
-
-        [data-theme="dark"] .sidebar .hover\:bg-medical-50:hover {
-            background-color: rgba(16, 185, 129, 0.1) !important;
-        }
-
-        [data-theme="dark"] .sidebar .hover\:text-medical-600:hover {
-            color: var(--accent-medical) !important;
-=======
         [data-theme="dark"] .sidebar .hover\:text-primary-600:hover {
             color: #38bdf8 !important;
         }
@@ -1843,7 +1782,6 @@
 
         [data-theme="dark"] .sidebar .w-1\.5.h-1\.5.bg-green-500 {
             animation: statusGlow 2s ease-in-out infinite;
->>>>>>> origin/main
         }
 
         /* Animation spéciale pour le profil médecin */

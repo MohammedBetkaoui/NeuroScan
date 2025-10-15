@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory, Response, session, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, send_from_directory, Response, session, redirect, url_for, flash, send_file
+from flask_socketio import SocketIO, emit, join_room, leave_room, rooms
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -32,6 +33,9 @@ from database.mongodb_helpers import (
 )
 from bson import ObjectId
 
+# File Manager import
+from file_manager import get_file_manager
+
 # Charger les variables d'environnement depuis le fichier .env
 load_dotenv()
 
@@ -53,6 +57,13 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = 'uploads'
 # Charger la clé secrète depuis .env ou utiliser une valeur par défaut
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'neuroscan_secret_key_2024_medical_auth')
+
+# Initialiser SocketIO pour la messagerie en temps réel
+socketio = SocketIO(app, 
+                    cors_allowed_origins="*", 
+                    async_mode='threading',  # Threading pour compatibilité Windows
+                    logger=True,
+                    engineio_logger=True)
 
 # Créer le dossier uploads s'il n'existe pas
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -703,6 +714,27 @@ def get_conversation_messages(conversation_id):
                 'created_at': msg.get('created_at').isoformat() if msg.get('created_at') else None
             }
             
+            # Ajouter les fichiers attachés
+            if msg.get('file_ids'):
+                files_collection = get_collection('message_files')
+                attached_files = list(files_collection.find({
+                    '_id': {'$in': [ObjectId(fid) for fid in msg['file_ids']]},
+                    'is_deleted': False
+                }))
+                
+                message_data['files'] = []
+                for file_doc in attached_files:
+                    message_data['files'].append({
+                        'id': str(file_doc['_id']),
+                        '_id': str(file_doc['_id']),
+                        'original_filename': file_doc.get('original_filename', ''),
+                        'file_size': file_doc.get('file_size', 0),
+                        'file_size_formatted': file_doc.get('file_size_formatted', '0 B'),
+                        'file_extension': file_doc.get('file_extension', ''),
+                        'file_category': file_doc.get('file_category', ''),
+                        'mime_type': file_doc.get('mime_type', 'application/octet-stream')
+                    })
+            
             # Ajouter les données spécifiques selon le type
             if msg.get('message_type') == 'analysis_share':
                 message_data['analysis_id'] = str(msg.get('analysis_id', ''))
@@ -763,6 +795,11 @@ def send_message():
             'created_at': datetime.now()
         }
         
+        # Ajouter les IDs de fichiers si présents
+        file_ids = data.get('file_ids', [])
+        if file_ids:
+            message_doc['file_ids'] = file_ids
+        
         result = db.doctor_messages.insert_one(message_doc)
         
         # Mettre à jour la conversation
@@ -771,10 +808,61 @@ def send_message():
             {'$set': {'updated_at': datetime.now()}}
         )
         
+        # Si des fichiers sont attachés, les retourner aussi
+        files_data = []
+        if file_ids:
+            files_collection = get_collection('message_files')
+            attached_files = list(files_collection.find({
+                '_id': {'$in': [ObjectId(fid) for fid in file_ids]},
+                'is_deleted': False
+            }))
+            
+            for file_doc in attached_files:
+                files_data.append({
+                    'id': str(file_doc['_id']),
+                    '_id': str(file_doc['_id']),
+                    'original_filename': file_doc.get('original_filename', ''),
+                    'file_size': file_doc.get('file_size', 0),
+                    'file_size_formatted': file_doc.get('file_size_formatted', '0 B'),
+                    'file_extension': file_doc.get('file_extension', ''),
+                    'file_category': file_doc.get('file_category', ''),
+                    'mime_type': file_doc.get('mime_type', 'application/octet-stream')
+                })
+        
+        # Récupérer les infos du sender pour le message complet
+        sender = db.doctors.find_one(
+            {'_id': ObjectId(doctor_id)},
+            {'password': 0}
+        )
+        
+        first_name = sender.get('first_name', '') if sender else ''
+        last_name = sender.get('last_name', '') if sender else ''
+        full_name = f"{first_name} {last_name}".strip() if sender else ''
+        if not full_name and sender:
+            full_name = sender.get('full_name', 'Médecin')
+        elif not full_name:
+            full_name = 'Médecin'
+        
+        # Retourner le message complet formaté
         return jsonify({
             'success': True,
-            'message_id': str(result.inserted_id),
-            'created_at': message_doc['created_at'].isoformat()
+            'message': {
+                'id': str(result.inserted_id),
+                '_id': str(result.inserted_id),
+                'content': content,
+                'message_type': 'text',
+                'is_from_me': True,
+                'sender': {
+                    'id': str(sender['_id']) if sender else None,
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'full_name': full_name,
+                    'specialty': sender.get('specialty', '') if sender else ''
+                },
+                'is_read': False,
+                'created_at': message_doc['created_at'].isoformat(),
+                'files': files_data
+            }
         })
     
     except Exception as e:
@@ -1016,6 +1104,213 @@ def get_shared_analysis_details(analysis_id):
 
 # ========================================
 # FIN MESSAGERIE ENTRE MÉDECINS
+# ========================================
+# ROUTES UPLOAD DE FICHIERS
+# ========================================
+
+@app.route('/api/messages/upload-file', methods=['POST'])
+@login_required
+def upload_message_file():
+    """Upload un fichier pour la messagerie"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        # Vérifier qu'un fichier a été envoyé
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'Aucun fichier fourni'}), 400
+        
+        file = request.files['file']
+        conversation_id = request.form.get('conversation_id')
+        
+        if not conversation_id:
+            return jsonify({'success': False, 'error': 'ID de conversation manquant'}), 400
+        
+        # Utiliser le gestionnaire de fichiers
+        file_manager = get_file_manager()
+        result = file_manager.save_file(file, subfolder=conversation_id)
+        
+        if not result['success']:
+            return jsonify(result), 400
+        
+        # Enregistrer dans la base de données
+        files_collection = get_collection('message_files')
+        file_doc = {
+            'conversation_id': conversation_id,
+            'uploaded_by': doctor['id'],
+            'original_filename': result['original_filename'],
+            'stored_filename': result['stored_filename'],
+            'relative_path': result['relative_path'],
+            'file_size': result['file_size'],
+            'file_extension': result['file_extension'],
+            'file_category': result['file_category'],
+            'mime_type': result['mime_type'],
+            'uploaded_at': datetime.now(),
+            'is_deleted': False
+        }
+        
+        insert_result = files_collection.insert_one(file_doc)
+        file_doc['_id'] = str(insert_result.inserted_id)
+        file_doc['uploaded_at'] = file_doc['uploaded_at'].isoformat()
+        
+        return jsonify({
+            'success': True,
+            'file': file_doc,
+            'message': 'Fichier uploadé avec succès'
+        })
+        
+    except Exception as e:
+        print(f"Erreur upload fichier: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/messages/files/<file_id>')
+@login_required
+def get_message_file(file_id):
+    """Télécharger un fichier de la messagerie"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        # Récupérer le fichier de la DB
+        files_collection = get_collection('message_files')
+        file_doc = files_collection.find_one({'_id': ObjectId(file_id), 'is_deleted': False})
+        
+        if not file_doc:
+            return jsonify({'success': False, 'error': 'Fichier non trouvé'}), 404
+        
+        # Vérifier que le médecin a accès à cette conversation
+        conversations_collection = get_collection('doctor_conversations')
+        
+        # Convertir l'ID du médecin en ObjectId si nécessaire
+        doctor_id = ObjectId(doctor['id']) if isinstance(doctor['id'], str) else doctor['id']
+        
+        conversation = conversations_collection.find_one({
+            '_id': ObjectId(file_doc['conversation_id']),
+            'participants': doctor_id
+        })
+        
+        if not conversation:
+            # Log pour debug
+            print(f"❌ Accès refusé - Doctor ID: {doctor_id}, File conversation: {file_doc['conversation_id']}")
+            return jsonify({'success': False, 'error': 'Accès non autorisé'}), 403
+        
+        # Chemin du fichier
+        file_path = os.path.join('uploads', file_doc['relative_path'])
+        
+        if not os.path.exists(file_path):
+            return jsonify({'success': False, 'error': 'Fichier physique non trouvé'}), 404
+        
+        # Télécharger le fichier
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name=file_doc['original_filename'],
+            mimetype=file_doc.get('mime_type', 'application/octet-stream')
+        )
+        
+    except Exception as e:
+        print(f"Erreur téléchargement fichier: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/messages/files/<file_id>/delete', methods=['DELETE'])
+@login_required
+def delete_message_file(file_id):
+    """Supprimer un fichier de la messagerie"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        # Récupérer le fichier de la DB
+        files_collection = get_collection('message_files')
+        file_doc = files_collection.find_one({'_id': ObjectId(file_id), 'is_deleted': False})
+        
+        if not file_doc:
+            return jsonify({'success': False, 'error': 'Fichier non trouvé'}), 404
+        
+        # Vérifier que c'est l'uploader
+        if file_doc['uploaded_by'] != doctor['id']:
+            return jsonify({'success': False, 'error': 'Seul l\'uploadeur peut supprimer le fichier'}), 403
+        
+        # Marquer comme supprimé (soft delete)
+        files_collection.update_one(
+            {'_id': ObjectId(file_id)},
+            {'$set': {'is_deleted': True, 'deleted_at': datetime.now()}}
+        )
+        
+        # Optionnel: supprimer le fichier physique
+        file_path = os.path.join('uploads', file_doc['relative_path'])
+        file_manager = get_file_manager()
+        file_manager.delete_file(file_path)
+        
+        return jsonify({'success': True, 'message': 'Fichier supprimé avec succès'})
+        
+    except Exception as e:
+        print(f"Erreur suppression fichier: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/messages/conversations/<conversation_id>/files')
+@login_required
+def get_conversation_files(conversation_id):
+    """Obtenir la liste des fichiers d'une conversation"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        # Vérifier l'accès à la conversation
+        conversations_collection = get_collection('doctor_conversations')
+        conversation = conversations_collection.find_one({
+            '_id': ObjectId(conversation_id),
+            'participants': doctor['id']
+        })
+        
+        if not conversation:
+            return jsonify({'success': False, 'error': 'Conversation non trouvée'}), 404
+        
+        # Récupérer les fichiers
+        files_collection = get_collection('message_files')
+        files_cursor = files_collection.find({
+            'conversation_id': conversation_id,
+            'is_deleted': False
+        }).sort('uploaded_at', -1)
+        
+        files = []
+        for file_doc in files_cursor:
+            file_doc['_id'] = str(file_doc['_id'])
+            file_doc['uploaded_at'] = file_doc['uploaded_at'].isoformat()
+            files.append(file_doc)
+        
+        return jsonify({'success': True, 'files': files})
+        
+    except Exception as e:
+        print(f"Erreur récupération fichiers: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/messages/storage-stats')
+@login_required
+def get_storage_stats():
+    """Obtenir les statistiques de stockage"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        file_manager = get_file_manager()
+        stats = file_manager.get_storage_stats()
+        
+        return jsonify({'success': True, 'stats': stats})
+        
+    except Exception as e:
+        print(f"Erreur statistiques stockage: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # ========================================
 
 @app.route('/api/messages/quick-share-analysis', methods=['POST'])
@@ -7729,12 +8024,231 @@ Réponds de manière concise, professionnelle et amicale. Si la question sort du
             'error': 'Erreur serveur'
         }), 500
 
+# ========================================
+# WEBSOCKET - MESSAGERIE TEMPS RÉEL
+# ========================================
+
+# Dictionnaire pour suivre les médecins connectés et leurs rooms
+connected_doctors = {}  # {socket_id: doctor_id}
+doctor_sockets = {}  # {doctor_id: [socket_ids]}
+
+@socketio.on('connect')
+def handle_connect():
+    """Gestion de la connexion WebSocket"""
+    print(f'🔌 Client connecté: {request.sid}')
+    emit('connected', {'status': 'connected', 'socket_id': request.sid})
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    """Gestion de la déconnexion WebSocket"""
+    socket_id = request.sid
+    print(f'🔌 Client déconnecté: {socket_id}')
+    
+    # Retirer le médecin des dictionnaires de suivi
+    if socket_id in connected_doctors:
+        doctor_id = connected_doctors[socket_id]
+        del connected_doctors[socket_id]
+        
+        if doctor_id in doctor_sockets:
+            doctor_sockets[doctor_id].remove(socket_id)
+            if not doctor_sockets[doctor_id]:
+                del doctor_sockets[doctor_id]
+                # Notifier les autres que ce médecin est hors ligne
+                emit('doctor_offline', {'doctor_id': doctor_id}, broadcast=True)
+
+@socketio.on('join')
+def handle_join(data):
+    """Rejoindre une room de conversation"""
+    try:
+        doctor_id = data.get('doctor_id')
+        conversation_id = data.get('conversation_id')
+        
+        if not doctor_id or not conversation_id:
+            emit('error', {'message': 'doctor_id et conversation_id requis'})
+            return
+        
+        # Enregistrer le médecin connecté
+        socket_id = request.sid
+        connected_doctors[socket_id] = doctor_id
+        
+        if doctor_id not in doctor_sockets:
+            doctor_sockets[doctor_id] = []
+        if socket_id not in doctor_sockets[doctor_id]:
+            doctor_sockets[doctor_id].append(socket_id)
+        
+        # Rejoindre la room de la conversation
+        join_room(conversation_id)
+        print(f'✅ Médecin {doctor_id} a rejoint la conversation {conversation_id}')
+        
+        # Notifier que le médecin est en ligne
+        emit('doctor_online', {'doctor_id': doctor_id}, room=conversation_id, skip_sid=request.sid)
+        
+        emit('joined', {
+            'conversation_id': conversation_id,
+            'doctor_id': doctor_id,
+            'status': 'success'
+        })
+        
+    except Exception as e:
+        print(f'❌ Erreur join: {e}')
+        emit('error', {'message': str(e)})
+
+@socketio.on('leave')
+def handle_leave(data):
+    """Quitter une room de conversation"""
+    try:
+        conversation_id = data.get('conversation_id')
+        doctor_id = data.get('doctor_id')
+        
+        if conversation_id:
+            leave_room(conversation_id)
+            print(f'👋 Médecin {doctor_id} a quitté la conversation {conversation_id}')
+            
+            # Notifier que le médecin est hors ligne de cette conversation
+            emit('doctor_offline', {'doctor_id': doctor_id}, room=conversation_id)
+            
+            emit('left', {'conversation_id': conversation_id, 'status': 'success'})
+    except Exception as e:
+        print(f'❌ Erreur leave: {e}')
+        emit('error', {'message': str(e)})
+
+@socketio.on('send_message')
+def handle_send_message(data):
+    """Envoyer un message en temps réel"""
+    try:
+        conversation_id = data.get('conversation_id')
+        sender_id = data.get('sender_id')
+        content = data.get('content')
+        
+        if not all([conversation_id, sender_id, content]):
+            emit('error', {'message': 'Données manquantes'})
+            return
+        
+        # Récupérer les informations du médecin expéditeur
+        sender = db.doctors.find_one({'_id': ObjectId(sender_id)})
+        if not sender:
+            emit('error', {'message': 'Médecin non trouvé'})
+            return
+        
+        # Créer le message dans la base de données
+        message_doc = {
+            'conversation_id': ObjectId(conversation_id),
+            'sender_id': ObjectId(sender_id),
+            'content': content,
+            'created_at': datetime.now(),
+            'is_read': False
+        }
+        
+        result = db.doctor_messages.insert_one(message_doc)
+        message_id = str(result.inserted_id)
+        
+        # Mettre à jour la conversation
+        db.doctor_conversations.update_one(
+            {'_id': ObjectId(conversation_id)},
+            {
+                '$set': {
+                    'last_message': content,
+                    'last_message_at': datetime.now(),
+                    'updated_at': datetime.now()
+                }
+            }
+        )
+        
+        # Récupérer la conversation pour savoir qui est l'autre participant
+        conversation = db.doctor_conversations.find_one({'_id': ObjectId(conversation_id)})
+        if conversation:
+            participants = conversation.get('participants', [])
+            recipient_id = None
+            for p in participants:
+                if str(p) != sender_id:
+                    recipient_id = str(p)
+                    break
+        
+        # Préparer le message à émettre
+        message_data = {
+            '_id': message_id,
+            'conversation_id': conversation_id,
+            'sender_id': sender_id,
+            'content': content,
+            'created_at': datetime.now().isoformat(),
+            'is_read': False,
+            'sender': {
+                'id': sender_id,
+                'full_name': f"{sender.get('first_name', '')} {sender.get('last_name', '')}".strip(),
+                'specialty': sender.get('specialty', ''),
+                'avatar': sender.get('avatar', '/static/images/avatar-default.svg')
+            }
+        }
+        
+        # Émettre le message à tous les participants de la conversation
+        emit('new_message', message_data, room=conversation_id, include_self=True)
+        
+        print(f'📨 Message envoyé dans la conversation {conversation_id}')
+        
+    except Exception as e:
+        print(f'❌ Erreur send_message: {e}')
+        import traceback
+        traceback.print_exc()
+        emit('error', {'message': str(e)})
+
+@socketio.on('typing')
+def handle_typing(data):
+    """Notifier qu'un utilisateur est en train d'écrire"""
+    try:
+        conversation_id = data.get('conversation_id')
+        doctor_id = data.get('doctor_id')
+        is_typing = data.get('is_typing', True)
+        
+        if conversation_id and doctor_id:
+            emit('user_typing', {
+                'doctor_id': doctor_id,
+                'is_typing': is_typing
+            }, room=conversation_id, skip_sid=request.sid)
+            
+    except Exception as e:
+        print(f'❌ Erreur typing: {e}')
+
+@socketio.on('mark_read')
+def handle_mark_read(data):
+    """Marquer les messages comme lus"""
+    try:
+        conversation_id = data.get('conversation_id')
+        doctor_id = data.get('doctor_id')
+        
+        if not conversation_id or not doctor_id:
+            return
+        
+        # Marquer les messages comme lus
+        result = db.doctor_messages.update_many(
+            {
+                'conversation_id': ObjectId(conversation_id),
+                'sender_id': {'$ne': ObjectId(doctor_id)},
+                'is_read': False
+            },
+            {'$set': {'is_read': True, 'read_at': datetime.now()}}
+        )
+        
+        if result.modified_count > 0:
+            # Notifier l'autre participant
+            emit('messages_read', {
+                'conversation_id': conversation_id,
+                'reader_id': doctor_id,
+                'count': result.modified_count
+            }, room=conversation_id, skip_sid=request.sid)
+            
+            print(f'✅ {result.modified_count} messages marqués comme lus dans {conversation_id}')
+        
+    except Exception as e:
+        print(f'❌ Erreur mark_read: {e}')
+
 if __name__ == '__main__':
     print(f"Démarrage de l'application sur le device: {device}")
     print(f"Modèle chargé: {'Oui' if model is not None else 'Non'}")
+    print("🔌 WebSocket activé pour la messagerie en temps réel")
     
     # Port pour le déploiement (Render, Heroku, etc.)
     port = int(os.environ.get('PORT', 5000))
     debug_mode = os.environ.get('FLASK_ENV', 'development') == 'development'
     
-    app.run(debug=debug_mode, host='0.0.0.0', port=port)
+    # Utiliser socketio.run au lieu de app.run pour le support WebSocket
+    socketio.run(app, debug=debug_mode, host='0.0.0.0', port=port, allow_unsafe_werkzeug=True)

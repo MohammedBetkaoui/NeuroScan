@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide Téléchargement - NeuroScan AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 1.125rem;
+        }
+        
+        .step {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        
+        .step h3 {
+            display: inline-block;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .step p {
+            color: #666;
+            line-height: 1.6;
+            margin-top: 0.5rem;
+            margin-left: 3rem;
+        }
+        
+        .demo-message {
+            background: white;
+            border-radius: 18px;
+            padding: 1rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+        }
+        
+        .demo-message.sent {
+            margin-left: auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .demo-file {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .demo-file:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(4px);
+        }
+        
+        .demo-message.sent .demo-file {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .demo-file-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            font-size: 1.25rem;
+        }
+        
+        .demo-file-info {
+            flex: 1;
+        }
+        
+        .demo-file-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .demo-file-size {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+        
+        .demo-file-download {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        
+        .demo-file-download:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .feature-card {
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        .feature-card h4 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature-card p {
+            color: #666;
+            font-size: 0.875rem;
+        }
+        
+        .tip {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .tip strong {
+            color: #856404;
+        }
+        
+        .tip p {
+            color: #856404;
+            margin-top: 0.5rem;
+        }
+        
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .success-box strong {
+            color: #155724;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin-top: 2rem;
+        }
+        
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-download"></i> Guide de Téléchargement</h1>
+        <p class="subtitle">Comment télécharger les fichiers partagés entre médecins</p>
+        
+        <!-- Étapes -->
+        <div class="step">
+            <h3><span class="step-number">1</span>Ouvrir une conversation</h3>
+            <p>Sélectionnez une conversation avec un médecin dans la liste de gauche.</p>
+        </div>
+        
+        <div class="step">
+            <h3><span class="step-number">2</span>Trouver un fichier</h3>
+            <p>Identifiez un message contenant des fichiers attachés (affichés sous le texte du message).</p>
+            
+            <!-- Démo -->
+            <div class="demo-message sent">
+                <p>Voici le rapport que vous m'avez demandé</p>
+                <div class="demo-file">
+                    <div class="demo-file-icon">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <div class="demo-file-info">
+                        <div class="demo-file-name">rapport_medical.pdf</div>
+                        <div class="demo-file-size">2.4 MB</div>
+                    </div>
+                    <div class="demo-file-download">
+                        <i class="fas fa-download"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3><span class="step-number">3</span>Cliquer sur le bouton de téléchargement</h3>
+            <p>Cliquez sur l'icône de téléchargement <i class="fas fa-download"></i> à droite du fichier.</p>
+        </div>
+        
+        <div class="step">
+            <h3><span class="step-number">4</span>Le fichier est téléchargé</h3>
+            <p>Le fichier sera automatiquement téléchargé dans votre dossier "Téléchargements".</p>
+            
+            <div class="success-box">
+                <strong><i class="fas fa-check-circle"></i> Succès!</strong>
+                <p>Une notification "Fichier téléchargé: rapport_medical.pdf" s'affichera.</p>
+            </div>
+        </div>
+        
+        <!-- Fonctionnalités -->
+        <h2 style="margin-top: 3rem; margin-bottom: 1rem; color: #333;">
+            <i class="fas fa-star"></i> Fonctionnalités
+        </h2>
+        
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-image"></i>
+                </div>
+                <h4>Prévisualisation</h4>
+                <p>Les images peuvent être prévisualisées avant téléchargement</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h4>Tous les formats</h4>
+                <p>PDF, Word, Excel, Images, Archives, etc.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h4>Sécurisé</h4>
+                <p>Accès restreint aux médecins de la conversation</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-tachometer-alt"></i>
+                </div>
+                <h4>Rapide</h4>
+                <p>Téléchargement instantané jusqu'à 50 MB</p>
+            </div>
+        </div>
+        
+        <!-- Astuces -->
+        <div class="tip">
+            <strong><i class="fas fa-lightbulb"></i> Astuce:</strong>
+            <p>Pour les images, cliquez directement sur le fichier pour le prévisualiser dans une modal. Vous pourrez ensuite le télécharger depuis la modal si vous le souhaitez.</p>
+        </div>
+        
+        <div class="tip">
+            <strong><i class="fas fa-mobile-alt"></i> Sur Mobile:</strong>
+            <p>Le téléchargement fonctionne de la même manière. Les fichiers seront enregistrés dans votre gestionnaire de téléchargements.</p>
+        </div>
+        
+        <!-- Bouton retour -->
+        <a href="/messages" class="back-button">
+            <i class="fas fa-arrow-left"></i>
+            Retour à la messagerie
+        </a>
+    </div>
+</body>
+</html>

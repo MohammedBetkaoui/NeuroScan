@@ -1,9 +1,10 @@
 // ===========================
 // Messages Page JavaScript
-// UI Interactions & Animations
+// Modern UI Interactions & Animations
 // ===========================
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Messages interface initialized');
     
     // ===========================
     // Elements Selection
@@ -19,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchConversations = document.getElementById('searchConversations');
     const filterBtns = document.querySelectorAll('.filter-btn');
     const infoPanel = document.getElementById('infoPanel');
+    const conversationsSidebar = document.getElementById('conversationsSidebar');
     
     // ===========================
     // Auto-resize Message Input
@@ -26,7 +28,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (messageInput) {
         messageInput.addEventListener('input', function() {
             this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            
+            // Enable/disable send button based on input
+            if (btnSend) {
+                btnSend.disabled = this.value.trim() === '';
+            }
         });
         
         // Handle Enter key (send message) and Shift+Enter (new line)
@@ -35,6 +42,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 sendMessage();
             }
+        });
+        
+        // Focus management
+        messageInput.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        messageInput.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
         });
     }
     

@@ -2,50 +2,37 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Messagerie Professionnelle - NeuroScan AI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/messages_pro.css') }}">
+    
+    <!-- Socket.IO Client -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- Styles Modernes -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/messages-modern.css') }}">
 </head>
-<body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-brand">
-                <i class="fas fa-brain"></i>
-                <span>NeuroScan AI</span>
-            </div>
-            <div class="nav-links">
-                <a href="/dashboard" class="nav-link">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/messages" class="nav-link active">
-                    <i class="fas fa-comments"></i>
-                    <span>Messages</span>
-                </a>
-                <a href="/patients" class="nav-link">
-                    <i class="fas fa-users"></i>
-                    <span>Patients</span>
-                </a>
-            </div>
-            <div class="nav-user">
-                <div class="user-avatar">
-                    <i class="fas fa-user-md"></i>
-                </div>
-                <span class="user-name">Dr. {{ session.get('doctor_name', 'Médecin') }}</span>
-            </div>
-        </div>
-    </nav>
+<body data-doctor-id="{{ doctor.id if doctor else '' }}">
 
     <!-- Main Container -->
     <div class="messages-container">
         <!-- Sidebar - Liste des conversations -->
-        <aside class="conversations-sidebar">
+        <aside class="conversations-sidebar" id="conversationsSidebar">
             <div class="sidebar-header">
-                <h2>Messages</h2>
-                <button class="btn-new-message" id="btnNewMessage">
+                <div class="sidebar-header-left">
+                    <button class="btn-toggle-sidebar" onclick="toggleSidebar()" title="Masquer">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2>Messages</h2>
+                </div>
+                <button class="btn-new-message" id="btnNewMessage" title="Nouvelle conversation">
                     <i class="fas fa-edit"></i>
                     <span>Nouveau</span>
                 </button>
@@ -53,24 +40,26 @@
 
             <!-- Search Bar -->
             <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Rechercher un médecin..." id="searchConversations">
+                <div style="display: flex; align-items: center; gap: 0.75rem; width: 100%;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Rechercher un médecin..." id="searchConversations">
+                </div>
             </div>
 
             <!-- Filters -->
             <div class="message-filters">
-                <button class="filter-btn active" data-filter="all">
+                <button class="filter-btn active" data-filter="all" title="Tous les messages">
                     <i class="fas fa-inbox"></i>
-                    Tous
+                    <span>Tous</span>
                 </button>
-                <button class="filter-btn" data-filter="unread">
+                <button class="filter-btn" data-filter="unread" title="Messages non lus">
                     <i class="fas fa-envelope"></i>
-                    Non lus
+                    <span>Non lus</span>
                     <span class="badge">3</span>
                 </button>
-                <button class="filter-btn" data-filter="important">
+                <button class="filter-btn" data-filter="important" title="Messages importants">
                     <i class="fas fa-star"></i>
-                    Importants
+                    <span>Importants</span>
                 </button>
             </div>
 
@@ -80,37 +69,30 @@
                 <div class="empty-state">
                     <i class="fas fa-spinner fa-spin fa-3x"></i>
                     <h3>Chargement...</h3>
-                    <p>Chargement des conversations</p>
+                    <p>Récupération des conversations en cours</p>
                 </div>
             </div>
         </aside>
 
         <!-- Chat Area -->
-        <main class="chat-area">
-            <!-- Chat Header -->
-            <div class="chat-header">
-                <div class="empty-state">
-                    <i class="fas fa-comments fa-2x"></i>
-                    <h3>Sélectionnez une conversation</h3>
-                    <p>Choisissez une conversation pour commencer</p>
-                </div>
-            </div>
+        <main class="chat-area" id="chatArea">
+           
 
             <!-- Messages Container -->
             <div class="messages-area" id="messagesArea">
                 <div class="empty-messages">
                     <i class="fas fa-comment-dots fa-3x"></i>
-                    <h3>Aucune conversation sélectionnée</h3>
-                    <p>Commencez une nouvelle conversation ou sélectionnez-en une existante</p>
+                    <h3>Aucune conversation active</h3>
+                    <p>Sélectionnez une conversation ou créez-en une nouvelle pour commencer</p>
                 </div>
             </div>
 
             <!-- Message Input -->
             <div class="message-input-container">
-                <button class="btn-icon" onclick="shareAnalysisModal()" title="Partager une analyse">
+                <button class="btn-icon" onclick="shareAnalysisModal()" title="Partager une analyse médicale">
                     <i class="fas fa-share-alt"></i>
                 </button>
-                <button class="btn-icon" title="Joindre un fichier">
+                <button class="btn-icon" title="Joindre un fichier" onclick="attachFile()">
                     <i class="fas fa-paperclip"></i>
                 </button>
                 <div class="message-input-wrapper">
@@ -118,18 +100,107 @@
                         id="messageInput" 
                         placeholder="Écrivez votre message..." 
                         rows="1"
+                        maxlength="2000"
                         disabled></textarea>
-                    <button class="btn-emoji" title="Émojis">
+                    <button class="btn-emoji" title="Insérer un emoji">
                         <i class="fas fa-smile"></i>
                     </button>
                 </div>
-                <button class="btn-send" id="btnSend">
+                <button class="btn-send" id="btnSend" title="Envoyer le message" disabled>
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
         </main>
     </div>
 
-    <script src="{{ url_for('static', filename='js/messages_pro.js') }}"></script>
+    <!-- Floating Action Button (Mobile) -->
+    <button class="fab" onclick="toggleSidebar()" title="Afficher les conversations">
+        <i class="fas fa-comments"></i>
+    </button>
+
+    <!-- Overlay pour fermer la sidebar sur mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- Modal: Nouvelle Conversation -->
+    <div class="modal-overlay" id="newConversationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-comment-medical"></i>
+                    Nouvelle Conversation
+                </h3>
+                <button class="btn-close-modal" onclick="closeNewConversationModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="search-doctors">
+                    <div class="search-input-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input 
+                            type="text" 
+                            id="searchDoctors" 
+                            placeholder="Rechercher un médecin par nom ou spécialité..."
+                            autocomplete="off">
+                    </div>
+                </div>
+                <div class="doctors-list" id="doctorsList">
+                    <div class="loading-doctors">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Chargement des médecins...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/messaging_config.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/websocket_manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/messages_modern.js') }}"></script>
+    <script>
+        // Toggle sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('conversationsSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebar) {
+                sidebar.classList.toggle('show');
+            }
+            if (overlay) {
+                overlay.classList.toggle('show');
+            }
+        }
+
+        // Close sidebar with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const sidebar = document.getElementById('conversationsSidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                
+                if (sidebar && sidebar.classList.contains('show')) {
+                    sidebar.classList.remove('show');
+                    if (overlay) overlay.classList.remove('show');
+                }
+            }
+        });
+
+        // Placeholder functions
+        function shareAnalysisModal() {
+            console.log('📤 Partage d\'analyse');
+            showNotification('Fonctionnalité de partage en cours de développement', 'info');
+        }
+
+        // attachFile() est maintenant définie dans messages_modern.js
+    </script>
+
+    <!-- Overlay pour fermer la sidebar sur mobile -->
+    <div class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- FAB (Floating Action Button) pour nouvelle conversation sur mobile -->
+    <button class="fab" onclick="openNewConversationModal()" title="Nouvelle conversation">
+        <i class="fas fa-edit"></i>
+    </button>
+
 </body>
 </html>

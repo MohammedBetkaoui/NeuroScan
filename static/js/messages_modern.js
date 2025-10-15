@@ -382,6 +382,19 @@ function displayMessages(messages) {
             // Contenu du message (l'API utilise 'content' pas 'message_text')
             const messageContent = msg.content || msg.message_text || '';
             
+            // Gestion spéciale des messages de partage d'analyse
+            let messageBubbleClass = '';
+            let formattedContent = messageContent;
+            
+            if (msg.message_type === 'analysis_share' || msg.analysis_share_url) {
+                messageBubbleClass = 'analysis-share';
+                // Convertir les URLs en liens cliquables
+                formattedContent = messageContent.replace(
+                    /(https?:\/\/[^\s]+)/g,
+                    '<a href="$1" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> Voir l\'analyse</a>'
+                );
+            }
+            
             // Construire le HTML des fichiers attachés
             let filesHTML = '';
             if (msg.files && msg.files.length > 0) {
@@ -417,8 +430,8 @@ function displayMessages(messages) {
                         <img src="/static/images/avatar-default.svg" alt="${senderName}" onerror="this.src='/static/images/avatar-default.svg'">
                     </div>
                     <div class="message-content">
-                        <div class="message-bubble">
-                            ${messageContent ? `<p>${escapeHtml(messageContent)}</p>` : ''}
+                        <div class="message-bubble ${messageBubbleClass}">
+                            ${formattedContent ? `<p>${formattedContent}</p>` : ''}
                             ${filesHTML}
                         </div>
                         <span class="message-time">
@@ -461,6 +474,19 @@ function appendMessages(newMessages) {
         const readIndicator = msg.is_read ? '<i class="fas fa-check-double read"></i>' : '<i class="fas fa-check"></i>';
         const senderName = msg.sender ? msg.sender.full_name : 'Médecin';
         const messageContent = msg.content || msg.message_text || '';
+        
+        // Gestion spéciale des messages de partage d'analyse
+        let messageBubbleClass = '';
+        let formattedContent = messageContent;
+        
+        if (msg.message_type === 'analysis_share' || msg.analysis_share_url) {
+            messageBubbleClass = 'analysis-share';
+            // Convertir les URLs en liens cliquables
+            formattedContent = messageContent.replace(
+                /(https?:\/\/[^\s]+)/g,
+                '<a href="$1" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> Voir l\'analyse</a>'
+            );
+        }
         
         // Construire le HTML des fichiers attachés
         let filesHTML = '';
@@ -510,8 +536,8 @@ function appendMessages(newMessages) {
                     <img src="/static/images/avatar-default.svg" alt="${senderName}" onerror="this.src='/static/images/avatar-default.svg'">
                 </div>
                 <div class="message-content">
-                    <div class="message-bubble">
-                        ${messageContent ? `<p>${escapeHtml(messageContent)}</p>` : ''}
+                    <div class="message-bubble ${messageBubbleClass}">
+                        ${formattedContent ? `<p>${formattedContent}</p>` : ''}
                         ${filesHTML}
                     </div>
                     <span class="message-time">
@@ -2661,5 +2687,11 @@ document.addEventListener('click', function(e) {
 document.addEventListener('DOMContentLoaded', function() {
     initializeEmojiPicker();
 });
+
+// Exposer les fonctions globalement pour les attributs onclick
+window.shareAnalysisModal = shareAnalysisModal;
+window.closeShareAnalysisModal = closeShareAnalysisModal;
+window.filterAnalyses = filterAnalyses;
+window.shareSelectedAnalysis = shareSelectedAnalysis;
 
 console.log('✅ Fonctions utilitaires WebSocket, Responsive, Upload et Emoji chargées');

@@ -872,18 +872,18 @@ def send_message():
 @app.route('/api/messages/share-analysis', methods=['POST'])
 @login_required
 def share_analysis_with_doctor():
-    """Partager une analyse avec un autre médecin"""
+    """Créer un lien de partage sécurisé pour une analyse"""
     try:
         doctor = get_current_doctor()
         if not doctor:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
         
         data = request.get_json()
-        conversation_id = data.get('conversation_id')
         analysis_id = data.get('analysis_id')
-        message_content = data.get('message', '').strip()
+        conversation_id = data.get('conversation_id')
+        recipient_id = data.get('recipient_id')
         
-        if not conversation_id or not analysis_id:
+        if not analysis_id or not conversation_id or not recipient_id:
             return jsonify({'success': False, 'error': 'Données manquantes'}), 400
         
         doctor_id = doctor['id']
@@ -907,68 +907,201 @@ def share_analysis_with_doctor():
         if str(analysis.get('doctor_id', '')) != doctor_id:
             return jsonify({'success': False, 'error': 'Vous ne pouvez partager que vos propres analyses'}), 403
         
-        # Préparer les données de l'analyse à partager
-        analysis_data = {
-            'patient_name': analysis.get('patient_name', 'Patient inconnu'),
-            'exam_date': analysis.get('exam_date', ''),
-            'predicted_label': analysis.get('predicted_label', ''),
-            'confidence': analysis.get('confidence', 0),
-            'probabilities': analysis.get('probabilities', {}),
-            'recommendations': analysis.get('recommendations', []),
-            'image_filename': analysis.get('image_filename', '')
-        }
+        # Générer un token sécurisé unique
+        share_token = secrets.token_urlsafe(32)
         
-        # Créer le message de partage
-        content = message_content or f"Partage d'analyse pour {analysis_data['patient_name']}"
-        
-        message_doc = {
-            'conversation_id': ObjectId(conversation_id),
-            'sender_id': ObjectId(doctor_id),
-            'content': content,
-            'message_type': 'analysis_share',
+        # Créer l'entrée de partage dans la collection shared_analyses
+        shared_analysis_doc = {
+            'token': share_token,
             'analysis_id': ObjectId(analysis_id),
-            'analysis_data': analysis_data,
-            'is_read': False,
-            'created_at': datetime.now()
+            'shared_by_id': ObjectId(doctor_id),
+            'shared_to_id': ObjectId(recipient_id),
+            'conversation_id': ObjectId(conversation_id),
+            'accessed': False,
+            'access_count': 0,
+            'created_at': datetime.now(),
+            'expires_at': datetime.now() + timedelta(days=30)  # Expire après 30 jours
         }
         
-        result = db.doctor_messages.insert_one(message_doc)
+        db.shared_analyses.insert_one(shared_analysis_doc)
         
-        # Mettre à jour la conversation
-        db.doctor_conversations.update_one(
-            {'_id': ObjectId(conversation_id)},
-            {'$set': {'updated_at': datetime.now()}}
-        )
+        # Créer l'URL de partage
+        share_url = f"{request.host_url}shared-analysis?token={share_token}"
         
-        # Créer une notification pour le destinataire
-        recipient_id = None
-        for participant_id in conversation.get('participants', []):
-            if str(participant_id) != doctor_id:
-                recipient_id = participant_id
-                break
-        
-        if recipient_id:
-            notification_doc = {
-                'doctor_id': recipient_id,
-                'type': 'analysis_shared',
-                'title': 'Nouvelle analyse partagée',
-                'message': f"Dr. {doctor.get('full_name', 'Un médecin')} a partagé une analyse avec vous",
-                'analysis_id': ObjectId(analysis_id),
-                'sender_id': ObjectId(doctor_id),
-                'is_read': False,
-                'created_at': datetime.now()
-            }
-            db.notifications.insert_one(notification_doc)
+        # Retourner les informations pour le message
+        analysis_info = {
+            'patient_age': analysis.get('patient_age', 'N/A'),
+            'patient_gender': analysis.get('patient_gender', 'N/A'),
+            'result': analysis.get('predicted_label', 'N/A'),
+            'confidence': f"{analysis.get('confidence', 0):.1f}"
+        }
         
         return jsonify({
             'success': True,
-            'message_id': str(result.inserted_id),
-            'created_at': message_doc['created_at'].isoformat()
+            'share_url': share_url,
+            'token': share_token,
+            'analysis_info': analysis_info
         })
     
     except Exception as e:
         print(f"Erreur partage analyse: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/messages/my-analyses', methods=['GET'])
+@login_required
+def get_my_analyses():
+    """Récupérer la liste des analyses du médecin connecté"""
+    try:
+        doctor = get_current_doctor()
+        if not doctor:
+            return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+        
+        doctor_id = doctor['id']
+        
+        # Récupérer toutes les analyses du médecin
+        # Note: doctor_id est stocké comme string dans la collection analyses
+        analyses = list(db.analyses.find({
+            'doctor_id': doctor_id  # String comparison, not ObjectId
+        }).sort('timestamp', -1))  # Plus récentes en premier
+        
+        # Debug: afficher le nombre d'analyses trouvées
+        print(f"DEBUG: Found {len(analyses)} analyses for doctor_id={doctor_id}")
+        
+        # Formater les données
+        analyses_list = []
+        for analysis in analyses:
+            # Récupérer les informations du patient si disponible
+            patient_age = analysis.get('patient_age', 'N/A')
+            patient_gender = analysis.get('patient_gender', 'N/A')
+
+            # Si patient_id est disponible ET ressemble à un ObjectId, récupérer les infos du patient
+            patient_id = analysis.get('patient_id')
+            if (
+                patient_id and
+                (patient_age == 'N/A' or patient_gender == 'N/A') and
+                isinstance(patient_id, str) and
+                len(patient_id) == 24 and
+                all(c in '0123456789abcdefABCDEF' for c in patient_id)
+            ):
+                try:
+                    patient = db.patients.find_one({'_id': ObjectId(patient_id)})
+                    if patient:
+                        patient_age = patient.get('age', patient_age)
+                        patient_gender = patient.get('gender', patient_gender)
+                except Exception as e:
+                    print(f"[WARN] patient_id {patient_id} n'est pas un ObjectId valide: {e}")
+
+            analyses_list.append({
+                '_id': str(analysis['_id']),
+                'patient_name': analysis.get('patient_name', 'Patient inconnu'),
+                'patient_age': patient_age,
+                'gender': patient_gender,
+                'age': patient_age,
+                'prediction': analysis.get('predicted_label', 'N/A'),
+                'confidence': f"{analysis.get('confidence', 0):.1f}",
+                'image_url': f"/uploads/{analysis.get('filename', '')}" if analysis.get('filename') else '',
+                'created_at': analysis.get('timestamp', datetime.now()).isoformat()
+            })
+        
+        return jsonify({
+            'success': True,
+            'analyses': analyses_list,
+            'count': len(analyses_list)
+        })
+    
+    except Exception as e:
+        print(f"Erreur récupération analyses: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/messages/shared-analysis/<token>', methods=['GET'])
+def get_shared_analysis_by_token(token):
+    """Récupérer une analyse partagée via son token sécurisé"""
+    try:
+        # Rechercher le partage par token
+        shared_analysis = db.shared_analyses.find_one({'token': token})
+        
+        if not shared_analysis:
+            return jsonify({'success': False, 'error': 'Lien de partage invalide ou expiré'}), 404
+        
+        # Vérifier si le lien a expiré
+        if shared_analysis.get('expires_at') and shared_analysis['expires_at'] < datetime.now():
+            return jsonify({'success': False, 'error': 'Ce lien de partage a expiré'}), 410
+        
+        # Récupérer l'analyse
+        analysis = db.analyses.find_one({'_id': shared_analysis['analysis_id']})
+        
+        if not analysis:
+            return jsonify({'success': False, 'error': 'Analyse non trouvée'}), 404
+        
+        # Mettre à jour le compteur d'accès
+        db.shared_analyses.update_one(
+            {'_id': shared_analysis['_id']},
+            {
+                '$set': {'accessed': True, 'last_accessed_at': datetime.now()},
+                '$inc': {'access_count': 1}
+            }
+        )
+        
+        # Récupérer les informations du médecin qui a partagé (pour affichage)
+        shared_by_doctor = db.doctors.find_one(
+            {'_id': shared_analysis['shared_by_id']},
+            {'password': 0}
+        )
+        
+        shared_by_name = 'Médecin'
+        if shared_by_doctor:
+            first_name = shared_by_doctor.get('first_name', '')
+            last_name = shared_by_doctor.get('last_name', '')
+            shared_by_name = f"Dr. {first_name} {last_name}".strip()
+            if shared_by_name == 'Dr.':
+                shared_by_name = shared_by_doctor.get('full_name', 'Médecin')
+        
+        # Préparer les données anonymisées (GDPR compliant)
+        analysis_data = {
+            # Patient info - ANONYMISÉE (pas de nom)
+            'patient_age': analysis.get('patient_age', 'N/A'),
+            'patient_gender': analysis.get('patient_gender', 'N/A'),
+            
+            # Résultats de l'analyse
+            'predicted_label': analysis.get('predicted_label', 'N/A'),
+            'confidence': analysis.get('confidence', 0),
+            'probabilities': analysis.get('probabilities', {}),
+            'recommendations': analysis.get('recommendations', []),
+            'description': analysis.get('description', ''),
+            
+            # Image IRM
+            'image_url': f"/uploads/{analysis.get('image_filename', '')}" if analysis.get('image_filename') else '',
+            'image_filename': analysis.get('image_filename', ''),
+            
+            # Metadata
+            'exam_date': analysis.get('exam_date', ''),
+            'created_at': analysis.get('timestamp', datetime.now()).isoformat(),
+            'processing_time': analysis.get('processing_time', 0),
+            
+            # Infos de partage
+            'shared_by': shared_by_name,
+            'shared_at': shared_analysis.get('created_at', datetime.now()).isoformat()
+        }
+        
+        return jsonify({
+            'success': True,
+            'analysis': analysis_data
+        })
+    
+    except Exception as e:
+        print(f"Erreur récupération analyse partagée: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/shared-analysis', methods=['GET'])
+def shared_analysis_page():
+    """Page d'affichage d'une analyse partagée"""
+    return render_template('shared_analysis.html')
 
 @app.route('/api/messages/shared-analyses')
 @login_required

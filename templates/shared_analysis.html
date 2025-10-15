@@ -389,11 +389,11 @@
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Âge</span>
-                                <span class="info-value">${analysis.patient.age} ans</span>
+                                <span class="info-value">${analysis.patient_age ? analysis.patient_age + ' ans' : 'N/A'}</span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Genre</span>
-                                <span class="info-value">${analysis.patient.gender === 'M' ? 'Masculin' : 'Féminin'}</span>
+                                <span class="info-value">${analysis.patient_gender === 'M' ? 'Masculin' : (analysis.patient_gender === 'F' ? 'Féminin' : 'N/A')}</span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">ID Analyse</span>

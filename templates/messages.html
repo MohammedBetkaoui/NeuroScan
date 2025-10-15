@@ -110,6 +110,8 @@
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
+            <!-- Emoji picker (invisible by default) -->
+            <div id="emojiPicker" class="emoji-picker" style="display:none; position: absolute; right: 24px; bottom: 88px; z-index:70; background:#fff; border:1px solid rgba(0,0,0,0.08); box-shadow:0 6px 18px rgba(0,0,0,0.08); padding:8px; border-radius:8px; max-width:320px; max-height:220px; overflow:auto;"></div>
         </main>
     </div>
 
@@ -198,4 +200,5 @@
     </button>
 
 </body>
+    <script src="{{ url_for('static', filename='js/emoji_picker.js') }}"></script>
 </html>

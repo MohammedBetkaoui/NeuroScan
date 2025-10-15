@@ -337,7 +337,7 @@
                             <button id="templateBtn" class="quick-action-btn" title="Templates de messages">
                                 <i data-feather="file-text" class="w-4 h-4"></i>
                             </button>
-                            <button id="emojiBtn" class="quick-action-btn" title="Émojis médicaux">
+                            <button id="emojiBtn" class="quick-action-btn" title="Émojis médicaux" type="button" onclick="toggleEmojiPickerChat()">
                                 <i data-feather="smile" class="w-4 h-4"></i>
                             </button>
                             <button id="attachmentBtn" class="quick-action-btn" title="Pièces jointes">
@@ -427,6 +427,8 @@
                         </div>
                     </form>
                 </div>
+                <!-- Emoji picker for chat (hidden by default) -->
+                <div id="emojiPickerChat" style="display:none; position: absolute; right: 24px; bottom: 88px; z-index:70; background:#fff; border:1px solid rgba(0,0,0,0.08); box-shadow:0 6px 18px rgba(0,0,0,0.08); padding:8px; border-radius:8px; max-width:320px; max-height:220px; overflow:auto;"></div>
                 
                 <!-- Zone d'accueil -->
                 <div id="welcomeInput">
@@ -598,6 +600,7 @@
     </div>
 
   
+    <script src="{{ url_for('static', filename='js/emoji_picker.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 </body>
 </html>

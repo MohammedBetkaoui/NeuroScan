@@ -1178,26 +1178,52 @@ def get_shared_analysis_by_token(token):
         if not patient_gender_val:
             patient_gender_val = 'N/A'
 
+        # Trouver le nom de fichier d'image (plusieurs clefs possibles selon où il a été sauvegardé)
+        file_name = None
+        for key in ('image_filename', 'image_file', 'filename', 'file'):
+            if analysis.get(key):
+                file_name = analysis.get(key)
+                break
+
+        # Construire une URL d'image robuste : vérifier si le fichier existe dans uploads/ puis uploads/messages/
+        image_url_val = ''
+        if file_name:
+            # Chemin possible 1: uploads/<file>
+            p1 = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
+            p2 = os.path.join(app.config['UPLOAD_FOLDER'], 'messages', file_name)
+            if os.path.exists(p1):
+                image_url_val = url_for('uploaded_file', filename=file_name)
+            elif os.path.exists(p2):
+                # servir via /uploads/messages/<file> en construisant l'URL relative
+                image_url_val = f"/uploads/messages/{file_name}"
+            else:
+                # fallback: if analysis already stored a full image_url, use it
+                if analysis.get('image_url'):
+                    image_url_val = analysis.get('image_url')
+                else:
+                    image_url_val = ''
+
         analysis_data = {
+            'analysis_id': str(analysis.get('_id')),
             'patient_age': patient_age_val,
             'patient_gender': patient_gender_val,
-            
+
             # Résultats de l'analyse
             'predicted_label': analysis.get('predicted_label', 'N/A'),
             'confidence': analysis.get('confidence', 0),
             'probabilities': analysis.get('probabilities', {}),
             'recommendations': analysis.get('recommendations', []),
             'description': analysis.get('description', ''),
-            
+
             # Image IRM
-            'image_url': f"/uploads/{analysis.get('image_filename', '')}" if analysis.get('image_filename') else '',
-            'image_filename': analysis.get('image_filename', ''),
-            
+            'image_url': image_url_val,
+            'image_filename': file_name or '',
+
             # Metadata
             'exam_date': analysis.get('exam_date', ''),
             'created_at': analysis.get('timestamp', datetime.now()).isoformat(),
             'processing_time': analysis.get('processing_time', 0),
-            
+
             # Infos de partage
             'shared_by': shared_by_name,
             'shared_at': shared_analysis.get('created_at', datetime.now()).isoformat()

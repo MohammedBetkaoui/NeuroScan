@@ -1155,6 +1155,24 @@ body {
     z-index: 9999;
     animation: fadeIn 0.3s var(--ease-smooth);
 }
+/* Analysis share inline link style */
+.analysis-share-line {
+    margin-top: 8px;
+}
+.analysis-share-line .analysis-share-link {
+    display: inline-block;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.06);
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: var(--primary-dark);
+    text-decoration: none;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(2,6,23,0.06);
+}
+.analysis-share-line .analysis-share-link:hover {
+    text-decoration: underline;
+}
 
 .modal-overlay.show {
     display: flex;

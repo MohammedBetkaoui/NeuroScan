@@ -345,7 +345,38 @@
         
         function displayAnalysis(analysis) {
             const container = document.getElementById('mainContainer');
-            
+
+            // Sécuriser et normaliser les champs renvoyés par l'API
+            const sharedAt = analysis.shared_at || analysis.created_at || analysis.exam_date || null;
+            const sharedDate = sharedAt ? new Date(sharedAt) : null;
+
+            // shared_by peut être une chaîne (ex: 'Dr. X') ou un objet. Gérer les deux cas.
+            let sharedByName = 'Médecin';
+            if (analysis.shared_by) {
+                if (typeof analysis.shared_by === 'string') {
+                    sharedByName = analysis.shared_by;
+                } else if (analysis.shared_by.full_name) {
+                    sharedByName = analysis.shared_by.full_name;
+                }
+            }
+
+            const patientAge = (analysis.patient_age && analysis.patient_age !== 'N/A') ? analysis.patient_age + ' ans' : 'N/A';
+            const patientGender = analysis.patient_gender === 'M' ? 'Masculin' : (analysis.patient_gender === 'F' ? 'Féminin' : 'N/A');
+
+            // ID d'analyse (peut être absent) : protéger l'accès à substring
+            const analysisIdRaw = analysis.analysis_id || analysis.analysisId || analysis._id || null;
+            const analysisIdDisplay = analysisIdRaw ? ('#' + String(analysisIdRaw).substring(0, 8).toUpperCase()) : '—';
+
+            // Résultat : adapter au format renvoyé par le serveur
+            const resultPrediction = analysis.predicted_label || (analysis.result && analysis.result.prediction) || 'N/A';
+            let rawConf = analysis.confidence !== undefined ? analysis.confidence : (analysis.result && analysis.result.confidence ? analysis.result.confidence : 0);
+            rawConf = parseFloat(rawConf) || 0;
+            // Si la confiance est en 0..1, la convertir en pourcentage
+            const confidencePct = rawConf > 0 && rawConf <= 1 ? Math.round(rawConf * 100) : Math.round(rawConf);
+
+            const tumorType = (analysis.result && analysis.result.tumor_type) || analysis.tumor_type || '';
+            const imageUrl = analysis.image_url || (analysis.image_filename ? ('/uploads/' + analysis.image_filename) : '');
+
             const html = `
                 <div class="header">
                     <div class="header-left">
@@ -355,19 +386,15 @@
                         <div class="header-title">
                             <h1>Analyse IRM Partagée</h1>
                             <div class="header-subtitle">
-                                ${new Date(analysis.analysis_date).toLocaleDateString('fr-FR', {
-                                    day: 'numeric',
-                                    month: 'long',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
+                                ${sharedDate ? sharedDate.toLocaleDateString('fr-FR', {
+                                    day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                                }) : 'Date inconnue'}
                             </div>
                         </div>
                     </div>
                     <div class="shared-by">
                         <i class="fas fa-user-md"></i>
-                        <span>Partagé par Dr. ${analysis.shared_by.full_name}</span>
+                        <span>Partagé par ${sharedByName}</span>
                     </div>
                 </div>
                 
@@ -389,15 +416,15 @@
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Âge</span>
-                                <span class="info-value">${analysis.patient_age ? analysis.patient_age + ' ans' : 'N/A'}</span>
+                                <span class="info-value">${patientAge}</span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Genre</span>
-                                <span class="info-value">${analysis.patient_gender === 'M' ? 'Masculin' : (analysis.patient_gender === 'F' ? 'Féminin' : 'N/A')}</span>
+                                <span class="info-value">${patientGender}</span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">ID Analyse</span>
-                                <span class="info-value">#${analysis.analysis_id.substring(0, 8).toUpperCase()}</span>
+                                <span class="info-value">${analysisIdDisplay}</span>
                             </div>
                         </div>
                         
@@ -410,23 +437,23 @@
                             <div class="info-row">
                                 <span class="info-label">Diagnostic</span>
                                 <span class="info-value">
-                                    <span class="result-badge ${analysis.result.prediction === 'Tumeur détectée' ? 'result-positive' : 'result-negative'}">
-                                        ${analysis.result.prediction}
+                                    <span class="result-badge ${resultPrediction && resultPrediction.toLowerCase().includes('normal') ? 'result-negative' : 'result-positive'}">
+                                        ${resultPrediction}
                                     </span>
                                 </span>
                             </div>
                             <div class="info-row" style="display: block;">
                                 <span class="info-label">Niveau de confiance</span>
                                 <div class="confidence-bar">
-                                    <div class="confidence-fill" style="width: ${analysis.result.confidence}%">
-                                        ${analysis.result.confidence}%
+                                    <div class="confidence-fill" style="width: ${confidencePct}%">
+                                        ${confidencePct}%
                                     </div>
                                 </div>
                             </div>
-                            ${analysis.result.tumor_type ? `
+                            ${tumorType ? `
                             <div class="info-row">
                                 <span class="info-label">Type de tumeur</span>
-                                <span class="info-value">${analysis.result.tumor_type}</span>
+                                <span class="info-value">${tumorType}</span>
                             </div>
                             ` : ''}
                         </div>
@@ -438,7 +465,7 @@
                                 Image IRM
                             </div>
                             <div class="irm-image-container">
-                                <img src="${analysis.image_url}" 
+                                <img src="${imageUrl}" 
                                      alt="IRM" 
                                      class="irm-image" 
                                      id="irmImage">

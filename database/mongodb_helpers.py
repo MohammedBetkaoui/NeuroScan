@@ -51,6 +51,8 @@ def save_analysis_to_db_mongo(results, filename, processing_time, session_id=Non
             'patient_id': patient_id,
             'patient_name': patient_name,
             'exam_date': exam_date,
+            # image filename stored for consistency
+            'image_filename': filename,
             'predicted_class': results['predicted_class'],
             'predicted_label': results['predicted_label'],
             'confidence': results['confidence'],
@@ -64,6 +66,55 @@ def save_analysis_to_db_mongo(results, filename, processing_time, session_id=Non
             'previous_analysis_id': previous_analysis_id,
             'doctor_id': doctor_id
         }
+
+        # Si on a un patient_id, essayer d'enrichir le document avec âge/genre depuis la fiche patient
+        if patient_id:
+            try:
+                db = get_mongodb()
+                patients = db.patients
+                # patient_id peut être string non-ObjectId; on essaie de trouver par patient_id champ
+                patient_doc = None
+                # Première tentative: chercher par champ 'patient_id'
+                patient_doc = patients.find_one({'patient_id': patient_id})
+                if not patient_doc:
+                    # Si patient_id ressemble à un ObjectId, tenter la recherche par _id
+                    try:
+                        if isinstance(patient_id, str) and len(patient_id) == 24 and all(c in '0123456789abcdefABCDEF' for c in patient_id):
+                            patient_doc = patients.find_one({'_id': ObjectId(patient_id)})
+                    except Exception:
+                        patient_doc = None
+
+                if patient_doc:
+                    # Computation of age from date_of_birth if present
+                    dob = patient_doc.get('date_of_birth')
+                    computed_age = None
+                    try:
+                        if dob:
+                            if isinstance(dob, str):
+                                try:
+                                    dob_dt = datetime.fromisoformat(dob)
+                                except Exception:
+                                    dob_dt = datetime.strptime(dob, '%Y-%m-%d')
+                            elif isinstance(dob, date) and not isinstance(dob, datetime):
+                                dob_dt = datetime.combine(dob, datetime.min.time())
+                            else:
+                                dob_dt = dob
+                            today = datetime.now().date()
+                            birth = dob_dt.date()
+                            computed_age = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+                    except Exception:
+                        computed_age = None
+
+                    # Mettre à jour le document d'analyse
+                    if computed_age is not None:
+                        analysis_doc['patient_age'] = computed_age
+                    elif patient_doc.get('age'):
+                        analysis_doc['patient_age'] = patient_doc.get('age')
+
+                    if patient_doc.get('gender'):
+                        analysis_doc['patient_gender'] = patient_doc.get('gender')
+            except Exception as e:
+                print(f"[WARN] enrich analysis with patient info failed: {e}")
         
         # Insérer l'analyse
         print(f"DEBUG save_analysis: Inserting analysis document...")

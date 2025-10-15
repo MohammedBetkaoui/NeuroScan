@@ -388,11 +388,17 @@ function displayMessages(messages) {
             
             if (msg.message_type === 'analysis_share' || msg.analysis_share_url) {
                 messageBubbleClass = 'analysis-share';
-                // Convertir les URLs en liens cliquables
-                formattedContent = messageContent.replace(
-                    /(https?:\/\/[^\s]+)/g,
-                    '<a href="$1" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> Voir l\'analyse</a>'
-                );
+                // Use explicit analysis_share_url if provided, otherwise extract first URL from content
+                const shareUrl = msg.analysis_share_url || (messageContent.match(/(https?:\/\/[^\s]+)/) || [null])[0];
+                if (shareUrl) {
+                    formattedContent = `
+                        <div class="analysis-share-line">
+                            <a href="${escapeHtml(shareUrl)}" class="analysis-share-link" target="_blank" rel="noopener noreferrer">${escapeHtml(shareUrl)}</a>
+                        </div>
+                    `;
+                } else {
+                    formattedContent = `<div class="analysis-share-line">${escapeHtml(messageContent)}</div>`;
+                }
             }
             
             // Construire le HTML des fichiers attachés
@@ -481,11 +487,16 @@ function appendMessages(newMessages) {
         
         if (msg.message_type === 'analysis_share' || msg.analysis_share_url) {
             messageBubbleClass = 'analysis-share';
-            // Convertir les URLs en liens cliquables
-            formattedContent = messageContent.replace(
-                /(https?:\/\/[^\s]+)/g,
-                '<a href="$1" target="_blank" rel="noopener noreferrer"><i class="fas fa-external-link-alt"></i> Voir l\'analyse</a>'
-            );
+            const shareUrl = msg.analysis_share_url || (messageContent.match(/(https?:\/\/[^\s]+)/) || [null])[0];
+            if (shareUrl) {
+                formattedContent = `
+                    <div class="analysis-share-line">
+                        <a href="${escapeHtml(shareUrl)}" class="analysis-share-link" target="_blank" rel="noopener noreferrer">${escapeHtml(shareUrl)}</a>
+                    </div>
+                `;
+            } else {
+                formattedContent = `<div class="analysis-share-line">${escapeHtml(messageContent)}</div>`;
+            }
         }
         
         // Construire le HTML des fichiers attachés

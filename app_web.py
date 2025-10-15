@@ -907,7 +907,7 @@ def share_analysis_with_doctor():
         if str(analysis.get('doctor_id', '')) != doctor_id:
             return jsonify({'success': False, 'error': 'Vous ne pouvez partager que vos propres analyses'}), 403
         
-        # Générer un token sécurisé unique
+    # Générer un token sécurisé unique
         share_token = secrets.token_urlsafe(32)
         
         # Créer l'entrée de partage dans la collection shared_analyses
@@ -928,10 +928,72 @@ def share_analysis_with_doctor():
         # Créer l'URL de partage
         share_url = f"{request.host_url}shared-analysis?token={share_token}"
         
+        # Si l'âge du patient n'est pas présent dans l'analyse, essayer de le calculer
+        def _compute_age_from_dob(dob_val):
+            try:
+                if not dob_val:
+                    return None
+                # dob_val peut être un datetime ou une chaîne
+                if isinstance(dob_val, datetime):
+                    dob_dt = dob_val
+                elif isinstance(dob_val, str):
+                    # Essayer isoformat d'abord
+                    try:
+                        dob_dt = datetime.fromisoformat(dob_val)
+                    except Exception:
+                        # Essayer quelques formats communs
+                        for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%Y/%m/%d'):
+                            try:
+                                dob_dt = datetime.strptime(dob_val, fmt)
+                                break
+                            except Exception:
+                                dob_dt = None
+                        if dob_dt is None:
+                            return None
+                else:
+                    return None
+
+                today = datetime.now().date()
+                birth = dob_dt.date()
+                age = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+                return int(age)
+            except Exception as e:
+                print(f"[WARN] compute age failed: {e}")
+                return None
+
         # Retourner les informations pour le message
+        patient_age = analysis.get('patient_age') or None
+        patient_gender = analysis.get('patient_gender') or analysis.get('patient_gender', 'N/A')
+
+        # Tenter de récupérer les informations depuis la collection patients si nécessaire
+        if (not patient_age or patient_age == 'N/A') and analysis.get('patient_id'):
+            pid = analysis.get('patient_id')
+            try:
+                if isinstance(pid, str) and len(pid) == 24 and all(c in '0123456789abcdefABCDEF' for c in pid):
+                    patient_doc = db.patients.find_one({'_id': ObjectId(pid)})
+                    if patient_doc:
+                        # Préférer un champ 'age' s'il existe
+                        patient_age = patient_doc.get('age') or patient_age
+                        # Sinon essayer depuis date_of_birth
+                        if (not patient_age or patient_age == 'N/A') and patient_doc.get('date_of_birth'):
+                            computed = _compute_age_from_dob(patient_doc.get('date_of_birth'))
+                            if computed is not None:
+                                patient_age = computed
+                        # Compléter le genre si manquant
+                        if (not patient_gender or patient_gender == 'N/A') and patient_doc.get('gender'):
+                            patient_gender = patient_doc.get('gender')
+            except Exception as e:
+                print(f"[WARN] Could not fetch patient {pid}: {e}")
+
+        # Format fallback
+        if patient_age is None:
+            patient_age = 'N/A'
+        if not patient_gender:
+            patient_gender = 'N/A'
+
         analysis_info = {
-            'patient_age': analysis.get('patient_age', 'N/A'),
-            'patient_gender': analysis.get('patient_gender', 'N/A'),
+            'patient_age': patient_age,
+            'patient_gender': patient_gender,
             'result': analysis.get('predicted_label', 'N/A'),
             'confidence': f"{analysis.get('confidence', 0):.1f}"
         }
@@ -1061,10 +1123,64 @@ def get_shared_analysis_by_token(token):
                 shared_by_name = shared_by_doctor.get('full_name', 'Médecin')
         
         # Préparer les données anonymisées (GDPR compliant)
+        # Helper pour calculer l'âge si on a la date de naissance
+        def _compute_age_from_dob_shared(dob_val):
+            try:
+                if not dob_val:
+                    return None
+                if isinstance(dob_val, datetime):
+                    dob_dt = dob_val
+                elif isinstance(dob_val, str):
+                    try:
+                        dob_dt = datetime.fromisoformat(dob_val)
+                    except Exception:
+                        for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%Y/%m/%d'):
+                            try:
+                                dob_dt = datetime.strptime(dob_val, fmt)
+                                break
+                            except Exception:
+                                dob_dt = None
+                        if dob_dt is None:
+                            return None
+                else:
+                    return None
+                today = datetime.now().date()
+                birth = dob_dt.date()
+                age = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+                return int(age)
+            except Exception as e:
+                print(f"[WARN] compute age failed (shared): {e}")
+                return None
+
+        # Patient info - ANONYMISÉE (pas de nom)
+        patient_age_val = analysis.get('patient_age')
+        patient_gender_val = analysis.get('patient_gender', 'N/A')
+
+        # If age missing, try to fetch from patient record if linked
+        if (not patient_age_val or patient_age_val == 'N/A') and analysis.get('patient_id'):
+            try:
+                pid = analysis.get('patient_id')
+                if isinstance(pid, str) and len(pid) == 24 and all(c in '0123456789abcdefABCDEF' for c in pid):
+                    patient_doc = db.patients.find_one({'_id': ObjectId(pid)})
+                    if patient_doc:
+                        patient_age_val = patient_doc.get('age', patient_age_val)
+                        if (not patient_age_val or patient_age_val == 'N/A') and patient_doc.get('date_of_birth'):
+                            computed = _compute_age_from_dob_shared(patient_doc.get('date_of_birth'))
+                            if computed is not None:
+                                patient_age_val = computed
+                        if (not patient_gender_val or patient_gender_val == 'N/A') and patient_doc.get('gender'):
+                            patient_gender_val = patient_doc.get('gender')
+            except Exception as e:
+                print(f"[WARN] Could not fetch patient for shared analysis: {e}")
+
+        if patient_age_val is None:
+            patient_age_val = 'N/A'
+        if not patient_gender_val:
+            patient_gender_val = 'N/A'
+
         analysis_data = {
-            # Patient info - ANONYMISÉE (pas de nom)
-            'patient_age': analysis.get('patient_age', 'N/A'),
-            'patient_gender': analysis.get('patient_gender', 'N/A'),
+            'patient_age': patient_age_val,
+            'patient_gender': patient_gender_val,
             
             # Résultats de l'analyse
             'predicted_label': analysis.get('predicted_label', 'N/A'),

@@ -2240,25 +2240,41 @@ function displayAnalysisSelectionModal(analyses) {
  */
 function createAnalysisItem(analysis) {
     const date = new Date(analysis.created_at).toLocaleDateString('fr-FR');
-    const resultClass = analysis.prediction === 'Tumeur détectée' ? 'positive' : 'negative';
-    
+
+    const patientName = analysis.patient_name || 'Patient inconnu';
+    const patientAge = analysis.patient_age || analysis.age || 'N/A';
+    const gender = analysis.gender || analysis.patient_gender || 'N/A';
+
+    // Confidence may be 0-1 or already a percentage
+    let confidence = parseFloat(analysis.confidence);
+    if (isNaN(confidence)) confidence = 0;
+    if (confidence > 0 && confidence <= 1) {
+        confidence = Math.round(confidence * 100);
+    } else {
+        confidence = Math.round(confidence);
+    }
+
+    // Consider 'Normal' as negative, everything else as positive
+    const resultClass = (analysis.prediction === 'Normal') ? 'negative' : 'positive';
+    const iconClass = (analysis.prediction === 'Normal') ? 'fa-check-circle' : 'fa-exclamation-triangle';
+
     return `
-        <div class="analysis-item" data-analysis-id="${analysis._id}" data-patient-name="${analysis.patient_name.toLowerCase()}">
+        <div class="analysis-item" data-analysis-id="${analysis._id}" data-patient-name="${(patientName || '').toLowerCase()}">
             <div class="analysis-preview">
-                <img src="${analysis.image_url}" alt="IRM">
+                <img src="${analysis.image_url || ''}" alt="IRM">
             </div>
             <div class="analysis-info">
                 <div class="analysis-patient">
                     <i class="fas fa-user"></i>
-                    <strong>${analysis.patient_name}</strong>
+                    <strong>${patientName}</strong>
                 </div>
                 <div class="analysis-details">
                     <span><i class="fas fa-calendar"></i> ${date}</span>
-                    <span><i class="fas fa-venus-mars"></i> ${analysis.gender === 'M' ? 'Masculin' : 'Féminin'}, ${analysis.age} ans</span>
+                    <span><i class="fas fa-venus-mars"></i> ${gender === 'M' ? 'Masculin' : (gender === 'F' ? 'Féminin' : 'N/A')}, ${patientAge} ans</span>
                 </div>
                 <div class="analysis-result ${resultClass}">
-                    <i class="fas ${analysis.prediction === 'Tumeur détectée' ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i>
-                    ${analysis.prediction} (${analysis.confidence}%)
+                    <i class="fas ${iconClass}"></i>
+                    ${analysis.prediction || 'N/A'} (${confidence}%)
                 </div>
             </div>
             <button class="btn-share-analysis" onclick="shareSelectedAnalysis('${analysis._id}')" title="Partager cette analyse">

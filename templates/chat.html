@@ -114,66 +114,51 @@
             </div>
         </div>
         
-        <div class="relative overflow-hidden border-t border-gray-200/50">
-            <!-- Fond dégradé sophistiqué -->
-            <div class="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-medical-50 opacity-80"></div>
-            <div class="absolute inset-0 bg-gradient-to-t from-gray-100/30 to-transparent"></div>
-            
-            <!-- Conteneur principal -->
-            <div class="relative p-3">
-                <!-- Carte profil médecin compacte -->
-                <div class="bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-xl p-3 shadow-md transition-all duration-300">
-                    <!-- En-tête profil compact -->
-                    <div class="flex items-center gap-3 mb-3">
-                        <!-- Avatar compact -->
-                        <div class="relative">
-                            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 text-white flex items-center justify-center shadow">
-                                <i data-feather="user-check" class="w-5 h-5"></i>
-                            </div>
-                            <!-- Indicateur de statut en ligne -->
-                            <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-medical-500 border-2 border-white rounded-full"></div>
+        <div class="border-t border-gray-200 bg-gradient-to-br from-gray-50 to-white">
+            <!-- Conteneur simplifié -->
+            <div class="p-4">
+                <!-- Profil compact -->
+                <div class="flex items-center gap-3 mb-4">
+                    <!-- Avatar -->
+                    <div class="relative">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary-600 to-primary-700 text-white flex items-center justify-center shadow-md">
+                            <i data-feather="user" class="w-5 h-5"></i>
                         </div>
-                        
-                        <!-- Informations médecin compactes -->
-                        <div class="flex-1 min-w-0">
-                            <h3 class="font-semibold text-gray-900 text-sm">Dr. {{ doctor.first_name if doctor else 'Mohammed' }} {{ doctor.last_name if doctor else 'Betkaoui' }}</h3>
-                        </div>
+                        <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full shadow-sm"></div>
                     </div>
                     
-                    <!-- Actions et contrôles -->
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <!-- Toggle thème moderne -->
-                            <button id="themeToggle" class="theme-toggle" title="Basculer le mode sombre">
-                                <i class="theme-icon sun-icon fas fa-sun"></i>
-                                <i class="theme-icon moon-icon fas fa-moon"></i>
-                            </button>
-                            
-                            <!-- Indicateur de statut -->
-                            <div class="flex items-center gap-1.5 px-2.5 py-1.5 bg-medical-50 text-medical-700 rounded-lg">
-                                <div class="w-2 h-2 bg-medical-500 rounded-full animate-pulse"></div>
-                                <span class="text-xs font-medium">Actif</span>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center gap-1">
-                            <a href="{{ url_for('chat_help') }}" 
-                               class="p-2.5 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 group" 
-                               title="Aide et Support">
-                                <i data-feather="help-circle" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
-                            </a>
-                            <a href="{{ url_for('dashboard') }}" 
-                               class="p-2.5 text-gray-500 hover:text-medical-600 hover:bg-medical-50 rounded-lg transition-all duration-200 group" 
-                               title="Tableau de bord">
-                                <i data-feather="settings" class="w-4 h-4 group-hover:rotate-90 transition-transform duration-300"></i>
-                            </a>
-                        </div>
+                    <!-- Nom complet -->
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-semibold text-gray-800 truncate text-sm">
+                            Dr. {{ doctor.first_name if doctor and doctor.first_name else 'Mohammed' }} {{ doctor.last_name if doctor and doctor.last_name else 'Betkaoui' }}
+                        </h3>
+                        <p class="text-xs text-gray-500 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                            En ligne
+                        </p>
                     </div>
                 </div>
                 
-               
-                
-                
+                <!-- Actions -->
+                <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                    <button id="themeToggle" class="theme-toggle p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Basculer le mode sombre">
+                        <i class="theme-icon sun-icon fas fa-sun text-amber-500"></i>
+                        <i class="theme-icon moon-icon fas fa-moon text-indigo-600"></i>
+                    </button>
+                    
+                    <div class="flex items-center gap-1">
+                        <a href="{{ url_for('chat_help') }}" 
+                           class="p-2 text-gray-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors" 
+                           title="Aide et Support">
+                            <i data-feather="help-circle" class="w-4 h-4"></i>
+                        </a>
+                        <a href="{{ url_for('dashboard') }}" 
+                           class="p-2 text-gray-600 hover:text-medical-700 hover:bg-medical-50 rounded-lg transition-colors" 
+                           title="Tableau de bord">
+                            <i data-feather="settings" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -613,6 +598,6 @@
     </div>
 
   
-    <script src="{{ url_for('static', filename='js/chat.js') }}?v={{ range(1, 999999) | random }}" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
 </body>
 </html>

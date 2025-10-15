@@ -1,17 +1,25 @@
-// Variables globales - accessibles dans window
-window.currentConversationId = null;
-window.conversations = [];
-window.isLoading = false;
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize feather icons
-    feather.replace();
-    
-    // Initialiser le mode sombre
-    initializeTheme();
-    
-    // Initialiser le système responsive mobile
-    initializeMobileResponsive();
+ 
+        // Variables globales - accessibles dans window
+        window.currentConversationId = null;
+        window.conversations = [];
+        window.isLoading = false;
+        
+        // Fonction helper pour valider les ObjectIds MongoDB
+        window.isValidMongoId = function(id) {
+            if (!id) return false;
+            // Un ObjectId MongoDB est une chaîne hexadécimale de 24 caractères
+            return /^[0-9a-fA-F]{24}$/.test(id.toString());
+        };
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize feather icons
+            feather.replace();
+            
+            // Initialiser le mode sombre
+            initializeTheme();
+            
+            // Initialiser le système responsive mobile
+            initializeMobileResponsive();
             
             // Sidebar toggle for mobile
             const sidebar = document.getElementById('sidebar');
@@ -223,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Bouton nouvelle conversation
             const newChatBtn = document.getElementById('newChatBtn');
             if (newChatBtn) {
-                newChatBtn.addEventListener('click', window.createNewConversation);
+                newChatBtn.addEventListener('click', createNewConversation);
             }
 
             // Barre de recherche des conversations
@@ -233,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (searchInput) {
                 searchInput.addEventListener('input', function() {
                     const query = this.value.toLowerCase().trim();
-                    window.filterConversations(query);
+                    filterConversations(query);
                     
                     // Afficher/masquer le bouton clear
                     if (clearSearch) {
@@ -260,11 +268,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const closeTemplates = document.getElementById('closeTemplates');
             
             if (templateBtn) {
-                templateBtn.addEventListener('click', window.toggleTemplates);
+                templateBtn.addEventListener('click', toggleTemplates);
             }
             
             if (closeTemplates) {
-                closeTemplates.addEventListener('click', window.hideTemplates);
+                closeTemplates.addEventListener('click', hideTemplates);
             }
             
             // Templates de messages
@@ -276,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         messageInput.value = template;
                         messageInput.dispatchEvent(new Event('input'));
                         messageInput.focus();
-                        window.hideTemplates();
+                        hideTemplates();
                     }
                 }
             });
@@ -295,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Ctrl/Cmd + / : Nouvelle conversation
                 if ((e.ctrlKey || e.metaKey) && e.key === '/') {
                     e.preventDefault();
-                    window.createNewConversation();
+                    createNewConversation();
                 }
                 
                 // Ctrl/Cmd + Enter : Envoyer le message (dans le champ de saisie)
@@ -312,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Échap : Fermer les modales, templates et focus
                 if (e.key === 'Escape') {
-                    window.hideTemplates();
+                    hideTemplates();
                     // Le reste est géré plus haut pour les modales
                 }
             });
@@ -339,7 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     lastScrollTop = scrollTop;
                     
                     // Afficher/masquer le bouton "scroll to bottom" si nécessaire
-                    window.toggleScrollToBottomButton(!isAtBottom && userScrolledUp);
+                    toggleScrollToBottomButton(!isAtBottom && userScrolledUp);
                 });
             }
 
@@ -348,24 +356,24 @@ document.addEventListener('DOMContentLoaded', function() {
             const welcomeForm = document.getElementById('welcomeForm');
             
             if (messageForm) {
-                messageForm.addEventListener('submit', window.handleMessageSubmit);
+                messageForm.addEventListener('submit', handleMessageSubmit);
             }
             
             if (welcomeForm) {
-                welcomeForm.addEventListener('submit', window.handleWelcomeSubmit);
+                welcomeForm.addEventListener('submit', handleWelcomeSubmit);
             }
 
             // Modale patient
             const assignPatientBtn = document.getElementById('assignPatientBtn');
             const assignPatientCancel = document.getElementById('assignPatientCancel');
             const assignPatientConfirm = document.getElementById('assignPatientConfirm');
-            const closePatientModalBtn = document.getElementById('closePatientModal');
+            const closePatientModal = document.getElementById('closePatientModal');
             const patientSelect = document.getElementById('patientSelect');
             
-            if (assignPatientBtn) assignPatientBtn.addEventListener('click', window.openPatientModal);
-            if (assignPatientCancel) assignPatientCancel.addEventListener('click', window.closePatientModal);
-            if (assignPatientConfirm) assignPatientConfirm.addEventListener('click', window.assignPatient);
-            if (closePatientModalBtn) closePatientModalBtn.addEventListener('click', window.closePatientModal);
+            if (assignPatientBtn) assignPatientBtn.addEventListener('click', openPatientModal);
+            if (assignPatientCancel) assignPatientCancel.addEventListener('click', closePatientModal);
+            if (assignPatientConfirm) assignPatientConfirm.addEventListener('click', assignPatient);
+            if (closePatientModal) closePatientModal.addEventListener('click', closePatientModal);
             
             // Modale suppression conversation
             const closeDeleteModal = document.getElementById('closeDeleteModal');
@@ -439,9 +447,17 @@ document.addEventListener('DOMContentLoaded', function() {
         window.restoreSavedConversation = function() {
             const savedConversationId = localStorage.getItem('neuroscan-current-conversation');
             if (savedConversationId && window.conversations.length > 0) {
+                // Vérifier que l'ID est un ObjectId MongoDB valide
+                if (!window.isValidMongoId(savedConversationId)) {
+                    // ID invalide (ancien format SQLite), nettoyer le localStorage
+                    console.warn('ID de conversation invalide détecté:', savedConversationId);
+                    localStorage.removeItem('neuroscan-current-conversation');
+                    return;
+                }
+                
                 const conversationExists = window.conversations.find(conv => conv.id.toString() === savedConversationId);
                 if (conversationExists) {
-                    // Restaurer la conversation sauvegardée (pas de parseInt pour supporter MongoDB ObjectId)
+                    // Restaurer la conversation sauvegardée
                     window.selectConversation(savedConversationId);
                 } else {
                     // La conversation n'existe plus, nettoyer le localStorage
@@ -762,7 +778,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // ===== FIN DES NOUVELLES FONCTIONS =====
         
         // Fonction de recherche dans les conversations
-        window.filterConversations = function(query) {
+        function filterConversations(query) {
             const conversationItems = document.querySelectorAll('.conversation-item');
             let hasResults = false;
             
@@ -801,7 +817,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Gestion des templates de messages
-        window.toggleTemplates = function() {
+        function toggleTemplates() {
             const templates = document.getElementById('messageTemplates');
             if (templates) {
                 const isVisible = !templates.classList.contains('hidden');
@@ -821,7 +837,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        window.hideTemplates = function() {
+        function hideTemplates() {
             const templates = document.getElementById('messageTemplates');
             if (templates) {
                 templates.classList.add('hidden');
@@ -829,7 +845,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Bouton "scroll to bottom" intelligent
-        window.toggleScrollToBottomButton = function(show) {
+        function toggleScrollToBottomButton(show) {
             let scrollBtn = document.getElementById('scrollToBottomBtn');
             
             if (show) {
@@ -947,7 +963,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }, autoRemoveDelay);
         }
 
-        window.handleWelcomeSubmit = async function(e) {
+        async function handleWelcomeSubmit(e) {
             e.preventDefault();
             
             const welcomeInput = document.getElementById('welcomeMessageInput');
@@ -1005,7 +1021,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const symptoms = titleAnalysis.symptoms;
 
                 return `
-                <div class="conversation-item group cursor-pointer p-3 rounded-xl border border-transparent hover:border-gray-200 transition-all duration-200 ${String(conv.id) === String(window.currentConversationId) ? 'active bg-primary-100 border-primary-200 shadow-sm' : 'hover:bg-gray-50'}"
+                <div class="conversation-item group cursor-pointer p-3 rounded-xl border border-transparent hover:border-gray-200 transition-all duration-200 ${conv.id === window.currentConversationId ? 'active bg-primary-100 border-primary-200 shadow-sm' : 'hover:bg-gray-50'}"
                      data-id="${conv.id}">
                     <div class="flex justify-between items-start">
                         <div class="flex-1 min-w-0">
@@ -1063,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <span class="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
                                         ${conv.message_count || 0}
                                     </span>
-                                    <button onclick="deleteConversation(event, ${conv.id})"
+                                    <button onclick="deleteConversation(event, '${conv.id}')"
                                             class="delete-conversation-btn opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 p-1.5 rounded-lg transition-all hover:bg-red-50 hover:shadow-sm"
                                             title="Supprimer la conversation">
                                         <i data-feather="trash-2" class="w-3.5 h-3.5"></i>
@@ -1084,7 +1100,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (e.target.closest('.delete-conversation-btn')) {
                         return;
                     }
-                    const id = item.dataset.id; // Garder comme string pour supporter MongoDB ObjectId
+                    // Ne pas utiliser parseInt() car les ObjectIds MongoDB sont des chaînes hexadécimales
+                    const id = item.dataset.id;
                     window.selectConversation(id);
                 });
 
@@ -1102,10 +1119,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         window.selectConversation = async function(conversationId) {
-            // Convertir en string pour supporter MongoDB ObjectId
-            conversationId = String(conversationId);
+            // Vérifier que l'ID est valide
+            if (!window.isValidMongoId(conversationId)) {
+                console.error('Tentative de sélection avec un ID invalide:', conversationId);
+                localStorage.removeItem('neuroscan-current-conversation');
+                window.showNotification('ID de conversation invalide. Veuillez créer une nouvelle conversation.', 'error');
+                return;
+            }
             
-            if (String(window.currentConversationId) === conversationId) return;
+            if (window.currentConversationId === conversationId) return;
 
             window.currentConversationId = conversationId;
             
@@ -1164,6 +1186,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         window.loadMessages = async function() {
             if (!window.currentConversationId) return;
+
+            // Vérifier que l'ID est un ObjectId MongoDB valide
+            if (!window.isValidMongoId(window.currentConversationId)) {
+                console.error('ID de conversation invalide:', window.currentConversationId);
+                window.currentConversationId = null;
+                localStorage.removeItem('neuroscan-current-conversation');
+                return;
+            }
 
             try {
                 const response = await fetch(`/api/chat/conversations/${window.currentConversationId}/messages`);
@@ -1276,10 +1306,24 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (window.isLoading || !window.currentConversationId) return;
             
+            // Vérifier que l'ID de conversation est valide
+            if (!window.isValidMongoId(window.currentConversationId)) {
+                console.error('ID de conversation invalide:', window.currentConversationId);
+                window.currentConversationId = null;
+                localStorage.removeItem('neuroscan-current-conversation');
+                window.showNotification('Conversation invalide. Veuillez créer une nouvelle conversation.', 'error');
+                return;
+            }
+            
             const messageInput = document.getElementById('messageInput');
             const message = messageInput.value.trim();
             
-            if (!message) return;
+            console.log('handleMessageSubmit - message:', message, 'length:', message.length);
+            
+            if (!message) {
+                console.warn('Message vide, arrêt de la soumission');
+                return;
+            }
             
             // Désactiver l'interface
             window.setLoading(true);
@@ -1300,20 +1344,22 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typingIndicator) typingIndicator.classList.remove('hidden');
             
             try {
-                console.log('📤 Envoi message - conversation_id:', window.currentConversationId, 'message:', message.substring(0, 50));
+                const requestBody = {
+                    conversation_id: window.currentConversationId,
+                    message: message
+                };
+                console.log('Envoi de la requête avec:', requestBody);
                 
                 const response = await fetch('/api/chat/send', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        conversation_id: window.currentConversationId,
-                        message: message
-                    })
+                    body: JSON.stringify(requestBody)
                 });
                 
                 const data = await response.json();
+                console.log('Réponse reçue:', data);
                 
                 // Masquer l'indicateur de frappe moderne
                 const typingIndicator = document.getElementById('typingIndicatorModern');
@@ -1513,9 +1559,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initialiser l'application
         initializePage();
         setupEventListeners();
+        window.loadConversations();
         
         // Initialiser les animations du profil médecin
         initializeDoctorProfile();
+        
+        });
 
         // ===== GESTION DU MODE SOMBRE =====
         
@@ -1841,6 +1890,15 @@ document.addEventListener('DOMContentLoaded', function() {
         window.assignPatient = async function() {
             if (!window.currentConversationId) {
                 window.showNotification('Aucune conversation sélectionnée', 'error');
+                return;
+            }
+            
+            // Vérifier que l'ID est un ObjectId MongoDB valide
+            if (!window.isValidMongoId(window.currentConversationId)) {
+                console.error('ID de conversation invalide:', window.currentConversationId);
+                window.currentConversationId = null;
+                localStorage.removeItem('neuroscan-current-conversation');
+                window.showNotification('Conversation invalide, veuillez en créer une nouvelle', 'error');
                 return;
             }
             
@@ -2303,6 +2361,3 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     
-    // Charger les conversations au démarrage
-    window.loadConversations();
-});

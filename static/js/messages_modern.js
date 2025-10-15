@@ -2122,6 +2122,234 @@ function previewFile(fileId, filename, mimeType) {
 }
 
 // ========================================
+// PARTAGE D'ANALYSES
+// ========================================
+
+/**
+ * Ouvrir le modal de partage d'analyse
+ */
+async function shareAnalysisModal() {
+    if (!currentRecipient) {
+        showNotification('Veuillez sélectionner un médecin destinataire', 'error');
+        return;
+    }
+    
+    try {
+        // Charger les analyses du médecin connecté
+        const response = await fetch('/api/messages/my-analyses');
+        const data = await response.json();
+        
+        if (!data.success) {
+            showNotification('Erreur lors du chargement des analyses', 'error');
+            return;
+        }
+        
+        // Créer le modal
+        displayAnalysisSelectionModal(data.analyses);
+        
+    } catch (error) {
+        console.error('Erreur chargement analyses:', error);
+        showNotification('Erreur de connexion', 'error');
+    }
+}
+
+/**
+ * Afficher le modal de sélection d'analyse
+ */
+function displayAnalysisSelectionModal(analyses) {
+    // Supprimer le modal existant s'il y en a un
+    const existingModal = document.getElementById('shareAnalysisModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    const modal = document.createElement('div');
+    modal.id = 'shareAnalysisModal';
+    modal.className = 'modal-overlay show';
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-share-alt"></i>
+                    Partager une Analyse
+                </h3>
+                <button class="btn-close-modal" onclick="closeShareAnalysisModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                ${analyses.length === 0 ? `
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open"></i>
+                        <h3>Aucune analyse disponible</h3>
+                        <p>Vous n'avez pas encore effectué d'analyses</p>
+                    </div>
+                ` : `
+                    <div class="analysis-search" style="margin-bottom: 1.5rem;">
+                        <div class="search-input-wrapper">
+                            <i class="fas fa-search"></i>
+                            <input 
+                                type="text" 
+                                id="searchAnalyses" 
+                                placeholder="Rechercher par nom de patient..."
+                                oninput="filterAnalyses(this.value)"
+                                autocomplete="off">
+                        </div>
+                    </div>
+                    
+                    <div class="analyses-list" id="analysesList">
+                        ${analyses.map(analysis => createAnalysisItem(analysis)).join('')}
+                    </div>
+                `}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+/**
+ * Créer un item d'analyse
+ */
+function createAnalysisItem(analysis) {
+    const date = new Date(analysis.created_at).toLocaleDateString('fr-FR');
+    const resultClass = analysis.prediction === 'Tumeur détectée' ? 'positive' : 'negative';
+    
+    return `
+        <div class="analysis-item" data-analysis-id="${analysis._id}" data-patient-name="${analysis.patient_name.toLowerCase()}">
+            <div class="analysis-preview">
+                <img src="${analysis.image_url}" alt="IRM">
+            </div>
+            <div class="analysis-info">
+                <div class="analysis-patient">
+                    <i class="fas fa-user"></i>
+                    <strong>${analysis.patient_name}</strong>
+                </div>
+                <div class="analysis-details">
+                    <span><i class="fas fa-calendar"></i> ${date}</span>
+                    <span><i class="fas fa-venus-mars"></i> ${analysis.gender === 'M' ? 'Masculin' : 'Féminin'}, ${analysis.age} ans</span>
+                </div>
+                <div class="analysis-result ${resultClass}">
+                    <i class="fas ${analysis.prediction === 'Tumeur détectée' ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i>
+                    ${analysis.prediction} (${analysis.confidence}%)
+                </div>
+            </div>
+            <button class="btn-share-analysis" onclick="shareSelectedAnalysis('${analysis._id}')" title="Partager cette analyse">
+                <i class="fas fa-share"></i>
+            </button>
+        </div>
+    `;
+}
+
+/**
+ * Filtrer les analyses
+ */
+function filterAnalyses(query) {
+    const items = document.querySelectorAll('.analysis-item');
+    const searchTerm = query.toLowerCase();
+    
+    items.forEach(item => {
+        const patientName = item.dataset.patientName;
+        if (patientName.includes(searchTerm)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+/**
+ * Partager l'analyse sélectionnée
+ */
+async function shareSelectedAnalysis(analysisId) {
+    if (!currentConversation || !currentRecipient) {
+        showNotification('Erreur: conversation non trouvée', 'error');
+        return;
+    }
+    
+    try {
+        // Afficher un loader
+        showNotification('Génération du lien de partage...', 'info');
+        
+        // Créer le lien de partage sécurisé
+        const response = await fetch('/api/messages/share-analysis', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                analysis_id: analysisId,
+                conversation_id: currentConversation,
+                recipient_id: currentRecipient
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            showNotification(data.error || 'Erreur lors du partage', 'error');
+            return;
+        }
+        
+        // Envoyer le message avec le lien
+        await sendAnalysisMessage(data.share_url, data.analysis_info);
+        
+        // Fermer le modal
+        closeShareAnalysisModal();
+        
+        showNotification('Analyse partagée avec succès!', 'success');
+        
+    } catch (error) {
+        console.error('Erreur partage analyse:', error);
+        showNotification('Erreur lors du partage de l\'analyse', 'error');
+    }
+}
+
+/**
+ * Envoyer le message avec l'analyse partagée
+ */
+async function sendAnalysisMessage(shareUrl, analysisInfo) {
+    const messageData = {
+        conversation_id: currentConversation,
+        recipient_id: currentRecipient,
+        content: `📊 Analyse IRM partagée\n\nPatient: ${analysisInfo.patient_age} ans, ${analysisInfo.patient_gender === 'M' ? 'Masculin' : 'Féminin'}\nRésultat: ${analysisInfo.result}\n\n🔗 Voir l'analyse: ${shareUrl}`,
+        message_type: 'analysis_share',
+        analysis_share_url: shareUrl,
+        analysis_info: analysisInfo
+    };
+    
+    // Envoyer via WebSocket ou HTTP
+    if (useWebSocket && window.wsManager && window.wsManager.isConnected) {
+        window.wsManager.sendMessage(messageData);
+    } else {
+        const response = await fetch('/api/messages/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(messageData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.message) {
+            appendMessages([result.message]);
+        }
+    }
+}
+
+/**
+ * Fermer le modal de partage
+ */
+function closeShareAnalysisModal() {
+    const modal = document.getElementById('shareAnalysisModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// ========================================
 // EMOJI PICKER
 // ========================================
 

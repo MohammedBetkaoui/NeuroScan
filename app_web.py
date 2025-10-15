@@ -1143,6 +1143,7 @@ def upload_message_file():
             'stored_filename': result['stored_filename'],
             'relative_path': result['relative_path'],
             'file_size': result['file_size'],
+            'file_size_formatted': result.get('file_size_formatted', '0 B'),
             'file_extension': result['file_extension'],
             'file_category': result['file_category'],
             'mime_type': result['mime_type'],
@@ -1174,12 +1175,18 @@ def get_message_file(file_id):
         if not doctor:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
         
+        print(f"📥 Demande téléchargement fichier: {file_id} par doctor: {doctor.get('id')}")
+        
         # Récupérer le fichier de la DB
         files_collection = get_collection('message_files')
         file_doc = files_collection.find_one({'_id': ObjectId(file_id), 'is_deleted': False})
         
         if not file_doc:
+            print(f"❌ Fichier non trouvé dans la BD: {file_id}")
             return jsonify({'success': False, 'error': 'Fichier non trouvé'}), 404
+        
+        print(f"✅ Fichier trouvé: {file_doc.get('original_filename')}")
+        print(f"📁 Conversation du fichier: {file_doc.get('conversation_id')}")
         
         # Vérifier que le médecin a accès à cette conversation
         conversations_collection = get_collection('doctor_conversations')
@@ -1187,15 +1194,25 @@ def get_message_file(file_id):
         # Convertir l'ID du médecin en ObjectId si nécessaire
         doctor_id = ObjectId(doctor['id']) if isinstance(doctor['id'], str) else doctor['id']
         
+        # Récupérer la conversation pour vérifier
         conversation = conversations_collection.find_one({
-            '_id': ObjectId(file_doc['conversation_id']),
-            'participants': doctor_id
+            '_id': ObjectId(file_doc['conversation_id'])
         })
         
         if not conversation:
-            # Log pour debug
-            print(f"❌ Accès refusé - Doctor ID: {doctor_id}, File conversation: {file_doc['conversation_id']}")
+            print(f"❌ Conversation non trouvée: {file_doc['conversation_id']}")
+            return jsonify({'success': False, 'error': 'Conversation non trouvée'}), 404
+        
+        print(f"👥 Participants de la conversation: {conversation.get('participants')}")
+        
+        # Vérifier si le médecin est participant
+        is_participant = doctor_id in conversation.get('participants', [])
+        
+        if not is_participant:
+            print(f"❌ Accès refusé - Doctor {doctor_id} pas dans participants {conversation.get('participants')}")
             return jsonify({'success': False, 'error': 'Accès non autorisé'}), 403
+        
+        print(f"✅ Accès autorisé pour {doctor.get('first_name')} {doctor.get('last_name')}")
         
         # Chemin du fichier
         file_path = os.path.join('uploads', file_doc['relative_path'])

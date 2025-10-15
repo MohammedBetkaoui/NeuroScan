@@ -1765,7 +1765,9 @@ function displayFilePreview() {
         previewContainer = document.createElement('div');
         previewContainer.id = 'filePreviewContainer';
         previewContainer.className = 'file-preview-container';
-        inputContainer.insertBefore(previewContainer, inputContainer.firstChild);
+        
+        // Insérer AVANT le conteneur input (pas dedans)
+        inputContainer.parentElement.insertBefore(previewContainer, inputContainer);
     }
     
     // Vider et remplir
@@ -2119,4 +2121,317 @@ function previewFile(fileId, filename, mimeType) {
     });
 }
 
-console.log('✅ Fonctions utilitaires WebSocket, Responsive et Upload chargées');
+// ========================================
+// EMOJI PICKER
+// ========================================
+
+// Liste des emojis par catégorie
+const emojiData = {
+    frequent: ['😊', '😂', '❤️', '👍', '🙏', '👏', '🎉', '💯'],
+    smileys: [
+        '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
+        '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
+        '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩',
+        '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣',
+        '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬',
+        '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗'
+    ],
+    gestures: [
+        '👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞',
+        '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '👍',
+        '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝',
+        '🙏', '✍️', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃'
+    ],
+    medical: [
+        '⚕️', '🏥', '🩺', '💉', '💊', '🩹', '🩼', '🧬', '🔬', '🧪',
+        '🧫', '🦠', '🧠', '🫀', '🫁', '🦷', '🦴', '👁️', '👀', '🧑‍⚕️',
+        '👨‍⚕️', '👩‍⚕️', '🚑', '🏨', '🔬', '🩺', '💉'
+    ],
+    hearts: [
+        '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔',
+        '❤️‍🔥', '❤️‍🩹', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟'
+    ],
+    objects: [
+        '📱', '💻', '⌨️', '🖥️', '🖨️', '🖱️', '📞', '📟', '📠', '📺',
+        '📷', '📸', '📹', '🎥', '📽️', '📝', '📄', '📃', '📑', '📊',
+        '📈', '📉', '🗒️', '📅', '📆', '🗓️', '📇', '🗃️', '📋', '📁',
+        '📂', '🗂️', '📌', '📍', '📎', '🖇️', '📏', '📐', '✂️', '🔒'
+    ],
+    symbols: [
+        '✅', '❌', '⭕', '✔️', '✖️', '➕', '➖', '➗', '✳️', '✴️',
+        '❇️', '‼️', '⁉️', '❓', '❔', '❗', '〰️', '⚠️', '🚫', '🔞',
+        '📵', '🚭', '❎', '✴️', '🆚', '📶', '🎦', '🔅', '🔆', '📳'
+    ]
+};
+
+const emojiCategories = {
+    frequent: { icon: '🕐', label: 'Récents' },
+    smileys: { icon: '😊', label: 'Smileys' },
+    gestures: { icon: '👋', label: 'Gestes' },
+    medical: { icon: '⚕️', label: 'Médical' },
+    hearts: { icon: '❤️', label: 'Coeurs' },
+    objects: { icon: '📁', label: 'Objets' },
+    symbols: { icon: '✅', label: 'Symboles' }
+};
+
+let currentEmojiCategory = 'frequent';
+let emojiPickerElement = null;
+let frequentEmojis = [];
+
+/**
+ * Initialiser le picker d'emoji
+ */
+function initializeEmojiPicker() {
+    // Charger les emojis fréquents depuis localStorage
+    const stored = localStorage.getItem('frequentEmojis');
+    if (stored) {
+        try {
+            frequentEmojis = JSON.parse(stored);
+        } catch (e) {
+            frequentEmojis = [...emojiData.frequent];
+        }
+    } else {
+        frequentEmojis = [...emojiData.frequent];
+    }
+    
+    // Créer l'élément picker s'il n'existe pas
+    if (!emojiPickerElement) {
+        createEmojiPicker();
+    }
+}
+
+/**
+ * Créer l'élément HTML du picker
+ */
+function createEmojiPicker() {
+    const picker = document.createElement('div');
+    picker.className = 'emoji-picker';
+    picker.id = 'emojiPicker';
+    
+    picker.innerHTML = `
+        <div class="emoji-picker-header">
+            <h4>Emojis</h4>
+            <button class="btn-close-emoji" onclick="closeEmojiPicker()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="emoji-categories" id="emojiCategories">
+            ${Object.entries(emojiCategories).map(([key, cat]) => `
+                <button class="emoji-category-btn ${key === 'frequent' ? 'active' : ''}" 
+                        data-category="${key}" 
+                        onclick="selectEmojiCategory('${key}')"
+                        title="${cat.label}">
+                    ${cat.icon}
+                </button>
+            `).join('')}
+        </div>
+        
+        <div class="emoji-search">
+            <input type="text" 
+                   id="emojiSearchInput" 
+                   placeholder="Rechercher un emoji..." 
+                   oninput="searchEmojis(this.value)">
+        </div>
+        
+        <div class="emoji-grid" id="emojiGrid">
+            <!-- Les emojis seront insérés ici -->
+        </div>
+    `;
+    
+    // Ajouter au wrapper de l'input
+    const inputWrapper = document.querySelector('.message-input-wrapper');
+    if (inputWrapper) {
+        inputWrapper.appendChild(picker);
+        emojiPickerElement = picker;
+        displayEmojis(currentEmojiCategory);
+    }
+}
+
+/**
+ * Toggle le picker d'emoji
+ */
+function toggleEmojiPicker() {
+    if (!emojiPickerElement) {
+        initializeEmojiPicker();
+    }
+    
+    const picker = document.getElementById('emojiPicker');
+    if (picker) {
+        picker.classList.toggle('show');
+        
+        // Focus sur la recherche si ouvert
+        if (picker.classList.contains('show')) {
+            setTimeout(() => {
+                const searchInput = document.getElementById('emojiSearchInput');
+                if (searchInput) searchInput.focus();
+            }, 100);
+        }
+    }
+}
+
+/**
+ * Fermer le picker
+ */
+function closeEmojiPicker() {
+    const picker = document.getElementById('emojiPicker');
+    if (picker) {
+        picker.classList.remove('show');
+    }
+}
+
+/**
+ * Sélectionner une catégorie
+ */
+function selectEmojiCategory(category) {
+    currentEmojiCategory = category;
+    
+    // Mettre à jour les boutons actifs
+    document.querySelectorAll('.emoji-category-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.category === category);
+    });
+    
+    // Afficher les emojis de cette catégorie
+    displayEmojis(category);
+}
+
+/**
+ * Afficher les emojis d'une catégorie
+ */
+function displayEmojis(category) {
+    const grid = document.getElementById('emojiGrid');
+    if (!grid) return;
+    
+    let emojis = [];
+    
+    if (category === 'frequent') {
+        emojis = frequentEmojis.length > 0 ? frequentEmojis : emojiData.frequent;
+    } else {
+        emojis = emojiData[category] || [];
+    }
+    
+    if (emojis.length === 0) {
+        grid.innerHTML = `
+            <div class="emoji-no-results">
+                <i class="fas fa-search"></i>
+                <p>Aucun emoji trouvé</p>
+            </div>
+        `;
+        return;
+    }
+    
+    grid.innerHTML = emojis.map(emoji => `
+        <button class="emoji-item" onclick="insertEmoji('${emoji}')" title="${emoji}">
+            ${emoji}
+        </button>
+    `).join('');
+}
+
+/**
+ * Rechercher des emojis
+ */
+function searchEmojis(query) {
+    const grid = document.getElementById('emojiGrid');
+    if (!grid) return;
+    
+    if (!query.trim()) {
+        displayEmojis(currentEmojiCategory);
+        return;
+    }
+    
+    // Rechercher dans toutes les catégories
+    const allEmojis = Object.values(emojiData).flat();
+    const results = allEmojis.filter(emoji => {
+        // Recherche simple (on pourrait améliorer avec des mots-clés)
+        return emoji.includes(query.toLowerCase());
+    });
+    
+    if (results.length === 0) {
+        grid.innerHTML = `
+            <div class="emoji-no-results">
+                <i class="fas fa-search"></i>
+                <p>Aucun emoji trouvé pour "${query}"</p>
+            </div>
+        `;
+        return;
+    }
+    
+    grid.innerHTML = results.slice(0, 64).map(emoji => `
+        <button class="emoji-item" onclick="insertEmoji('${emoji}')" title="${emoji}">
+            ${emoji}
+        </button>
+    `).join('');
+}
+
+/**
+ * Insérer un emoji dans l'input
+ */
+function insertEmoji(emoji) {
+    const messageInput = document.getElementById('messageInput');
+    if (!messageInput) return;
+    
+    // Insérer à la position du curseur
+    const start = messageInput.selectionStart;
+    const end = messageInput.selectionEnd;
+    const text = messageInput.value;
+    
+    messageInput.value = text.substring(0, start) + emoji + text.substring(end);
+    
+    // Replacer le curseur après l'emoji
+    const newPosition = start + emoji.length;
+    messageInput.setSelectionRange(newPosition, newPosition);
+    messageInput.focus();
+    
+    // Ajouter aux emojis fréquents
+    addToFrequentEmojis(emoji);
+    
+    // Optionnel: fermer le picker après insertion
+    // closeEmojiPicker();
+}
+
+/**
+ * Ajouter un emoji aux fréquents
+ */
+function addToFrequentEmojis(emoji) {
+    // Retirer l'emoji s'il existe déjà
+    frequentEmojis = frequentEmojis.filter(e => e !== emoji);
+    
+    // Ajouter au début
+    frequentEmojis.unshift(emoji);
+    
+    // Limiter à 20 emojis
+    frequentEmojis = frequentEmojis.slice(0, 20);
+    
+    // Sauvegarder dans localStorage
+    try {
+        localStorage.setItem('frequentEmojis', JSON.stringify(frequentEmojis));
+    } catch (e) {
+        console.error('Erreur sauvegarde emojis fréquents:', e);
+    }
+    
+    // Mettre à jour l'affichage si on est dans la catégorie frequent
+    if (currentEmojiCategory === 'frequent') {
+        displayEmojis('frequent');
+    }
+}
+
+/**
+ * Fermer le picker en cliquant en dehors
+ */
+document.addEventListener('click', function(e) {
+    const picker = document.getElementById('emojiPicker');
+    const emojiBtn = document.querySelector('.btn-emoji');
+    
+    if (picker && picker.classList.contains('show')) {
+        if (!picker.contains(e.target) && e.target !== emojiBtn && !emojiBtn?.contains(e.target)) {
+            closeEmojiPicker();
+        }
+    }
+});
+
+// Initialiser le picker au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    initializeEmojiPicker();
+});
+
+console.log('✅ Fonctions utilitaires WebSocket, Responsive, Upload et Emoji chargées');

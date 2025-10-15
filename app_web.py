@@ -1108,9 +1108,16 @@ def get_conversation_messages(conversation_id, doctor_id, with_branches=False):
         return []
     
     try:
+        # Convertir conversation_id en ObjectId si c'est une string
+        try:
+            conv_obj_id = ObjectId(conversation_id) if isinstance(conversation_id, str) else conversation_id
+        except:
+            print(f"ID conversation invalide: {conversation_id}")
+            return []
+        
         # Vérifier que la conversation appartient au médecin
         conversation = db.chat_conversations.find_one({
-            '_id': ObjectId(conversation_id),
+            '_id': conv_obj_id,
             'doctor_id': doctor_id
         })
         
@@ -1118,15 +1125,18 @@ def get_conversation_messages(conversation_id, doctor_id, with_branches=False):
             return []
         
         # Récupérer seulement les messages de niveau 0 (conversation principale)
+        # Les messages sont stockés avec conversation_id comme string
         messages_cursor = db.chat_messages.find({
-            'conversation_id': conversation_id,
-            '$or': [
-                {'branch_level': 0},
-                {'branch_level': {'$exists': False}}
-            ],
-            '$or': [
-                {'is_active': True},
-                {'is_active': {'$exists': False}}
+            'conversation_id': str(conv_obj_id),
+            '$and': [
+                {'$or': [
+                    {'branch_level': 0},
+                    {'branch_level': {'$exists': False}}
+                ]},
+                {'$or': [
+                    {'is_active': True},
+                    {'is_active': {'$exists': False}}
+                ]}
             ]
         }).sort('timestamp', 1)
         
@@ -1144,15 +1154,27 @@ def get_conversation_messages(conversation_id, doctor_id, with_branches=False):
         return messages
     except Exception as e:
         print(f"Erreur récupération messages: {e}")
+        import traceback
+        traceback.print_exc()
         return []
 
 def save_chat_message(conversation_id, role, content, is_medical_query=True, confidence_score=None, parent_message_id=None, original_message_id=None, branch_level=0):
     """Sauvegarder un message de chat avec support du branchement"""
     try:
+        # S'assurer que conversation_id est une string pour la cohérence
+        conv_id_str = str(conversation_id)
+        
+        # Convertir en ObjectId pour la mise à jour de la conversation
+        try:
+            conv_obj_id = ObjectId(conversation_id) if isinstance(conversation_id, str) else conversation_id
+        except:
+            print(f"ID conversation invalide: {conversation_id}")
+            return None
+        
         # Calculer la position dans la branche
         pipeline = [
             {'$match': {
-                'conversation_id': conversation_id,
+                'conversation_id': conv_id_str,
                 'branch_level': branch_level,
                 '$or': [
                     {'parent_message_id': parent_message_id},
@@ -1172,7 +1194,7 @@ def save_chat_message(conversation_id, role, content, is_medical_query=True, con
         
         # Créer le document message
         message_doc = {
-            'conversation_id': conversation_id,
+            'conversation_id': conv_id_str,  # Stocké comme string
             'role': role,
             'content': content,
             'is_medical_query': is_medical_query,
@@ -1191,13 +1213,15 @@ def save_chat_message(conversation_id, role, content, is_medical_query=True, con
         
         # Mettre à jour la conversation
         db.chat_conversations.update_one(
-            {'_id': ObjectId(conversation_id)},
+            {'_id': conv_obj_id},
             {'$set': {'updated_at': datetime.now()}}
         )
         
         return message_id
     except Exception as e:
         print(f"Erreur sauvegarde message: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def edit_message_and_create_branch(message_id, new_content, doctor_id):
@@ -1557,6 +1581,16 @@ def chat_page():
         return redirect(url_for('login'))
     return render_template('chat.html', doctor=doctor)
 
+@app.route('/static/js/chat.js')
+def serve_chat_js():
+    """Servir le fichier chat.js sans cache"""
+    response = send_from_directory('static/js', 'chat.js')
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    response.headers['Content-Type'] = 'application/javascript; charset=utf-8'
+    return response
+
 @app.route('/chat/help')
 @login_required
 def chat_help():
@@ -1606,7 +1640,7 @@ def create_conversation():
         print(f"Erreur création conversation: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/chat/conversations/<int:conversation_id>/messages')
+@app.route('/api/chat/conversations/<conversation_id>/messages')
 @login_required
 def get_messages(conversation_id):
     """API pour récupérer les messages d'une conversation"""
@@ -1632,6 +1666,8 @@ def send_chat_message():
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
         data = request.get_json()
+        print(f"📨 Données reçues: {data}")  # DEBUG
+        
         conversation_id = data.get('conversation_id')
         
         # Vérifier que message est une chaîne de caractères
@@ -1644,8 +1680,12 @@ def send_chat_message():
         else:
             message = str(message_raw).strip()
 
+        print(f"📝 Conversation ID: {conversation_id}, Message: {message[:50]}...")  # DEBUG
+        
         if not conversation_id or not message:
-            return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+            error_msg = f"Données manquantes - conversation_id: {conversation_id}, message vide: {not message}"
+            print(f"❌ {error_msg}")  # DEBUG
+            return jsonify({'success': False, 'error': error_msg}), 400
 
         # Récupérer l'historique de la conversation
         conversation_history = get_conversation_messages(conversation_id, doctor_id)
@@ -1697,28 +1737,27 @@ def send_chat_message():
 def get_patient_context_for_conversation(conversation_id):
     """Récupérer le contexte patient pour une conversation"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # Convertir conversation_id en ObjectId
+        try:
+            conv_obj_id = ObjectId(conversation_id) if isinstance(conversation_id, str) else conversation_id
+        except:
+            print(f"ID conversation invalide: {conversation_id}")
+            return None
         
         # Récupérer l'ID patient de la conversation
-        # MongoDB query needed here
-        # TODO: Convert to MongoDB
-        # SELECT patient_id FROM chat_conversations WHERE id = ?
+        conversation = db.chat_conversations.find_one(
+            {'_id': conv_obj_id},
+            {'patient_id': 1}
+        )
         
-        result = None  # TODO: Fetch from MongoDB
-        if not result or not result.get('patient_id'):
+        if not conversation or not conversation.get('patient_id'):
             return None
             
-        patient_id = result.get('patient_id')
+        patient_id = conversation.get('patient_id')
         
         # Récupérer les informations du patient
-        # MongoDB query needed here
-        # TODO: Convert to MongoDB
-        # SELECT patient_name, date_of_birth, gender, medical_history, 
-        #        allergies, current_medications, total_analyses
-        # FROM patients WHERE patient_id = ?
+        patient_data = db.patients.find_one({'patient_id': patient_id})
         
-        patient_data = None  # TODO: Fetch from MongoDB
         if not patient_data:
             return None
             
@@ -1727,42 +1766,48 @@ def get_patient_context_for_conversation(conversation_id):
         birth_date_str = patient_data.get('date_of_birth')
         if birth_date_str:
             try:
-                birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d')
+                if isinstance(birth_date_str, str):
+                    birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d')
+                else:
+                    birth_date = birth_date_str
                 age = datetime.now().year - birth_date.year
             except:
                 age = None
         
         # Récupérer les analyses récentes
-        # MongoDB query needed here
-        # TODO: Convert to MongoDB
-        # SELECT timestamp, predicted_label, confidence, exam_date
-        # FROM analyses WHERE patient_id = ? ORDER BY timestamp DESC LIMIT 3
+        recent_analyses = list(db.analyses.find(
+            {'patient_id': patient_id},
+            {'analysis_date': 1, 'prediction': 1, 'confidence': 1}
+        ).sort('analysis_date', -1).limit(5))
         
-        recent_analyses = []  # TODO: Fetch from MongoDB
-        analyses_summary = []
-        for analysis in recent_analyses:
-            analyses_summary.append(f"- {analysis.get('exam_date') or analysis.get('timestamp')}: {analysis.get('predicted_label')} (confiance: {analysis.get('confidence', 0)*100:.1f}%)")
-        
-        return {
-            'name': patient_data.get('patient_name'),
-            'id': patient_id,
-            'age': age,
-            'gender': patient_data[2],
-            'medical_history': patient_data[3],
+        # Construire le contexte
+        context = {
+            'patient_name': patient_data.get('patient_name'),
             'age': age,
             'gender': patient_data.get('gender'),
             'medical_history': patient_data.get('medical_history'),
             'allergies': patient_data.get('allergies'),
             'current_medications': patient_data.get('current_medications'),
-            'total_analyses': patient_data.get('total_analyses'),
-            'recent_analyses': '\n'.join(analyses_summary) if analyses_summary else 'Aucune analyse récente'
+            'total_analyses': patient_data.get('total_analyses', 0),
+            'recent_analyses': [
+                {
+                    'date': str(a.get('analysis_date', '')),
+                    'prediction': a.get('prediction'),
+                    'confidence': a.get('confidence')
+                }
+                for a in recent_analyses
+            ]
         }
+        
+        return context
         
     except Exception as e:
         print(f"Erreur récupération contexte patient: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
-@app.route('/api/chat/conversations/<int:conversation_id>/update', methods=['PUT'])
+@app.route('/api/chat/conversations/<conversation_id>/update', methods=['PUT'])
 @login_required
 def update_conversation(conversation_id):
     """API pour mettre à jour une conversation (titre, patient)"""
@@ -1775,47 +1820,42 @@ def update_conversation(conversation_id):
         title = data.get('title')
         patient_id = data.get('patient_id')
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # Convertir conversation_id en ObjectId
+        try:
+            conv_obj_id = ObjectId(conversation_id) if isinstance(conversation_id, str) else conversation_id
+        except:
+            return jsonify({'success': False, 'error': 'ID conversation invalide'}), 400
         
         # Vérifier que la conversation appartient au médecin
-        # MongoDB query needed here
-        # SELECT id FROM chat_conversations 
-        #             WHERE id = ? AND doctor_id = ?)
+        conversation = db.chat_conversations.find_one({
+            '_id': conv_obj_id,
+            'doctor_id': doctor_id
+        })
         
-        # if not cursor.fetchone():  # TODO: Convert to MongoDB
-            # # conn.close() # DISABLED
-            # return jsonify({'success': False, 'error': 'Conversation introuvable'}), 404
-        # TODO: Implement MongoDB validation check
+        if not conversation:
+            return jsonify({'success': False, 'error': 'Conversation introuvable'}), 404
         
-        # Mettre à jour la conversation
-        update_fields = []
-        params = []
+        # Préparer les champs à mettre à jour
+        update_fields = {'updated_at': datetime.now()}
         
         if title:
-            update_fields.append('title = ?')
-            params.append(title)
+            update_fields['title'] = title
         
         if patient_id is not None:  # Peut être None pour supprimer l'association
-            update_fields.append('patient_id = ?')
-            params.append(patient_id if patient_id else None)
+            update_fields['patient_id'] = patient_id if patient_id else None
         
-        if update_fields:
-            update_fields.append('updated_at = CURRENT_TIMESTAMP')
-            params.append(conversation_id)
-            
-            # MongoDB query needed here
-        # UPDATE chat_conversations 
-        #                 SET {', '.join(update_fields)}
-        #                 WHERE id = ?, params)
-        
-        # conn.commit() # DISABLED
-        # conn.close() # DISABLED
+        # Mettre à jour la conversation
+        db.chat_conversations.update_one(
+            {'_id': conv_obj_id},
+            {'$set': update_fields}
+        )
         
         return jsonify({'success': True, 'message': 'Conversation mise à jour'})
 
     except Exception as e:
         print(f"Erreur mise à jour conversation: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/patients/list')
@@ -1827,39 +1867,47 @@ def get_patients_for_chat():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
-
-        # MongoDB query needed here
-        # SELECT patient_id, patient_name, date_of_birth, gender, total_analyses
-        #             FROM patients
-        #             WHERE doctor_id = ?
-        #             ORDER BY patient_name)
+        # Récupérer les patients du médecin depuis MongoDB
+        patients_cursor = db.patients.find(
+            {'doctor_id': doctor_id},
+            {
+                'patient_id': 1,
+                'patient_name': 1,
+                'date_of_birth': 1,
+                'gender': 1,
+                'total_analyses': 1
+            }
+        ).sort('patient_name', 1)
 
         patients = []
-        # TODO: Convert to MongoDB - fetch patients
-        # for row in cursor.fetchall():
-        #     # Calculer l'âge si date de naissance disponible
-        #     age = None
-        #     if row[2]:  # date_of_birth
-        #         try:
-        #             birth_date = datetime.strptime(row[2], '%Y-%m-%d')
-        #             age = datetime.now().year - birth_date.year
-        #             if datetime.now().month < birth_date.month or (datetime.now().month == birth_date.month and datetime.now().day < birth_date.day):
-        #                 age -= 1
-        #         except:
-        #             age = None
-        #     
-        #     patients.append({
-        #         'patient_id': row[0],
-        #         'patient_name': row[1] or f"Patient {row[0]}",
-        #         'age': age,
-        #         'gender': row[3],
-        #         'total_analyses': row[4] or 0,
-        #         'display_name': f"{row[1] or 'Patient ' + row[0]} ({age} ans)" if age else (row[1] or f"Patient {row[0]}")
-        #     })
-
-        # conn.close() # DISABLED
+        for patient_doc in patients_cursor:
+            # Calculer l'âge si date de naissance disponible
+            age = None
+            date_of_birth = patient_doc.get('date_of_birth')
+            if date_of_birth:
+                try:
+                    if isinstance(date_of_birth, str):
+                        birth_date = datetime.strptime(date_of_birth, '%Y-%m-%d')
+                    else:
+                        birth_date = date_of_birth
+                    age = datetime.now().year - birth_date.year
+                    if datetime.now().month < birth_date.month or (datetime.now().month == birth_date.month and datetime.now().day < birth_date.day):
+                        age -= 1
+                except Exception as e:
+                    print(f"Erreur calcul âge: {e}")
+                    age = None
+            
+            patient_id = patient_doc.get('patient_id')
+            patient_name = patient_doc.get('patient_name') or f"Patient {patient_id}"
+            
+            patients.append({
+                'patient_id': patient_id,
+                'patient_name': patient_name,
+                'age': age,
+                'gender': patient_doc.get('gender'),
+                'total_analyses': patient_doc.get('total_analyses', 0),
+                'display_name': f"{patient_name} ({age} ans)" if age else patient_name
+            })
 
         return jsonify({
             'success': True,
@@ -1868,9 +1916,11 @@ def get_patients_for_chat():
 
     except Exception as e:
         print(f"Erreur récupération liste patients: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/chat/conversations/<int:conversation_id>/delete', methods=['DELETE'])
+@app.route('/api/chat/conversations/<conversation_id>/delete', methods=['DELETE'])
 @login_required
 def delete_conversation(conversation_id):
     """API pour supprimer une conversation et tous ses messages"""
@@ -1879,47 +1929,47 @@ def delete_conversation(conversation_id):
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # Convertir conversation_id en ObjectId
+        try:
+            conv_obj_id = ObjectId(conversation_id) if isinstance(conversation_id, str) else conversation_id
+        except:
+            return jsonify({'success': False, 'error': 'ID conversation invalide'}), 400
         
         # Vérifier que la conversation appartient au médecin
-        # MongoDB query needed here
-        # SELECT id FROM chat_conversations 
-        #             WHERE id = ? AND doctor_id = ?)
+        conversation = db.chat_conversations.find_one({
+            '_id': conv_obj_id,
+            'doctor_id': doctor_id
+        })
         
-        # if not cursor.fetchone():  # TODO: Convert to MongoDB
-            # conn.close() # DISABLED
+        if not conversation:
             return jsonify({'success': False, 'error': 'Conversation introuvable'}), 404
         
         # Supprimer d'abord les messages de la conversation
-        # MongoDB query needed here
-        # DELETE FROM chat_messages 
-        #             WHERE conversation_id = ?)
+        delete_messages_result = db.chat_messages.delete_many({
+            'conversation_id': str(conv_obj_id)
+        })
+        deleted_messages = delete_messages_result.deleted_count
         
-        # Supprimer les attachments s'il y en a
-        # MongoDB query needed here
-        # DELETE FROM chat_attachments 
-        #             WHERE message_id IN (
-        #                 SELECT id FROM chat_messages WHERE conversation_id = ?
-        #             ))
+        # Supprimer les attachments s'il y en a (si la collection existe)
+        if 'chat_attachments' in db.list_collection_names():
+            db.chat_attachments.delete_many({
+                'conversation_id': str(conv_obj_id)
+            })
         
         # Supprimer la conversation
-        # MongoDB query needed here
-        # DELETE FROM chat_conversations 
-        #             WHERE id = ?)
-        
-        # deleted_messages = cursor.rowcount  # TODO: Convert to MongoDB
-        deleted_messages = 0  # Placeholder
-        # conn.commit() # DISABLED
-        # conn.close() # DISABLED
+        db.chat_conversations.delete_one({
+            '_id': conv_obj_id
+        })
         
         return jsonify({
             'success': True, 
-            'message': f'Conversation supprimée avec {deleted_messages} messages'
+            'message': f'Conversation supprimée avec {deleted_messages} message(s)'
         })
 
     except Exception as e:
         print(f"Erreur suppression conversation: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ===== APIs pour l'édition et le branchement de messages =====
@@ -2008,7 +2058,7 @@ def get_message_branches_api(message_id):
         print(f"Erreur récupération branches: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/chat/conversations/<int:conversation_id>/messages-with-branches')
+@app.route('/api/chat/conversations/<conversation_id>/messages-with-branches')
 @login_required  
 def get_messages_with_branches_api(conversation_id):
     """API pour récupérer les messages d'une conversation avec leurs branches"""

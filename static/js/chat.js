@@ -1,18 +1,17 @@
- 
-        // Variables globales - accessibles dans window
-        window.currentConversationId = null;
-        window.conversations = [];
-        window.isLoading = false;
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize feather icons
-            feather.replace();
-            
-            // Initialiser le mode sombre
-            initializeTheme();
-            
-            // Initialiser le système responsive mobile
-            initializeMobileResponsive();
+// Variables globales - accessibles dans window
+window.currentConversationId = null;
+window.conversations = [];
+window.isLoading = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize feather icons
+    feather.replace();
+    
+    // Initialiser le mode sombre
+    initializeTheme();
+    
+    // Initialiser le système responsive mobile
+    initializeMobileResponsive();
             
             // Sidebar toggle for mobile
             const sidebar = document.getElementById('sidebar');
@@ -224,7 +223,7 @@
             // Bouton nouvelle conversation
             const newChatBtn = document.getElementById('newChatBtn');
             if (newChatBtn) {
-                newChatBtn.addEventListener('click', createNewConversation);
+                newChatBtn.addEventListener('click', window.createNewConversation);
             }
 
             // Barre de recherche des conversations
@@ -234,7 +233,7 @@
             if (searchInput) {
                 searchInput.addEventListener('input', function() {
                     const query = this.value.toLowerCase().trim();
-                    filterConversations(query);
+                    window.filterConversations(query);
                     
                     // Afficher/masquer le bouton clear
                     if (clearSearch) {
@@ -261,11 +260,11 @@
             const closeTemplates = document.getElementById('closeTemplates');
             
             if (templateBtn) {
-                templateBtn.addEventListener('click', toggleTemplates);
+                templateBtn.addEventListener('click', window.toggleTemplates);
             }
             
             if (closeTemplates) {
-                closeTemplates.addEventListener('click', hideTemplates);
+                closeTemplates.addEventListener('click', window.hideTemplates);
             }
             
             // Templates de messages
@@ -277,7 +276,7 @@
                         messageInput.value = template;
                         messageInput.dispatchEvent(new Event('input'));
                         messageInput.focus();
-                        hideTemplates();
+                        window.hideTemplates();
                     }
                 }
             });
@@ -296,7 +295,7 @@
                 // Ctrl/Cmd + / : Nouvelle conversation
                 if ((e.ctrlKey || e.metaKey) && e.key === '/') {
                     e.preventDefault();
-                    createNewConversation();
+                    window.createNewConversation();
                 }
                 
                 // Ctrl/Cmd + Enter : Envoyer le message (dans le champ de saisie)
@@ -313,7 +312,7 @@
                 
                 // Échap : Fermer les modales, templates et focus
                 if (e.key === 'Escape') {
-                    hideTemplates();
+                    window.hideTemplates();
                     // Le reste est géré plus haut pour les modales
                 }
             });
@@ -340,7 +339,7 @@
                     lastScrollTop = scrollTop;
                     
                     // Afficher/masquer le bouton "scroll to bottom" si nécessaire
-                    toggleScrollToBottomButton(!isAtBottom && userScrolledUp);
+                    window.toggleScrollToBottomButton(!isAtBottom && userScrolledUp);
                 });
             }
 
@@ -349,24 +348,24 @@
             const welcomeForm = document.getElementById('welcomeForm');
             
             if (messageForm) {
-                messageForm.addEventListener('submit', handleMessageSubmit);
+                messageForm.addEventListener('submit', window.handleMessageSubmit);
             }
             
             if (welcomeForm) {
-                welcomeForm.addEventListener('submit', handleWelcomeSubmit);
+                welcomeForm.addEventListener('submit', window.handleWelcomeSubmit);
             }
 
             // Modale patient
             const assignPatientBtn = document.getElementById('assignPatientBtn');
             const assignPatientCancel = document.getElementById('assignPatientCancel');
             const assignPatientConfirm = document.getElementById('assignPatientConfirm');
-            const closePatientModal = document.getElementById('closePatientModal');
+            const closePatientModalBtn = document.getElementById('closePatientModal');
             const patientSelect = document.getElementById('patientSelect');
             
-            if (assignPatientBtn) assignPatientBtn.addEventListener('click', openPatientModal);
-            if (assignPatientCancel) assignPatientCancel.addEventListener('click', closePatientModal);
-            if (assignPatientConfirm) assignPatientConfirm.addEventListener('click', assignPatient);
-            if (closePatientModal) closePatientModal.addEventListener('click', closePatientModal);
+            if (assignPatientBtn) assignPatientBtn.addEventListener('click', window.openPatientModal);
+            if (assignPatientCancel) assignPatientCancel.addEventListener('click', window.closePatientModal);
+            if (assignPatientConfirm) assignPatientConfirm.addEventListener('click', window.assignPatient);
+            if (closePatientModalBtn) closePatientModalBtn.addEventListener('click', window.closePatientModal);
             
             // Modale suppression conversation
             const closeDeleteModal = document.getElementById('closeDeleteModal');
@@ -442,8 +441,8 @@
             if (savedConversationId && window.conversations.length > 0) {
                 const conversationExists = window.conversations.find(conv => conv.id.toString() === savedConversationId);
                 if (conversationExists) {
-                    // Restaurer la conversation sauvegardée
-                    window.selectConversation(parseInt(savedConversationId));
+                    // Restaurer la conversation sauvegardée (pas de parseInt pour supporter MongoDB ObjectId)
+                    window.selectConversation(savedConversationId);
                 } else {
                     // La conversation n'existe plus, nettoyer le localStorage
                     localStorage.removeItem('neuroscan-current-conversation');
@@ -763,7 +762,7 @@
         // ===== FIN DES NOUVELLES FONCTIONS =====
         
         // Fonction de recherche dans les conversations
-        function filterConversations(query) {
+        window.filterConversations = function(query) {
             const conversationItems = document.querySelectorAll('.conversation-item');
             let hasResults = false;
             
@@ -802,7 +801,7 @@
         }
         
         // Gestion des templates de messages
-        function toggleTemplates() {
+        window.toggleTemplates = function() {
             const templates = document.getElementById('messageTemplates');
             if (templates) {
                 const isVisible = !templates.classList.contains('hidden');
@@ -822,7 +821,7 @@
             }
         }
         
-        function hideTemplates() {
+        window.hideTemplates = function() {
             const templates = document.getElementById('messageTemplates');
             if (templates) {
                 templates.classList.add('hidden');
@@ -830,7 +829,7 @@
         }
         
         // Bouton "scroll to bottom" intelligent
-        function toggleScrollToBottomButton(show) {
+        window.toggleScrollToBottomButton = function(show) {
             let scrollBtn = document.getElementById('scrollToBottomBtn');
             
             if (show) {
@@ -948,7 +947,7 @@
             }, autoRemoveDelay);
         }
 
-        async function handleWelcomeSubmit(e) {
+        window.handleWelcomeSubmit = async function(e) {
             e.preventDefault();
             
             const welcomeInput = document.getElementById('welcomeMessageInput');
@@ -1006,7 +1005,7 @@
                 const symptoms = titleAnalysis.symptoms;
 
                 return `
-                <div class="conversation-item group cursor-pointer p-3 rounded-xl border border-transparent hover:border-gray-200 transition-all duration-200 ${conv.id === window.currentConversationId ? 'active bg-primary-100 border-primary-200 shadow-sm' : 'hover:bg-gray-50'}"
+                <div class="conversation-item group cursor-pointer p-3 rounded-xl border border-transparent hover:border-gray-200 transition-all duration-200 ${String(conv.id) === String(window.currentConversationId) ? 'active bg-primary-100 border-primary-200 shadow-sm' : 'hover:bg-gray-50'}"
                      data-id="${conv.id}">
                     <div class="flex justify-between items-start">
                         <div class="flex-1 min-w-0">
@@ -1085,7 +1084,7 @@
                     if (e.target.closest('.delete-conversation-btn')) {
                         return;
                     }
-                    const id = parseInt(item.dataset.id);
+                    const id = item.dataset.id; // Garder comme string pour supporter MongoDB ObjectId
                     window.selectConversation(id);
                 });
 
@@ -1103,7 +1102,10 @@
         }
 
         window.selectConversation = async function(conversationId) {
-            if (window.currentConversationId === conversationId) return;
+            // Convertir en string pour supporter MongoDB ObjectId
+            conversationId = String(conversationId);
+            
+            if (String(window.currentConversationId) === conversationId) return;
 
             window.currentConversationId = conversationId;
             
@@ -1298,6 +1300,8 @@
             if (typingIndicator) typingIndicator.classList.remove('hidden');
             
             try {
+                console.log('📤 Envoi message - conversation_id:', window.currentConversationId, 'message:', message.substring(0, 50));
+                
                 const response = await fetch('/api/chat/send', {
                     method: 'POST',
                     headers: {
@@ -1509,12 +1513,9 @@
         // Initialiser l'application
         initializePage();
         setupEventListeners();
-        window.loadConversations();
         
         // Initialiser les animations du profil médecin
         initializeDoctorProfile();
-        
-        });
 
         // ===== GESTION DU MODE SOMBRE =====
         
@@ -2302,3 +2303,6 @@
             }
         }
     
+    // Charger les conversations au démarrage
+    window.loadConversations();
+});

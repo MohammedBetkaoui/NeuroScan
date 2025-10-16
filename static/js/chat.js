@@ -4,6 +4,13 @@
         window.conversations = [];
         window.isLoading = false;
         
+        // Fonction helper pour valider les ObjectIds MongoDB
+        window.isValidMongoId = function(id) {
+            if (!id) return false;
+            // Un ObjectId MongoDB est une chaîne hexadécimale de 24 caractères
+            return /^[0-9a-fA-F]{24}$/.test(id.toString());
+        };
+        
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize feather icons
             feather.replace();
@@ -440,10 +447,18 @@
         window.restoreSavedConversation = function() {
             const savedConversationId = localStorage.getItem('neuroscan-current-conversation');
             if (savedConversationId && window.conversations.length > 0) {
+                // Vérifier que l'ID est un ObjectId MongoDB valide
+                if (!window.isValidMongoId(savedConversationId)) {
+                    // ID invalide (ancien format SQLite), nettoyer le localStorage
+                    console.warn('ID de conversation invalide détecté:', savedConversationId);
+                    localStorage.removeItem('neuroscan-current-conversation');
+                    return;
+                }
+                
                 const conversationExists = window.conversations.find(conv => conv.id.toString() === savedConversationId);
                 if (conversationExists) {
                     // Restaurer la conversation sauvegardée
-                    window.selectConversation(parseInt(savedConversationId));
+                    window.selectConversation(savedConversationId);
                 } else {
                     // La conversation n'existe plus, nettoyer le localStorage
                     localStorage.removeItem('neuroscan-current-conversation');
@@ -1064,7 +1079,7 @@
                                     <span class="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
                                         ${conv.message_count || 0}
                                     </span>
-                                    <button onclick="deleteConversation(event, ${conv.id})"
+                                    <button onclick="deleteConversation(event, '${conv.id}')"
                                             class="delete-conversation-btn opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 p-1.5 rounded-lg transition-all hover:bg-red-50 hover:shadow-sm"
                                             title="Supprimer la conversation">
                                         <i data-feather="trash-2" class="w-3.5 h-3.5"></i>
@@ -1085,7 +1100,8 @@
                     if (e.target.closest('.delete-conversation-btn')) {
                         return;
                     }
-                    const id = parseInt(item.dataset.id);
+                    // Ne pas utiliser parseInt() car les ObjectIds MongoDB sont des chaînes hexadécimales
+                    const id = item.dataset.id;
                     window.selectConversation(id);
                 });
 
@@ -1103,6 +1119,14 @@
         }
 
         window.selectConversation = async function(conversationId) {
+            // Vérifier que l'ID est valide
+            if (!window.isValidMongoId(conversationId)) {
+                console.error('Tentative de sélection avec un ID invalide:', conversationId);
+                localStorage.removeItem('neuroscan-current-conversation');
+                window.showNotification('ID de conversation invalide. Veuillez créer une nouvelle conversation.', 'error');
+                return;
+            }
+            
             if (window.currentConversationId === conversationId) return;
 
             window.currentConversationId = conversationId;
@@ -1162,6 +1186,14 @@
 
         window.loadMessages = async function() {
             if (!window.currentConversationId) return;
+
+            // Vérifier que l'ID est un ObjectId MongoDB valide
+            if (!window.isValidMongoId(window.currentConversationId)) {
+                console.error('ID de conversation invalide:', window.currentConversationId);
+                window.currentConversationId = null;
+                localStorage.removeItem('neuroscan-current-conversation');
+                return;
+            }
 
             try {
                 const response = await fetch(`/api/chat/conversations/${window.currentConversationId}/messages`);
@@ -1274,10 +1306,24 @@
             
             if (window.isLoading || !window.currentConversationId) return;
             
+            // Vérifier que l'ID de conversation est valide
+            if (!window.isValidMongoId(window.currentConversationId)) {
+                console.error('ID de conversation invalide:', window.currentConversationId);
+                window.currentConversationId = null;
+                localStorage.removeItem('neuroscan-current-conversation');
+                window.showNotification('Conversation invalide. Veuillez créer une nouvelle conversation.', 'error');
+                return;
+            }
+            
             const messageInput = document.getElementById('messageInput');
             const message = messageInput.value.trim();
             
-            if (!message) return;
+            console.log('handleMessageSubmit - message:', message, 'length:', message.length);
+            
+            if (!message) {
+                console.warn('Message vide, arrêt de la soumission');
+                return;
+            }
             
             // Désactiver l'interface
             window.setLoading(true);
@@ -1298,18 +1344,22 @@
             if (typingIndicator) typingIndicator.classList.remove('hidden');
             
             try {
+                const requestBody = {
+                    conversation_id: window.currentConversationId,
+                    message: message
+                };
+                console.log('Envoi de la requête avec:', requestBody);
+                
                 const response = await fetch('/api/chat/send', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        conversation_id: window.currentConversationId,
-                        message: message
-                    })
+                    body: JSON.stringify(requestBody)
                 });
                 
                 const data = await response.json();
+                console.log('Réponse reçue:', data);
                 
                 // Masquer l'indicateur de frappe moderne
                 const typingIndicator = document.getElementById('typingIndicatorModern');
@@ -1840,6 +1890,15 @@
         window.assignPatient = async function() {
             if (!window.currentConversationId) {
                 window.showNotification('Aucune conversation sélectionnée', 'error');
+                return;
+            }
+            
+            // Vérifier que l'ID est un ObjectId MongoDB valide
+            if (!window.isValidMongoId(window.currentConversationId)) {
+                console.error('ID de conversation invalide:', window.currentConversationId);
+                window.currentConversationId = null;
+                localStorage.removeItem('neuroscan-current-conversation');
+                window.showNotification('Conversation invalide, veuillez en créer une nouvelle', 'error');
                 return;
             }
             

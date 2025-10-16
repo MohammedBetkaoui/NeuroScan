@@ -446,6 +446,16 @@ def dashboard():
                          total_analyses=total_analyses,
                          total_patients=total_patients)
 
+@app.route('/messages')
+@login_required
+def messages():
+    """Page de messagerie professionnelle entre médecins"""
+    doctor = get_current_doctor()
+    if not doctor:
+        return redirect(url_for('login'))
+    
+    return render_template('messages.html', doctor=doctor)
+
 @app.route('/api/doctor/stats')
 @login_required
 def get_doctor_stats_api():
@@ -1026,6 +1036,15 @@ def get_gemini_analysis(results):
 
     return None
 
+# Fonction helper pour valider les ObjectIds
+def is_valid_objectid(oid):
+    """Vérifie si une chaîne est un ObjectId MongoDB valide"""
+    try:
+        ObjectId(oid)
+        return True
+    except:
+        return False
+
 # Fonctions pour le chat médical avec Gemini
 def create_chat_conversation(doctor_id, title="Nouvelle consultation", patient_id=None):
     """Créer une nouvelle conversation de chat médical"""
@@ -1054,9 +1073,12 @@ def get_chat_conversations(doctor_id, limit=20):
         # MongoDB Aggregation Pipeline
         pipeline = [
             {'$match': {'doctor_id': doctor_id, 'is_active': True}},
+            {'$addFields': {
+                'id_string': {'$toString': '$_id'}
+            }},
             {'$lookup': {
                 'from': 'chat_messages',
-                'localField': '_id',
+                'localField': 'id_string',
                 'foreignField': 'conversation_id',
                 'as': 'messages'
             }},
@@ -1108,6 +1130,14 @@ def get_conversation_messages(conversation_id, doctor_id, with_branches=False):
         return []
     
     try:
+        # Convertir conversation_id en string si c'est un entier
+        conversation_id = str(conversation_id)
+        
+        # Vérifier que c'est un ObjectId valide
+        if not is_valid_objectid(conversation_id):
+            print(f"ID de conversation invalide: {conversation_id}")
+            return []
+        
         # Vérifier que la conversation appartient au médecin
         conversation = db.chat_conversations.find_one({
             '_id': ObjectId(conversation_id),
@@ -1606,7 +1636,7 @@ def create_conversation():
         print(f"Erreur création conversation: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/chat/conversations/<int:conversation_id>/messages')
+@app.route('/api/chat/conversations/<conversation_id>/messages')
 @login_required
 def get_messages(conversation_id):
     """API pour récupérer les messages d'une conversation"""
@@ -1632,10 +1662,14 @@ def send_chat_message():
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
         data = request.get_json()
+        print(f"DEBUG - Données reçues: {data}")
+        
         conversation_id = data.get('conversation_id')
         
         # Vérifier que message est une chaîne de caractères
         message_raw = data.get('message', '')
+        print(f"DEBUG - message_raw type: {type(message_raw)}, value: {repr(message_raw)}")
+        
         if isinstance(message_raw, dict):
             # Si c'est un dictionnaire, essayer d'extraire le contenu
             message = str(message_raw.get('content', message_raw.get('text', ''))).strip()
@@ -1644,8 +1678,16 @@ def send_chat_message():
         else:
             message = str(message_raw).strip()
 
+        print(f"DEBUG - message final: {repr(message)}, length: {len(message)}")
+
         if not conversation_id or not message:
-            return jsonify({'success': False, 'error': 'Données manquantes'}), 400
+            print(f"Données manquantes - conversation_id: {conversation_id}, message: {message[:50] if message else 'vide'}")
+            return jsonify({'success': False, 'error': 'Données manquantes (conversation_id ou message)'}), 400
+
+        # Vérifier que c'est un ObjectId valide
+        if not is_valid_objectid(conversation_id):
+            print(f"ID de conversation invalide: {conversation_id}")
+            return jsonify({'success': False, 'error': 'ID de conversation invalide'}), 400
 
         # Récupérer l'historique de la conversation
         conversation_history = get_conversation_messages(conversation_id, doctor_id)
@@ -1697,28 +1739,26 @@ def send_chat_message():
 def get_patient_context_for_conversation(conversation_id):
     """Récupérer le contexte patient pour une conversation"""
     try:
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # Convertir conversation_id en string si nécessaire
+        conversation_id = str(conversation_id)
+        
+        db = get_mongodb()
         
         # Récupérer l'ID patient de la conversation
-        # MongoDB query needed here
-        # TODO: Convert to MongoDB
-        # SELECT patient_id FROM chat_conversations WHERE id = ?
+        conversation = db.chat_conversations.find_one({
+            '_id': ObjectId(conversation_id)
+        }, {'patient_id': 1})
         
-        result = None  # TODO: Fetch from MongoDB
-        if not result or not result.get('patient_id'):
+        if not conversation or not conversation.get('patient_id'):
             return None
             
-        patient_id = result.get('patient_id')
+        patient_id = conversation.get('patient_id')
         
         # Récupérer les informations du patient
-        # MongoDB query needed here
-        # TODO: Convert to MongoDB
-        # SELECT patient_name, date_of_birth, gender, medical_history, 
-        #        allergies, current_medications, total_analyses
-        # FROM patients WHERE patient_id = ?
+        patient_data = db.patients.find_one({
+            'patient_id': patient_id
+        })
         
-        patient_data = None  # TODO: Fetch from MongoDB
         if not patient_data:
             return None
             
@@ -1727,34 +1767,38 @@ def get_patient_context_for_conversation(conversation_id):
         birth_date_str = patient_data.get('date_of_birth')
         if birth_date_str:
             try:
-                birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d')
+                if isinstance(birth_date_str, str):
+                    birth_date = datetime.strptime(birth_date_str, '%Y-%m-%d')
+                else:
+                    birth_date = birth_date_str
                 age = datetime.now().year - birth_date.year
             except:
                 age = None
         
         # Récupérer les analyses récentes
-        # MongoDB query needed here
-        # TODO: Convert to MongoDB
-        # SELECT timestamp, predicted_label, confidence, exam_date
-        # FROM analyses WHERE patient_id = ? ORDER BY timestamp DESC LIMIT 3
+        recent_analyses_cursor = db.analyses.find({
+            'patient_id': patient_id
+        }).sort('timestamp', -1).limit(3)
         
-        recent_analyses = []  # TODO: Fetch from MongoDB
         analyses_summary = []
-        for analysis in recent_analyses:
-            analyses_summary.append(f"- {analysis.get('exam_date') or analysis.get('timestamp')}: {analysis.get('predicted_label')} (confiance: {analysis.get('confidence', 0)*100:.1f}%)")
+        for analysis in recent_analyses_cursor:
+            exam_date = analysis.get('exam_date', analysis.get('timestamp', ''))
+            if isinstance(exam_date, datetime):
+                exam_date = exam_date.strftime('%Y-%m-%d')
+            analyses_summary.append(
+                f"- {exam_date}: {analysis.get('predicted_label')} "
+                f"(confiance: {analysis.get('confidence', 0)*100:.1f}%)"
+            )
         
         return {
             'name': patient_data.get('patient_name'),
             'id': patient_id,
             'age': age,
-            'gender': patient_data[2],
-            'medical_history': patient_data[3],
-            'age': age,
             'gender': patient_data.get('gender'),
             'medical_history': patient_data.get('medical_history'),
             'allergies': patient_data.get('allergies'),
             'current_medications': patient_data.get('current_medications'),
-            'total_analyses': patient_data.get('total_analyses'),
+            'total_analyses': patient_data.get('total_analyses', 0),
             'recent_analyses': '\n'.join(analyses_summary) if analyses_summary else 'Aucune analyse récente'
         }
         
@@ -1762,7 +1806,7 @@ def get_patient_context_for_conversation(conversation_id):
         print(f"Erreur récupération contexte patient: {e}")
         return None
 
-@app.route('/api/chat/conversations/<int:conversation_id>/update', methods=['PUT'])
+@app.route('/api/chat/conversations/<conversation_id>/update', methods=['PUT'])
 @login_required
 def update_conversation(conversation_id):
     """API pour mettre à jour une conversation (titre, patient)"""
@@ -1771,46 +1815,41 @@ def update_conversation(conversation_id):
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
+        # Vérifier que c'est un ObjectId valide
+        if not is_valid_objectid(conversation_id):
+            return jsonify({'success': False, 'error': 'ID de conversation invalide'}), 400
+
         data = request.get_json()
         title = data.get('title')
         patient_id = data.get('patient_id')
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        db = get_mongodb()
         
         # Vérifier que la conversation appartient au médecin
-        # MongoDB query needed here
-        # SELECT id FROM chat_conversations 
-        #             WHERE id = ? AND doctor_id = ?)
+        conversation = db.chat_conversations.find_one({
+            '_id': ObjectId(conversation_id),
+            'doctor_id': doctor_id
+        })
         
-        # if not cursor.fetchone():  # TODO: Convert to MongoDB
-            # # conn.close() # DISABLED
-            # return jsonify({'success': False, 'error': 'Conversation introuvable'}), 404
-        # TODO: Implement MongoDB validation check
+        if not conversation:
+            return jsonify({'success': False, 'error': 'Conversation introuvable'}), 404
         
-        # Mettre à jour la conversation
-        update_fields = []
-        params = []
+        # Préparer les champs à mettre à jour
+        update_data = {
+            'updated_at': datetime.now()
+        }
         
         if title:
-            update_fields.append('title = ?')
-            params.append(title)
+            update_data['title'] = title
         
         if patient_id is not None:  # Peut être None pour supprimer l'association
-            update_fields.append('patient_id = ?')
-            params.append(patient_id if patient_id else None)
+            update_data['patient_id'] = patient_id if patient_id else None
         
-        if update_fields:
-            update_fields.append('updated_at = CURRENT_TIMESTAMP')
-            params.append(conversation_id)
-            
-            # MongoDB query needed here
-        # UPDATE chat_conversations 
-        #                 SET {', '.join(update_fields)}
-        #                 WHERE id = ?, params)
-        
-        # conn.commit() # DISABLED
-        # conn.close() # DISABLED
+        # Mettre à jour la conversation
+        db.chat_conversations.update_one(
+            {'_id': ObjectId(conversation_id)},
+            {'$set': update_data}
+        )
         
         return jsonify({'success': True, 'message': 'Conversation mise à jour'})
 
@@ -1827,39 +1866,52 @@ def get_patients_for_chat():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
-
-        # MongoDB query needed here
-        # SELECT patient_id, patient_name, date_of_birth, gender, total_analyses
-        #             FROM patients
-        #             WHERE doctor_id = ?
-        #             ORDER BY patient_name)
-
+        # MongoDB query
+        db = get_mongodb()
+        
+        # Get patients for this doctor
+        patients_cursor = db.patients.find(
+            {'doctor_id': doctor_id},
+            {
+                '_id': 0,
+                'patient_id': 1,
+                'patient_name': 1,
+                'date_of_birth': 1,
+                'gender': 1,
+                'total_analyses': 1
+            }
+        ).sort('patient_name', 1)
+        
         patients = []
-        # TODO: Convert to MongoDB - fetch patients
-        # for row in cursor.fetchall():
-        #     # Calculer l'âge si date de naissance disponible
-        #     age = None
-        #     if row[2]:  # date_of_birth
-        #         try:
-        #             birth_date = datetime.strptime(row[2], '%Y-%m-%d')
-        #             age = datetime.now().year - birth_date.year
-        #             if datetime.now().month < birth_date.month or (datetime.now().month == birth_date.month and datetime.now().day < birth_date.day):
-        #                 age -= 1
-        #         except:
-        #             age = None
-        #     
-        #     patients.append({
-        #         'patient_id': row[0],
-        #         'patient_name': row[1] or f"Patient {row[0]}",
-        #         'age': age,
-        #         'gender': row[3],
-        #         'total_analyses': row[4] or 0,
-        #         'display_name': f"{row[1] or 'Patient ' + row[0]} ({age} ans)" if age else (row[1] or f"Patient {row[0]}")
-        #     })
-
-        # conn.close() # DISABLED
+        for patient in patients_cursor:
+            # Calculer l'âge si date de naissance disponible
+            age = None
+            dob = patient.get('date_of_birth')
+            if dob:
+                try:
+                    if isinstance(dob, str):
+                        birth_date = datetime.strptime(dob, '%Y-%m-%d')
+                    else:
+                        birth_date = dob
+                    
+                    today = datetime.now()
+                    age = today.year - birth_date.year
+                    if today.month < birth_date.month or (today.month == birth_date.month and today.day < birth_date.day):
+                        age -= 1
+                except:
+                    age = None
+            
+            patient_id = patient.get('patient_id', str(patient.get('_id', '')))
+            patient_name = patient.get('patient_name') or f"Patient {patient_id}"
+            
+            patients.append({
+                'patient_id': patient_id,
+                'patient_name': patient_name,
+                'age': age,
+                'gender': patient.get('gender'),
+                'total_analyses': patient.get('total_analyses', 0),
+                'display_name': f"{patient_name} ({age} ans)" if age else patient_name
+            })
 
         return jsonify({
             'success': True,
@@ -1870,7 +1922,7 @@ def get_patients_for_chat():
         print(f"Erreur récupération liste patients: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/chat/conversations/<int:conversation_id>/delete', methods=['DELETE'])
+@app.route('/api/chat/conversations/<conversation_id>/delete', methods=['DELETE'])
 @login_required
 def delete_conversation(conversation_id):
     """API pour supprimer une conversation et tous ses messages"""
@@ -1879,38 +1931,36 @@ def delete_conversation(conversation_id):
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        # Vérifier que c'est un ObjectId valide
+        if not is_valid_objectid(conversation_id):
+            return jsonify({'success': False, 'error': 'ID de conversation invalide'}), 400
+
+        db = get_mongodb()
         
         # Vérifier que la conversation appartient au médecin
-        # MongoDB query needed here
-        # SELECT id FROM chat_conversations 
-        #             WHERE id = ? AND doctor_id = ?)
+        conversation = db.chat_conversations.find_one({
+            '_id': ObjectId(conversation_id),
+            'doctor_id': doctor_id
+        })
         
-        # if not cursor.fetchone():  # TODO: Convert to MongoDB
-            # conn.close() # DISABLED
+        if not conversation:
             return jsonify({'success': False, 'error': 'Conversation introuvable'}), 404
         
         # Supprimer d'abord les messages de la conversation
-        # MongoDB query needed here
-        # DELETE FROM chat_messages 
-        #             WHERE conversation_id = ?)
+        messages_result = db.chat_messages.delete_many({
+            'conversation_id': conversation_id
+        })
+        deleted_messages = messages_result.deleted_count
         
         # Supprimer les attachments s'il y en a
-        # MongoDB query needed here
-        # DELETE FROM chat_attachments 
-        #             WHERE message_id IN (
-        #                 SELECT id FROM chat_messages WHERE conversation_id = ?
-        #             ))
+        db.chat_attachments.delete_many({
+            'conversation_id': conversation_id
+        })
         
         # Supprimer la conversation
-        # MongoDB query needed here
-        # DELETE FROM chat_conversations 
-        #             WHERE id = ?)
-        
-        # deleted_messages = cursor.rowcount  # TODO: Convert to MongoDB
-        deleted_messages = 0  # Placeholder
-        # conn.commit() # DISABLED
+        db.chat_conversations.delete_one({
+            '_id': ObjectId(conversation_id)
+        })
         # conn.close() # DISABLED
         
         return jsonify({
@@ -2008,7 +2058,7 @@ def get_message_branches_api(message_id):
         print(f"Erreur récupération branches: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/chat/conversations/<int:conversation_id>/messages-with-branches')
+@app.route('/api/chat/conversations/<conversation_id>/messages-with-branches')
 @login_required  
 def get_messages_with_branches_api(conversation_id):
     """API pour récupérer les messages d'une conversation avec leurs branches"""
@@ -2016,6 +2066,10 @@ def get_messages_with_branches_api(conversation_id):
         doctor_id = session.get('doctor_id')
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
+
+        # Vérifier que c'est un ObjectId valide
+        if not is_valid_objectid(conversation_id):
+            return jsonify({'success': False, 'error': 'ID de conversation invalide'}), 400
 
         messages = get_conversation_messages_with_branches(conversation_id, doctor_id)
         return jsonify({'success': True, 'messages': messages})
@@ -5789,102 +5843,144 @@ def pro_dashboard_overview():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
+        db = get_mongodb()
+        analyses_collection = db.analyses
+        patients_collection = db.patients
 
         # Statistiques principales du médecin
-        # cursor.execute( # DISABLED'SELECT COUNT(*) FROM analyses WHERE doctor_id = ?', (doctor_id,))
-        total_analyses = 0  # TODO: Implement MongoDB query
+        # Total analyses
+        total_analyses = analyses_collection.count_documents({'doctor_id': doctor_id})
 
-        # cursor.execute( # DISABLED'SELECT COUNT(*) FROM analyses WHERE doctor_id = ? AND predicted_class != 0', (doctor_id,))
-        tumors_detected = 0  # TODO: Implement MongoDB query
+        # Tumeurs détectées (predicted_class != 0, ou predicted_label != 'Normal')
+        tumors_detected = analyses_collection.count_documents({
+            'doctor_id': doctor_id,
+            'predicted_label': {'$ne': 'Normal'}
+        })
 
-        # cursor.execute( # DISABLED'SELECT COUNT(DISTINCT patient_id) FROM patients WHERE doctor_id = ?', (doctor_id,))
-        patients_count = 0  # TODO: Implement MongoDB query
+        # Nombre de patients
+        patients_count = patients_collection.count_documents({'doctor_id': doctor_id})
 
-        # cursor.execute( # DISABLED'SELECT AVG(confidence) FROM analyses WHERE doctor_id = ?', (doctor_id,))
-        avg_confidence = 0  # TODO: Implement MongoDB query
+        # Confiance moyenne
+        avg_confidence_pipeline = [
+            {'$match': {'doctor_id': doctor_id}},
+            {'$group': {'_id': None, 'avg_conf': {'$avg': '$confidence'}}}
+        ]
+        avg_conf_result = list(analyses_collection.aggregate(avg_confidence_pipeline))
+        avg_confidence = round(avg_conf_result[0]['avg_conf'], 2) if avg_conf_result and avg_conf_result[0].get('avg_conf') else 0
 
         # Répartition par type de diagnostic
-        # MongoDB query needed here
-        # SELECT predicted_label, COUNT(*) 
-        #             FROM analyses 
-        #             WHERE doctor_id = ? 
-        #             GROUP BY predicted_label)
-        distribution = {}  # TODO: Implement MongoDB query
+        distribution_pipeline = [
+            {'$match': {'doctor_id': doctor_id}},
+            {'$group': {'_id': '$predicted_label', 'count': {'$sum': 1}}}
+        ]
+        distribution_result = list(analyses_collection.aggregate(distribution_pipeline))
+        distribution = {item['_id']: item['count'] for item in distribution_result if item['_id']}
 
         # Analyses par période (30 derniers jours)
-        # MongoDB query needed here
-        # SELECT DATE(timestamp) as date, COUNT(*) as count
-        #             FROM analyses 
-        #             WHERE doctor_id = ? AND timestamp >= datetime('now', '-30 days')
-        #             GROUP BY DATE(timestamp)
-        #             ORDER BY date)
-        daily_data = []  # TODO: Implement MongoDB query
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        daily_pipeline = [
+            {'$match': {
+                'doctor_id': doctor_id,
+                'timestamp': {'$gte': thirty_days_ago}
+            }},
+            {'$group': {
+                '_id': {
+                    '$dateToString': {'format': '%Y-%m-%d', 'date': '$timestamp'}
+                },
+                'count': {'$sum': 1}
+            }},
+            {'$sort': {'_id': 1}}
+        ]
+        daily_result = list(analyses_collection.aggregate(daily_pipeline))
+        daily_data = [{'date': item['_id'], 'count': item['count']} for item in daily_result]
 
         # Calcul des changements (simulation basée sur les données existantes)
+        now = datetime.now()
+        
+        # Début du mois actuel
+        start_of_current_month = datetime(now.year, now.month, 1)
+        
+        # Début du mois précédent
+        if now.month == 1:
+            start_of_previous_month = datetime(now.year - 1, 12, 1)
+        else:
+            start_of_previous_month = datetime(now.year, now.month - 1, 1)
+
         # Analyses ce mois vs mois précédent
-        # MongoDB query needed here
-        # SELECT COUNT(*) FROM analyses 
-        #             WHERE doctor_id = ? AND timestamp >= date('now', 'start of month'))
-        current_month = 0  # TODO: Implement MongoDB query
+        current_month = analyses_collection.count_documents({
+            'doctor_id': doctor_id,
+            'timestamp': {'$gte': start_of_current_month}
+        })
 
-        # MongoDB query needed here
-        # SELECT COUNT(*) FROM analyses 
-        #             WHERE doctor_id = ? 
-        #             AND timestamp >= date('now', 'start of month', '-1 month')
-        #             AND timestamp < date('now', 'start of month'))
-        previous_month = 1  # TODO: Implement MongoDB query (default 1 to avoid division by zero)
+        previous_month = analyses_collection.count_documents({
+            'doctor_id': doctor_id,
+            'timestamp': {
+                '$gte': start_of_previous_month,
+                '$lt': start_of_current_month
+            }
+        })
 
-        analyses_change = ((current_month - previous_month) / previous_month * 100) if previous_month > 0 else 0
+        analyses_change = ((current_month - previous_month) / previous_month * 100) if previous_month > 0 else (100 if current_month > 0 else 0)
 
         # Tumeurs détectées ce mois vs mois précédent
-        # MongoDB query needed here
-        # SELECT COUNT(*) FROM analyses 
-        #             WHERE doctor_id = ? AND predicted_class != 0 
-        #             AND timestamp >= date('now', 'start of month'))
-        current_month_tumors = 0  # TODO: Implement MongoDB query
+        current_month_tumors = analyses_collection.count_documents({
+            'doctor_id': doctor_id,
+            'predicted_label': {'$ne': 'Normal'},
+            'timestamp': {'$gte': start_of_current_month}
+        })
 
-        # MongoDB query needed here
-        # SELECT COUNT(*) FROM analyses 
-        #             WHERE doctor_id = ? AND predicted_class != 0
-        #             AND timestamp >= date('now', 'start of month', '-1 month')
-        #             AND timestamp < date('now', 'start of month'))
-        previous_month_tumors = 1  # TODO: Implement MongoDB query (default 1 to avoid division by zero)
+        previous_month_tumors = analyses_collection.count_documents({
+            'doctor_id': doctor_id,
+            'predicted_label': {'$ne': 'Normal'},
+            'timestamp': {
+                '$gte': start_of_previous_month,
+                '$lt': start_of_current_month
+            }
+        })
 
-        tumors_change = ((current_month_tumors - previous_month_tumors) / previous_month_tumors * 100) if previous_month_tumors > 0 else 0
+        tumors_change = ((current_month_tumors - previous_month_tumors) / previous_month_tumors * 100) if previous_month_tumors > 0 else (100 if current_month_tumors > 0 else 0)
 
         # Nouveaux patients ce mois
-        # MongoDB query needed here
-        # SELECT COUNT(*) FROM patients 
-        #             WHERE doctor_id = ? AND created_at >= date('now', 'start of month'))
-        new_patients_month = 0  # TODO: Implement MongoDB query
+        new_patients_month = patients_collection.count_documents({
+            'doctor_id': doctor_id,
+            'created_at': {'$gte': start_of_current_month}
+        })
 
-        # MongoDB query needed here
-        # SELECT COUNT(*) FROM patients 
-        #             WHERE doctor_id = ? 
-        #             AND created_at >= date('now', 'start of month', '-1 month')
-        #             AND created_at < date('now', 'start of month'))
-        previous_month_patients = 1  # TODO: Implement MongoDB query (default 1 to avoid division by zero)
+        previous_month_patients = patients_collection.count_documents({
+            'doctor_id': doctor_id,
+            'created_at': {
+                '$gte': start_of_previous_month,
+                '$lt': start_of_current_month
+            }
+        })
 
-        patients_change = ((new_patients_month - previous_month_patients) / previous_month_patients * 100) if previous_month_patients > 0 else 0
+        patients_change = ((new_patients_month - previous_month_patients) / previous_month_patients * 100) if previous_month_patients > 0 else (100 if new_patients_month > 0 else 0)
 
         # Confiance moyenne ce mois vs mois précédent
-        # MongoDB query needed here
-        # SELECT AVG(confidence) FROM analyses 
-        #             WHERE doctor_id = ? AND timestamp >= date('now', 'start of month'))
-        current_avg_confidence = 0  # TODO: Implement MongoDB query
+        current_month_conf_pipeline = [
+            {'$match': {
+                'doctor_id': doctor_id,
+                'timestamp': {'$gte': start_of_current_month}
+            }},
+            {'$group': {'_id': None, 'avg_conf': {'$avg': '$confidence'}}}
+        ]
+        current_conf_result = list(analyses_collection.aggregate(current_month_conf_pipeline))
+        current_avg_confidence = current_conf_result[0]['avg_conf'] if current_conf_result and current_conf_result[0].get('avg_conf') else 0
 
-        # MongoDB query needed here
-        # SELECT AVG(confidence) FROM analyses 
-        #             WHERE doctor_id = ? 
-        #             AND timestamp >= date('now', 'start of month', '-1 month')
-        #             AND timestamp < date('now', 'start of month'))
-        previous_avg_confidence = 1  # TODO: Implement MongoDB query (default 1 to avoid division by zero)
+        previous_month_conf_pipeline = [
+            {'$match': {
+                'doctor_id': doctor_id,
+                'timestamp': {
+                    '$gte': start_of_previous_month,
+                    '$lt': start_of_current_month
+                }
+            }},
+            {'$group': {'_id': None, 'avg_conf': {'$avg': '$confidence'}}}
+        ]
+        previous_conf_result = list(analyses_collection.aggregate(previous_month_conf_pipeline))
+        previous_avg_confidence = previous_conf_result[0]['avg_conf'] if previous_conf_result and previous_conf_result[0].get('avg_conf') else 0
 
         confidence_change = ((current_avg_confidence - previous_avg_confidence) / previous_avg_confidence * 100) if previous_avg_confidence > 0 else 0
-
-        # conn.close() # DISABLED
 
         return jsonify({
             'success': True,
@@ -5909,6 +6005,8 @@ def pro_dashboard_overview():
 
     except Exception as e:
         print(f"Erreur pro dashboard overview: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/pro-dashboard/recent-analyses')
@@ -5920,31 +6018,33 @@ def pro_dashboard_recent_analyses():
         if not doctor_id:
             return jsonify({'success': False, 'error': 'Médecin non connecté'}), 401
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
-
-        # MongoDB query needed here
-        # SELECT a.id, a.timestamp, a.patient_name, a.patient_id, 
-        #                    a.predicted_label, a.confidence, a.filename
-        #             FROM analyses a
-        #             WHERE a.doctor_id = ?
-        #             ORDER BY a.timestamp DESC
-        #             LIMIT 10)
-
+        # MongoDB query for recent analyses
+        db = get_mongodb()
+        
+        analyses_cursor = db.analyses.find({
+            'doctor_id': doctor_id
+        }).sort('timestamp', -1).limit(10)
+        
         analyses = []
-        # for row in cursor.fetchall():  # TODO: Convert to MongoDB
-            # analyses.append({
-            #     'id': row[0],
-            #     'timestamp': row[1],
-            #     'patient_name': row[2] or f'Patient {row[3]}' if row[3] else 'Patient anonyme',
-            #     'patient_id': row[3],
-            #     'predicted_label': row[4],
-            #     'confidence': row[5],
-            #     'filename': row[6]
-            # })
-        # TODO: Implement MongoDB query
-
-        # conn.close() # DISABLED
+        for analysis in analyses_cursor:
+            patient_name = analysis.get('patient_name')
+            patient_id = analysis.get('patient_id')
+            
+            # Format patient name
+            if not patient_name and patient_id:
+                patient_name = f'Patient {patient_id}'
+            elif not patient_name:
+                patient_name = 'Patient anonyme'
+            
+            analyses.append({
+                'id': str(analysis.get('_id')),
+                'timestamp': analysis.get('timestamp').strftime('%Y-%m-%d %H:%M:%S') if analysis.get('timestamp') else '',
+                'patient_name': patient_name,
+                'patient_id': patient_id,
+                'predicted_label': analysis.get('predicted_label'),
+                'confidence': analysis.get('confidence'),
+                'filename': analysis.get('filename')
+            })
 
         return jsonify({
             'success': True,
@@ -6028,24 +6128,46 @@ def pro_dashboard_time_range(time_range):
         else:
             return jsonify({'success': False, 'error': 'Période invalide'}), 400
 
-        # conn = sqlite3.connect() # DISABLED - MongoDB used instead
-        # cursor = conn.cursor() # DISABLED
-
-        # Données par jour pour la période
-        # MongoDB query needed here
-        # SELECT DATE(timestamp) as date, COUNT(*) as count
-        #             FROM analyses 
-        #             WHERE doctor_id = ? AND timestamp >= datetime('now', '-{days} days')
-        #             GROUP BY DATE(timestamp)
-        #             ORDER BY date)
-
-        daily_data = []  # TODO: Implement MongoDB query
-
-        # Créer une série complète de dates
+        # MongoDB query for daily analysis counts
         from datetime import datetime, timedelta
         
         end_date = datetime.now().date()
         start_date = end_date - timedelta(days=days-1)
+        start_datetime = datetime.combine(start_date, datetime.min.time())
+        
+        db = get_mongodb()
+        
+        # Aggregate analyses by date
+        pipeline = [
+            {
+                "$match": {
+                    "doctor_id": doctor_id,
+                    "timestamp": {"$gte": start_datetime}
+                }
+            },
+            {
+                "$project": {
+                    "date": {
+                        "$dateToString": {
+                            "format": "%Y-%m-%d",
+                            "date": "$timestamp"
+                        }
+                    }
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$date",
+                    "count": {"$sum": 1}
+                }
+            },
+            {
+                "$sort": {"_id": 1}
+            }
+        ]
+        
+        result = list(db.analyses.aggregate(pipeline))
+        daily_data = [(item['_id'], item['count']) for item in result]
         
         # Créer un dictionnaire avec toutes les dates
         date_counts = {}

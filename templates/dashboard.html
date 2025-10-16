@@ -182,6 +182,24 @@
         Gestion & Suivi
     </h2>
     <div class="dashboard-grid cols-4">
+        <!-- Messagerie Professionnelle -->
+        <div class="dashboard-card clickable p-6" onclick="navigateTo('messages')">
+            <div class="dashboard-card-header">
+                <div class="dashboard-card-icon blue">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <div>
+                    <h3 class="dashboard-card-title">Messagerie</h3>
+                    <p class="dashboard-card-subtitle">Communication sécurisée</p>
+                </div>
+            </div>
+            <div class="dashboard-card-content">
+                <p class="text-gray-600 text-sm">
+                    Échangez avec vos collègues médecins via une messagerie professionnelle sécurisée.
+                </p>
+            </div>
+        </div>
+
         <!-- Mes Patients -->
         <div class="dashboard-card clickable p-6" onclick="navigateTo('patients_list')">
             <div class="dashboard-card-header">
@@ -390,7 +408,8 @@
             'platform_stats': '{{ url_for("platform_stats") }}',
             'new_analysis': '{{ url_for("new_analysis_page") }}',
             'chat': '{{ url_for("chat_page") }}',
-            'medical_alerts': '{{ url_for("alerts_page") }}'
+            'medical_alerts': '{{ url_for("alerts_page") }}',
+            'messages': '{{ url_for("messages") }}'
         };
         
         if (routes[routeName]) {

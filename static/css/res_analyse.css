@@ -147,21 +147,36 @@ i {
   color: #3b82f6 !important;
 }
 
-/* Couleurs des probabilités */
-.prob-color-0, .prob-color-bg-0 { background-color: #3b82f6 !important; }
-.prob-color-1, .prob-color-bg-1 { background-color: #7c3aed !important; }
-.prob-color-2, .prob-color-bg-2 { background-color: #10b981 !important; }
-.prob-color-3, .prob-color-bg-3 { background-color: #f59e0b !important; }
-.prob-color-4, .prob-color-bg-4 { background-color: #ef4444 !important; }
+/* Couleurs des probabilités avec gradients modernes */
+.prob-color-0, .prob-color-bg-0 { 
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important; 
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+.prob-color-1, .prob-color-bg-1 { 
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%) !important; 
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+}
+.prob-color-2, .prob-color-bg-2 { 
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%) !important; 
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+.prob-color-3, .prob-color-bg-3 { 
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important; 
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+.prob-color-4, .prob-color-bg-4 { 
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; 
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
 
 /* ===================================================================
    EN-TÊTE DE LA PAGE ANALYSE - Design Gradient Animé Premium
    =================================================================== */
 .analysis-header {
   background: linear-gradient(135deg, 
-    #f7f8fa 0%, 
-    #051361 25%, 
-    #8798f8 50%, 
+    #b4c8ee 0%, 
+    #cbd9f5 25%, 
+    #f3f4f7 50%, 
     #eeeeee 75%, 
     #ffffff 100%);
   background-size: 400% 400%;
@@ -544,21 +559,62 @@ i {
 /* ===================================================================
    BARRES DE PROBABILITÉ - Design Moderne avec Effets
    =================================================================== */
-.prob-bar-container {
-  background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 100%);
-  border-radius: 10px;
-  overflow: hidden;
-  height: 10px;
+.prob-item {
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.6) 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.prob-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.4) 50%, 
+    transparent 100%);
+  transition: left 0.5s ease;
+}
+
+.prob-item:hover::before {
+  left: 100%;
+}
+
+.prob-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.prob-bar-container {
+  background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-radius: 12px;
+  overflow: hidden;
+  height: 12px;
+  position: relative;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .prob-bar-fill {
   height: 100%;
-  border-radius: 10px;
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .prob-bar-fill::before {
@@ -570,14 +626,62 @@ i {
   bottom: 0;
   background: linear-gradient(90deg, 
     transparent 0%, 
-    rgba(255, 255, 255, 0.2) 50%, 
+    rgba(255, 255, 255, 0.6) 30%,
+    rgba(255, 255, 255, 0.3) 70%, 
     transparent 100%);
-  animation: shimmer-slow 3s infinite;
+  animation: shimmer-flow 2.5s infinite;
+  border-radius: inherit;
 }
 
-@keyframes shimmer-slow {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+/* ===================================================================
+   RESPONSIVE DESIGN POUR LA SECTION PROBABILITÉS
+   =================================================================== */
+@media (max-width: 1024px) {
+  .grid.grid-cols-1.lg\\:grid-cols-2 > div:first-child .analysis-card .grid.grid-cols-1.lg\\:grid-cols-2 {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .grid.grid-cols-1.lg\\:grid-cols-2 > div:first-child .analysis-card .grid.grid-cols-1.lg\\:grid-cols-2 > div:first-child {
+    order: 2;
+  }
+  
+  .grid.grid-cols-1.lg\\:grid-cols-2 > div:first-child .analysis-card .grid.grid-cols-1.lg\\:grid-cols-2 > div:last-child {
+    order: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .prob-item {
+    padding: 12px;
+  }
+  
+  .prob-item .flex.items-center.justify-between.mb-2 {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .prob-item .flex.items-center.gap-3 {
+    width: 100%;
+  }
+  
+  .prob-item .flex.items-center.gap-2 {
+    margin-left: auto;
+  }
+}
+
+/* ===================================================================
+   AMÉLIORATIONS POUR LE GRAPHIQUE DONUT
+   =================================================================== */
+#probDonut {
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.12));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#probDonut:hover {
+  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.15));
+  transform: scale(1.02);
 }
 
 .image-container {
@@ -902,6 +1006,9 @@ i {
 }
 
 #imageModal .absolute.bottom-4.right-4 button:hover {
+  transform: scale(1.1) rotate(-90deg);
+}
+
 @media (max-width: 768px) {
   :root {
     --radius-xl: 16px;
@@ -1084,301 +1191,1266 @@ i {
 }
 
 /* ===================================================================
-   UTILITIES & HELPERS - Classes Utilitaires Personnalisées
+   STYLES POUR LA LÉGENDE DES PROBABILITÉS
    =================================================================== */
-.rounded-12 { border-radius: 12px; }
-.rounded-14 { border-radius: 14px; }
-.rounded-16 { border-radius: 16px; }
-.rounded-18 { border-radius: 18px; }
-.rounded-20 { border-radius: 20px; }
-
-/* Effet de profondeur pour les cartes importantes */
-.card-elevated {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12),
-              0 4px 16px rgba(0, 0, 0, 0.08);
+.mt-6.p-4.bg-gradient-to-r.from-gray-50.to-blue-50.rounded-xl.border.border-blue-100 {
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(239, 246, 255, 0.6) 100%) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(59, 130, 246, 0.15) !important;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Effet de glow pour les éléments interactifs */
-.glow-primary {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
-}
-
-.glow-success {
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
-}
-
-/* Transitions fluides globales */
-* {
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Scroll smooth pour toute la page */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Amélioration de la lisibilité */
-body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
-
-/* Performance - Accélération matérielle */
-.analysis-card,
-.action-btn,
-.result-badge,
-.info-chip {
-  transform: translateZ(0);
-  will-change: transform;
-}
-
-/* Focus visible pour l'accessibilité */
-.action-btn:focus-visible {
-  outline: 3px solid rgba(59, 130, 246, 0.5);
-  outline-offset: 2px;
+.mt-6.p-4.bg-gradient-to-r.from-gray-50.to-blue-50.rounded-xl.border.border-blue-100:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 24px rgba(59, 130, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 /* ===================================================================
-   STYLES AMÉLIORÉS POUR LAYOUT 2 COLONNES
+   ANIMATIONS PERSONNALISÉES POUR LE DIAGNOSTIC PRINCIPAL
    =================================================================== */
-
-/* Cartes d'information patient avec bordure colorée */
-.analysis-card .border-l-4 {
-  transition: all var(--transition-base);
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
 }
 
-.analysis-card .border-l-4:hover {
-  transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+@keyframes ping-slow {
+  0% { transform: scale(1); opacity: 0.8; }
+  75%, 100% { transform: scale(1.2); opacity: 0; }
 }
 
-/* Statistiques rapides avec animation */
-.analysis-card .grid-cols-3 > div {
-  transition: all var(--transition-base);
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.analysis-card .grid-cols-3 > div:hover {
-  transform: translateY(-4px) scale(1.05);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-}
-
-/* Icônes circulaires avec effet de pulse */
-.w-16.h-16.rounded-full,
-.w-20.h-20.rounded-full {
-  animation: pulse-icon 3s ease-in-out infinite;
-  transition: all var(--transition-base);
-}
-
-@keyframes pulse-icon {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  50% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.w-16.h-16.rounded-full:hover,
-.w-20.h-20.rounded-full:hover {
-  transform: scale(1.1) rotate(5deg);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
 }
 
-/* Section pleine largeur en bas */
-.mt-6.grid.grid-cols-1.md\:grid-cols-3 .analysis-card {
-  transition: all var(--transition-base);
+.animate-ping-slow {
+  animation: ping-slow 4s ease-in-out infinite;
 }
 
-.mt-6.grid.grid-cols-1.md\:grid-cols-3 .analysis-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
 }
 
-/* Amélioration des dégradés */
-.bg-gradient-to-r,
-.bg-gradient-to-br {
-  position: relative;
+.animate-slide-up {
+  animation: slide-up 0.8s ease-out;
+}
+
+/* ===================================================================
+   BARRE DE CONFIANCE ULTRA-MODERNE
+   =================================================================== */
+.confidence-bar-advanced {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 16px;
   overflow: hidden;
+  height: 16px;
+  position: relative;
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.5);
 }
 
-.bg-gradient-to-r::before,
-.bg-gradient-to-br::before {
+.confidence-fill-advanced {
+  height: 100%;
+  background: linear-gradient(135deg,
+    #3b82f6 0%,
+    #1d4ed8 25%,
+    #1e40af 50%,
+    #1d4ed8 75%,
+    #3b82f6 100%);
+  border-radius: 12px;
+  transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 2px 8px rgba(59, 130, 246, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.confidence-fill-advanced::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-  opacity: 0;
-  transition: opacity var(--transition-base);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.8) 30%,
+    rgba(255, 255, 255, 0.4) 70%,
+    transparent 100%);
+  animation: confidence-shimmer 2.5s infinite;
+  border-radius: inherit;
 }
 
-.bg-gradient-to-r:hover::before,
-.bg-gradient-to-br:hover::before {
-  opacity: 1;
-  animation: shimmer-rotate 2s linear infinite;
-}
-
-@keyframes shimmer-rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Responsive 2 colonnes */
-@media (max-width: 1024px) {
-  .grid.grid-cols-1.lg\:grid-cols-2 {
-    grid-template-columns: 1fr;
-  }
-  
-  .analysis-card .grid.grid-cols-2 {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (min-width: 1025px) {
-  /* Animation stagger pour les 2 colonnes */
-  .grid.grid-cols-1.lg\:grid-cols-2 > div:first-child .analysis-card {
-    animation-delay: 0s;
-  }
-  
-  .grid.grid-cols-1.lg\:grid-cols-2 > div:last-child .analysis-card {
-    animation-delay: 0.1s;
-  }
-}
-
-/* Amélioration de l'espacement vertical */
-.space-y-6 > * + * {
-  margin-top: 1.5rem;
-}
-
-@media (max-width: 768px) {
-  .space-y-6 > * + * {
-    margin-top: 1rem;
-  }
+@keyframes confidence-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 /* ===================================================================
-   SECTION AUTRES ANALYSES - Liste Interactive
+   CARTES DE MÉTRIQUES AVANCÉES
    =================================================================== */
-.other-analyses-list a {
-  text-decoration: none;
-  display: block;
-}
-
-.other-analyses-list .analysis-item {
-  transition: all var(--transition-base);
-  cursor: pointer;
-}
-
-.other-analyses-list .analysis-item:hover {
-  transform: translateX(4px);
-}
-
-.other-analyses-list .analysis-item.current {
-  background: linear-gradient(135deg, 
-    rgba(59, 130, 246, 0.1) 0%, 
-    rgba(59, 130, 246, 0.05) 100%);
-  border-left: 4px solid #3b82f6;
-}
-
-/* Badge pour l'analyse actuelle */
-.current-badge {
-  animation: pulse-badge 2s ease-in-out infinite;
-}
-
-@keyframes pulse-badge {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
-  }
-}
-
-/* Scrollbar personnalisée pour la liste */
-.other-analyses-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.other-analyses-list::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 10px;
-}
-
-.other-analyses-list::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #667eea, #764ba2);
-  border-radius: 10px;
-}
-
-.other-analyses-list::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #5a67d8, #6b46c1);
-}
-
-/* Animation d'apparition pour chaque élément de la liste */
-.other-analyses-list a {
-  animation: slideInFromLeft 0.5s ease-out backwards;
-}
-
-.other-analyses-list a:nth-child(1) { animation-delay: 0.05s; }
-.other-analyses-list a:nth-child(2) { animation-delay: 0.1s; }
-.other-analyses-list a:nth-child(3) { animation-delay: 0.15s; }
-.other-analyses-list a:nth-child(4) { animation-delay: 0.2s; }
-.other-analyses-list a:nth-child(5) { animation-delay: 0.25s; }
-.other-analyses-list a:nth-child(n+6) { animation-delay: 0.3s; }
-
-@keyframes slideInFromLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* Effet de highlight sur les labels */
-.label-badge {
+.metric-card-advanced {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(248, 250, 252, 0.9) 100%);
+  backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 }
 
-.label-badge::before {
+.metric-card-advanced::before {
   content: '';
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(59, 130, 246, 0.05) 50%,
+    transparent 100%);
+  transition: left 0.6s ease;
 }
 
-.label-badge:hover::before {
+.metric-card-advanced:hover::before {
   left: 100%;
 }
 
-/* Statistiques résumées */
-.stats-summary {
-  background: linear-gradient(135deg, 
-    rgba(59, 130, 246, 0.1) 0%, 
-    rgba(124, 58, 237, 0.1) 100%);
-  backdrop-filter: blur(10px);
-  transition: all var(--transition-base);
-}
-
-.stats-summary:hover {
-  background: linear-gradient(135deg, 
-    rgba(59, 130, 246, 0.15) 0%, 
-    rgba(124, 58, 237, 0.15) 100%);
-  transform: scale(1.02);
+.metric-card-advanced:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 /* ===================================================================
-   FIN DES STYLES
+   EFFETS DE PROFONDEUR ET D'OMBRE
+   =================================================================== */
+.shadow-2xl {
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.drop-shadow-lg {
+  filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.15));
+}
+
+/* ===================================================================
+   RESPONSIVE POUR LA SECTION DIAGNOSTIC
+   =================================================================== */
+@media (max-width: 768px) {
+  .metric-card-advanced {
+    padding: 16px;
+  }
+
+  .confidence-bar-advanced {
+    height: 14px;
+  }
+
+  .text-4xl {
+    font-size: 2.5rem;
+  }
+
+  .text-5xl {
+    font-size: 3rem;
+  }
+}
+
+/* ===================================================================
+   SECTION INFORMATIONS PATIENT ULTRA-MODERNE
+   =================================================================== */
+.patient-info-card {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(248, 250, 252, 0.9) 100%);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.patient-info-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(59, 130, 246, 0.03) 50%,
+    transparent 100%);
+  transition: left 0.8s ease;
+}
+
+.patient-info-card:hover::before {
+  left: 100%;
+}
+
+.patient-info-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Cartes d'information individuelles */
+.patient-info-item {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(248, 250, 252, 0.6) 100%);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 16px;
+  padding: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.patient-info-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg,
+    var(--accent-color) 0%,
+    var(--accent-color-light) 100%);
+  border-radius: 0 2px 2px 0;
+}
+
+.patient-info-item:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* Icônes des informations patient */
+.patient-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.patient-icon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    transparent 50%);
+  border-radius: inherit;
+}
+
+/* Variations de couleurs pour les icônes */
+.patient-icon-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  --accent-color: #3b82f6;
+  --accent-color-light: #60a5fa;
+}
+
+.patient-icon-secondary {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  --accent-color: #8b5cf6;
+  --accent-color-light: #a78bfa;
+}
+
+.patient-icon-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --accent-color: #10b981;
+  --accent-color-light: #34d399;
+}
+
+.patient-icon-info {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  --accent-color: #06b6d4;
+  --accent-color-light: #22d3ee;
+}
+
+/* Animations d'entrée pour les cartes patient */
+@keyframes slideInFromLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.patient-info-item:nth-child(odd) {
+  animation: slideInFromLeft 0.8s ease-out;
+}
+
+.patient-info-item:nth-child(even) {
+  animation: slideInFromRight 0.8s ease-out;
+}
+
+/* Responsive pour la section patient */
+@media (max-width: 768px) {
+  .patient-info-card {
+    padding: 20px;
+  }
+
+  .patient-info-item {
+    padding: 16px;
+  }
+
+  .patient-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+}
+
+/* ===================================================================
+   SECTION INFORMATIONS PATIENT VERSION PROFESSIONNELLE ULTRA-MODERNE
+   =================================================================== */
+.patient-info-card-pro {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(248, 250, 252, 0.95) 25%,
+    rgba(241, 245, 249, 0.92) 50%,
+    rgba(248, 250, 252, 0.95) 75%,
+    rgba(255, 255, 255, 0.98) 100%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.patient-info-card-pro::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(59, 130, 246, 0.02) 30%,
+    rgba(139, 92, 246, 0.02) 70%,
+    transparent 100%);
+  transition: left 1s ease;
+}
+
+.patient-info-card-pro:hover::before {
+  left: 100%;
+}
+
+.patient-info-card-pro:hover {
+  transform: translateY(-6px) scale(1.005);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(59, 130, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* En-tête professionnel avec avatar */
+.patient-header-pro {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(248, 250, 252, 0.8) 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  position: relative;
+  overflow: hidden;
+}
+
+.patient-header-pro::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle,
+    rgba(59, 130, 246, 0.08) 0%,
+    transparent 70%);
+  border-radius: 50%;
+  transform: translate(40px, -40px);
+}
+
+.patient-avatar-pro {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: linear-gradient(135deg,
+    #667eea 0%,
+    #764ba2 25%,
+    #f093fb 50%,
+    #f5576c 75%,
+    #4facfe 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    0 0 0 4px rgba(255, 255, 255, 0.8),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.patient-avatar-pro:hover {
+  transform: scale(1.05) rotate(5deg);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.2),
+    0 0 0 4px rgba(59, 130, 246, 0.3),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4);
+}
+
+.patient-avatar-pro i {
+  font-size: 32px;
+  color: white;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.patient-status-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: 3px solid white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Cartes d'information professionnelles */
+.patient-info-item-pro {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(248, 250, 252, 0.9) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  padding: 24px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.patient-info-item-pro::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: linear-gradient(180deg,
+    var(--accent-color, #3b82f6) 0%,
+    var(--accent-color-light, #60a5fa) 100%);
+  border-radius: 0 3px 3px 0;
+  transition: width 0.3s ease;
+}
+
+.patient-info-item-pro:hover::before {
+  width: 8px;
+}
+
+.patient-info-item-pro:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.patient-info-item-pro:hover .patient-icon-pro {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* Icônes professionnelles */
+.patient-icon-pro {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 2px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+}
+
+.patient-icon-pro::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.1) 30%,
+    transparent 60%);
+  border-radius: inherit;
+  transition: all 0.3s ease;
+}
+
+.patient-icon-pro::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 25% 25%,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.2) 30%,
+    transparent 70%);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.patient-icon-pro:hover::after {
+  opacity: 1;
+}
+
+.patient-icon-pro:hover {
+  transform: scale(1.08) rotate(2deg);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.2),
+    0 0 0 2px rgba(255, 255, 255, 0.2),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3);
+}
+
+.patient-icon-pro:hover::before {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.2) 40%,
+    transparent 70%);
+}
+
+.patient-icon-pro i {
+  font-size: 24px;
+  color: white;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.patient-icon-pro:hover i {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Variations de couleurs professionnelles médicales */
+.patient-icon-primary-pro {
+  background: linear-gradient(135deg,
+    #2563eb 0%, #1d4ed8 30%, #1e40af 70%, #1e3a8a 100%);
+  --accent-color: #2563eb;
+  --accent-color-light: #3b82f6;
+}
+
+.patient-icon-primary-pro::before {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(59, 130, 246, 0.3) 50%,
+    transparent 100%);
+}
+
+.patient-icon-secondary-pro {
+  background: linear-gradient(135deg,
+    #7c3aed 0%, #6d28d9 30%, #5b21b6 70%, #4c1d95 100%);
+  --accent-color: #7c3aed;
+  --accent-color-light: #8b5cf6;
+}
+
+.patient-icon-secondary-pro::before {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(139, 92, 246, 0.3) 50%,
+    transparent 100%);
+}
+
+.patient-icon-success-pro {
+  background: linear-gradient(135deg,
+    #059669 0%, #047857 30%, #065f46 70%, #064e3b 100%);
+  --accent-color: #059669;
+  --accent-color-light: #10b981;
+}
+
+.patient-icon-success-pro::before {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(16, 185, 129, 0.3) 50%,
+    transparent 100%);
+}
+
+.patient-icon-info-pro {
+  background: linear-gradient(135deg,
+    #0891b2 0%, #0e7490 30%, #155e75 70%, #164e63 100%);
+  --accent-color: #0891b2;
+  --accent-color-light: #06b6d4;
+}
+
+.patient-icon-info-pro::before {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(6, 182, 212, 0.3) 50%,
+    transparent 100%);
+}
+
+.patient-icon-warning-pro {
+  background: linear-gradient(135deg,
+    #d97706 0%, #b45309 30%, #92400e 70%, #78350f 100%);
+  --accent-color: #d97706;
+  --accent-color-light: #f59e0b;
+}
+
+.patient-icon-warning-pro::before {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(245, 158, 11, 0.3) 50%,
+    transparent 100%);
+}
+
+/* Animations spéciales pour les icônes médicales */
+.patient-icon-primary-pro:hover {
+  animation: iconPulseBlue 0.6s ease-out;
+}
+
+.patient-icon-secondary-pro:hover {
+  animation: iconPulsePurple 0.6s ease-out;
+}
+
+.patient-icon-success-pro:hover {
+  animation: iconPulseGreen 0.6s ease-out;
+}
+
+.patient-icon-info-pro:hover {
+  animation: iconPulseCyan 0.6s ease-out;
+}
+
+.patient-icon-warning-pro:hover {
+  animation: iconPulseOrange 0.6s ease-out;
+}
+
+@keyframes iconPulseBlue {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.12) rotate(3deg); }
+  100% { transform: scale(1.08) rotate(2deg); }
+}
+
+@keyframes iconPulsePurple {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.12) rotate(-3deg); }
+  100% { transform: scale(1.08) rotate(-2deg); }
+}
+
+@keyframes iconPulseGreen {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.12) rotate(2deg); }
+  100% { transform: scale(1.08) rotate(1deg); }
+}
+
+@keyframes iconPulseCyan {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.12) rotate(-2deg); }
+  100% { transform: scale(1.08) rotate(-1deg); }
+}
+
+@keyframes iconPulseOrange {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.12) rotate(4deg); }
+  100% { transform: scale(1.08) rotate(3deg); }
+}
+
+/* Badge de statut professionnel */
+.patient-status-badge-pro {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg,
+    rgba(16, 185, 129, 0.1) 0%,
+    rgba(5, 150, 105, 0.05) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 50px;
+  box-shadow:
+    0 4px 12px rgba(16, 185, 129, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.patient-status-badge-pro::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(16, 185, 129, 0.1) 50%,
+    transparent 100%);
+  transition: left 0.6s ease;
+}
+
+.patient-status-badge-pro:hover::before {
+  left: 100%;
+}
+
+.patient-status-dot {
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+  animation: statusDotPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusDotPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+  }
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.7);
+  }
+}
+
+/* Animations d'entrée professionnelles */
+@keyframes slideInFromBottom {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.patient-info-item-pro:nth-child(1) { animation: slideInFromBottom 0.8s ease-out 0.1s both; }
+.patient-info-item-pro:nth-child(2) { animation: slideInFromBottom 0.8s ease-out 0.2s both; }
+.patient-info-item-pro:nth-child(3) { animation: slideInFromBottom 0.8s ease-out 0.3s both; }
+.patient-info-item-pro:nth-child(4) { animation: slideInFromBottom 0.8s ease-out 0.4s both; }
+.patient-info-item-pro:nth-child(5) { animation: slideInFromBottom 0.8s ease-out 0.5s both; }
+
+/* Responsive professionnel */
+@media (max-width: 768px) {
+  .patient-info-card-pro {
+    padding: 24px;
+  }
+
+  .patient-header-pro {
+    padding: 20px;
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .patient-avatar-pro {
+    width: 70px;
+    height: 70px;
+  }
+
+  .patient-info-item-pro {
+    padding: 20px;
+  }
+
+  .patient-icon-pro {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+}
+
+/* ===================================================================
+   NOUVELLE SECTION PROFIL PATIENT MODERNE ET PROFESSIONNEL
    =================================================================== */
 
-}  transform: scale(1.1) rotate(-90deg);
+.modern-patient-profile {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(248, 250, 252, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  border: 2px solid;
+  border-image: linear-gradient(135deg, #3b82f6, #8b5cf6, #22c55e) 1;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modern-patient-profile::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(59, 130, 246, 0.03) 50%,
+    transparent 100%);
+  transition: left 1.5s ease;
+}
+
+.modern-patient-profile:hover::before {
+  left: 100%;
+}
+
+.modern-patient-profile:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 32px 64px rgba(0, 0, 0, 0.15),
+    0 0 0 2px rgba(59, 130, 246, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* En-tête du profil */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(248, 250, 252, 0.6) 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.profile-avatar {
+  position: relative;
+}
+
+.avatar-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 32px;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s ease;
+}
+
+.avatar-circle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.4);
+}
+
+.avatar-status {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 3px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-status i {
+  font-size: 8px;
+  color: white;
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-name {
+  font-size: 28px;
+  font-weight: 900;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.profile-subtitle {
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+
+.profile-badges {
+  display: flex;
+  gap: 12px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.badge-active {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.badge-verified {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #166534;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Informations détaillées */
+.profile-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.detail-card {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(248, 250, 252, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.detail-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.detail-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.detail-content {
+  flex: 1;
+}
+
+.detail-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.detail-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+/* Statut médical */
+.medical-status {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(248, 250, 252, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.status-header i {
+  font-size: 20px;
+  color: #ef4444;
+}
+
+.status-header span {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.status-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+  animation: pulse 2s infinite;
+}
+
+.status-text {
+  font-weight: 600;
+  color: #166534;
+}
+
+.status-description {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Métriques de performance */
+.performance-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.metric-item {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(248, 250, 252, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.metric-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.metric-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.metric-item:nth-child(1) .metric-icon {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #166534;
+}
+
+.metric-item:nth-child(2) .metric-icon {
+  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+  color: #7c3aed;
+}
+
+.metric-item:nth-child(3) .metric-icon {
+  background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+  color: #ea580c;
+}
+
+.metric-data {
+  flex: 1;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 900;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.metric-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Animation de pulsation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modern-patient-profile {
+    padding: 24px;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .profile-details {
+    grid-template-columns: 1fr;
+  }
+
+  .performance-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .status-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
 }

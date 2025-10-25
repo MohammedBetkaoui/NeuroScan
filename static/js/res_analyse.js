@@ -42,9 +42,13 @@ function initializeInteractiveElements() {
   
   // Initialiser les compteurs animés
   animateNumbers();
-}
+  
+  // Animer les cartes de métriques
+  animateMetricCards();
 
-// Effet de parallaxe léger au scroll
+  // Animer les cartes d'informations patient
+  animatePatientInfoCards();
+}// Effet de parallaxe léger au scroll
 function handleParallaxScroll() {
   const scrolled = window.pageYOffset;
   const parallaxElements = document.querySelectorAll('.analysis-card');
@@ -130,11 +134,12 @@ function createHeaderParticles() {
 // Animation des nombres (compteur)
 function animateNumbers() {
   const confidence = parseFloat(window.__analysisData.confidence || 0);
-  const confidenceElement = document.querySelector('.text-2xl.font-bold.text-gray-900');
-  
+  const confidenceElement = document.querySelector('.text-4xl.font-black.text-gray-900');
+  const confidenceFill = document.getElementById('confFill');
+
   if (confidenceElement && confidence > 0) {
     let current = 0;
-    const increment = confidence / 50;
+    const increment = confidence / 60; // Animation plus lente et fluide
     const timer = setInterval(() => {
       current += increment;
       if (current >= confidence) {
@@ -142,8 +147,41 @@ function animateNumbers() {
         clearInterval(timer);
       }
       confidenceElement.textContent = current.toFixed(1) + '%';
-    }, 20);
+    }, 25);
   }
+
+  // Animation de la barre de confiance avec délai
+  if (confidenceFill) {
+    setTimeout(() => {
+      confidenceFill.style.width = confidence + '%';
+    }, 800); // Délai pour laisser le temps aux autres animations
+  }
+}
+
+// Animation des cartes de métriques avec effet de révélation
+function animateMetricCards() {
+  const metricCards = document.querySelectorAll('.metric-card-advanced');
+  metricCards.forEach((card, index) => {
+    // Réinitialiser l'état initial
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px) scale(0.95)';
+
+    // Animer avec délai progressif (2 cartes seulement maintenant)
+    setTimeout(() => {
+      card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0) scale(1)';
+    }, 1200 + (index * 200)); // Délai plus espacé pour 2 cartes
+  });
+}
+
+// Animation des cartes d'informations patient
+function animatePatientInfoCards() {
+  const patientCards = document.querySelectorAll('.patient-info-item-pro');
+  patientCards.forEach((card, index) => {
+    // Les cartes ont déjà leurs animations CSS définies, mais on peut ajouter un délai initial
+    card.style.animationDelay = `${0.1 + (index * 0.1)}s`;
+  });
 }
 
 // Initialiser les tooltips
@@ -216,31 +254,38 @@ function hideTooltip(e) {
     const width = parseFloat(bar.dataset.width || '0');
     const color = colors[index % colors.length];
     
-    // Appliquer la couleur avec dégradé
-    bar.style.background = `linear-gradient(90deg, ${color}, ${adjustBrightness(color, -20)})`;
+    // Appliquer la couleur avec dégradé amélioré
+    bar.style.background = `linear-gradient(135deg, ${color}, ${adjustBrightness(color, -25)})`;
+    bar.style.boxShadow = `0 2px 8px ${color}40`;
     
-    // Animation de largeur avec effet élastique
+    // Animation de largeur avec effet élastique amélioré
     setTimeout(() => {
       bar.style.width = Math.max(0, Math.min(100, width)) + '%';
       
-      // Ajouter une animation de pulse au survol
-      bar.parentElement.addEventListener('mouseenter', () => {
-        bar.style.transform = 'scaleY(1.2)';
-        bar.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-      });
-      
-      bar.parentElement.addEventListener('mouseleave', () => {
-        bar.style.transform = 'scaleY(1)';
-      });
-    }, 800 + (index * 150));
+      // Ajouter des effets de hover avancés
+      const probItem = bar.closest('.prob-item');
+      if (probItem) {
+        probItem.addEventListener('mouseenter', () => {
+          bar.style.transform = 'scaleY(1.15) scaleX(1.02)';
+          bar.style.boxShadow = `0 4px 12px ${color}60`;
+          bar.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        });
+        
+        probItem.addEventListener('mouseleave', () => {
+          bar.style.transform = 'scaleY(1) scaleX(1)';
+          bar.style.boxShadow = `0 2px 8px ${color}40`;
+        });
+      }
+    }, 1000 + (index * 200)); // Délai plus long pour laisser le temps au graphique
   });
 
-  // Appliquer les couleurs aux indicateurs circulaires avec glow
-  document.querySelectorAll('.w-4.h-4.rounded-full').forEach((circle, index) => {
-    if (index < colors.length) {
-      circle.style.backgroundColor = colors[index];
-      circle.style.boxShadow = `0 0 12px ${colors[index]}80`;
-    }
+  // Appliquer les couleurs aux indicateurs circulaires avec glow amélioré
+  document.querySelectorAll('.prob-color-0, .prob-color-1, .prob-color-2, .prob-color-3, .prob-color-4').forEach((circle, index) => {
+    const colorIndex = index % colors.length;
+    const color = colors[colorIndex];
+    circle.style.background = `linear-gradient(135deg, ${color}, ${adjustBrightness(color, -20)})`;
+    circle.style.boxShadow = `0 0 16px ${color}60, 0 2px 8px ${color}30`;
+    circle.style.border = `2px solid rgba(255, 255, 255, 0.8)`;
   });
 })();
 

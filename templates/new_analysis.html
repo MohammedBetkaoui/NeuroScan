@@ -5,11 +5,460 @@
 {% block page_subtitle %}Interface épurée et performante{% endblock %}
 {% block page_description %}Téléversez une imagerie et obtenez un diagnostic IA fiable en quelques secondes.{% endblock %}
 
-{% block content %}
-<div class="min-h-screen bg-neutral-50 -mt-6 pt-6">
-  <div class="max-w-7xl mx-auto p-6">
+{% block extra_css %}
+<style>
+/* Ultra-Modern Alert Styles for NeuroScan Professional Platform */
+:root {
+    --alert-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --alert-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --alert-warning: linear-gradient(135deg, #fcb045 0%, #fd1d1d 100%);
+    --alert-error: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    --alert-info: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.15);
+    --border-radius: 20px;
+    --transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-    <!-- Bandeau -->
+.modern-alert {
+    background: var(--glass-bg);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 0.75rem;
+    box-shadow: var(--shadow-soft);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+    animation: slideInAlert 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    max-width: 420px;
+    z-index: 1000;
+}
+
+.modern-alert::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: var(--alert-info);
+    transition: var(--transition);
+    border-radius: var(--border-radius) 0 0 var(--border-radius);
+    z-index: -1;
+}
+
+.modern-alert::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+    opacity: 0;
+    transition: var(--transition);
+    border-radius: var(--border-radius);
+    z-index: -1;
+}
+
+.modern-alert:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.modern-alert:hover::after {
+    opacity: 1;
+}
+
+/* Alert Types */
+.modern-alert.success {
+    border-left: 6px solid #11998e;
+}
+
+.modern-alert.success::before {
+    background: var(--alert-success);
+}
+
+.modern-alert.error {
+    border-left: 6px solid #ee5a52;
+}
+
+.modern-alert.error::before {
+    background: var(--alert-error);
+}
+
+.modern-alert.warning {
+    border-left: 6px solid #fcb045;
+}
+
+.modern-alert.warning::before {
+    background: var(--alert-warning);
+}
+
+.modern-alert.info {
+    border-left: 6px solid #667eea;
+}
+
+.modern-alert.info::before {
+    background: var(--alert-info);
+}
+
+/* Alert Content */
+.modern-alert-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+.modern-alert-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-alert.success .modern-alert-icon {
+    background: var(--alert-success);
+    box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+}
+
+.modern-alert.error .modern-alert-icon {
+    background: var(--alert-error);
+    box-shadow: 0 4px 12px rgba(238, 90, 82, 0.3);
+}
+
+.modern-alert.warning .modern-alert-icon {
+    background: var(--alert-warning);
+    box-shadow: 0 4px 12px rgba(252, 176, 69, 0.3);
+}
+
+.modern-alert.info .modern-alert-icon {
+    background: var(--alert-info);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.modern-alert-icon i {
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.modern-alert-text {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1f2937;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.modern-alert-description {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: #6b7280;
+    margin-top: 0.25rem;
+    line-height: 1.4;
+}
+
+.modern-alert-close {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0.375rem;
+    border-radius: 8px;
+    transition: var(--transition);
+    flex-shrink: 0;
+    margin-top: -0.25rem;
+    margin-right: -0.25rem;
+}
+
+.modern-alert-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #374151;
+    transform: scale(1.1);
+}
+
+/* Animations */
+@keyframes slideInAlert {
+    from {
+        opacity: 0;
+        transform: translateX(100%) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes fadeOutAlert {
+    from {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%) scale(0.95);
+    }
+}
+
+.modern-alert.fade-out {
+    animation: fadeOutAlert 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Pulse animation for important alerts */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.modern-alert.important {
+    animation: slideInAlert 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards, pulse 2s ease-in-out infinite;
+}
+
+/* Progress bar for loading alerts */
+.modern-alert-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: var(--alert-info);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    animation: progressBar 5s linear forwards;
+}
+
+@keyframes progressBar {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+    .modern-alert {
+        max-width: calc(100vw - 2rem);
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
+
+    .modern-alert-content {
+        gap: 0.75rem;
+    }
+
+    .modern-alert-text {
+        font-size: 0.9rem;
+    }
+}
+
+/* Additional styles for enhanced alerts */
+.modern-alert-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.modern-alert-message {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #374151;
+    margin-top: 0.5rem;
+    line-height: 1.4;
+}
+
+.modern-alert-action {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 0.75rem;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.modern-alert-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.modern-alert-action:active {
+    transform: translateY(0);
+}
+
+/* Enhanced animations */
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modern-alert.important {
+    animation: slideInAlert 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards, bounceIn 0.8s ease-out 0.6s;
+}
+
+/* Loading state for alerts */
+.modern-alert.loading .modern-alert-icon i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.modern-alert:hover::after {
+    opacity: 1;
+}
+
+.modern-alert.success::before {
+    background: linear-gradient(135deg, #00b894, #00a085);
+}
+
+.modern-alert.error::before {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+}
+
+.modern-alert.warning::before {
+    background: linear-gradient(135deg, #ffd93d, #ff9f43);
+}
+
+.modern-alert.info::before {
+    background: linear-gradient(135deg, #74b9ff, #0984e3);
+}
+
+.modern-alert-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modern-alert-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.modern-alert.success .modern-alert-icon {
+    background: linear-gradient(135deg, #00b894, #00a085);
+}
+
+.modern-alert.error .modern-alert-icon {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+}
+
+.modern-alert.warning .modern-alert-icon {
+    background: linear-gradient(135deg, #ffd93d, #ff9f43);
+}
+
+.modern-alert.info .modern-alert-icon {
+    background: linear-gradient(135deg, #74b9ff, #0984e3);
+}
+
+.modern-alert-icon i {
+    color: white;
+    font-size: 10px;
+}
+
+.modern-alert-text {
+    flex: 1;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.modern-alert-close {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.modern-alert-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #6b7280;
+}
+
+@keyframes slideInAlert {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeOutAlert {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+.modern-alert.fade-out {
+    animation: fadeOutAlert 0.5s ease-out forwards;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="min-h-screen bg-neutral-50 -mt-6 pt-6">
+    <!-- Modern Alert Container -->
+    <div id="modernAlertContainer" class="fixed top-4 right-4 z-50 space-y-2 max-w-sm"></div>
+
+    <div class="max-w-7xl mx-auto p-6">    <!-- Bandeau -->
     <section class="rounded-2xl p-6 bg-white border border-neutral-200 shadow-sm mb-6">
       <div class="flex items-center justify-between gap-4 flex-wrap">
         <div class="flex items-center gap-4">
@@ -117,6 +566,7 @@
                 <div id="nsUploadProgress" class="h-2 bg-gradient-to-r from-emerald-500 to-teal-600" style="width:0%"></div>
               </div>
             </div>
+            <img id="nsImagePreview" class="mt-4 w-full h-48 object-contain rounded-lg border border-neutral-200" style="display:none;" alt="Aperçu de l'image" />
           </div>
 
           <button id="nsAnalyzeBtn" class="mt-6 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-4 shadow-sm hover:shadow focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
@@ -127,18 +577,49 @@
 
       <!-- Statut (1) -->
       <div class="lg:col-span-1 space-y-6">
-        <div id="nsProgressCard" class="rounded-2xl p-6 bg-white border border-neutral-200 shadow-sm hidden">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 rounded-lg bg-neutral-100 text-neutral-700 flex items-center justify-center">
-              <i class="fas fa-cogs"></i>
+        <div id="nsProgressCard" class="fixed inset-0 hidden items-center justify-center bg-black/60 backdrop-blur-sm z-50">
+          <div class="bg-white rounded-3xl p-10 shadow-2xl max-w-lg w-full mx-4 border border-neutral-200">
+            <div class="text-center">
+              <div class="relative mb-6">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mx-auto shadow-lg">
+                  <i class="fas fa-brain text-white text-3xl animate-pulse"></i>
+                </div>
+                <div class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
+                  <i class="fas fa-cogs text-white text-sm animate-spin"></i>
+                </div>
+              </div>
+              <h2 class="text-2xl font-bold text-neutral-900 mb-2">Analyse IA en cours</h2>
+              <p class="text-neutral-600 mb-6" id="nsStatusText">Préparation de l'analyse...</p>
+
+              <!-- Patient Info -->
+              <div class="bg-neutral-50 rounded-xl p-4 mb-4">
+                <div class="flex items-center justify-center gap-3 text-sm">
+                  <i class="fas fa-user-md text-blue-600"></i>
+                  <span class="font-medium text-neutral-800" id="progressPatientName">Patient</span>
+                  <span class="text-neutral-500">•</span>
+                  <span id="progressPatientAge">Âge</span>
+                  <span class="text-neutral-500">•</span>
+                  <span id="progressPatientGender">Genre</span>
+                </div>
+              </div>
+
+              <!-- File Info -->
+              <div class="bg-neutral-50 rounded-xl p-4 mb-6">
+                <div class="flex items-center justify-center gap-3 text-sm">
+                  <i class="fas fa-file-medical text-indigo-600"></i>
+                  <span class="font-medium text-neutral-800" id="progressFileName">Fichier</span>
+                  <span class="text-neutral-500">•</span>
+                  <span id="progressFileSize">Taille</span>
+                </div>
+              </div>
+
+              <div class="w-full h-4 rounded-full bg-neutral-200 overflow-hidden mb-3 shadow-inner">
+                <div id="nsAnalysisProgress" class="h-4 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 transition-all duration-500 ease-out" style="width:0%"></div>
+              </div>
+              <div class="text-center text-lg font-semibold text-neutral-700 mb-2" id="nsProgressPct">0%</div>
+              <p class="text-sm text-neutral-500">Veuillez patienter, l'analyse peut prendre quelques secondes...</p>
             </div>
-            <h2 class="font-semibold text-neutral-900">Analyse en cours</h2>
           </div>
-          <div class="text-sm text-neutral-600 mb-2" id="nsStatusText">En attente du fichier...</div>
-          <div class="w-full h-2 rounded-full bg-neutral-200 overflow-hidden">
-            <div id="nsAnalysisProgress" class="h-2 bg-gradient-to-r from-blue-600 to-indigo-600" style="width:0%"></div>
-          </div>
-          <div class="mt-2 text-right text-sm font-semibold text-neutral-700" id="nsProgressPct">0%</div>
         </div>
 
         <div id="nsResultsCard" class="rounded-2xl p-6 bg-emerald-50 border border-emerald-200 text-emerald-800 shadow-sm hidden cursor-pointer hover:shadow-md transition" onclick="openResultsModal()">

@@ -1,5 +1,180 @@
 let analysisResults = null;
 
+// Ultra-Modern Alert System for NeuroScan Professional Platform
+function showModernAlert(message, type = 'info', duration = 6000, options = {}) {
+    const container = document.getElementById('modernAlertContainer');
+    if (!container) return;
+
+    const {
+        title,
+        description,
+        important = false,
+        showProgress = true,
+        actionButton
+    } = options;
+
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `modern-alert ${type} ${important ? 'important' : ''}`;
+
+    const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-triangle',
+        warning: 'fa-exclamation-circle',
+        info: 'fa-info-circle',
+        analysis: 'fa-brain',
+        upload: 'fa-cloud-upload-alt',
+        report: 'fa-file-pdf',
+        share: 'fa-share-alt'
+    };
+
+    const titles = {
+        success: 'Succès',
+        error: 'Erreur',
+        warning: 'Attention',
+        info: 'Information',
+        analysis: 'Analyse IA',
+        upload: 'Téléversement',
+        report: 'Rapport',
+        share: 'Partage'
+    };
+
+    const alertTitle = title || titles[type] || 'Notification';
+    const iconClass = icons[type] || icons.info;
+
+    let progressBar = '';
+    if (showProgress && duration > 0) {
+        progressBar = '<div class="modern-alert-progress"></div>';
+    }
+
+    let actionBtn = '';
+    if (actionButton) {
+        actionBtn = `<button class="modern-alert-action" onclick="${actionButton.onClick}">${actionButton.text}</button>`;
+    }
+
+    alertDiv.innerHTML = `
+        <div class="modern-alert-content">
+            <div class="modern-alert-icon">
+                <i class="fas ${iconClass}"></i>
+            </div>
+            <div class="modern-alert-body">
+                <div class="modern-alert-text">${alertTitle}</div>
+                ${description ? `<div class="modern-alert-description">${description}</div>` : ''}
+                ${message ? `<div class="modern-alert-message">${message}</div>` : ''}
+                ${actionBtn}
+            </div>
+            <button class="modern-alert-close" onclick="this.closest('.modern-alert').remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        ${progressBar}
+    `;
+
+    container.appendChild(alertDiv);
+
+    // Auto-remove after duration
+    if (duration > 0) {
+        setTimeout(() => {
+            if (alertDiv.parentElement) {
+                alertDiv.classList.add('fade-out');
+                setTimeout(() => alertDiv.remove(), 600);
+            }
+        }, duration);
+    }
+
+    return alertDiv;
+}
+
+// Specialized alert functions for better UX
+function showAnalysisStartAlert() {
+    return showModernAlert(
+        'Votre analyse IA est en cours de traitement...',
+        'analysis',
+        0, // Don't auto-remove
+        {
+            description: 'Le modèle d\'intelligence artificielle analyse l\'imagerie médicale avec précision.',
+            important: true,
+            showProgress: false
+        }
+    );
+}
+
+function showAnalysisCompleteAlert(diagnosis, confidence) {
+    const confidenceLevel = parseFloat(confidence);
+    const isHighConfidence = confidenceLevel >= 85;
+
+    let description = `Analyse terminée avec ${confidence} de confiance.`;
+    if (isHighConfidence) {
+        description += ' Résultats hautement fiables grâce à notre modèle IA avancé.';
+    } else {
+        description += ' Corrélation clinique recommandée pour confirmation.';
+    }
+
+    return showModernAlert(
+        `Diagnostic: ${diagnosis}`,
+        'success',
+        10000,
+        {
+            description: description,
+            important: isHighConfidence,
+            actionButton: {
+                text: 'Voir le rapport détaillé',
+                onClick: 'openResultsModal()'
+            }
+        }
+    );
+}
+
+function showFileUploadAlert(fileName, fileSize) {
+    return showModernAlert(
+        `Fichier "${fileName}" chargé avec succès`,
+        'upload',
+        4000,
+        {
+            description: `Taille: ${fileSize} • Prêt pour l'analyse IA`,
+            showProgress: false
+        }
+    );
+}
+
+function showErrorAlert(message, details = '') {
+    return showModernAlert(
+        message,
+        'error',
+        8000,
+        {
+            description: details || 'Veuillez réessayer ou contacter le support technique.',
+            important: true
+        }
+    );
+}
+
+function showReportGeneratedAlert() {
+    return showModernAlert(
+        'Rapport PDF généré avec succès',
+        'report',
+        5000,
+        {
+            description: 'Le rapport détaillé a été créé et est prêt au téléchargement.',
+            actionButton: {
+                text: 'Télécharger',
+                onClick: 'document.querySelector("#reportBtn").click()'
+            }
+        }
+    );
+}
+
+function showShareSuccessAlert() {
+    return showModernAlert(
+        'Analyse partagée avec succès',
+        'share',
+        5000,
+        {
+            description: 'Le destinataire recevra un lien sécurisé vers les résultats.',
+            showProgress: false
+        }
+    );
+}
+
 function openResultsModal() {
   if (!analysisResults) return;
   document.getElementById('modalResultImg').src = analysisResults.imageUrl || '';
@@ -211,12 +386,34 @@ function createProbabilityList(prob) {
     if (!file) return;
     const allowed = ['dcm','dicom','nii','jpg','jpeg','png'];
     const ext = file.name.split('.').pop().toLowerCase();
-    if (!allowed.includes(ext)) { alert('Format non supporté'); return; }
+    if (!allowed.includes(ext)) {
+        showErrorAlert(
+            'Format de fichier non supporté',
+            'Formats acceptés: JPG, PNG, DICOM. Sélectionnez un fichier d\'imagerie médicale valide.'
+        );
+        return;
+    }
     fileName.textContent = file.name;
     fileSize.textContent = formatSize(file.size);
     fileInfo.classList.remove('hidden');
     input.files = input.files;
     updateAnalyzeButton();
+
+    // Show modern file upload success alert
+    showFileUploadAlert(file.name, formatSize(file.size));
+
+    // Image preview for supported formats
+    const previewImg = document.getElementById('nsImagePreview');
+    if (['jpg','jpeg','png'].includes(ext)) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImg.src = e.target.result;
+        previewImg.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      previewImg.style.display = 'none';
+    }
   }
 
   drop.addEventListener('click', () => input.click());
@@ -229,7 +426,17 @@ function createProbabilityList(prob) {
     // Start progress
     resultsCard.classList.add('hidden');
     progressCard.classList.remove('hidden');
-    statusText.textContent = 'Téléversement du fichier...';
+    statusText.textContent = 'Préparation de l\'analyse...';
+
+    // Show modern analysis start alert
+    showAnalysisStartAlert();
+
+    // Populate progress modal with info
+    document.getElementById('progressPatientName').textContent = document.getElementById('patientName').textContent || 'Non spécifié';
+    document.getElementById('progressPatientAge').textContent = document.getElementById('patientAge').textContent || '—';
+    document.getElementById('progressPatientGender').textContent = document.getElementById('patientGender').textContent || '—';
+    document.getElementById('progressFileName').textContent = document.getElementById('nsFileName').textContent || 'Fichier';
+    document.getElementById('progressFileSize').textContent = document.getElementById('nsFileSize').textContent || '—';
 
   const formData = new FormData();
   formData.append('file', input.files[0]);
@@ -249,6 +456,7 @@ function createProbabilityList(prob) {
           const pct = Math.round((e.loaded / e.total) * 100);
           progressBar.style.width = `${pct}%`;
           progressPct.textContent = `${pct}%`;
+          statusText.textContent = `Téléversement en cours... ${pct}%`;
         }
       };
       xhr.onload = () => { uploadOk = xhr.status === 200; uploadResponseText = xhr.responseText; resolve(); };
@@ -257,13 +465,37 @@ function createProbabilityList(prob) {
     });
 
   statusText.textContent = uploadOk ? 'Analyse IA en cours...' : 'Analyse locale (démo)';
-    progressBar.style.width = '100%';
-    progressPct.textContent = '100%';
+    progressBar.style.width = '0%';
+    progressPct.textContent = '0%';
+
+    // Simulate real-time progress
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 10 + 5; // Random increment
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(progressInterval);
+        statusText.textContent = 'Finalisation des résultats...';
+      }
+      progressBar.style.width = `${progress}%`;
+      progressPct.textContent = `${Math.round(progress)}%`;
+    }, 200);
 
     let resData;
     if (uploadOk && uploadResponseText) {
       try { resData = JSON.parse(uploadResponseText); } catch (e) { /* ignore parse error */ }
     }
+
+    // Wait for progress to complete
+    await new Promise(resolve => {
+      const checkProgress = () => {
+        if (progress >= 100) resolve();
+        else setTimeout(checkProgress, 100);
+      };
+      checkProgress();
+    });
+
+    progressCard.classList.add('hidden');
 
   if (!resData) {
       // Fallback démo
@@ -286,7 +518,20 @@ function createProbabilityList(prob) {
     return;
   }
 
-  // Fallback: conserver l'ancien affichage si aucun analysis_id (mode démo)
+  // Show welcome alert on page load
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        showModernAlert(
+            'Plateforme NeuroScan IA prête',
+            'info',
+            6000,
+            {
+                description: 'Modèle d\'intelligence artificielle avancé pour l\'analyse d\'imagerie médicale. Précision et rapidité garanties.',
+                showProgress: false
+            }
+        );
+    }, 1000);
+});
   analysisResults = {
     id: resData.analysis_id || 'DEMO',
     imageUrl: resData.image_url,
@@ -311,6 +556,10 @@ function createProbabilityList(prob) {
 
   progressCard.classList.add('hidden');
   resultsCard.classList.remove('hidden');
+  
+  // Show success alert for completed analysis with detailed info
+  showAnalysisCompleteAlert(analysisResults.diagnosis, analysisResults.confidence);
+  
   const miniBadge = document.getElementById('nsResultMiniBadge');
   if (miniBadge) { miniBadge.textContent = analysisResults.diagnosis; miniBadge.className = `px-2 py-1 rounded-md text-white text-xs font-semibold ${analysisResults.badgeClass || 'bg-blue-600'}`; }
   const miniSummary = document.getElementById('nsResultMiniSummary');
@@ -328,9 +577,13 @@ function createProbabilityList(prob) {
           body: JSON.stringify({ patientName: document.getElementById('patientName').textContent, analysisData: analysisResults })
         });
         const data = await resp.json();
-        alert(data.success ? 'Rapport généré' : 'Erreur génération rapport');
+        if (data.success) {
+            showReportGeneratedAlert();
+        } else {
+            showErrorAlert('Échec de la génération du rapport', 'Une erreur s\'est produite lors de la création du PDF.');
+        }
       } catch {
-        alert('Erreur réseau');
+        showModernAlert('Erreur de connexion réseau. Veuillez réessayer.', 'error');
       }
     });
   }
@@ -346,9 +599,13 @@ function createProbabilityList(prob) {
           body: JSON.stringify({ recipientEmail: email, analysisData: analysisResults })
         });
         const data = await resp.json();
-        alert(data.success ? 'Analyse partagée' : 'Erreur partage');
+        if (data.success) {
+            showShareSuccessAlert();
+        } else {
+            showErrorAlert('Échec du partage', 'Impossible d\'envoyer l\'analyse au destinataire.');
+        }
       } catch {
-        alert('Erreur réseau');
+        showErrorAlert('Erreur de connexion', 'Impossible de contacter le serveur. Vérifiez votre connexion internet.');
       }
     });
   }

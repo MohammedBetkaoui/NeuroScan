@@ -1347,6 +1347,15 @@ def dashboard():
                          total_analyses=total_analyses,
                          total_patients=total_patients)
 
+@app.route('/messages')
+@login_required
+def messages_page():
+    """Page de messagerie professionnelle entre médecins"""
+    doctor = get_current_doctor()
+    if not doctor:
+        return redirect(url_for('login'))
+    return render_template('messages.html', doctor=doctor)
+
 @app.route('/api/doctor/stats')
 @login_required
 def get_doctor_stats_api():

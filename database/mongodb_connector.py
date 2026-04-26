@@ -14,7 +14,8 @@ import json
 load_dotenv()
 
 # Configuration MongoDB
-MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://betkaoui_mohammed:betkaoui@2002@cluster0.xdhjsc1.mongodb.net/')
+# Note: Le caractère @ dans le mot de passe doit être encodé en %40
+MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://betkaoui_mohammed:betkaoui%402002@cluster0.xdhjsc1.mongodb.net/')
 MONGODB_DB_NAME = os.getenv('MONGODB_DB_NAME', 'NeuroScan')
 
 class MongoDBConnector:
